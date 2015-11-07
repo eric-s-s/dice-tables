@@ -55,7 +55,7 @@ class dicetable(object):
     def stddev(self):
         '''wassamatter you! you don't know what standard deviation is?'''
         try:
-            avg = (self.totaldice*(1+self.dsize)/2.0)
+            avg = self.mean()
             sqs = 0
             count = 0
             for x in self.table.keys():
@@ -65,7 +65,7 @@ class dicetable(object):
         except OverflowError:
             print 'this standard deviation is a gross approximation '+\
             'as i had to int() all the sqrt, because the numbers are just too big'
-            avg = (self.totaldice*(1+self.dsize)/2.0)
+            avg = self.mean()
             sqs = 0
             count = 0
             for x in self.table.keys():
@@ -131,8 +131,8 @@ class dicetable(object):
                     print str(x)+': '+multiplier*'x'
         if count !=0:
             outrange = count/2-1
-            start = self.totaldice
-            finish = self.totaldice*self.dsize
+            start = self.min()
+            finish = self.max()
             outbottom = str(start)+' - '+str(start+outrange)
             outtop = str(finish-outrange)+' - '+str(finish)
         print 'each x represents '+(divstring)+' occurences' 
