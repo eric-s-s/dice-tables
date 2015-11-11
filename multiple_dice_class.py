@@ -1,3 +1,171 @@
+class dicetable(object):
+    def __init__(self,dsize):
+        self.totaldice = 0
+        self.table = {0:1}
+        self.dsize = dsize
+        
+
+    def getTableVal(self,value):
+        return self.table.get(value,0)
+    def getTable(self):
+        return self.table
+    def getDsize(self):
+        return self.dsize
+    def getTotalDice(self):
+        '''returns how many dice were used to generate the values in your table'''
+        return self.totaldice
+    def max(self):
+        '''returns the highest die roll in table'''
+        return self.dsize*self.totaldice
+    def min(self):
+        '''returns the lowest die roll in table'''
+        return self.totaldice
+    def totalcombos(self):
+        '''returns the total possible number of combinations from a dice table'''
+        return self.dsize**self.totaldice
+    def highest_frequency(self):
+        '''returns die roll that has the number of rolls (arbitrarily picks one of two equal ones)'''
+        return int(self.mean())
+    
+    def addADie(self):
+        '''takes your dicetable object, and calculates all the new combinations
+        if you add a new die of the dsize of the object'''
+        #so for d3, this would take {0:1,1:2} and 
+        #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
+        self.totaldice+=1
+        newdic = {}
+        for el in self.table:
+            currentval = self.table[el]
+            for x in range(self.dsize):
+                
+                newdic[el+x+1] = (newdic.get(el+x+1,0)+currentval)
+        self.table= newdic
+    def generator(self,num_dice):
+        for x in range (num_dice):
+            self.addADie()
+        #return self
+        
+         
+          
+            
+    def __str__(self):
+        return str(self.totaldice)+'D'+str(self.dsize)    
+    def printTable(self):
+        '''go on. give it a try.  you'll never guess what this function does.
+        it's a surprise'''
+        for el in range(self.min(), self.max()+1):
+            if el<10:
+                print ' '+str(el)+':'+str(self.table[el])
+            else:
+                print(str(el)+':'+str(self.table[el]))  
+                
+    def mean(self):
+        '''i mean, don't you just sometimes look at a table of values
+        and wonder what the mean is?'''
+        return (self.totaldice*(1+self.dsize)/2.0) 
+    def stddev(self):
+        '''wassamatter you! you don't know what standard deviation is?'''
+        try:
+            avg = self.mean()
+            sqs = 0
+            count = 0
+            for x in self.table.keys():
+                sqs += self.table[x]*((avg - x)**2)
+                count += self.table[x]
+            return round((sqs/count)**0.5,4)
+        except OverflowError:
+            print 'this standard deviation is a gross approximation '+\
+            'as i had to int() all the sqrt, because the numbers are just too big'
+            avg = self.mean()
+            sqs = 0
+            count = 0
+            for x in self.table.keys():
+                sqs += self.table[x]*int((avg - x)**2)
+                count += self.table[x]
+            return round((sqs/count)**0.5,4)
+        
+    def grapher(self):
+        '''returns a graph of self'''
+        max_roll_size = self.getTableVal(self.highest_frequency())
+        max_graph_height = 80.0
+                  
+        divisor = 1
+        divstring = '1'
+        #this sets the divisor so that max height of graph is 80 x's
+        if max_roll_size > max_graph_height:
+            try:
+                divisor = max_roll_size/max_graph_height
+            except OverflowError:
+                divisor = max_roll_size/int(max_graph_height)
+            divstring = str(divisor)
+        
+        sci_note_cutoff = 1000000
+        if divisor > sci_note_cutoff:
+            #this code just outputs as a string with sci notation assuming no decimals
+            power = len(divstring)-1
+            digits = divstring[0]+'.'+divstring[1:4]
+            divstring =digits+'e+'+str(power)
+        
+                
+        for x in range (self.min() , self.max()+1):
+            val = self.table.get(x,0)
+            if x<10:
+                print ' '+str(x)+': '+(int(round(val/divisor)))*'x'
+            else:
+                print str(x)+': '+(int(round(val/divisor)))*'x'
+        print 'each x represents '+(divstring)+' occurences'      
+        print self
+
+    def truncategrapher(self):
+        '''prints a graph of self with  the 0-'x' bits removed'''
+        max_roll_size = self.getTableVal(self.highest_frequency())
+        max_graph_height = 80.0
+                  
+        divisor = 1
+        divstring = '1'
+        #this sets the divisor so that max height of graph is 80 x's
+        if max_roll_size > max_graph_height:
+            try:
+                divisor = max_roll_size/max_graph_height
+            except OverflowError:
+                divisor = max_roll_size/int(max_graph_height)
+            divstring = str(divisor)
+        
+        sci_note_cutoff = 1000000
+        if divisor > sci_note_cutoff and 'e' not in divstring:
+            #the second arg above is to make sure divstring isn't already sci-note(python implements for floats above 10^16 and doesn't implement for ints. i want to implement for float above 10^6)
+            #this code just outputs as a string with sci notation assuming no decimals
+            print 'scinote info . divstring is '+divstring+' max roll size is '+str(max_roll_size)
+            power = len(divstring)-1
+            digits = divstring[0]+'.'+divstring[1:4]
+            divstring =digits+'e+'+str(power)
+        
+        count = 0        
+        for x in range (self.min() , self.max()+1):
+            val = self.table.get(x,0)
+            
+            multiplier = int(round(val/divisor))
+            if multiplier == 0:
+                count+=1
+            else:
+                if x<10:
+                    print ' '+str(x)+': '+multiplier*'x'
+                else:
+                    print str(x)+': '+multiplier*'x'
+        if count !=0:
+            outrange = count/2-1
+            start = self.min()
+            finish = self.max()
+            outbottom = str(start)+' - '+str(start+outrange)
+            outtop = str(finish-outrange)+' - '+str(finish)
+        print 'each x represents '+(divstring)+' occurences' 
+        if count != 0:
+            print 'not included: '+outbottom+' and '+outtop
+        print self
+    
+
+
+
 
 
 class MultipleDiceTable(dicetable):
@@ -32,6 +200,7 @@ class MultipleDiceTable(dicetable):
         '''returns the total possible number of combinations from a dice table'''
         out = 1
         for dsize in self.dsize_table.keys():
+            #if dsize !=0 and self.dsize_table[dsize] !=0:
             out *= dsize**self.dsize_table[dsize]
         return out
     def highest_frequency(self):

@@ -1,172 +1,8 @@
-from multiple-dice-class.py import *
+from multiple_dice_class import *
+import pylab
 
-class dicetable(object):
-    def __init__(self,dsize):
-        self.totaldice = 0
-        self.table = {0:1}
-        self.dsize = dsize
-        
-
-    def getTableVal(self,value):
-        return self.table.get(value,0)
-    def getTable(self):
-        return self.table
-    def getDsize(self):
-        return self.dsize
-    def getTotalDice(self):
-        '''returns how many dice were used to generate the values in your table'''
-        return self.totaldice
-    def max(self):
-        '''returns the highest die roll in table'''
-        return self.dsize*self.totaldice
-    def min(self):
-        '''returns the lowest die roll in table'''
-        return self.totaldice
-    def totalcombos(self):
-        '''returns the total possible number of combinations from a dice table'''
-        return self.dsize**self.totaldice
-    def highest_frequency(self):
-        '''returns die roll that has the number of rolls (arbitrarily picks one of two equal ones)'''
-        return int(self.mean())
     
-    def addADie(self):
-        '''takes your dicetable object, and calculates all the new combinations
-        if you add a new die of the dsize of the object'''
-        #so for d3, this would take {0:1,1:2} and 
-        #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
-        self.totaldice+=1
-        newdic = {}
-        for el in self.table:
-            currentval = self.table[el]
-            for x in range(self.dsize):
-                
-                newdic[el+x+1] = (newdic.get(el+x+1,0)+currentval)
-        self.table= newdic
-    def generator(self,num_dice):
-        for x in range (num_dice):
-            self.addADie()
-        #return self
-        
-         
-          
             
-    def __str__(self):
-        return str(self.totaldice)+'D'+str(self.dsize)    
-    def printTable(self):
-        '''go on. give it a try.  you'll never guess what this function does.
-        it's a surprise'''
-        for el in range(self.min(), self.max()+1):
-            if el<10:
-                print ' '+str(el)+':'+str(self.table[el])
-            else:
-                print(str(el)+':'+str(self.table[el]))  
-                
-    def mean(self):
-        '''i mean, don't you just sometimes look at a table of values
-        and wonder what the mean is?'''
-        return (self.totaldice*(1+self.dsize)/2.0) 
-    def stddev(self):
-        '''wassamatter you! you don't know what standard deviation is?'''
-        try:
-            avg = self.mean()
-            sqs = 0
-            count = 0
-            for x in self.table.keys():
-                sqs += self.table[x]*((avg - x)**2)
-                count += self.table[x]
-            return round((sqs/count)**0.5,4)
-        except OverflowError:
-            print 'this standard deviation is a gross approximation '+\
-            'as i had to int() all the sqrt, because the numbers are just too big'
-            avg = self.mean()
-            sqs = 0
-            count = 0
-            for x in self.table.keys():
-                sqs += self.table[x]*int((avg - x)**2)
-                count += self.table[x]
-            return round((sqs/count)**0.5,4)
-        
-    def grapher(self):
-        '''returns a graph of self'''
-        max_roll_size = self.getTableVal(self.highest_frequency())
-        max_graph_height = 80.0
-                  
-        divisor = 1
-        divstring = '1'
-        #this sets the divisor so that max height of graph is 80 x's
-        if max_roll_size > max_graph_height:
-            try:
-                divisor = max_roll_size/max_graph_height
-            except OverflowError:
-                divisor = max_roll_size/int(max_graph_height)
-            divstring = str(divisor)
-        
-        sci_note_cutoff = 1000000
-        if divisor > sci_note_cutoff:
-            #this code just outputs as a string with sci notation assuming no decimals
-            power = len(divstring)-1
-            digits = divstring[0]+'.'+divstring[1:4]
-            divstring =digits+'e+'+str(power)
-        
-                
-        for x in range (self.min() , self.max()+1):
-            val = self.table.get(x,0)
-            if x<10:
-                print ' '+str(x)+': '+(int(round(val/divisor)))*'x'
-            else:
-                print str(x)+': '+(int(round(val/divisor)))*'x'
-        print 'each x represents '+(divstring)+' occurences'      
-        print self
-
-    def truncategrapher(self):
-        '''prints a graph of self with  the 0-'x' bits removed'''
-        max_roll_size = self.getTableVal(self.highest_frequency())
-        max_graph_height = 80.0
-                  
-        divisor = 1
-        divstring = '1'
-        #this sets the divisor so that max height of graph is 80 x's
-        if max_roll_size > max_graph_height:
-            try:
-                divisor = max_roll_size/max_graph_height
-            except OverflowError:
-                divisor = max_roll_size/int(max_graph_height)
-            divstring = str(divisor)
-        
-        sci_note_cutoff = 1000000
-        if divisor > sci_note_cutoff:
-            #this code just outputs as a string with sci notation assuming no decimals
-            power = len(divstring)-1
-            digits = divstring[0]+'.'+divstring[1:4]
-            divstring =digits+'e+'+str(power)
-        
-        count = 0        
-        for x in range (self.min() , self.max()+1):
-            val = self.table.get(x,0)
-            
-            multiplier = int(round(val/divisor))
-            if multiplier == 0:
-                count+=1
-            else:
-                if x<10:
-                    print ' '+str(x)+': '+multiplier*'x'
-                else:
-                    print str(x)+': '+multiplier*'x'
-        if count !=0:
-            outrange = count/2-1
-            start = self.min()
-            finish = self.max()
-            outbottom = str(start)+' - '+str(start+outrange)
-            outtop = str(finish-outrange)+' - '+str(finish)
-        print 'each x represents '+(divstring)+' occurences' 
-        if count != 0:
-            print 'not included: '+outbottom+' and '+outtop
-        print self
-    
-#random experiment to have different kinds of dtable.  remove at convenience    
-class NewDiceTable(dicetable):
-    def __init__(self,dval):
-        dicetable.__init__(self,dval)            
             
 def scinote(num):
     '''returns str of a rounded INT in sci notation. 
@@ -273,94 +109,22 @@ def getstat(dtable):
             print
             return 0
 
-#two functions for generating a dicetable of specific size
-def mycombos(dval,dice):
-    '''generates a dice table of specs, die size, dval(int) and #of dice(int)'''
-    x = dicetable(dval)
-    for a in range(dice):
-        x.addADie()
-    return x                    
-                                                            
-def mycombosDisplay(dval,dice):
-    '''generates a dice table of specs, die size, dval(int) and #of dice(int)
-    also prints info on table'''
-    x = dicetable(dval)
-    for a in range(dice):
-        x.addADie()
-    x.truncategrapher()
-    print 'the mean is '+str(x.mean())
-    print 'the standard deviation is '+str(x.stddev())
-    return x
-    
-     
-#here's a generator and UI that uses it is below -  diceTableYielder()
-def genTableStep(dval):
-    '''user input adds dice to a generator like mycombos  
-    dval is the kind of dice  
-    the yield none is used by the parent function(diceTableYielder) to quit'''
-    x = dicetable(dval)
-    
-    while True:
-        print 'you currently have ' +str(x)
-	step = raw_input('how many dice would you like to add? (\'q\' to quit) ')
-	if step == 'q':
-	    yield None
-	else:
-	    try:
-	        for count in range(int(step)):
-	           x.addADie()
-                yield x
-            except ValueError:
-                print 'incorrect input'
-                continue
-        
-
-def diceTableYielder():    
-    
-    x = int(raw_input('what kind of dice? '))
-    
-        
-    for el in genTableStep(x):
-        if el == None:
-            break
-        choice = raw_input('type "t" for a table, "g" for a graph or the anykey to skip ')
-        if choice == 't':
-            el.printTable()
-        if choice == 'g':
-            el.truncategrapher()
-        
-        while True:
-            statyn = raw_input\
-            ('would you like stats on your table? \'y\' or \'n\' ')
-            if statyn == 'y':
-                print
-                print el
-                print 'the mean is '+str(el.mean())
-                print 'the standard deviation is '+str(el.stddev())
-                print 'the range is '+str(el.min())+'-'+str(el.max())
-                print
-                x = getstat(el)
-                if x == None:
-                    break
-            if statyn == 'n':
-                break
-            else:
-                continue
 
 
+def fancy_grapher(table,figure,style = 'bo'):
+    x_axis = []
+    y_axis =[]
+    the_table = table.getTable()
+    for el in the_table.keys():
+        x_axis.append(el)
+    x_axis.sort()
+    for el in x_axis:
+        y_axis.append(the_table[el])
+    pylab.figure(figure)
+    pylab.plot(x_axis,y_axis,style)
+    pylab.draw()
 
-
-
-
-
-
-
-
-
-
-        
-
-
+#start the UI
 def table_setup():
     '''set up a table.  output init-ed table or "q"'''
     while True:
@@ -418,7 +182,8 @@ def _table_setup_R():
 
 def _table_setup_M():
     '''multiple table'''
-    raise NotImplementedError
+    print 'creating empty dicetable'
+    return MultipleDiceTable()
     #end MULTIPLE table
 
 def _table_setup_W():
@@ -431,7 +196,6 @@ def _table_setup_W():
 def add_what(table):
     '''input how much to add to your table or "q" or "b"'''
     def _add_what_dt(table):
-        
         x = raw_input('            time to add dice\n'\
         +'            "b" for "back", "q" for "quit" of pos interger/0 for how many dice to add ')
         if x == 'b':
@@ -448,13 +212,32 @@ def add_what(table):
             except ValueError:
                 print 'oh come on.  you\'re not even trying. adding 0 dice'
                 table.generator(0)
+
     
+    def _add_what_MDT(table):
+        x = raw_input('            time to add dice\n'\
+        +'            "b" for "back", "q" for "quit" of pos interger/0 for how many dice to add ')
+        
+        if x == 'b':
+            print 'chose b'
+            return 'b'
+            
+        if x == 'q':
+            print 'chose q'
+            return 'q'
+        dsize = raw_input('          now what kind of dice are we adding, hmmm?')    
+        
+        try:
+            table.generator(int(x),int(dsize))
+        except ValueError:
+            print 'oh come on.  you\'re not even trying. adding 0 dice'
+            table.generator(0,0)            
     
     if type(table) == dicetable:
-        
         return _add_what_dt(table)
    
-
+    if type(table) == MultipleDiceTable:
+        return _add_what_MDT(table)
 
         
                                                                                                 
@@ -480,6 +263,8 @@ def another_UI():
                 x.printTable()
             if choice == 'g':
                 x.truncategrapher()
+            if choice == 'f':
+                fancy_grapher(x,1)
             
             while True: 
                 #TODO a hot mess rewrite getstat
