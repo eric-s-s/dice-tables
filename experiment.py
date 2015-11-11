@@ -1,4 +1,4 @@
-
+from multiple-dice-class.py import *
 
 class dicetable(object):
     def __init__(self,dsize):
@@ -45,7 +45,7 @@ class dicetable(object):
     def generator(self,num_dice):
         for x in range (num_dice):
             self.addADie()
-        return self
+        #return self
         
          
           

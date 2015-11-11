@@ -1,4 +1,3 @@
-from dicetable import *
 
 
 class MultipleDiceTable(dicetable):
@@ -8,10 +7,7 @@ class MultipleDiceTable(dicetable):
         self.table = {0:1}
         self.dsize_table = {} 
         
-    def getTableVal(self,value):
-        return self.table.get(value,0)
-    def getTable(self):
-        return self.table
+    
     def getDsize(self):
         return self.dsize_table
     def getTotalDice(self):
@@ -68,15 +64,11 @@ class MultipleDiceTable(dicetable):
         for dsize in self.dsize_table:
             out = out+str(self.dsize_table[dsize])+'D'+str(dsize)+'\n'
         return out    
-    def printTable(self):
-        '''go on. give it a try.  you'll never guess what this function does.
-        it's a surprise'''
-        for el in range(self.min(), self.max()+1):
-            if el<10:
-                print ' '+str(el)+':'+str(self.table[el])
-            else:
-                print(str(el)+':'+str(self.table[el]))  
-                
+      
+    def generator(self,num_dice,dsize):
+        for x in range (num_dice):
+            self.addADie(dsize)            
+    
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
