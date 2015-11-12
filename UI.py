@@ -49,16 +49,21 @@ def makealist():
 #right now, since overflowerror just uses int the chance will say 1 in 2 when pct is 34-50
 def getstat(dtable):
         '''returns the stats on lst of elements in self'''
-        totalval = 0
+        
         tabletotal = dtable.totalcombos()
         #below takes the values from makealist to get lst for function and 
         # str to print the range of values
         lst,lststring = makealist()
         if lst == None:
             return None
-        
-        for el in lst:
-            totalval += dtable.getTableVal(el)
+        try:
+            totalval = 0
+            for el in lst:
+                totalval += dtable.getTableVal(el)
+        except OverflowError:
+            totalval = 0
+            for el in lst:
+                totalval += int(dtable.getTableVal(el))
         if totalval == 0:
             print 'you get nothing!  good day, sir!'
             return 0
@@ -74,7 +79,7 @@ def getstat(dtable):
                 #all because of this line of code perhaps use funtion like scinote
                 #pass a short float and power of ten.  can use in next line for better pct, too
                 
-                chance = (tabletotal)/totalval
+                chance = (tabletotal)/int(totalval)
             
             try:
                 pct = round(float(totalval)*100/tabletotal,3)
@@ -85,17 +90,17 @@ def getstat(dtable):
             #either just display the num, or display it in scientific notation if too big
             scinoteCutoff = 1000000
             
-            if totalval>scinoteCutoff:
+            if totalval>scinoteCutoff and 'e' not in str(totalval):
                 totalvalstring =scinote(totalval)
             else:
                 totalvalstring = str(totalval)
             
-            if tabletotal>scinoteCutoff:
+            if tabletotal>scinoteCutoff and 'e' not in str(tabletotal):
                 tabletotalstring =scinote(tabletotal)
             else:
                 tabletotalstring =str(tabletotal)
             
-            if chance > scinoteCutoff:
+            if chance > scinoteCutoff and 'e' not in str(chance):
                 chancestring =scinote(int(chance))
             else:
                 chancestring = str(chance)
