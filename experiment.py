@@ -290,7 +290,21 @@ def another_UI():
         #TODO the cache when get here, put value in cache.  cache holds ten tables
         #how the fuc to access?
              
-
-
+def input_weights(dsize):
+    outlst = []
+    for x in range(dsize):
+        usr_says = ''
+        while type(usr_says) == str:
+            usr_says = raw_input('put in your weight for a roll of '+str(x+1)+': ')
+            try:
+                usr_says = float(usr_says)
+                if usr_says <0:
+                    print '\nno such thing as a negative weight'
+                    usr_says = str(usr_says)
+                    raise ValueError
+            except ValueError:
+                print '\nincorrect input'
+        outlst.append(usr_says)
+    return outlst
 #if __name__ == '__main__':
 #    diceTableYielder()
