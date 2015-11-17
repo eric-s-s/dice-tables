@@ -80,11 +80,8 @@ class DiceTable(object):
             self._int_so_no_overflow = True
         self._totaldice += 1
         newdic = {}
-        #for roll in self._table:
-        #    currentval = self._table[roll]
         for roll, current_frequency in self._table.items():
             for die_value in range(1, self._dsize+1):
-
                 newdic[roll+die_value] = \
                 (newdic.get(roll+die_value, 0)+current_frequency)
         self._table = newdic
