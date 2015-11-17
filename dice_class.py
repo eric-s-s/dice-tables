@@ -1,31 +1,32 @@
+'''module contains DiceTable class only.'''
 class DiceTable(object):
     '''This is a class for finding how many comdinations for any die roll using
     (number of dice)D(die size).  So it could tell you that on 3D6, you have
-    25 different combinations that get you a "9" out of a total of 216 
+    25 different combinations that get you a "9" out of a total of 216
     combinations - an 11.6 percent chance. Or it could tell you that you have
     a 2.3 percent chance of rolling a 350 on 100D6.'''
-    
+
     OVERFLOW_CUTOFF = 10**100
     def __init__(self, dsize):
         '''dsize is a positive interger.
-        the kind of dice you want.  6-sided dice = 6''' 
+        the kind of dice you want.  6-sided dice = 6'''
         self._totaldice = 0
         self._table = {0:1}
         self._dsize = dsize
         self._int_so_no_overflow = False
-        
-    
-    
+
+
+
     def int_or_float(self, variable):
         '''OverflowError control.  These tables deal with VERY large numbers.
-        Floats over 10**300 or so, become "inf". If you explicitly convert 
+        Floats over 10**300 or so, become "inf". If you explicitly convert
         certain numbers to intergers, Python can handle the huge-number math.
         Otherwise, you swim in OverflowErrors'''
         if self._int_so_no_overflow:
             return int(variable)
         else:
-            return variable    
-        
+            return variable
+
 
     def dice_size(self):
         return self._dsize
@@ -48,7 +49,7 @@ class DiceTable(object):
 
     def roll_frequency(self, roll):
         '''Returns tuple of the roll and it's frequency.'''
-        return roll, self._table.get(roll,0)
+        return roll, self._table.get(roll, 0)
     def roll_frequency_range(self, start, stopbefore):
         '''Returns a list of tuples (roll,frequency).
         Like regular range function, it stops before endvalue.'''
@@ -88,6 +89,7 @@ class DiceTable(object):
                 (newdic.get(roll+die_value, 0)+current_frequency)
         self._table = newdic
     def add_many_dice(self, num_dice):
+        '''num_dice is an int.  add that many dice.'''
         for x in range(num_dice):
             self.add_a_die()
 
@@ -99,18 +101,9 @@ class DiceTable(object):
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
-        return self._totaldice*(1+self._dsize)/2.0 
-         
+        return self._totaldice*(1+self._dsize)/2.0
+
     def stddev(self):
-        #if (not self._int_so_no_overflow and
-        #       self.total_combinations() > self.OVERFLOW_CUTOFF):
-        #   self._int_so_no_overflow = True
-        
-        #TODO: remove 2 lines of testing code.  still useful.    
-        if self._int_so_no_overflow:
-            print 'trip'    
-        #TODO ends.
-            
         avg = self.mean()
         sqs = 0
         count = 0
@@ -118,8 +111,8 @@ class DiceTable(object):
             sqs += frequency*self.int_or_float((avg - roll)**2)
             count += frequency
         return round((sqs/count)**0.5, 4)
-            
-    #TODO: remove the next two functions.  they are for testing                
+
+    #TODO: remove the next two functions.  they are for testing
     def stddevtst(self):
         avg = self.mean()
         sqs = 0
@@ -131,14 +124,7 @@ class DiceTable(object):
     def stddeverr(self):
         accurate = self.stddevtst()
         approx = self.stddev()
-        return 100*(accurate - approx)/accurate        
+        return 100*(accurate - approx)/accurate
     #TODO ends.
-     
-    
 
 
-
-    
-
-
-            
