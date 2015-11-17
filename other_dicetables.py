@@ -1,49 +1,44 @@
 from dice_class import *
 
+        
+    
 class WeightedDiceTable(DiceTable):
     def __init__(self,lst):
         DiceTable.__init__(self,len(lst))
-       
         
-        #TODO: take these two functions, and make one function that makes a 
-        #list of tuples that are floats.  the inter will int them later.
-        def _transform_weights(lst):
-            #transforms user's lst to a uniform weight table
-            total = len(lst)
-            lst_total = sum(lst)
-            factor = float(total)/lst_total
-            newlst = []
-            print factor
-            for el in lst:
-                newlst.append(factor*el)
-            return newlst    
-        def _overflow_weights(weights):
-            #converts transform to to tuples representing
-            #one int over another int for overflow problems
-            def _fractioner(x):
-                for divisor in range(1,1001):
-                    if x*divisor == int(x*divisor):
-                        return int(x*divisor),divisor
-                return int(round(1000*x)),1000 
-            tuple_lst = []
-            for el in weights:
-                tuple_lst.append(_fractioner(el))
-            return tuple_lst
-        self.weights = _transform_weights(lst) 
-        self.overflow_weights = _overflow_weights(self.weights)
+        def _tranform_weights(lst):
+            converted = []
+            conversion_numerator = float(len(lst))
+            conversion_denominator = sum(lst)
+            for value in lst:
+                converted.append(value*conversion_numerator/
+                                conversion_denominator)
+            def fractioner_maker(weight):
+                final_denominator =1000
+                for denominator in range(1,final_denominator):
+                    numerator = weight*denominator
+                    if numerator == int(numerator):
+                        return int(numerator),float(denominator)
+                final_numerator = int(round(final_denominator*weight))
+                return (final_numerator, float(final_denominator))
+            weights_out = []
+            for value in converted:
+                weights_out.append(fractioner_maker(value))
+            return weights_out           
+        self._weights = _tranform_weights(lst)
         
         
-    def addADie(self):
+    def add_a_die(self):
         '''takes your dicetable object, and calculates all the new combinations
         if you add a new die of the dsize of the object and applies weight table'''
         #so for d3, this would take {0:1,1:2} and 
         #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
-        self.totaldice+=1
+        self._totaldice+=1
         newdic = {}
-        for el in self.table:
-            currentval = self.table[el]
+        for el in self._table:
+            currentval = self._table[el]
             overflow_cutoff = 1000000000000000000
-            for x in range(self.dsize):
+            for x in range(self._dsize):
                 weight_factor = self.weights[x]
                 if newdic.get(el+x+1,0)> overflow_cutoff or currentval>overflow_cutoff :
                     
@@ -53,21 +48,21 @@ class WeightedDiceTable(DiceTable):
                 else:
                     newdic[el+x+1] = (newdic.get(el+x+1,0)+weight_factor*currentval)
                     
-        self.table= newdic
+        self._table= newdic
     def mean(self):
         
         try:
             mean = 0
-            for el in self.table.keys():
-                mean += el*self.table[el]
+            for el in self._table.keys():
+                mean += el*self._table[el]
         
-            mean = mean/self.totalcombos()
+            mean = mean/self.total_combinations()
         except OverflowError:
             mean = 0
-            for el in self.table.keys():
-                mean += el*int(self.table[el])
+            for el in self._table.keys():
+                mean += el*int(self._table[el])
             top = mean
-            bottom = self.totalcombos()
+            bottom = self.total_combinations()
             remainder = top%bottom
             if remainder*10000<bottom:
                 mean = top/bottom

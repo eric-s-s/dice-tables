@@ -1,191 +1,189 @@
-from multiple_dice_class import *
-import pylab
+from dice_class import *
+import pylab           
 
-    
-            
-            
+#helper function. used everywhere to make numbers look purty.           
 def scinote(num):
-    '''returns str of a rounded INT in sci notation. 
-    if you int(the string) it's legal input for python'''
-    string = str(num)
-    power = str(len(string)-1)
-    digits = string[0]+'.'+string[1:4]
-    return digits+'e+'+power
-    
-def printTable(self):
-        '''go on. give it a try.  you'll never guess what this function does.
-        it's a surprise'''
-        for el in range(self.min(), self.max()+1):
-            if el<10:
-                print ' '+str(el)+':'+str(self.table[el])
-            else:
-                print(str(el)+':'+str(self.table[el]))
-    
-def grapher(self):
-        '''returns a graph of self'''
-        max_roll_size = self.getTableVal(self.highest_frequency())
-        max_graph_height = 80.0
-                  
-        divisor = 1
-        divstring = '1'
-        #this sets the divisor so that max height of graph is 80 x's
-        if max_roll_size > max_graph_height:
-            try:
-                divisor = max_roll_size/max_graph_height
-            except OverflowError:
-                divisor = max_roll_size/int(max_graph_height)
-            divstring = str(divisor)
-        
-        sci_note_cutoff = 1000000
-        if divisor > sci_note_cutoff and 'e' not in divstring:
-            #this code just outputs as a string with sci notation assuming no decimals
-            power = len(divstring)-1
-            digits = divstring[0]+'.'+divstring[1:4]
-            divstring =digits+'e+'+str(power)
-        
-                
-        for x in range (self.min() , self.max()+1):
-            val = self.table.get(x,0)
-            if x<10:
-                print ' '+str(x)+': '+(int(round(val/divisor)))*'x'
-            else:
-                print str(x)+': '+(int(round(val/divisor)))*'x'
-        print 'each x represents '+(divstring)+' occurences'      
-        print self
+    '''checks a positive int or float.  outputs a string of the number.
+    float(string) will give you the number.
+    if number lower than scinonote_cutoff, no change.
+    if number already in scientific notation, just prints first 4 digits
+    else prints first four digits in scientific notation.'''
+    scinote_cutoff = 10**6
+    if num < scinote_cutoff:
+        return str(num)
+    elif 'e' in str(num):
+        left,right = str(num).split('e')
+        return left[0:5]+'e'+right
+    else:
+        string = str(int(num))
+        power = str(len(string)-1)
+        digits = string[0]+'.'+string[1:4]
+        return digits+'e+'+power
 
-def truncategrapher(self):
-        '''prints a graph of self with  the 0-'x' bits removed'''
-        max_roll_size = self.getTableVal(self.highest_frequency())
-        max_graph_height = 80.0
-                  
-        divisor = 1
-        divstring = '1'
-        #this sets the divisor so that max height of graph is 80 x's
-        if max_roll_size > max_graph_height:
-            try:
-                divisor = max_roll_size/max_graph_height
-            except OverflowError:
-                divisor = max_roll_size/int(max_graph_height)
-            divstring = str(divisor)
-        
-        sci_note_cutoff = 1000000
-        if divisor > sci_note_cutoff and 'e' not in divstring:
-            #the second arg above is to make sure divstring isn't already sci-note(python implements for floats above 10^16 and doesn't implement for ints. i want to implement for float above 10^6)
-            #this code just outputs as a string with sci notation assuming no decimals
-            #print 'scinote info . divstring is '+divstring+' max roll size is '+str(max_roll_size)
-            power = len(divstring)-1
-            digits = divstring[0]+'.'+divstring[1:4]
-            divstring =digits+'e+'+str(power)
-        
-        out_lst = []        
-        for x in range (self.min() , self.max()+1):
-            val = self.table.get(x,0)
-            try:
-                multiplier = int(round(val/divisor))
-            except OverflowError:
-                multiplier =  int(val)/int(divisor)
-            if multiplier == 0:
-                out_lst.append(x)
-            else:
-                if x<10:
-                    print ' '+str(x)+': '+multiplier*'x'
-                else:
-                    print str(x)+': '+multiplier*'x'
-        if out_lst !=[]:
-            
-            for index in range(len(out_lst)-1):
-                if out_lst[index+1]-out_lst[index]>1:
-                    bottom_bottom = (out_lst[0])
-                    bottom_top =(out_lst[index])
-                    top_bottom = (out_lst[index+1])
-                    top_top = (out_lst[-1])
-                    break
-
-            outbottom = str(bottom_bottom)+' - '+str(bottom_top)
-            outtop = str(top_bottom)+' - '+str(top_top)
-        print 'each x represents '+(divstring)+' occurences' 
-        if out_lst !=[]:
-            print 'not included: '+outbottom+' and '+outtop
-        print self
-        
-def getstat(dtable):
-        '''returns the stats on lst of elements in self'''
-        
-        tabletotal = dtable.totalcombos()
-        #below takes the values from makealist to get lst for function and 
-        # str to print the range of values
-        lst,lststring = makealist()
-        if lst == None:
-            return None
-        try:
-            totalval = 0
-            for el in lst:
-                totalval += dtable.getTableVal(el)
-        except OverflowError:
-            totalval = 0
-            for el in lst:
-                totalval += int(dtable.getTableVal(el))
-        if totalval == 0:
-            print 'you get nothing!  good day, sir!'
-            return 0
-        
-        
+#helper function for truncate_grapher() and stats()
+def list_to_string(lst):
+    '''outputs a list of intergers as a nice string.
+    [1,2,3,7,9,10] becomes "1-3, 7, 9-10"
+    [1,1,2,2,3] becomes "1-3"'''
+    lst.sort()
+    start_index = 0
+    tuple_list = []
+    for index in range(len(lst)-1):
+        if lst[index+1]-lst[index] > 1:
+            tuple_list.append((lst[start_index], lst[index]))
+            start_index = index+1
+    tuple_list.append((lst[start_index], lst[-1]))
+    out_list = []
+    for pair in tuple_list:
+        if pair[0] == pair[1]:
+            out_list.append(str(pair[0]))
         else:
-            
-            try:
-                chance = round(float(tabletotal)/totalval,3)
-            except OverflowError:
-                #TODO
-                #this needs revision.  33-50pct are all 1 in 2 chance for very large numbers
-                #all because of this line of code perhaps use funtion like scinote
-                #pass a short float and power of ten.  can use in next line for better pct, too
-                
-                chance = (tabletotal)/int(totalval)
-            
-            try:
-                pct = round(float(totalval)*100/tabletotal,3)
-            except OverflowError:
-                pct = (totalval)*100/tabletotal
-            
-            #the if elses establish output str based on size of numbers
-            #either just display the num, or display it in scientific notation if too big
-            scinoteCutoff = 1000000
-            
-            if totalval>scinoteCutoff and 'e' not in str(totalval):
-                totalvalstring =scinote(totalval)
-            else:
-                totalvalstring = str(totalval)
-            
-            if tabletotal>scinoteCutoff and 'e' not in str(tabletotal):
-                tabletotalstring =scinote(tabletotal)
-            else:
-                tabletotalstring =str(tabletotal)
-            
-            if chance > scinoteCutoff and 'e' not in str(chance):
-                chancestring =scinote(int(chance))
-            else:
-                chancestring = str(chance)
-            
-            print
-            print lststring+' occurred '+totalvalstring+\
-            ' times out of a total of '+tabletotalstring+' possible combinations'
-            print 'if you roll '+str(dtable)+','
-            print 'the chance of '+lststring+' is 1 in '+chancestring+' or '\
-            +str(pct)+' percent'
-            print
-            return 0
+            out_list.append(str(pair[0])+'-'+str(pair[1]))
+    return ', '.join(out_list)     
 
+#helper function. currently used in print_table(), grapher() 
+#and truncate_grapher()       
+def justify_right(roll, max_roll):
+    '''takes a roll, and the largest roll from a DiceTable.
+    outputs a string of the roll with enough added spaces so that
+    "roll:" and "max_roll:" will be the same number of characters.'''
+    max_len = len(str(max_roll))
+    out_roll = str(roll)
+    spaces = (max_len - len(out_roll))*' '
+    return spaces + out_roll
 
+#helper function.  currently only used in stats()    
+def more_sig_figs(numerator, denominator):
+    MAX_POWER = 6
+    '''two ints.  returns a float of numerator/denominator. it's a way to 
+    divide two really big ints and get a useful float. '''
+    if numerator*10**MAX_POWER < denominator:
+        return 0.0
+    if numerator/denominator > 10**MAX_POWER:
+        return numerator/denominator
+    else:
+        power = len(str(numerator)) - MAX_POWER - 1
+        factor = 10**power
+        new_numerator = float(numerator/factor)
+        new_denominator = float(denominator/factor)
+        return round(new_numerator/new_denominator, MAX_POWER-1)    
 
-def fancy_grapher(table,figure,style = 'bo'):
+#helper function that's really only useful for grapher and truncate_grapher                        
+def graph_list(table):
+    '''makes a list of tuples.  (roll-int, grapher output for roll-str).
+    it's a helper function for grapher and truncate_grapher'''
+    graph_list = []
+    
+    max_frequency = table.roll_frequency_highest()[1]
+    max_roll = table.roll_range_top()
+    MAX_GRAPH_HEIGHT = 80.0
+                  
+    divisor = 1
+    divstring = '1'
+    #this sets the divisor so that max height of graph is MAX_GRAPH_HEIGHT x's
+    if max_frequency > MAX_GRAPH_HEIGHT:
+        divisor = max_frequency/table.int_or_float(MAX_GRAPH_HEIGHT)
+        divstring = scinote(divisor)    
+        
+    for roll, frequency in table.roll_frequency_all():
+        num_of_xs = int(round(frequency/divisor))
+        graph_list.append((roll, 
+                         justify_right(roll, max_roll) +':'+num_of_xs*'x'))
+        
+    graph_list.append((None, 'each x represents '+divstring+' occurences'))      
+    return graph_list
+
+def print_table(table):
+    '''input - DiceTable.  Prints all the rolls and their frequencies.'''
+    max_roll = table.roll_range_top()
+    for roll, frequency in table.roll_frequency_all():
+        print justify_right(roll, max_roll) +':'+scinote(frequency)
+    
+def grapher(table):
+    '''input = DiceTable. output = a graph of x's'''
+    for output in graph_list(table):
+        print output[1]
+    print table
+    
+def truncate_grapher(table):
+    '''input = DiceTable. output = a graph of x's 
+    but doesn't print zero-x rolls'''
+    excluded = []
+    for output in graph_list(table):
+        if 'x' in output[1]:
+            print output[1]
+        else:
+            excluded.append(output[0])
+    if excluded !=[]:
+        print 'not included: '+list_to_string(excluded).replace(',',' and')
+    print table
+        
+def fancy_grapher(table,figure = 1,style = 'bo'):
+    '''makes a pylab plot of a DiceTable. 
+    You can set other figures and styles'''
     x_axis = []
     y_axis =[]
-    the_table = table.getTable()
-    for el in the_table.keys():
-        x_axis.append(el)
-    x_axis.sort()
-    for el in x_axis:
-        y_axis.append(the_table[el])
+    factor = 1
+    
     pylab.figure(figure)
+    pylab.ylabel('number of combinations')
+    #A work-around for the limitations of pylab.
+    #It can't handle really fucking big ints and can't use my workarounds
+    if type(table.int_or_float(1.)) is int:
+        power = len(str(table.roll_frequency_highest()[1])) - 5
+        factor = 10**power
+        pylab.ylabel('number of combinations times 10^'+str(power)) 
+    
+    for roll, frequency in table.roll_frequency_all():
+        x_axis.append(roll)
+        y_axis.append(frequency/factor)
+    
+    pylab.xlabel('roll value')
+    pylab.title('all the combinations for '+str(table))
     pylab.plot(x_axis,y_axis,style)
-    pylab.draw()
+    pylab.draw()                
+
+#TODO: delete
+#for eval purposes
+def highest(table):
+    return scinote(table.roll_frequency_highest()[1])
+       
+
+         
+def stats(table, rolls):
+        '''returns the stats from a DiceTable for the rolls(a list)'''
+        ints_only = False
+        if type(table.int_or_float(1.)) is int:
+            ints_only = True
+        
+        all_combos = table.total_combinations()
+        total_frequency = 0
+        for roll in rolls:
+            total_frequency += table.roll_frequency(roll)[1]
+        if total_frequency == 0:
+            print 'no results'
+            return None
+        if ints_only:
+            chance = more_sig_figs(all_combos,total_frequency)
+            pct = 100*more_sig_figs(total_frequency,all_combos)
+        else:
+            chance = round(float(all_combos)/total_frequency, 5)
+            pct =  round(float(total_frequency*100)/all_combos, 3)
+        
+        total_frequency_str = scinote(total_frequency)
+        chance_str = scinote(chance)
+        all_combos_str = scinote(all_combos)
+        rolls_str = list_to_string(rolls)
+        print
+        print (rolls_str+' occurred '+total_frequency_str+
+                ' times out of a total of '+all_combos_str+
+                ' possible combinations')
+        print 'if you roll '+str(table)+','
+        print ('the chance of '+rolls_str+' is 1 in '+
+                chance_str+' or '+str(pct)+' percent')
+        print    
+
+
+
+
+
