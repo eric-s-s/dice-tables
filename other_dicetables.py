@@ -1,77 +1,78 @@
 from dice_class import *
+           
+            
 
-        
-    
 class WeightedDiceTable(DiceTable):
-    def __init__(self,lst):
-        DiceTable.__init__(self,len(lst))
+    def __init__(self, lst):
+        DiceTable.__init__(self, len(lst))
         
-        def _tranform_weights(lst):
-            converted = []
-            conversion_numerator = float(len(lst))
-            conversion_denominator = sum(lst)
-            for value in lst:
-                converted.append(value*conversion_numerator/
-                                conversion_denominator)
-            def fractioner_maker(weight):
-                final_denominator =1000
-                for denominator in range(1,final_denominator):
-                    numerator = weight*denominator
-                    if numerator == int(numerator):
-                        return int(numerator),float(denominator)
-                final_numerator = int(round(final_denominator*weight))
-                return (final_numerator, float(final_denominator))
-            weights_out = []
-            for value in converted:
-                weights_out.append(fractioner_maker(value))
-            return weights_out           
-        self._weights = _tranform_weights(lst)
+        def _int_the_weights(in_lst):
+            '''takes list of weights and makes them ints.
+            outputs tuples of weight and die value.'''
+            factor = 1
+            out_lst = []
+            for value in in_lst:
+                if not isinstance(value, int):
+                    found_one = False
+                    for guess in range(factor,1001):
+                        if value*guess == int(value*guess):
+                            factor = guess
+                            found_one = True
+                            break
+                    if found_one == False:
+                        factor = 1000
+                        break
+            for index in range(len(in_lst)):
+                out_lst.append((index+1, int(factor*in_lst[index])))
+            return out_lst
+        self._weights = _int_the_weights(lst)
+        self._total_weight = sum([pair[1] for pair in self._weights])
         
+    def weight_info(self):
+        print self
+        for die_val, weight in self._weights:
+            print 'a roll of '+str(die_val)+' has a weight '+str(weight)
+        print 'the total weight is '+str(self._total_weight)
         
     def add_a_die(self):
-        '''takes your dicetable object, and calculates all the new combinations
-        if you add a new die of the dsize of the object and applies weight table'''
-        #so for d3, this would take {0:1,1:2} and 
+        '''Takes your dicetable object, and calculates all the new combinations
+        if you add a new die of the dsize of the object.'''
+        #so for d3, this would take {0:1,1:2} and
         #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
-        self._totaldice+=1
+        if (not self._int_so_no_overflow and
+                self.total_combinations() > self.OVERFLOW_CUTOFF):
+            self._int_so_no_overflow = True
+        self._totaldice += 1
         newdic = {}
-        for el in self._table:
-            currentval = self._table[el]
-            overflow_cutoff = 1000000000000000000
-            for x in range(self._dsize):
-                weight_factor = self.weights[x]
-                if newdic.get(el+x+1,0)> overflow_cutoff or currentval>overflow_cutoff :
-                    
-                    weight_top = self.overflow_weights[x][0]
-                    weight_bottom = self.overflow_weights[x][1]
-                    newdic[el+x+1] = (int(newdic.get(el+x+1,0))+weight_top*int(currentval)/weight_bottom)
-                else:
-                    newdic[el+x+1] = (newdic.get(el+x+1,0)+weight_factor*currentval)
-                    
-        self._table= newdic
-    def mean(self):
-        
-        try:
-            mean = 0
-            for el in self._table.keys():
-                mean += el*self._table[el]
-        
-            mean = mean/self.total_combinations()
-        except OverflowError:
-            mean = 0
-            for el in self._table.keys():
-                mean += el*int(self._table[el])
-            top = mean
-            bottom = self.total_combinations()
-            remainder = top%bottom
-            if remainder*10000<bottom:
-                mean = top/bottom
-                print 'remainder '+str(remainder)
-            else:
-                mean = top/bottom
-                print 'implement here '+str(remainder)
-        return mean
+        #for roll in self._table:
+        #    currentval = self._table[roll]
+        for roll, current_frequency in self._table.items():
+            for die_value, weight in self._weights:
 
+                newdic[roll+die_value] = \
+                (newdic.get(roll+die_value, 0)+weight*current_frequency)
+        self._table = newdic
+    
+    def total_combinations(self):
+        '''Returns the total possible number of combinations from a dice table.'''
+        return self._total_weight**self._totaldice
+    def mean(self):
+        numerator = 0
+        denominator = self.total_combinations()
+        for roll, frequency in self._table.items():
+            numerator += roll*frequency
+        return self.int_or_float(numerator)/denominator  
+    def roll_frequency_highest(self):
+        '''Returns a tuple of (one of) the roll with the highest frequency,
+        and it's frequency'''
+        highest = (0,0)
+        for roll, frequency in self._table.items():
+            if frequency > highest[1]:
+                highest = (roll, frequency)
+        return highest 
+                                            
+    def __str__(self):
+        return str(self._totaldice)+'D'+str(self._dsize)+' weighted' 
 
 
 

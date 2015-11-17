@@ -1,3 +1,7 @@
+'''printing and graphing functions for use with DiceTable class.
+main functions are - grapher(), truncate_grapher(), fancy_grapher()
+print_table() and stats()'''
+
 from dice_class import DiceTable
 import pylab
 
@@ -129,7 +133,7 @@ def fancy_grapher(table, figure=1, style='bo'):
     pylab.ylabel('number of combinations')
     #A work-around for the limitations of pylab.
     #It can't handle really fucking big ints and can't use my workarounds
-    if isinstance(table.int_or_float(1.), int):
+    if isinstance(table.int_or_float(1), int):
         power = len(str(table.roll_frequency_highest()[1])) - 5
         factor = 10**power
         pylab.ylabel('number of combinations times 10^'+str(power))
@@ -153,7 +157,7 @@ def highest(table):
 def stats(table, rolls):
     '''returns the stats from a DiceTable for the rolls(a list)'''
     ints_only = False
-    if isinstance(table.int_or_float(1.), int):
+    if isinstance(table.int_or_float(1), int):
         ints_only = True
 
     all_combos = table.total_combinations()

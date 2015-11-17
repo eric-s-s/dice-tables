@@ -25,7 +25,7 @@ class DiceTable(object):
         if self._int_so_no_overflow:
             return int(variable)
         else:
-            return variable
+            return float(variable)
 
 
     def dice_size(self):
