@@ -56,22 +56,6 @@ def justify_right(roll, max_roll):
     spaces = (max_len - len(out_roll))*' '
     return spaces + out_roll
 
-#helper function.  currently only used in stats()
-def more_sig_figs(numerator, denominator):
-    '''two ints.  returns a float of numerator/denominator. it's a way to
-    divide two really big ints and get a useful float. '''
-    MAX_POWER = 6
-    if numerator*10**MAX_POWER < denominator:
-        return 0.0
-    if numerator/denominator > 10**MAX_POWER:
-        return numerator/denominator
-    else:
-        power = len(str(numerator)) - MAX_POWER - 1
-        factor = 10**power
-        new_numerator = float(numerator/factor)
-        new_denominator = float(denominator/factor)
-        return round(new_numerator/new_denominator, MAX_POWER-1)
-
 #helper function that's really only useful for grapher and truncate_grapher
 def graph_list(table):
     '''makes a list of tuples.  (roll-int, grapher output for roll-str).
@@ -80,13 +64,13 @@ def graph_list(table):
 
     max_frequency = table.roll_frequency_highest()[1]
     max_roll = table.roll_range_top()
-    MAX_GRAPH_HEIGHT = 80.0
+    max_graph_height = 80.0
 
     divisor = 1
     divstring = '1'
     #this sets the divisor so that max height of graph is MAX_GRAPH_HEIGHT x's
-    if max_frequency > MAX_GRAPH_HEIGHT:
-        divisor = max_frequency/table.int_or_float(MAX_GRAPH_HEIGHT)
+    if max_frequency > max_graph_height:
+        divisor = max_frequency/table.int_or_float(max_graph_height)
         divstring = scinote(divisor)
 
     for roll, frequency in table.roll_frequency_all():
@@ -155,11 +139,7 @@ def highest(table):
 
 
 def stats(table, rolls):
-    '''returns the stats from a DiceTable for the rolls(a list)'''
-    ints_only = False
-    if isinstance(table.int_or_float(1), int):
-        ints_only = True
-
+    '''returns the stats from a DiceTable for the rolls in the list, 'rolls'.'''
     all_combos = table.total_combinations()
     total_frequency = 0
     for roll in rolls:
@@ -168,12 +148,8 @@ def stats(table, rolls):
     if total_frequency == 0:
         print 'no results'
         return None
-    if ints_only:
-        chance = more_sig_figs(all_combos, total_frequency)
-        pct = 100*more_sig_figs(total_frequency, all_combos)
-    else:
-        chance = round(float(all_combos)/total_frequency, 5)
-        pct = round(float(total_frequency*100)/all_combos, 3)
+    chance = table.divide(all_combos, total_frequency, 4)
+    pct = 100 * table.divide(total_frequency, all_combos, 3)
 
     total_frequency_str = scinote(total_frequency)
     chance_str = scinote(chance)

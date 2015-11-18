@@ -15,20 +15,8 @@ class DiceTable(object):
         self._dsize = dsize
         self._int_so_no_overflow = False
 
-
-
-    def int_or_float(self, variable):
-        '''OverflowError control.  These tables deal with VERY large numbers.
-        Floats over 10**300 or so, become "inf". If you explicitly convert
-        certain numbers to intergers, Python can handle the huge-number math.
-        Otherwise, you swim in OverflowErrors'''
-        if self._int_so_no_overflow:
-            return int(variable)
-        else:
-            return float(variable)
-
-
     def dice_size(self):
+        '''Returns what kind of dice the table uses.'''
         return self._dsize
     def number_of_dice(self):
         '''Returns how many dice were used to generate the values in your table.'''
@@ -101,6 +89,7 @@ class DiceTable(object):
         return self._totaldice*(1+self._dsize)/2.0
 
     def stddev(self):
+        '''Returns the standard deviation of the table.'''
         avg = self.mean()
         sqs = 0
         count = 0
@@ -108,6 +97,44 @@ class DiceTable(object):
             sqs += frequency*self.int_or_float((avg - roll)**2)
             count += frequency
         return round((sqs/count)**0.5, 4)
+
+
+    def int_or_float(self, variable):
+        '''OverflowError control.  These tables deal with VERY large numbers.
+        Floats over 10**300 or so, become "inf". If you explicitly convert
+        certain numbers to intergers, Python can handle the huge-number math.
+        Otherwise, you swim in OverflowErrors'''
+        if self._int_so_no_overflow:
+            return int(variable)
+        else:
+            return float(variable)
+
+    def divide(self, numerator, denominator, sig_figs=5):
+        '''numerator and denominator >=1.
+        a special divide function for the large numbers in these tables.
+        if overflow control is tripped, does the division accurately and
+        returns either a large int, a float with the right number of sig figs,
+        or 0.0 if answer would be less than 10**(-sig_figs)'''
+        power_n = len(str(int(numerator)))-1
+        power_d = len(str(int(denominator)))-1
+        power_diff = power_n - power_d
+
+        if not self._int_so_no_overflow:
+            return round(float(numerator)/denominator, sig_figs - power_diff)
+        else:
+            if power_diff > sig_figs:
+                return int(numerator)/int(denominator)
+            elif -1*power_diff > sig_figs:
+                return 0.0
+            else:
+                if power_diff >= 0:
+                    factor = 10**(power_d - sig_figs)
+                else:
+                    factor = 10**(power_n - sig_figs)
+                new_numerator = int(numerator)/factor
+                new_denominator = int(denominator)/factor
+                return round(float(new_numerator)/new_denominator,
+                             sig_figs - power_diff)
 
     #TODO: remove the next two functions.  they are for testing
     def stddevtst(self):
@@ -123,5 +150,3 @@ class DiceTable(object):
         approx = self.stddev()
         return 100*(accurate - approx)/accurate
     #TODO ends.
-
-
