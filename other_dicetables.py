@@ -1,4 +1,4 @@
-from dice_class import *
+from dice_class import DiceTable
            
             
 
@@ -14,7 +14,7 @@ class WeightedDiceTable(DiceTable):
             for value in in_lst:
                 if not isinstance(value, int):
                     found_one = False
-                    for guess in range(factor,1001):
+                    for guess in range(factor,1000, factor):
                         if value*guess == int(value*guess):
                             factor = guess
                             found_one = True
@@ -61,7 +61,7 @@ class WeightedDiceTable(DiceTable):
         denominator = self.total_combinations()
         for roll, frequency in self._table.items():
             numerator += roll*frequency
-        return self.int_or_float(numerator)/denominator  
+        return self.divide(numerator, denominator, 10)  
     def roll_frequency_highest(self):
         '''Returns a tuple of (one of) the roll with the highest frequency,
         and it's frequency'''

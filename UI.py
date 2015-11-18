@@ -1,28 +1,23 @@
-from multiple_dice_class import *
+from dice_class import DiceTable
+from graphing_and_printing import *
 import pylab
 
-    
-            
-            
-def scinote(num):
-    '''returns str of a rounded INT in sci notation. 
-    if you int(the string) it's legal input for python'''
-    string = str(num)
-    power = str(len(string)-1)
-    digits = string[0]+'.'+string[1:4]
-    return digits+'e+'+power
+def menu_choices(user_input):
+    if user_input == 'q':
+        return break
 
 
-def makealist():
+def make_a_list():
     '''take user input of a range of numbers
-    and outputs (list of numbers,input string)
-    a helper function for getstat'''
-    x = raw_input('enter number(s) you want stats of separated by commas or you can use a dash \nfor a range of numbers: ')
-    if x == 'q' or x == '':
-        return None,None
+    and outputs a list of all those numbers'''
+    user_input = raw_input('enter number(s) you want stats of separated '+
+                           'by commas \nor you can '+
+                           'use a dash for a range of numbers: ')
+    if user_input == 'q' or user_input == '':
+        return None
     out = []
     try:
-        for el in x.split(','):
+        for el in user_input.split(','):
             if '-' in el:
                 start = int(el.split('-')[0])
                 end = int(el.split('-')[1])
@@ -42,94 +37,11 @@ def makealist():
         print 'here ya go.'
         print
         out.append(0)
-    return out,x
-
-
-#TODO i need to modify the overflowerror, maybe use a function like scinote. 
-#right now, since overflowerror just uses int the chance will say 1 in 2 when pct is 34-50
-def getstat(dtable):
-        '''returns the stats on lst of elements in self'''
-        
-        tabletotal = dtable.totalcombos()
-        #below takes the values from makealist to get lst for function and 
-        # str to print the range of values
-        lst,lststring = makealist()
-        if lst == None:
-            return None
-        try:
-            totalval = 0
-            for el in lst:
-                totalval += dtable.getTableVal(el)
-        except OverflowError:
-            totalval = 0
-            for el in lst:
-                totalval += int(dtable.getTableVal(el))
-        if totalval == 0:
-            print 'you get nothing!  good day, sir!'
-            return 0
-        
-        
-        else:
-            
-            try:
-                chance = round(float(tabletotal)/totalval,3)
-            except OverflowError:
-                #TODO
-                #this needs revision.  33-50pct are all 1 in 2 chance for very large numbers
-                #all because of this line of code perhaps use funtion like scinote
-                #pass a short float and power of ten.  can use in next line for better pct, too
-                
-                chance = (tabletotal)/int(totalval)
-            
-            try:
-                pct = round(float(totalval)*100/tabletotal,3)
-            except OverflowError:
-                pct = (totalval)*100/tabletotal
-            
-            #the if elses establish output str based on size of numbers
-            #either just display the num, or display it in scientific notation if too big
-            scinoteCutoff = 1000000
-            
-            if totalval>scinoteCutoff and 'e' not in str(totalval):
-                totalvalstring =scinote(totalval)
-            else:
-                totalvalstring = str(totalval)
-            
-            if tabletotal>scinoteCutoff and 'e' not in str(tabletotal):
-                tabletotalstring =scinote(tabletotal)
-            else:
-                tabletotalstring =str(tabletotal)
-            
-            if chance > scinoteCutoff and 'e' not in str(chance):
-                chancestring =scinote(int(chance))
-            else:
-                chancestring = str(chance)
-            
-            print
-            print lststring+' occurred '+totalvalstring+\
-            ' times out of a total of '+tabletotalstring+' possible combinations'
-            print 'if you roll '+str(dtable)+','
-            print 'the chance of '+lststring+' is 1 in '+chancestring+' or '\
-            +str(pct)+' percent'
-            print
-            return 0
+    return out
 
 
 
-def fancy_grapher(table,figure,style = 'bo'):
-    x_axis = []
-    y_axis =[]
-    the_table = table.getTable()
-    for el in the_table.keys():
-        x_axis.append(el)
-    x_axis.sort()
-    for el in x_axis:
-        y_axis.append(the_table[el])
-    pylab.figure(figure)
-    pylab.plot(x_axis,y_axis,style)
-    pylab.draw()
 
-#start the UI
 def table_setup():
     '''set up a table.  output init-ed table or "q"'''
     while True:
@@ -178,7 +90,7 @@ def _table_setup_R():
             if x<2:
                 raise ValueError
             print '        creating table'
-            return dicetable(x)
+            return DiceTable(x)
         except ValueError:
             print '\n        asshole'
             continue
