@@ -4,7 +4,7 @@ import pylab
 
 def menu_choices(user_input):
     if user_input == 'q':
-        return break
+        raise SystemExit
 
 
 def make_a_list():
@@ -163,7 +163,7 @@ def another_UI():
     while x != 'q':
         x = table_setup()
         if x == 'q':
-            break
+            raise SystemExit()
         
         while True:
             ans = add_what(x)

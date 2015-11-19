@@ -136,6 +136,45 @@ class DiceTable(object):
                 return round(float(new_numerator)/new_denominator,
                              sig_figs - power_diff)
 
+
+    def times(self, n1, n2):
+        if not self._int_so_no_overflow:
+            return n1*n2
+        else:
+            p1 = len(str(int(n1)))-1
+            p2 = len(str(int(n2)))-1
+            if p1<10:
+                f1 = 1
+                new1 = n1
+            else:
+                f1 = 10**(p1-10)
+                new1 = n1/f1
+            if p2<10:
+                f2 = 1
+                new2 = n2
+            else:
+                f2 = 10**(p2-10)
+                new2 = n2/f2
+            return int(new1*new2*10**15)*f1*f2/10**15
+            
+    def stddev2(self):    
+        avg = self.mean()
+        sqs = 0
+        count = 0
+        for roll, frequency in self._table.items():
+            sqs += self.times(frequency, (avg - roll)**2)
+            count += frequency
+        return round((sqs/count)**0.5, 4)
+    def stddev3(self):
+        avg = self.mean()
+        power = len(str(self.roll_frequency_highest()[1])) - 6
+        factor = 10**power
+        sqs = 0
+        count = 0
+        for roll, frequency in self._table.items():
+            sqs += self.divide(frequency,factor,10)* (avg - roll)**2
+            count += frequency
+        return round((factor*sqs/count)**0.5, 4)
     #TODO: remove the next two functions.  they are for testing
     def stddevtst(self):
         avg = self.mean()
@@ -149,4 +188,19 @@ class DiceTable(object):
         accurate = self.stddevtst()
         approx = self.stddev()
         return 100*(accurate - approx)/accurate
+        
+    def stddeverr2(self):
+        accurate = self.stddevtst()
+        approx = self.stddev2()
+        return 100*(accurate - approx)/accurate
+        
+    def stddeverr3(self):
+        accurate = self.stddevtst()
+        approx = self.stddev3()
+        return 100*(accurate - approx)/accurate
     #TODO ends.
+def showit(table):
+    print '3    2     none'
+    for count in range(100):
+        table.add_a_die()
+        print str(table.stddeverr3())+'  '+str(table.stddeverr2())+'  '+str(table.stddeverr())
