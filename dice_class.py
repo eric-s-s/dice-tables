@@ -88,17 +88,8 @@ class DiceTable(object):
         and wonder what the mean is?'''
         return self._totaldice*(1+self._dsize)/2.0
 
-    def stddev2(self):
-        '''Returns the standard deviation of the table.'''
-        avg = self.mean()
-        sqs = 0
-        count = 0
-        for roll, frequency in self._table.items():
-            sqs += frequency*self.int_or_float((avg - roll)**2)
-            count += frequency
-        return round((sqs/count)**0.5, 4)
-
     def stddev(self):
+        '''returns the standdard deviation of the table'''
         omfg_thisll_take_all_day = 10**750
         avg = self.mean()
         sig_figs = 4
@@ -117,8 +108,8 @@ class DiceTable(object):
                 sqs += (self.divide(frequency, factor, (sig_figs + extra_digits))
                         * (avg - roll)**2)
                 count += frequency
-            new_count = self.divide(count, factor, (sig_figs + extra_digits))    
-        return round((sqs/new_count)**0.5,sig_figs)
+            new_count = self.divide(count, factor, (sig_figs + extra_digits))
+        return round((sqs/new_count)**0.5, sig_figs)
 
     def int_or_float(self, variable):
         '''OverflowError control.  These tables deal with VERY large numbers.
@@ -156,10 +147,4 @@ class DiceTable(object):
                 new_denominator = int(denominator)/factor
                 return round(float(new_numerator)/new_denominator,
                              sig_figs - power_diff)
-
-
-
-        
-
-    #TODO ends.
 
