@@ -79,77 +79,69 @@ class WeightedDiceTable(DiceTable):
 class MultipleDiceTable(DiceTable):
     
     def __init__(self):
-        
-        self.table = {0:1}
-        self.dsize_table = {} 
-        
+        DiceTable.__init__(self, {})
+         
+    def total_combinations(self):
+        '''Returns the total possible number of combinations from a dice table.'''
+        answer = 1
+        for dsize, number_of_dice in self._dsize.items():
+            if dsize*number_of_dice != 0:
+                answer *= dsize**number_of_dice
+        return answer    
     
-    def getDsize(self):
-        return self.dsize_table
-    def getTotalDice(self):
-        '''returns how many dice were used to generate the values in your table'''
-        total_dice = 0
-        for dice_num in self.dsize_table.values():
-            total_dice += dice_num
-        return total_dice
-    def max(self):
-        '''returns the highest die roll in table'''
-        out = 0
-        for dsize in self.dsize_table.keys():
-            out += dsize*self.dsize_table[dsize]
-        return out
-    def min(self):
-        '''returns the lowest die roll in table'''
-        total_dice = 0
-        for dice_num in self.dsize_table.values():
-            total_dice += dice_num
-        return total_dice
-    def totalcombos(self):
-        '''returns the total possible number of combinations from a dice table'''
-        out = 1
-        for dsize in self.dsize_table.keys():
-            #if dsize !=0 and self.dsize_table[dsize] !=0:
-            out *= dsize**self.dsize_table[dsize]
-        return out
-    def highest_frequency(self):
-        '''returns die roll that has the number of rolls (arbitrarily picks one of two equal ones)'''
-        hf_index = 0
-        hf_value = 0        
-        for roll_value in self.table:
-            if self.table[roll_value]>hf_value:
-                hf_value = self.table[roll_value]
-                hf_index = roll_value
-        return hf_index
-            
+    def roll_range_top(self):
+        '''Returns the highest die roll in table.'''
+        answer = 0
+        for dsize, number_of_dice in self._dsize.items():
+            answer += dsize*number_of_dice
+        return answer
     
-    def addADie(self,dsize):
-        '''takes your dicetable object, and calculates all the new combinations
-        if you add a new die of the dsize of the object'''
-        #so for d3, this would take {0:1,1:2} and 
-        #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
-        self.dsize_table[dsize] = self.dsize_table.get(dsize,0) + 1
-        newdic = {}
-        for el in self.table:
-            currentval = self.table[el]
-            for x in range(dsize):
-                
-                newdic[el+x+1] = (newdic.get(el+x+1,0)+currentval)
-        self.table= newdic
-     
-    def __str__(self):
-        out = ''
-        for dsize in self.dsize_table:
-            out = out+str(self.dsize_table[dsize])+'D'+str(dsize)+'\n'
-        return out    
-      
-    def generator(self,num_dice,dsize):
-        for x in range (num_dice):
-            self.addADie(dsize)            
+    def roll_range(self):
+        '''Returns a tuple of the range_bottom and range_top.'''
+        return (self.roll_range_bottom(), self.roll_range_top())
     
     def mean(self):
-        '''i mean, don't you just sometimes look at a table of values
-        and wonder what the mean is?'''
-        mean = 0
-        for dsize in self.dsize_table:
-            mean += self.dsize_table[dsize]*(dsize+1)/2.0 
-        return mean
+        answer = 0
+        for dsize, number_of_dice in self._dsize.items():
+            answer += (dsize + 1)*number_of_dice/2.0
+        return answer
+          
+    def roll_frequency_highest(self):
+        '''Returns a tuple of (one of) the roll with the highest frequency,
+        and it's frequency'''
+        highest = (0,0)
+        for roll, frequency in self._table.items():
+            if frequency > highest[1]:
+                highest = (roll, frequency)
+        return highest 
+    
+    def add_a_die(self, dsize):
+        '''dsize is the kind of die you want to add.
+        Takes your dicetable object, and calculates all the new combinations
+        if you add a new die of the dsize of the object.'''
+        #so for d3, this would take {0:1,1:2} and
+        #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
+        if (not self._int_so_no_overflow and
+                self.total_combinations() > self.OVERFLOW_CUTOFF):
+            self._int_so_no_overflow = True
+        self._totaldice += 1
+        self._dsize[dsize] = self._dsize.get(dsize, 0)+1
+        newdic = {}
+        for roll, current_frequency in self._table.items():
+            for die_value in range(1, dsize+1):
+                newdic[roll+die_value] = \
+                (newdic.get(roll+die_value, 0)+current_frequency)
+        self._table = newdic
+    def add_many_dice(self, dsize, num_dice):
+        '''dsize and num_dice are ints.  
+        Add that num_dice dice of kind dsize.'''
+        for x in range(num_dice):
+            self.add_a_die(dsize)
+
+
+    def __str__(self):
+        answer = ''
+        for dsize, number in self._dsize.items():
+            answer = answer + str(number) + 'D' + str(dsize) + '\n'
+        return answer.rstrip()
+
