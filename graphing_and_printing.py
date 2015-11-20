@@ -163,3 +163,28 @@ def stats(table, rolls):
     print ('the chance of '+rolls_str+' is 1 in '+
            chance_str+' or '+str(pct)+' percent')
     print
+
+def stddevtst(table):
+        avg = table.mean()
+        sqs = 0
+        count = 0
+        for roll in table._table.keys():
+            sqs += table._table[roll]*(((avg - roll)**2))
+            count += table._table[roll]
+        return round((sqs/count)**0.5, 4)
+
+def stddeverr(table):
+        accurate = stddevtst(table)
+        approx = table.stddev()
+        return 100*(accurate - approx)/accurate
+        
+def stddeverr2(table):
+        accurate = stddevtst(table)
+        approx = table.stddev2()
+        return 100*(accurate - approx)/accurate        
+
+def showit2(table):
+    print 'none    2'
+    for count in range(100):
+        table.add_a_die()
+        print str(stddeverr(table))+'     '+str(stddeverr2(table))
