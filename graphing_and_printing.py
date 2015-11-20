@@ -131,12 +131,6 @@ def fancy_grapher(table, figure=1, style='bo'):
     pylab.plot(x_axis, y_axis, style)
     pylab.draw()
 
-#TODO: delete
-#for eval purposes
-def highest(table):
-    return scinote(table.roll_frequency_highest()[1])
-
-
 
 def stats(table, rolls):
     '''returns the stats from a DiceTable for the rolls in the list, 'rolls'.'''
@@ -163,3 +157,29 @@ def stats(table, rolls):
     print ('the chance of '+rolls_str+' is 1 in '+
            chance_str+' or '+str(pct)+' percent')
     print
+
+
+
+#TODO delete.  for eval.
+def stddevtst(table):
+    avg = table.mean()
+    sqs = 0
+    count = 0
+    for roll in table._table.keys():
+        sqs += table._table[roll]*(((avg - roll)**2))
+        count += table._table[roll]
+    return round((sqs/count)**0.5, 4)
+
+def stddeverr(table):
+    accurate = stddevtst(table)
+    approx = table.stddev()
+    return 100*(accurate - approx)/accurate
+
+def showit2(table):
+    for count in range(100):
+        table.add_a_die()
+        print str(stddeverr(table))
+def highest(table):
+    return scinote(table.roll_frequency_highest()[1])
+#TODO ends
+

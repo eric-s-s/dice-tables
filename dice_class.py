@@ -89,15 +89,27 @@ class DiceTable(object):
         return self._totaldice*(1+self._dsize)/2.0
 
     def stddev(self):
-        '''Returns the standard deviation of the table.'''
+        '''returns the standdard deviation of the table'''
+        omfg_thisll_take_all_day = 10**750
         avg = self.mean()
+        sig_figs = 4
+        extra_digits = 5
+        power = len(str(self.roll_frequency_highest()[1])) - 1
+        factor = 10**(power - (sig_figs + extra_digits))
         sqs = 0
         count = 0
-        for roll, frequency in self._table.items():
-            sqs += frequency*self.int_or_float((avg - roll)**2)
-            count += frequency
-        return round((sqs/count)**0.5, 4)
-
+        if self.total_combinations() > omfg_thisll_take_all_day:
+            for roll, frequency in self._table.items():
+                sqs += (frequency//factor) * (avg - roll)**2
+                count += frequency
+            new_count = count//factor
+        else:
+            for roll, frequency in self._table.items():
+                sqs += (self.divide(frequency, factor, (sig_figs + extra_digits))
+                        * (avg - roll)**2)
+                count += frequency
+            new_count = self.divide(count, factor, (sig_figs + extra_digits))
+        return round((sqs/new_count)**0.5, sig_figs)
 
     def int_or_float(self, variable):
         '''OverflowError control.  These tables deal with VERY large numbers.
@@ -136,17 +148,3 @@ class DiceTable(object):
                 return round(float(new_numerator)/new_denominator,
                              sig_figs - power_diff)
 
-    #TODO: remove the next two functions.  they are for testing
-    def stddevtst(self):
-        avg = self.mean()
-        sqs = 0
-        count = 0
-        for roll in self._table.keys():
-            sqs += self._table[roll]*(((avg - roll)**2))
-            count += self._table[roll]
-        return round((sqs/count)**0.5, 4)
-    def stddeverr(self):
-        accurate = self.stddevtst()
-        approx = self.stddev()
-        return 100*(accurate - approx)/accurate
-    #TODO ends.
