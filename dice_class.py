@@ -75,7 +75,7 @@ class DiceTable(object):
         self._table = newdic
     def add_many_dice(self, num_dice):
         '''num_dice is an int.  add that many dice.'''
-        for x in range(num_dice):
+        for _ in range(num_dice):
             self.add_a_die()
 
 

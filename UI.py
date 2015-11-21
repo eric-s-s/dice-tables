@@ -1,20 +1,85 @@
 from dice_class import DiceTable
+from other_dicetables import *
 from graphing_and_printing import *
 import pylab
 
-def menu_choices(user_input):
-    if user_input == 'q':
-        raise SystemExit
+saved_tables = {}
 
+def main_menu():
+    choices = ('Make a new table:'.ljust(30)+"enter 'new' or 'n'\n"+
+               'Open an existing table:'.ljust(30)+'enter \'open\' or \'o\'\n'+
+               'Delete an existing table:'.ljust(30)+'enter \'del\' or \'d\'\n'+
+               'Quit'.ljust(30)+'enter \'q\' or \'quit\'\n')
+    
+    print choices
+    ans = raw_input('>>>').lower()
+    if ans in ('new', 'n'): new_table(),
+    if ans in ('open', 'o'): open_table(),
+    if ans in ('del', 'd', 'delete', 'rm'): delete_table(),
+    if ans in ('q', 'quit'): quit()
+    else:
+        print 'huh?'
+        main_menu()
+    
+        
+def quit():
+    raise SystemExit('exiting program')            
+def new_table():
+    choices = (5*' '+"Make a regular dice table:".ljust(40)+
+               "enter 'r' or 'regular'\n"+
+               5*' '+"Make a weighted dice table:".ljust(40)+
+               "enter 'w' or 'weighted'\n"+
+               5*' '+"Make a multi-die dice table:".ljust(40)+
+               "enter 'm' or 'multi'\n"+
+               5*' '+"Back to main menu:".ljust(40)+
+               "enter 'b' or 'back'\n"+
+               5*' '+"Quit:".ljust(40)+"enter 'q' or 'quit'")
+    print choices
+    answer = raw_input('>>>').lower()
+    
+    if answer in ('q', 'quit'): quit()
+    if answer in ('b', 'back'): main_menu()
+    if answer in ('m', 'multi'): table_actions(MultipleDiceTable())
+    if answer in ('r', 'regular'): r_dice_table_init()
+    if answer in ('w', 'weighted'): w_dice_table_init()
+    else:
+        print 'incorrect input'
+        new_table()                
+
+def r_dice_table_init():
+    table_actions(DiceTable(int(raw_input('dsize '))))
+def w_dice_table_init():
+    print ('instead of entering a value for the dice, '+
+           'enter values for weights.\n'+
+           'for example, entering "1-5,0.5", would give you a 6 sided die with'+
+           'the following weights.\none has a weight of 1\ntwo has a weight '+
+    table_actions(WeightedDiceTable(make_a_list()))
+
+def table_actions(table):
+    menu_choices = {'Add dice': ('add', 'a'),
+                    'Save this table' : ('save', 's'),
+                    'Back to main menu' : ('back', 'b'), #save?
+                    'Quit' : ('q', 'quit'),  #save? 
+                    'Get stats' : ('g', 'get', 'stats'),
+                    'Make graphs' : ('m', 'graph')}
+    print table
+    ans = raw_input('quit? back? ')
+    if ans == 'q': quit()
+    if ans == 'b': main_menu()
+    table_actions(table)               
+ 
+                
+class SomethingError(Exception):
+    '''an error'''
 
 def make_a_list():
     '''take user input of a range of numbers
     and outputs a list of all those numbers'''
-    user_input = raw_input('enter number(s) you want stats of separated '+
+    user_input = raw_input('enter number(s) separated '+
                            'by commas \nor you can '+
                            'use a dash for a range of numbers: ')
-    if user_input == 'q' or user_input == '':
-        return None
+    if user_input == 'q' or user_input == 'quit':
+        raise SystemExit
     out = []
     try:
         for el in user_input.split(','):
