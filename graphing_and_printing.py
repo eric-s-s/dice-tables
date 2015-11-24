@@ -2,7 +2,7 @@
 main functions are - grapher(), truncate_grapher(), fancy_grapher()
 print_table() and stats()'''
 
-from dice_class import DiceTable
+
 import pylab
 
 #helper function. used everywhere to make numbers look purty.
@@ -47,14 +47,14 @@ def list_to_string(lst):
 
 #helper function. currently used in print_table(), grapher()
 #and truncate_grapher()
-def justify_right(roll, max_roll):
+def justify_right(value, max_value):
     '''takes a roll, and the largest roll from a DiceTable.
     outputs a string of the roll with enough added spaces so that
     "roll:" and "max_roll:" will be the same number of characters.'''
-    max_len = len(str(max_roll))
-    out_roll = str(roll)
-    spaces = (max_len - len(out_roll))*' '
-    return spaces + out_roll
+    max_len = len(str(max_value))
+    out_val = str(value)
+    spaces = (max_len - len(out_val))*' '
+    return spaces + out_val
 
 #helper function that's really only useful for grapher and truncate_grapher
 def graph_list(table):
@@ -62,8 +62,8 @@ def graph_list(table):
     it's a helper function for grapher and truncate_grapher'''
     output_list = []
 
-    max_frequency = table.roll_frequency_highest()[1]
-    max_roll = table.roll_range_top()
+    max_frequency = table.frequency_highest()[1]
+    max_value = table.values_max()
     max_graph_height = 80.0
 
     divisor = 1
@@ -73,27 +73,27 @@ def graph_list(table):
         divisor = max_frequency/table.int_or_float(max_graph_height)
         divstring = scinote(divisor)
 
-    for roll, frequency in table.roll_frequency_all():
+    for value, frequency in table.frequency_all():
         num_of_xs = int(round(frequency/divisor))
-        output_list.append((roll,
-                            justify_right(roll, max_roll) +':'+num_of_xs*'x'))
+        output_list.append((value,
+                            justify_right(value, max_value) +':'+num_of_xs*'x'))
 
     output_list.append((None, 'each x represents '+divstring+' occurences'))
     return output_list
 
 def print_table(table):
     '''input - DiceTable.  Prints all the rolls and their frequencies.'''
-    max_roll = table.roll_range_top()
-    for roll, frequency in table.roll_frequency_all():
-        print justify_right(roll, max_roll) +':'+scinote(frequency)
+    max_value = table.values_max()
+    for value, frequency in table.frequency_all():
+        print justify_right(value, max_value) +':'+scinote(frequency)
 
-def grapher(table):
+def grapher(table, label = None):
     '''input = DiceTable. output = a graph of x's'''
     for output in graph_list(table):
         print output[1]
-    print table
+    print label
 
-def truncate_grapher(table):
+def truncate_grapher(table, label = None):
     '''input = DiceTable. output = a graph of x's
     but doesn't print zero-x rolls'''
     excluded = []
@@ -104,7 +104,7 @@ def truncate_grapher(table):
             excluded.append(output[0])
     if excluded != []:
         print 'not included: '+list_to_string(excluded).replace(',', ' and')
-    print table
+    print label
 
 def fancy_grapher(table, figure=1, style='bo'):
     '''makes a pylab plot of a DiceTable.
@@ -114,47 +114,47 @@ def fancy_grapher(table, figure=1, style='bo'):
     factor = 1
 
     pylab.figure(figure)
-    pylab.ylabel('number of combinations')
+    pylab.ylabel('number of occurences')
     #A work-around for the limitations of pylab.
     #It can't handle really fucking big ints and can't use my workarounds
     if isinstance(table.int_or_float(1), int):
-        power = len(str(table.roll_frequency_highest()[1])) - 5
+        power = len(str(table.frequency_highest()[1])) - 5
         factor = 10**power
-        pylab.ylabel('number of combinations times 10^'+str(power))
+        pylab.ylabel('number of occurences times 10^'+str(power))
 
-    for roll, frequency in table.roll_frequency_all():
-        x_axis.append(roll)
+    for value, frequency in table.frequency_all():
+        x_axis.append(value)
         y_axis.append(frequency/factor)
 
-    pylab.xlabel('roll value')
+    pylab.xlabel('values')
     pylab.title('all the combinations for '+str(table))
     pylab.plot(x_axis, y_axis, style)
     pylab.draw()
 
 
-def stats(table, rolls):
+def stats(table, values):
     '''returns the stats from a DiceTable for the rolls in the list, 'rolls'.'''
-    all_combos = table.total_combinations()
-    total_frequency = 0
-    for roll in rolls:
-        total_frequency += table.roll_frequency(roll)[1]
+    all_combos = table.total_frequency()
+    lst_frequency = 0
+    for value in values:
+        lst_frequency += table.roll_frequency(value)[1]
 
-    if total_frequency == 0:
+    if lst_frequency == 0:
         print 'no results'
         return None
-    chance = table.divide(all_combos, total_frequency, 4)
-    pct = 100 * table.divide(total_frequency, all_combos, 3)
+    chance = table.divide(all_combos, lst_frequency, 4)
+    pct = 100 * table.divide(lst_frequency, all_combos, 3)
 
-    total_frequency_str = scinote(total_frequency)
+    lst_frequency_str = scinote(lst_frequency)
     chance_str = scinote(chance)
     all_combos_str = scinote(all_combos)
-    rolls_str = list_to_string(rolls)
+    values_str = list_to_string(values)
     print
-    print (rolls_str+' occurred '+total_frequency_str+
+    print (values_str+' occurred '+lst_frequency_str+
            ' times out of a total of '+all_combos_str+
            ' possible combinations')
-    print 'if you roll '+str(table)+','
-    print ('the chance of '+rolls_str+' is 1 in '+
+    #print 'if you roll '+str(table)+','
+    print ('the chance of '+values_str+' is 1 in '+
            chance_str+' or '+str(pct)+' percent')
     print
 

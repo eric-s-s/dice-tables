@@ -34,26 +34,26 @@ class BFNTable(object):
         return self.values_min(), self.values_max()    
         
     
-    def value_frequency(self, value):
+    def frequency(self, value):
         '''Returns a tuple of the value and it's frequency.'''
         return value, self._table.get(value, 0)
-    def value_frequency_range(self, start, stopbefore):
+    def frequency_range(self, start, stopbefore):
         '''Returns a list of tuples (value,frequency).
         Like regular range function, it stops before endvalue.'''
         tuple_list = []
         for value in range(start, stopbefore):
             #tuple_list.append((roll, self._table.get(roll)))
-            tuple_list.append(self.value_frequency(value))
+            tuple_list.append(self.frequency(value))
         return tuple_list
-    def value_frequency_all(self):
+    def frequency_all(self):
         '''Returns a list of tuples IN ORDER for all non-zero-frequency
         values in table.'''
         value_list = self.values()
         tuple_list = []
         for value in value_list:
-            tuple_list.append(self.value_frequency(value))
+            tuple_list.append(self.frequency(value))
         return tuple_list
-    def value_frequency_highest(self):
+    def frequency_highest(self):
         '''Returns a tuple of (one of) the value(s) with the highest frequency,
         and it's frequency'''
         hf_val, hf_freq = None, 0
@@ -97,8 +97,8 @@ class BFNTable(object):
         if overflow control is tripped, does the division accurately and
         returns either a large int, a float with the right number of sig figs,
         or 0.0 if answer would be less than 10**(-sig_figs)'''
-        power_n = len(str(int(numerator)))-1
-        power_d = len(str(int(denominator)))-1
+        power_n = len(str(abs(int(numerator))))-1
+        power_d = len(str(abs(int(denominator))))-1
         power_diff = power_n - power_d
 
         if not self.check_overflow():
@@ -120,7 +120,7 @@ class BFNTable(object):
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
-        numerator = sum([roll*freq for roll, freq in self._table.items()])
+        numerator = sum([value*freq for value, freq in self._table.items()])
         denominator = self.total_frequency()
         
         return self.divide(numerator, denominator)
@@ -131,7 +131,7 @@ class BFNTable(object):
         avg = self.mean()
         sig_figs = 4
         extra_digits = 5
-        power = len(str(self.value_frequency_highest()[1])) - 1
+        power = len(str(self.frequency_highest()[1])) - 1
         factor = 10**(power - (sig_figs + extra_digits))
         sqs = 0
         count = 0
@@ -150,37 +150,40 @@ class BFNTable(object):
         
        
 #FIX THESE TWO!!!!!!!!!!!!!!!!!
-    def add_a_tuple_list(self, lst):
-        '''Takes your dicetable object, and calculates all the new combinations
-        if you add a new die of the dsize of the object.'''
-        #so for d3, this would take {0:1,1:2} and
-        #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
+    def add_list(self, lst):
+        '''lst is ints. takes the table.  for each int in the list, makes new 
+        tables with each value changed to value+int. merges those new tables 
+        and updates the existing table to become the merge.'''
+        #for adding a die to a list of die values
+        #so for [1,2,3], this would take {0:1,1:2} and
+        #update to {1:1, 2:2} + {2:1, 3:2} + {3:1, 4:2} 
+        newdic = {}
+        for value, current_frequency in self._table.items():
+            for lst_val in lst:
+                newdic[value+lst_val] = \
+                (newdic.get(value+lst_val, 0)+current_frequency)
+        self._table = newdic
+    def add_list_reps(self, num_times, lst):
+        '''repeat the add_ function num_times times.'''
+        for _ in range(num_times):
+            self.add_list(lst)        
+    
+    def add_tuple_list(self, lst):
+        '''as add_list_to_values, but now pass a list of tuples of ints. 
+        [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
+        efficient if numbers repeat a lot in you list.'''
         newdic = {}
         for value, current_frequency in self._table.items():
             for lst_val, weight in lst:
                 newdic[value+lst_val] = \
                 (newdic.get(value+lst_val, 0)+weight*current_frequency)
         self._table = newdic
-    def add_many_tuple_lists(self, num_dice, die):
-        '''num_dice is an int.  add that many dice.'''
-        for _ in range(num_dice):
-            self.oladd_a_die(die)
+    def add_tuple_lists_reps(self, num_times, lst):
+        '''num_times is an int.  repeat add_tuple_list that many times.'''
+        for _ in range(num_times):
+            self.oladd_a_die(lst)
     
-    def add_a_list(self, die):
-        '''Takes your dicetable object, and calculates all the new combinations
-        if you add a new die of the dsize of the object.'''
-        #so for d3, this would take {0:1,1:2} and
-        #update to {1:1,2:1,3:1}+{2:2,3:2,4:2}
-        newdic = {}
-        for value, current_frequency in self._table.items():
-            for die_value in die:
-                newdic[value+die_value] = \
-                (newdic.get(value+die_value, 0)+current_frequency)
-        self._table = newdic
-    def add_list_many(self, num_dice, die):
-        '''num_dice is an int.  add that many dice.'''
-        for _ in range(num_dice):
-            self.dadd_a_die(die)                                                                                                                          
+                                                                                                                        
 def stddevtst(table, mean):
     sqs = 0
     total_freq = 0
