@@ -13,7 +13,7 @@ class BasicDiceTable(object):
         if attr in self.LongIntTable_imports:
             return getattr(self._table, attr)
     def __str__(self):
-        return 'wubba'
+        return str(self.min_roll())+'D'+str(self._dsize)
     def add_a_die(self):
         self._table.add_a_die(range(1,self._dsize+1))
     def add_dice(self, num_dice):

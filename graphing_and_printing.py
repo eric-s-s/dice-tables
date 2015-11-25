@@ -5,10 +5,7 @@ print_table() and stats()'''
 
 import pylab
 
-#general helper
-def print_yn(string):
-    '''print if not None'''
-    if string != None: print string
+
 #helper function. used everywhere to make numbers look purty.
 def scinote(num):
     '''checks a positive int or float.  outputs a string of the number.
@@ -85,20 +82,20 @@ def graph_list(table):
     output_list.append((None, 'each x represents '+divstring+' occurences'))
     return output_list
 
-def print_table(table, label = None):
+def print_table(table):
     '''input - DiceTable.  Prints all the rolls and their frequencies.'''
     max_value = table.values_max()
     for value, frequency in table.frequency_all():
         print justify_right(value, max_value) +':'+scinote(frequency)
-    print_yn(label)
+    print table
     
-def grapher(table, label = None):
+def grapher(table):
     '''input = DiceTable. output = a graph of x's'''
     for output in graph_list(table):
         print output[1]
-    print_yn(label)
+    print table
 
-def truncate_grapher(table, label = None):
+def truncate_grapher(table):
     '''input = DiceTable. output = a graph of x's
     but doesn't print zero-x rolls'''
     excluded = []
@@ -109,7 +106,7 @@ def truncate_grapher(table, label = None):
             excluded.append(output[0])
     if excluded != []:
         print 'not included: '+list_to_string(excluded).replace(',', ' and')
-    print_yn(label)
+    print table
 
 def fancy_grapher(table, figure=1, style='bo'):
     '''makes a pylab plot of a DiceTable.
@@ -137,7 +134,7 @@ def fancy_grapher(table, figure=1, style='bo'):
     pylab.draw()
 
 
-def stats(table, values, label = None):
+def stats(table, values):
     '''returns the stats from a DiceTable for the rolls in the list, 'rolls'.'''
     all_combos = table.total_frequency()
     lst_frequency = 0
@@ -159,7 +156,7 @@ def stats(table, values, label = None):
            ' times out of a total of '+all_combos_str+
            ' possible combinations')
     
-    print_yn('for '+label+',')
+    print 'for '+str(table)+','
     print ('the chance of '+values_str+' is 1 in '+
            chance_str+' or '+str(pct)+' percent')
     print
@@ -171,9 +168,9 @@ def stddevtst(table):
     avg = table.mean()
     sqs = 0
     count = 0
-    for roll in table._table.keys():
-        sqs += table._table[roll]*(((avg - roll)**2))
-        count += table._table[roll]
+    for roll, freq in table.frequency_all():
+        sqs += freq*(((avg - roll)**2))
+        count += freq
     return round((sqs/count)**0.5, 4)
 
 def stddeverr(table):
@@ -186,6 +183,6 @@ def showit2(table):
         table.add_a_die()
         print str(stddeverr(table))
 def highest(table):
-    return scinote(table.roll_frequency_highest()[1])
+    return scinote(table.frequency_highest()[1])
 #TODO ends
 
