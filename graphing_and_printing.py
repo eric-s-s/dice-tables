@@ -5,6 +5,10 @@ print_table() and stats()'''
 
 import pylab
 
+#general helper
+def print_yn(string):
+    '''print if not None'''
+    if string != None: print string
 #helper function. used everywhere to make numbers look purty.
 def scinote(num):
     '''checks a positive int or float.  outputs a string of the number.
@@ -81,17 +85,18 @@ def graph_list(table):
     output_list.append((None, 'each x represents '+divstring+' occurences'))
     return output_list
 
-def print_table(table):
+def print_table(table, label = None):
     '''input - DiceTable.  Prints all the rolls and their frequencies.'''
     max_value = table.values_max()
     for value, frequency in table.frequency_all():
         print justify_right(value, max_value) +':'+scinote(frequency)
-
+    print_yn(label)
+    
 def grapher(table, label = None):
     '''input = DiceTable. output = a graph of x's'''
     for output in graph_list(table):
         print output[1]
-    print label
+    print_yn(label)
 
 def truncate_grapher(table, label = None):
     '''input = DiceTable. output = a graph of x's
@@ -104,7 +109,7 @@ def truncate_grapher(table, label = None):
             excluded.append(output[0])
     if excluded != []:
         print 'not included: '+list_to_string(excluded).replace(',', ' and')
-    print label
+    print_yn(label)
 
 def fancy_grapher(table, figure=1, style='bo'):
     '''makes a pylab plot of a DiceTable.
@@ -117,7 +122,7 @@ def fancy_grapher(table, figure=1, style='bo'):
     pylab.ylabel('number of occurences')
     #A work-around for the limitations of pylab.
     #It can't handle really fucking big ints and can't use my workarounds
-    if isinstance(table.int_or_float(1), int):
+    if table.check_overflow():
         power = len(str(table.frequency_highest()[1])) - 5
         factor = 10**power
         pylab.ylabel('number of occurences times 10^'+str(power))
@@ -132,7 +137,7 @@ def fancy_grapher(table, figure=1, style='bo'):
     pylab.draw()
 
 
-def stats(table, values):
+def stats(table, values, label = None):
     '''returns the stats from a DiceTable for the rolls in the list, 'rolls'.'''
     all_combos = table.total_frequency()
     lst_frequency = 0
@@ -153,7 +158,8 @@ def stats(table, values):
     print (values_str+' occurred '+lst_frequency_str+
            ' times out of a total of '+all_combos_str+
            ' possible combinations')
-    #print 'if you roll '+str(table)+','
+    
+    print_yn('for '+label+',')
     print ('the chance of '+values_str+' is 1 in '+
            chance_str+' or '+str(pct)+' percent')
     print
