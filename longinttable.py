@@ -1,3 +1,5 @@
+import time
+
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurences of all unassigned intergers.'''
@@ -149,6 +151,54 @@ class LongIntTable(object):
         
        
 #functions
+    def add(self, times, values):
+        '''times is (pos int) how many times to add the values to the table.
+        values contains only ints.  it can be
+        1 - lst of ints, 2 - list of tuples of [(val, freq), ...] 
+        3 - dict{val:freq, ...}, 4 - LongIntTable'''
+        start = time.clock()
+        #first convert any input to the same kind
+        if isinstance(values, LongIntTable):
+            to_add = values.frequency_all()
+        elif isinstance(values, list) and isinstance(values[0], int):
+            make_dic = {}
+            for number in values:
+                make_dic[number] = make_dic.get(number, 0)+1
+            to_add = [(val,freq) for val, freq in make_dic.items()]
+        elif isinstance(values, dict):
+            to_add = [(val, freq) for val, freq in values.items()]
+        else:
+            to_add = values
+        to_add.sort()
+        #now see which method will be faster
+        def _fastest(tuple_list):
+            difference = 0
+            cut_off = 3
+            for pair in tuple_list:
+                frequency = pair[1]
+                if frequency != 0:
+                    difference += abs(frequency) - 1
+            if difference > cut_off:
+                return tuple_list
+            else:
+                new_list = []
+                for val, freq in tuple_list:
+                    for _ in range(freq):
+                        new_list.append(val)
+                return new_list
+        
+        the_list =  _fastest(to_add)
+        print 'lst time', time.clock()-start
+        #if a list of ints is faster, will do that
+        if isinstance(the_list[0], int):
+            for _ in range(times):
+                self.add_a_list(the_list)
+        #otherwise adds
+        else:
+             for _ in range(times):
+                self.add_tuple_list(the_list)   
+        print time.clock()-start          
+                
     def merge(self, other):
         '''other can be LongIntTable, dictionary of ints {value:freq} or list
         of int tuples [(value, freq)].  adds all those value, freq to self'''
@@ -180,40 +230,44 @@ class LongIntTable(object):
 
 
 
-    def add_a_die(self, lst):
+    def add_a_list(self, lst):
         '''lst is ints. takes the table.  for each int in the list, makes new 
         tables with each value changed to value+int. merges those new tables 
         and updates the existing table to become the merge.'''
         #for adding a die to a list of die values
         #so for [1,2,3], this would take {0:1,1:2} and
         #update to {1:1, 2:2} + {2:1, 3:2} + {3:1, 4:2} 
+
         newdic = {}
+        
         for value, current_frequency in self._table.items():
-            for roll in lst:
-                newdic[value+roll] = \
-                (newdic.get(value+roll, 0)+current_frequency)
+            for val in lst:
+                newdic[value+val] = \
+                (newdic.get(value+val, 0)+current_frequency)
         self._table = newdic
     def add_dice(self, num_times, lst):
         '''repeat the add_ function num_times times.'''
+        start_time = time.clock()
         for _ in range(num_times):
-            self.add_a_die(lst)        
-    
-    def add_weighted_die(self, lst):
+            self.add_a_list(lst)        
+        print 'basic\n', time.clock()-start_time
+    def add_tuple_list(self, lst):
         '''as add_list_to_values, but now pass a list of tuples of ints. 
         [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
         efficient if numbers repeat a lot in you list.'''
         newdic = {}
         for value, current_frequency in self._table.items():
-            for roll, weight in lst:
-                newdic[value+roll] = \
-                (newdic.get(value+roll, 0)+weight*current_frequency)
+            for val, freq in lst:
+                newdic[value+val] = \
+                (newdic.get(value+val, 0)+freq*current_frequency)
         self._table = newdic
     def add_weighted_dice(self, num_times, lst):
         '''num_times is an int.  repeat add_tuple_list that many times.'''
+        start_time = time.clock()
         for _ in range(num_times):
-            self.add_weighted_die(lst)
-    
-                                                                                                                        
+            self.add_tuple_list(lst)
+        print 'weight\n', time.clock()-start_time
+                                                                                                                     
 def stddevtst(table, mean):
     sqs = 0
     total_freq = 0
@@ -221,4 +275,40 @@ def stddevtst(table, mean):
         sqs += (mean - val)**2*freq
         total_freq += freq
     return (sqs/total_freq)**0.5
-                 
+def timetrial(bdie, num_adds):
+    bdie.sort()
+    tdie = {}
+    for el in bdie:
+        tdie[el] = 1+tdie.get(el, 0)
+    wdie = []
+    for die, weight in tdie.items():
+        wdie.append((die, weight))
+    wdie.sort()
+    print 'b', bdie, '\nw', wdie, '\nt', tdie
+    
+    a = LongIntTable({0:1})
+    a.add_dice(num_adds, bdie)
+    print a.mean(), a.stddev(), '\n'
+    b = LongIntTable({0:1})
+    b.add_weighted_dice(num_adds, wdie)
+    print a.mean(), a.stddev(), '\n'
+    print 'dictionary'
+    c = LongIntTable({0:1})
+    c.add(num_adds, tdie)
+    print a.mean(), a.stddev()
+    print
+    print 'LIT'
+    d = LongIntTable({0:1})
+    d.add(num_adds, LongIntTable(tdie))
+    print a.mean(), a.stddev()    
+    print
+    print 'tuple_list'
+    e = LongIntTable({0:1})
+    e.add(num_adds, wdie)
+    print a.mean(), a.stddev()
+    print
+    print 'reg list'
+    f = LongIntTable({0:1})
+    f.add(num_adds, bdie)
+    print a.mean(), a.stddev()   
+    return a,b,c,d,e,f              

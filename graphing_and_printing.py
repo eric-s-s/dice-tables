@@ -105,7 +105,7 @@ def truncate_grapher(table):
         else:
             excluded.append(output[0])
     if excluded != []:
-        print 'not included: '+list_to_string(excluded).replace(',', ' and')
+        print 'not included:', list_to_string(excluded).replace(',', ' and')
     print table
 
 def fancy_grapher(table, figure=1, style='bo'):
@@ -139,7 +139,7 @@ def stats(table, values):
     all_combos = table.total_frequency()
     lst_frequency = 0
     for value in values:
-        lst_frequency += table.roll_frequency(value)[1]
+        lst_frequency += table.frequency(value)[1]
 
     if lst_frequency == 0:
         print 'no results'
@@ -160,7 +160,7 @@ def stats(table, values):
     print ('the chance of '+values_str+' is 1 in '+
            chance_str+' or '+str(pct)+' percent')
     print
-
+    return a
 
 
 #TODO delete.  for eval.
