@@ -152,10 +152,15 @@ class LongIntTable(object):
        
 #functions
     def add(self, times, values):
-        '''times is (pos int) how many times to add the values to the table.
+        '''this updates your table to be the frequency of it's orignal values
+        plus the new list of values and frequencies
+        times is (pos int) how many times to add the values to the table.
         values contains only ints.  it can be
         1 - lst of ints, 2 - list of tuples of [(val, freq), ...] 
-        3 - dict{val:freq, ...}, 4 - LongIntTable'''
+        3 - dict{val:freq, ...}, 4 - LongIntTable
+        here's how it works - original list event A is 3 out of 5.
+        event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
+        A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
         start = time.clock()
         #first convert any input to the same kind
         if isinstance(values, LongIntTable):
@@ -188,12 +193,12 @@ class LongIntTable(object):
                 return new_list
         
         the_list =  _fastest(to_add)
-        print 'lst time', time.clock()-start
+        print the_list
         #if a list of ints is faster, will do that
         if isinstance(the_list[0], int):
             for _ in range(times):
                 self.add_a_list(the_list)
-        #otherwise adds
+        #otherwise adds by tuple
         else:
              for _ in range(times):
                 self.add_tuple_list(the_list)   
