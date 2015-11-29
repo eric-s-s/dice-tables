@@ -1,4 +1,4 @@
-'''printing and graphing functions for use with DiceTable class.
+'''printing and graphing functions for use with LongIntTable class.
 main functions are - grapher(), truncate_grapher(), fancy_grapher()
 print_table() and stats()'''
 
@@ -49,7 +49,7 @@ def list_to_string(lst):
 #helper function. currently used in print_table(), grapher()
 #and truncate_grapher()
 def justify_right(value, max_value):
-    '''takes a roll, and the largest roll from a DiceTable.
+    '''takes a value, and the largest value from a LongIntTable.
     outputs a string of the roll with enough added spaces so that
     "roll:" and "max_roll:" will be the same number of characters.'''
     max_len = len(str(max_value))
@@ -59,7 +59,8 @@ def justify_right(value, max_value):
 
 #helper function that's really only useful for grapher and truncate_grapher
 def graph_list(table):
-    '''makes a list of tuples.  (roll-int, grapher output for roll-str).
+    '''table is a LongIntTable. makes a list of tuples which
+    [(value, x's representing value), ...]
     it's a helper function for grapher and truncate_grapher'''
     output_list = []
 
@@ -83,20 +84,20 @@ def graph_list(table):
     return output_list
 
 def print_table(table):
-    '''input - DiceTable.  Prints all the rolls and their frequencies.'''
+    '''table is a LongIntTable. Prints all the values and their frequencies.'''
     max_value = table.values_max()
     for value, frequency in table.frequency_all():
         print justify_right(value, max_value) +':'+scinote(frequency)
     print table
     
 def grapher(table):
-    '''input = DiceTable. output = a graph of x's'''
+    '''table is a LongIntTable. prints a graph of x's.'''
     for output in graph_list(table):
         print output[1]
     print table
 
 def truncate_grapher(table):
-    '''input = DiceTable. output = a graph of x's
+    '''table is a LongIntTable. prints a graph of x's,
     but doesn't print zero-x rolls'''
     excluded = []
     for output in graph_list(table):
@@ -109,7 +110,7 @@ def truncate_grapher(table):
     print table
 
 def fancy_grapher(table, figure=1, style='bo'):
-    '''makes a pylab plot of a DiceTable.
+    '''table is a LongIntTable. makes a pylab plot of a table.
     You can set other figures and styles'''
     x_axis = []
     y_axis = []
@@ -135,7 +136,8 @@ def fancy_grapher(table, figure=1, style='bo'):
 
 
 def stats(table, values):
-    '''returns the stats from a DiceTable for the rolls in the list, 'rolls'.'''
+    '''table is a LongIntTable. values is a list. prints stats information
+    for the values in the list.'''
     all_combos = table.total_frequency()
     lst_frequency = 0
     for value in values:
@@ -152,15 +154,13 @@ def stats(table, values):
     all_combos_str = scinote(all_combos)
     values_str = list_to_string(values)
     print
-    print (values_str+' occurred '+lst_frequency_str+
-           ' times out of a total of '+all_combos_str+
-           ' possible combinations')
+    print ('%s occurred %s times out of a total of %s possible combinations' % 
+            (values_str, lst_frequency_str, all_combos_str))
     
-    print 'for '+str(table)+','
-    print ('the chance of '+values_str+' is 1 in '+
-           chance_str+' or '+str(pct)+' percent')
+    print 'for %s,' % (table)
+    print ('the chance of %s is 1 in %s or %s percent' % 
+            (values_str, chance_str, pct))
     print
-    return a
 
 
 #TODO delete.  for eval.
@@ -178,9 +178,10 @@ def stddeverr(table):
     approx = table.stddev()
     return 100*(accurate - approx)/accurate
 
+from dice_classes import add_dice
 def showit2(table):
     for count in range(100):
-        table.add_a_die()
+        add_dice(table)
         print str(stddeverr(table))
 def highest(table):
     return scinote(table.frequency_highest()[1])

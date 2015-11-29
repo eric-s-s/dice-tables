@@ -3,38 +3,44 @@ from longinttable import LongIntTable
 
 class DiceInfo(object):
     '''dice info is an object that stores and returns info on a set of dice.
-    it has the number, kind, weight info for a weighted die'''
+    it has the number, kind, weight info for a weighted die. negative rolls
+    should work, but will yield incorrect info.'''
     def __init__(self, num, size):
         '''num is a positive int. size can be an int, as in, six makes a D6.
         for a weighted die, input a list of values, or a dictionary or a list
         of tuples.  [1,1,1,2,3], {1:3, 2:1, 3:1} and [(1,3), (2,1), (3,1)] all
         create a D3 that rolls a one 3 times more than a two or a three.'''
-        if isinstance(size, int):
-            self._dic = dict((val, 1) for val in range(1,size+1))
-            self._size = size
-            self._num = num
-        else:
-            self._dic = self._make_dic(size)
-            temp_size = self._dic.keys()
-            temp_size.sort()
-            self._size = temp_size[-1]
-            self._num = num
-        weight = sum(self._dic.values()) 
-        if len(self._dic.keys()) == weight:
-            self._weight = None
-        else:
-            self._weight = weight 
-            
+        self._dic = self._make_dic(size)
+        temp_size = self._dic.keys()
+        temp_size.sort()
+        self._size = temp_size[-1]
+        self._num = num
+        if self._no_weight(self._dic): self._weight = None
+        else: self._weight = sum(self._dic.values())
+    
+    #helper for init function
+    def _no_weight(self, dictionary):
+        '''checks to see if the dict has no weight (it's in order and it's 
+        values are all one. assumes positive dice values only.'''
+        if len(dictionary.keys()) != max(dictionary.keys()):            
+            return False
+        for freq in dictionary.values():
+            if freq != 1:
+                return False
+        return True 
+    #helper for init function        
     def _make_dic(self, lst):
         '''turns any appropriate die representation into a dictionary'''
+        if isinstance(lst, int):
+            return dict((val, 1) for val in range(1,lst+1))
         if isinstance(lst, dict):
             return lst
-        if isinstance(lst[0], int):
+        if isinstance(lst, list) and isinstance(lst[0], int):
             out = {}
             for val in lst:
                 out[val] = out.get(val, 0) + 1
             return out
-        else:
+        if isinstance(lst, list) and isinstance(lst[0], tuple):
             return dict((val, freq) for val, freq in lst)
     def get_num(self):
         '''returns the number of dice recorded'''
@@ -61,6 +67,7 @@ class DiceInfo(object):
         '''increases the number of dice recorded'''
         self._num += num
     def __lt__(self, other):
+        '''dice info's are compared by size of dice, not number of dice'''
         if self.get_size() != other.get_size():
             if self.get_size() < other.get_size():
                 return True
@@ -72,6 +79,7 @@ class DiceInfo(object):
             else:
                 return False
     def __eq__(self, other):
+        '''two DiceInfo are equal if their dictionary of values are a match'''
         if self.get_dic() == other.get_dic():
             return True
         else:
@@ -88,13 +96,13 @@ class DiceTable(LongIntTable):
     added to it.'''
     def __init__(self, dic = {0:1}, dice_list = []):
         LongIntTable.__init__(self, dic)
-        self._dice_list = dice_list
+        self._dice_list = dice_list[:]
         self._dice_list.sort()
         self._last_die = None
         
     def update_list(self, new_dice_info):
         '''adds new dice info to the list. if the new dice is the same as an
-        old one, just adds the number instead. makes this die's dict. the 
+        old one, just adds the number instead. makes this die's dict the 
         last die added.'''
         done = False
         for dice_info in self._dice_list:

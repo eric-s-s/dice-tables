@@ -1,5 +1,5 @@
-from dice_class import DiceTable
-from other_dicetables import *
+from longinttable import *
+from dice_classes import *
 from graphing_and_printing import *
 import pylab
 
@@ -12,7 +12,7 @@ def main_menu():
                'Quit'.ljust(30)+'enter \'q\' or \'quit\'\n')
     
     print choices
-    ans = raw_input('>>>').lower()
+    ans = raw_input('>>> ').lower()
     if ans in ('new', 'n'): new_table(),
     if ans in ('open', 'o'): open_table(),
     if ans in ('del', 'd', 'delete', 'rm'): delete_table(),
@@ -20,55 +20,74 @@ def main_menu():
     else:
         print 'huh?'
         main_menu()
+def open_table():
+    raise NotImplementedError
+    table_actions(table)    
     
+def delete_table():
+    raise NotImplementedError
+    main_menu()
         
 def quit():
     raise SystemExit('exiting program')            
 def new_table():
-    choices = (5*' '+"Make a regular dice table:".ljust(40)+
-               "enter 'r' or 'regular'\n"+
-               5*' '+"Make a weighted dice table:".ljust(40)+
-               "enter 'w' or 'weighted'\n"+
-               5*' '+"Make a multi-die dice table:".ljust(40)+
-               "enter 'm' or 'multi'\n"+
-               5*' '+"Back to main menu:".ljust(40)+
-               "enter 'b' or 'back'\n"+
-               5*' '+"Quit:".ljust(40)+"enter 'q' or 'quit'")
-    print choices
-    answer = raw_input('>>>').lower()
-    
-    if answer in ('q', 'quit'): quit()
-    if answer in ('b', 'back'): main_menu()
-    if answer in ('m', 'multi'): table_actions(MultipleDiceTable())
-    if answer in ('r', 'regular'): r_dice_table_init()
-    if answer in ('w', 'weighted'): w_dice_table_init()
-    else:
-        print 'incorrect input'
-        new_table()                
+    new_table = DiceTable()
+    print 'Making a new table.'
+    table_actions(new_table)                
 
-def r_dice_table_init():
-    table_actions(DiceTable(int(raw_input('dsize '))))
-def w_dice_table_init():
-    print ('instead of entering a value for the dice, '+
-           'enter values for weights.\n'+
-           'for example, entering "1-5,0.5", would give you a 6 sided die with'+
-           'the following weights.\none has a weight of 1\ntwo has a weight '+
-    table_actions(WeightedDiceTable(make_a_list()))
+
 
 def table_actions(table):
-    menu_choices = {'Add dice': ('add', 'a'),
-                    'Save this table' : ('save', 's'),
-                    'Back to main menu' : ('back', 'b'), #save?
-                    'Quit' : ('q', 'quit'),  #save? 
-                    'Get stats' : ('g', 'get', 'stats'),
-                    'Make graphs' : ('m', 'graph')}
+    menu_choices = {'add dice': ('add', 'a'),
+                    'save this table' : ('save', 's'),
+                    'get stats' : ('get', 'g'),
+                    'make graphs' : ('make', 'm'),
+                    'back to main menu' : ('back', 'b'), 
+                    'quit' : ('quit', 'q'),   
+                    }
     print table
-    ans = raw_input('quit? back? ')
-    if ans == 'q': quit()
-    if ans == 'b': main_menu()
-    table_actions(table)               
- 
-                
+    for choice, kw in menu_choices.items():
+        print 'To %s, type "%s" or "%s"' % (choice, kw[0], kw[1])
+    ans = raw_input('>>> ')
+    if ans in ('q', 'quit'): check_save('quit', table)
+    elif ans in ('back', 'b'): check_save('main', table)
+    elif ans in ('g', 'get'): get_stats(table)
+    elif ans in ('m', 'make'): graphing(table)
+    elif ans in ('add', 'a'): adder(table)
+    elif ans in ('save', 's'): save_menu('action', table)
+    else: 
+        print 'whu?'
+        table_actions(table)               
+def save_menu(menu_choice, table):
+    raise NotImplementedError
+def get_stats(table):
+    raise NotImplementedError
+    table_actions(table)
+def graphing(table):
+    raise NotImplementedError
+    table_actions(table) 
+def adder(table):
+    raise NotImplementedError
+    table_actions(table)
+def check_save(string, table):
+    if string == 'quit':
+        choice = raw_input('save before quitting? (y/n)\n>>> ')
+        if choice == 'n':
+            quit()
+        elif choice == 'y':
+            save_menu(string, table)
+        else:
+            'wuuuut?'
+            check_save(string, table) 
+    if string == 'main':
+        choice = raw_input('save before going to main menu? (y/n)\n>>> ')
+        if choice == 'n':
+            main_menu()
+        elif choice == 'y':
+            save_menu(string, table)
+        else:
+            'wuuuut?'
+            check_save(string, table)              
 class SomethingError(Exception):
     '''an error'''
 
@@ -105,73 +124,6 @@ def make_a_list():
     return out
 
 
-
-
-def table_setup():
-    '''set up a table.  output init-ed table or "q"'''
-    while True:
-        print "what kind of dicetable would you like to work with?"
-        usr_input = raw_input("'q' quits\ntype 'r' for a regular table, 'm' for multi-value table, 'w' for weighted table: ")
-        if usr_input == 'r':
-            out = _table_setup_R()
-            if out == 'b':
-                print '\n            up one menu'
-                continue
-            else:
-                return out
-           
-        if usr_input == 'm':
-            out = _table_setup_M()
-            if out == 'b':
-                print '\n            up one menu'
-                continue
-            else:
-                return out
-        
-        if usr_input == 'w':
-            out = _table_setup_W()
-            if out == 'b':
-                print '\n            up one menu'
-                continue
-            else:
-                return out
-                
-        if usr_input == 'q':
-            return 'q'
-        else:
-            print
-            print
-            print 'nice try dickhead'
-            print                
-
-def _table_setup_R():
-    '''regular table'''
-    while True:
-        set_up_val = raw_input('    regular dicetable. \n    \'b\' for back or input a positive int >1 for dice value: ')
-        if set_up_val == 'b':
-            return 'b'
-        try:
-            x =int(set_up_val)
-            if x<2:
-                raise ValueError
-            print '        creating table'
-            return DiceTable(x)
-        except ValueError:
-            print '\n        asshole'
-            continue
-        #end REGULAR table
-
-
-def _table_setup_M():
-    '''multiple table'''
-    print 'creating empty dicetable'
-    return MultipleDiceTable()
-    #end MULTIPLE table
-
-def _table_setup_W():
-    '''weighted table'''
-    raise NotImplementedError
-    #end WEIGHTED table
 
 
 

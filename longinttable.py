@@ -1,5 +1,4 @@
-import time
-
+''' this module contains only the class LongIntTable'''
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurences of all unassigned intergers.'''
@@ -23,16 +22,19 @@ class LongIntTable(object):
         the_values.sort()
         return the_values                
     def values_min(self):
+        '''returns the min value'''
         if self.values() == []:
             return None
         else:
             return self.values()[0]
     def values_max(self):
+        '''returns the max value'''
         if self.values() == []:
             return None
         else:
             return self.values()[-1]
     def values_range(self):
+        '''returns a tuple of min and max values'''
         return self.values_min(), self.values_max()    
         
     
@@ -66,15 +68,13 @@ class LongIntTable(object):
     def total_frequency(self):
         '''returns the sum all the freuencies in a table'''        
         all_freq = self._table.values()
-        return sum(all_freq)
-        
-    
+        return sum(all_freq)  
             
     def __str__(self):
         return ('table from '+str(self.values_min())+
                  ' to '+str(self.values_max()))
 
-
+    #the next three functions deal with overflow
     def check_overflow(self):
         '''if table is too big, and overflow control is false, set to true'''
         if (not self._overflow_control and
@@ -93,7 +93,7 @@ class LongIntTable(object):
             return float(variable)
 
     def divide(self, numerator, denominator, sig_figs=5):
-        '''numerator and denominator >=1.
+        '''numerator and denominator >=1 or <= -1.
         a special divide function for the large numbers in these tables.
         if overflow control is tripped, does the division accurately and
         returns either a large int, a float with the right number of sig figs,
@@ -101,12 +101,11 @@ class LongIntTable(object):
         power_n = len(str(abs(int(numerator))))-1
         power_d = len(str(abs(int(denominator))))-1
         power_diff = power_n - power_d
-
         if not self.check_overflow():
             return round(float(numerator)/denominator, sig_figs - power_diff)
         else:
             if power_diff > sig_figs:
-                return int(numerator)/int(denominator)
+                return (int(numerator)/int(denominator))
             elif -1*power_diff > sig_figs:
                 return 0.0
             else:
@@ -117,7 +116,7 @@ class LongIntTable(object):
                 new_numerator = int(numerator)/factor
                 new_denominator = int(denominator)/factor
                 return round(float(new_numerator)/new_denominator,
-                             sig_figs - power_diff)
+                                     sig_figs - power_diff)
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
@@ -127,7 +126,8 @@ class LongIntTable(object):
         return self.divide(numerator, denominator)
 
     def stddev(self):
-        '''returns the standdard deviation of the table'''
+        '''returns the standdard deviation of the table, with special measures 
+        to deal with long ints.'''
         omfg_thisll_take_all_day = 10**750
         avg = self.mean()
         sig_figs = 4
@@ -142,9 +142,9 @@ class LongIntTable(object):
                 count += frequency
             new_count = count//factor
         else:
-            for roll, frequency in self._table.items():
+            for value, frequency in self._table.items():
                 sqs += (self.divide(frequency, factor, (sig_figs + extra_digits))
-                        * (avg - roll)**2)
+                        * (avg - value)**2)
                 count += frequency
             new_count = self.divide(count, factor, (sig_figs + extra_digits))
         return round((sqs/new_count)**0.5, sig_figs)
@@ -161,7 +161,6 @@ class LongIntTable(object):
         here's how it works - original list event A is 3 out of 5.
         event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
         A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
-        start = time.clock()
         #first convert any input to the same kind
         if isinstance(values, LongIntTable):
             to_add = values.frequency_all()
@@ -173,9 +172,9 @@ class LongIntTable(object):
         elif isinstance(values, dict):
             to_add = [(val, freq) for val, freq in values.items()]
         else:
-            to_add = values
+            to_add = values[:]
         to_add.sort()
-        #now see which method will be faster
+        #now return which method will be faster
         def _fastest(tuple_list):
             difference = 0
             cut_off = 3
@@ -193,7 +192,7 @@ class LongIntTable(object):
                 return new_list
         
         the_list =  _fastest(to_add)
-        print the_list
+        #print the_list
         #if a list of ints is faster, will do that
         if isinstance(the_list[0], int):
             for _ in range(times):
@@ -202,8 +201,33 @@ class LongIntTable(object):
         else:
              for _ in range(times):
                 self.add_tuple_list(the_list)   
-        print time.clock()-start          
-                
+    
+    def add_a_list(self, lst):
+        '''lst is ints. takes the table.  for each int in the list, makes new 
+        tables with each value changed to value+int. merges those new tables 
+        and updates the existing table to become the merge.'''
+        #so for [1,2,3], this would take {0:1,1:2} and
+        #update to {1:1, 2:2} + {2:1, 3:2} + {3:1, 4:2} 
+        newdic = {}      
+        for value, current_frequency in self._table.items():
+            for val in lst:
+                newdic[value+val] = \
+                (newdic.get(value+val, 0)+current_frequency)
+        self._table = newdic                
+    
+    def add_tuple_list(self, lst):
+        '''as add_list_to_values, but now pass a list of tuples of ints. 
+        [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
+        efficient if numbers repeat a lot in your list.'''
+        newdic = {}
+        for value, current_frequency in self._table.items():
+            for val, freq in lst:
+                if freq != 0:
+                    newdic[value+val] = (newdic.get(value+val, 0)+
+                                         freq*current_frequency)
+        self._table = newdic    
+    
+    
     def merge(self, other):
         '''other can be LongIntTable, dictionary of ints {value:freq} or list
         of int tuples [(value, freq)].  adds all those value, freq to self'''
@@ -218,14 +242,18 @@ class LongIntTable(object):
                 self._table[val] = self._table.get(val, 0) + freq
         
     def update_frequency(self, value, new_freq):
+        '''looks up a value, and changes its frequency to the new one'''
         self._table[value] = new_freq
     
     def update_value_ow(self, old_val, new_val):
+        '''takes the frequency at old_val and moves it to new_val'''
         freq = self._table[old_val]
         self._table[old_val] = 0
         self._table[new_val] = freq
     
     def update_value_add(self, old_val, new_val):
+        '''takes the frequency at old_vall and moves it to new_val where it adds
+        to the frequency already at new_val'''
         freq = self._table[old_val]
         self._table[old_val] = 0
         self._table[new_val] = self._table.get(new_val, 0)+freq
@@ -234,44 +262,19 @@ class LongIntTable(object):
 
 
 
+#testing
+import time    
+def add_dice(table, num_times, lst):
+    '''repeat the add_ function num_times times.'''    
+    for _ in range(num_times):
+            table.add_a_list(lst)        
 
-    def add_a_list(self, lst):
-        '''lst is ints. takes the table.  for each int in the list, makes new 
-        tables with each value changed to value+int. merges those new tables 
-        and updates the existing table to become the merge.'''
-        #for adding a die to a list of die values
-        #so for [1,2,3], this would take {0:1,1:2} and
-        #update to {1:1, 2:2} + {2:1, 3:2} + {3:1, 4:2} 
 
-        newdic = {}
-        
-        for value, current_frequency in self._table.items():
-            for val in lst:
-                newdic[value+val] = \
-                (newdic.get(value+val, 0)+current_frequency)
-        self._table = newdic
-    def add_dice(self, num_times, lst):
-        '''repeat the add_ function num_times times.'''
-        start_time = time.clock()
-        for _ in range(num_times):
-            self.add_a_list(lst)        
-        print 'basic\n', time.clock()-start_time
-    def add_tuple_list(self, lst):
-        '''as add_list_to_values, but now pass a list of tuples of ints. 
-        [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
-        efficient if numbers repeat a lot in you list.'''
-        newdic = {}
-        for value, current_frequency in self._table.items():
-            for val, freq in lst:
-                newdic[value+val] = \
-                (newdic.get(value+val, 0)+freq*current_frequency)
-        self._table = newdic
-    def add_weighted_dice(self, num_times, lst):
-        '''num_times is an int.  repeat add_tuple_list that many times.'''
-        start_time = time.clock()
-        for _ in range(num_times):
-            self.add_tuple_list(lst)
-        print 'weight\n', time.clock()-start_time
+def add_weighted_dice(table, num_times, lst):
+    '''num_times is an int.  repeat add_tuple_list that many times.'''
+    for _ in range(num_times):
+        table.add_tuple_list(lst)
+
                                                                                                                      
 def stddevtst(table, mean):
     sqs = 0
@@ -280,40 +283,51 @@ def stddevtst(table, mean):
         sqs += (mean - val)**2*freq
         total_freq += freq
     return (sqs/total_freq)**0.5
-def timetrial(bdie, num_adds):
-    bdie.sort()
-    tdie = {}
-    for el in bdie:
-        tdie[el] = 1+tdie.get(el, 0)
-    wdie = []
-    for die, weight in tdie.items():
-        wdie.append((die, weight))
-    wdie.sort()
-    print 'b', bdie, '\nw', wdie, '\nt', tdie
+
+def timetrial(lst, num_adds):
+    lst.sort()
+    dic = {10:0, 11:0, 12:0}
+    for el in lst:
+        dic[el] = 1+dic.get(el, 0)
+    t_list = []
+    for die, weight in dic.items():
+        t_list.append((die, weight))
+    t_list.sort()
+    print 'list', lst, '\ndictionary', dic, '\ntuples', t_list
     
+    start_a = time.clock()
     a = LongIntTable({0:1})
-    a.add_dice(num_adds, bdie)
+    add_dice(a, num_adds, lst)
+    print 'basic\n', time.clock()-start_a
     print a.mean(), a.stddev(), '\n'
+   
+    start_b = time.clock()  
     b = LongIntTable({0:1})
-    b.add_weighted_dice(num_adds, wdie)
-    print a.mean(), a.stddev(), '\n'
-    print 'dictionary'
+    add_weighted_dice(b, num_adds, t_list)
+    print 'tuple list\n', time.clock()-start_b
+    print b.mean(), b.stddev(), '\n'
+
+    start_c = time.clock()      
     c = LongIntTable({0:1})
-    c.add(num_adds, tdie)
-    print a.mean(), a.stddev()
-    print
-    print 'LIT'
+    c.add(num_adds, lst)
+    print 'add funct list\n', time.clock()-start_c
+    print c.mean(), c.stddev(), '\n'
+    
+    start_d = time.clock()      
     d = LongIntTable({0:1})
-    d.add(num_adds, LongIntTable(tdie))
-    print a.mean(), a.stddev()    
-    print
-    print 'tuple_list'
+    d.add(num_adds, dic)
+    print 'add funct dictionary\n', time.clock()-start_d
+    print d.mean(), d.stddev(), '\n'
+    
+    start_e = time.clock()      
     e = LongIntTable({0:1})
-    e.add(num_adds, wdie)
-    print a.mean(), a.stddev()
-    print
-    print 'reg list'
+    e.add(num_adds, t_list)
+    print 'add funct tuple list\n', time.clock()-start_e
+    print e.mean(), e.stddev(), '\n'
+    
+    start_f = time.clock()      
     f = LongIntTable({0:1})
-    f.add(num_adds, bdie)
-    print a.mean(), a.stddev()   
+    f.add(num_adds, LongIntTable(dic))
+    print 'add funct LIT\n', time.clock()-start_f
+    print f.mean(), f.stddev(), '\n'  
     return a,b,c,d,e,f              
