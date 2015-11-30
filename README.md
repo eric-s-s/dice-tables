@@ -47,4 +47,3 @@ stats(x, list_of_rolls) gives you the stats on a list of rolls
 
 
 
-
