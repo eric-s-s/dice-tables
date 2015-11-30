@@ -66,17 +66,17 @@ def graph_list(table):
 
     max_frequency = table.frequency_highest()[1]
     max_value = table.values_max()
-    max_graph_height = 80.0
+    max_graph_height = 80
 
     divisor = 1
     divstring = '1'
     #this sets the divisor so that max height of graph is MAX_GRAPH_HEIGHT x's
     if max_frequency > max_graph_height:
-        divisor = max_frequency/table.int_or_float(max_graph_height)
+        divisor = table.divide(max_frequency, max_graph_height)
         divstring = scinote(divisor)
 
     for value, frequency in table.frequency_all():
-        num_of_xs = int(round(frequency/divisor))
+        num_of_xs = int(round(table.divide(frequency, divisor)))
         output_list.append((value,
                             justify_right(value, max_value) +':'+num_of_xs*'x'))
 
@@ -89,7 +89,7 @@ def print_table(table):
     for value, frequency in table.frequency_all():
         print justify_right(value, max_value) +':'+scinote(frequency)
     print table
-    
+
 def grapher(table):
     '''table is a LongIntTable. prints a graph of x's.'''
     for output in graph_list(table):
@@ -154,17 +154,17 @@ def stats(table, values):
     all_combos_str = scinote(all_combos)
     values_str = list_to_string(values)
     print
-    print ('%s occurred %s times out of a total of %s possible combinations' % 
-            (values_str, lst_frequency_str, all_combos_str))
-    
+    print ('%s occurred %s times out of a total of %s possible combinations' %
+           (values_str, lst_frequency_str, all_combos_str))
     print 'for %s,' % (table)
-    print ('the chance of %s is 1 in %s or %s percent' % 
-            (values_str, chance_str, pct))
+    print ('the chance of %s is 1 in %s or %s percent' %
+           (values_str, chance_str, pct))
     print
 
 
 #TODO delete.  for eval.
 def stddevtst(table):
+    '''for evaluating stddev'''
     avg = table.mean()
     sqs = 0
     count = 0
@@ -174,16 +174,19 @@ def stddevtst(table):
     return round((sqs/count)**0.5, 4)
 
 def stddeverr(table):
+    '''compares stddevtst to the table method and sees pct diff'''
     accurate = stddevtst(table)
     approx = table.stddev()
     return 100*(accurate - approx)/accurate
 
 from dice_classes import add_dice
 def showit2(table):
-    for count in range(100):
+    '''the final function for stddev checking.  adds a die and prints pctdiff'''
+    for _ in range(100):
         add_dice(table)
         print str(stddeverr(table))
 def highest(table):
+    '''quick! gimme the highest val, nicely displayed'''
     return scinote(table.frequency_highest()[1])
 #TODO ends
 

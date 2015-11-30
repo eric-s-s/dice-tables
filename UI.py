@@ -3,7 +3,24 @@ from dice_classes import *
 from graphing_and_printing import *
 import pylab
 
-saved_tables = {}
+class SaveList(object):
+    def __init__(self):
+        self._save_list = []
+    def save(self, thing):
+        self._save_list.append(thing)
+    def retrieve(self, index):
+        return self._save_list.pop(index)
+    def rm(self, index):
+        del(self._save_list[index])
+    def __str__(self):
+        out = ''
+        width = len(str(len(self._save_list)-1))
+        for index in range(len(self._save_list)):
+            out = (out + '%s: %s\n' % 
+                   (str(index).rjust(width), str(self._save_list[index])))
+        return out
+    
+
 
 def main_menu():
     choices = ('Make a new table:'.ljust(30)+"enter 'new' or 'n'\n"+
@@ -45,9 +62,10 @@ def table_actions(table):
                     'back to main menu' : ('back', 'b'), 
                     'quit' : ('quit', 'q'),   
                     }
-    print table
+    print '  '+str(table)
     for choice, kw in menu_choices.items():
-        print 'To %s, type "%s" or "%s"' % (choice, kw[0], kw[1])
+        width = 20 - len(choice)
+        print '  To %s,%stype: "%s" or "%s"' % (choice, width*' ', kw[0], kw[1])
     ans = raw_input('>>> ')
     if ans in ('q', 'quit'): check_save('quit', table)
     elif ans in ('back', 'b'): check_save('main', table)
