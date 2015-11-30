@@ -80,6 +80,11 @@ class LongIntTable(object):
             self._overflow_control = True
         return self._overflow_control
 
+    def copy(self):
+        '''returns a copy of a LIT'''
+        new_dic = dict((val, freq) for val, freq in self.frequency_all())
+        return LongIntTable(new_dic)
+
     def divide(self, numerator, denominator, sig_figs=5):
         '''numerator and denominator >=1 or <= -1.
         a special divide function for the large numbers in these tables.
