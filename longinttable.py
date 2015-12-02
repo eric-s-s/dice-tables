@@ -1,4 +1,96 @@
-''' this module contains only the class LongIntTable'''
+''' this module contains the class LongIntTable and longint math that the table
+needs to deal with it's BFN'''
+#these three functions are concerned with float-math for long ints.
+def long_int_div(numerator, denominator, sig_figs=8):
+    '''does float division for any number, including long ints
+    returns floats where possible, otherwise long ints.'''
+    man_figs = sig_figs+2
+    exp_ans = exp(numerator) - exp(denominator)
+    man_ans = mantissa(numerator, man_figs)/mantissa(denominator, man_figs)
+    return make_answer(man_ans, exp_ans, sig_figs)
+        
+    
+    
+def long_int_times(factor_1, factor_2, sig_figs=8):
+    '''does float multiplication for any number, including long ints
+    returns floats where possible, otherwise long ints.'''
+    man_figs = sig_figs+2
+    exp_ans = exp(factor_1) + exp(factor_2)
+    man_ans = mantissa(factor_1, man_figs) * mantissa(factor_2, man_figs)
+    return make_answer(man_ans, exp_ans, sig_figs)
+    
+def long_int_pow(number, numerator, denominator, sig_figs=8):
+    '''does anything to any exp.  inputs can be ints or floats.
+    returns floats where possible, otherwise long ints.'''
+    man_figs = sig_figs+2
+    exp_num = exp(number)
+    exp_remainder = exp_num % denominator
+    exp_ans = (exp_num//denominator)*numerator
+    man_ans = mantissa(number, man_figs)*10**exp_remainder
+    man_ans = man_ans**(numerator/float(denominator))
+    total_exp = exp(man_ans)+exp_ans
+    total_man = mantissa(man_ans, man_figs)
+    return make_answer(total_man, total_exp, sig_figs)
+    
+
+#the helper functions for the float-math functions
+def exp(num):
+    '''return the exp of a number'''
+    if num == 0:
+        return 'zero'
+    if 'e' in str(num):
+        return int(str(num).split('e')[1])
+    elif abs(num) >= 1:
+        return len(str(abs(int(num))))-1
+    else:
+        after_decimal = str(num).split('.')[1]
+        count = -1
+        for el in after_decimal:
+            if el == '0':
+                count -=1
+            else:
+                return count
+def mantissa(num, sig_figs=10):
+    '''mantissa(1.23455e+245) returns 1.23455 up to sig_fig digits.'''
+    if num == 0:
+        return 0
+    elif 'e' in str(num):
+        mantissa = float(str(num).split('e')[0])
+        #return round(mantissa, sig_figs)
+        return mantissa
+    elif abs(num) >= 1:
+        factor = 10**(exp(num) - sig_figs - 1)
+        reduced = num//factor
+        reduced = float(reduced)
+        #return round(reduced/(10**(sig_figs+1)), sig_figs)
+        return reduced/10**(sig_figs+1)
+    else:
+        factor = 10**(-exp(num))
+        #return round(num*factor, sig_figs)
+        return num*factor
+    
+def make_answer(mantissa, exp, sig_figs):
+    '''takes raw answer and outputs appropriate answer'''
+    max_float_exp = 300
+    if exp < -max_float_exp:
+        return 0.0
+    #print 'exp = %s\nmantissa = %s' % (exp, mantissa)
+    if exp <= max_float_exp:
+        return round(mantissa*10**exp, sig_figs-exp)
+    if exp > max_float_exp:
+        new_mantissa = int(round(mantissa, sig_figs)*10**(sig_figs))
+        new_pow = exp - sig_figs
+        return new_mantissa*10**new_pow
+def tst_pm(num):
+    try:
+        out =  mantissa(num)*10**exp(num)
+    except OverflowError:
+        temp = int(mantissa(num)*10**12)
+        out = temp*10**(exp(num)-12)
+    print out
+    print num - out
+    
+        
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurences of all unassigned intergers.'''
@@ -115,8 +207,8 @@ class LongIntTable(object):
         and wonder what the mean is?'''
         numerator = sum([value*freq for value, freq in self._table.items()])
         denominator = self.total_frequency()
-        return self.divide(numerator, denominator)
-
+        #return self.divide(numerator, denominator)
+        return long_int_div(numerator, denominator, 5)#, self.divide(numerator, denominator)
     def stddev(self):
         '''returns the standdard deviation of the table, with special measures
         to deal with long ints.'''
@@ -137,8 +229,11 @@ class LongIntTable(object):
             for value, frequency in self._table.items():
                 sqs += (self.divide(frequency, factor, (sig_figs + extra_digits))
                         * (avg - value)**2)
+                #sqs += (long_int_div(frequency, factor, (sig_figs + extra_digits))
+                #        * (avg - value)**2)
                 count += frequency
             new_count = self.divide(count, factor, (sig_figs + extra_digits))
+            #new_count = long_int_div(count, factor, (sig_figs + extra_digits))
         return round((sqs/new_count)**0.5, sig_figs)
 
     def add(self, times, values):
@@ -249,7 +344,7 @@ class LongIntTable(object):
 
 #testing
 import time
-def add_dice(table, num_times, lst):
+def add_dices(table, num_times, lst):
     '''repeat the add_ function num_times times.'''
     for _ in range(num_times):
         table._add_a_list(lst)
@@ -282,7 +377,7 @@ def timetrial(lst, num_adds):
 
     start_a = time.clock()
     a = LongIntTable({0:1})
-    add_dice(a, num_adds, lst)
+    add_dices(a, num_adds, lst)
     print 'basic\n', time.clock()-start_a
     print a.mean(), a.stddev(), '\n'
 
@@ -317,3 +412,65 @@ def timetrial(lst, num_adds):
     print f.mean(), f.stddev(), '\n'
     return a, b, c, d, e, f
 
+def tst_pow(num, exp_top,exp_bottom):
+    start1 = time.clock()
+    print 'LI %s' % (long_int_pow(num, exp_top, exp_bottom))
+    print time.clock() - start1
+    start2 = time.clock()
+    print 'reg %s' % (num**(float(exp_top)/exp_bottom))
+    print time.clock() - start2
+    
+def tst_div(num, denom):
+    tst = LongIntTable({1: 10**1000})
+    start1 = time.clock()
+    lit = tst.divide(num, denom)
+    time1 = time.clock() - start1
+    start2 = time.clock()
+    lid = long_int_div(num, denom)
+    time2 = time.clock() - start2
+    pct = 100*(lid-lit)/lid
+    if isinstance(lid, float):
+        print lid
+    print 'err %s\ntable  time %s\nl.i.d. time %s' % (pct, time1, time2)
+    
+def stddev_time(table):
+    s = time.clock()
+    ans = table.stddev()
+     
+    print '.divide', ans, 'time' , time.clock()-s
+    s = time.clock()
+    ans = stddev_floor(table)
+    print 'floor  ', ans, 'time' , time.clock()-s
+    s = time.clock()
+    ans = stddev_lid(table)
+    print 'lid    ', ans, 'time' , time.clock()-s
+    
+def stddev_floor(table):
+    avg = table.mean()
+    sig_figs = 4
+    extra_digits = 5
+    power = len(str(table.frequency_highest()[1])) - 1
+    factor = 10**(power - (sig_figs + extra_digits))
+    sqs = 0
+    count = 0
+    for value, frequency in table._table.items():
+        sqs += (frequency//factor) * (avg - value)**2
+        count += frequency
+    new_count = count//factor
+    return round((sqs/new_count)**0.5, sig_figs)
+def stddev_lid(table):
+    avg = table.mean()
+    sig_figs = 4
+    extra_digits = 5
+    power = len(str(table.frequency_highest()[1])) - 1
+    factor = 10**(power - (sig_figs + extra_digits))
+    sqs = 0
+    count = 0
+    for value, frequency in table._table.items():
+                
+        sqs += (long_int_div(frequency, factor, (sig_figs + extra_digits))
+                * (avg - value)**2)
+        count += frequency
+    new_count = long_int_div(count, factor, (sig_figs + extra_digits))
+    return round((sqs/new_count)**0.5, sig_figs)
+ 
