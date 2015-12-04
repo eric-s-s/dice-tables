@@ -37,7 +37,7 @@ def long_int_pow(number, numerator, denominator, sig_figs=8):
 def exp(num):
     '''return the exp of a number'''
     if num == 0:
-        return 'zero'
+        return 1
     if 'e' in str(num):
         return int(str(num).split('e')[1])
     elif abs(num) >= 1:
@@ -45,8 +45,8 @@ def exp(num):
     else:
         after_decimal = str(num).split('.')[1]
         count = -1
-        for el in after_decimal:
-            if el == '0':
+        for digit in after_decimal:
+            if digit == '0':
                 count -=1
             else:
                 return count
@@ -55,9 +55,9 @@ def mantissa(num, sig_figs=10):
     if num == 0:
         return 0
     elif 'e' in str(num):
-        mantissa = float(str(num).split('e')[0])
+        the_mantissa = float(str(num).split('e')[0])
         #return round(mantissa, sig_figs)
-        return mantissa
+        return the_mantissa
     elif abs(num) >= 1:
         factor = 10**(exp(num) - sig_figs - 1)
         reduced = num//factor
@@ -69,26 +69,23 @@ def mantissa(num, sig_figs=10):
         #return round(num*factor, sig_figs)
         return num*factor
     
-def make_answer(mantissa, exp, sig_figs):
+def make_answer(a_mantissa, exponent, sig_figs):
     '''takes raw answer and outputs appropriate answer'''
+    sig_figs -= 1
+    if a_mantissa < 1:
+        a_mantissa *= 10
+        exponent -= 1
     max_float_exp = 300
-    if exp < -max_float_exp:
+    if exponent < -max_float_exp:
         return 0.0
     #print 'exp = %s\nmantissa = %s' % (exp, mantissa)
-    if exp <= max_float_exp:
-        return round(mantissa*10**exp, sig_figs-exp)
-    if exp > max_float_exp:
-        new_mantissa = int(round(mantissa, sig_figs)*10**(sig_figs))
-        new_pow = exp - sig_figs
+    if exponent <= max_float_exp:
+        return round(a_mantissa*10**exponent, sig_figs - exponent)
+    if exponent > max_float_exp:
+        new_mantissa = int(round(a_mantissa, sig_figs)*10**(sig_figs))
+        new_pow = exponent - sig_figs
         return new_mantissa*10**new_pow
-def tst_pm(num):
-    try:
-        out =  mantissa(num)*10**exp(num)
-    except OverflowError:
-        temp = int(mantissa(num)*10**12)
-        out = temp*10**(exp(num)-12)
-    print out
-    print num - out
+
     
         
 class LongIntTable(object):
@@ -177,42 +174,17 @@ class LongIntTable(object):
         new_dic = dict((val, freq) for val, freq in self.frequency_all())
         return LongIntTable(new_dic)
 
-    def divide(self, numerator, denominator, sig_figs=5):
-        '''numerator and denominator >=1 or <= -1.
-        a special divide function for the large numbers in these tables.
-        if overflow control is tripped, does the division accurately and
-        returns either a large int, a float with the right number of sig figs,
-        or 0.0 if answer would be less than 10**(-sig_figs)'''
-        power_n = len(str(abs(int(numerator))))-1
-        power_d = len(str(abs(int(denominator))))-1
-        power_diff = power_n - power_d
-        if not self.check_overflow():
-            return round(float(numerator)/denominator, sig_figs - power_diff)
-        else:
-            if power_diff > sig_figs:
-                return int(numerator)//int(denominator)
-            elif -1*power_diff > sig_figs:
-                return 0.0
-            else:
-                if power_diff >= 0:
-                    factor = 10**(power_d - sig_figs)
-                else:
-                    factor = 10**(power_n - sig_figs)
-                new_numerator = int(numerator)/factor
-                new_denominator = int(denominator)/factor
-                return round(float(new_numerator)/new_denominator,
-                             sig_figs - power_diff)
+    
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
+        sig_figs = 8
         numerator = sum([value*freq for value, freq in self._table.items()])
         denominator = self.total_frequency()
-        #return self.divide(numerator, denominator)
-        return long_int_div(numerator, denominator, 5)#, self.divide(numerator, denominator)
+        return long_int_div(numerator, denominator, sig_figs)
     def stddev(self):
         '''returns the standdard deviation of the table, with special measures
         to deal with long ints.'''
-        omfg_thisll_take_all_day = 10**750
         avg = self.mean()
         sig_figs = 4
         extra_digits = 5
@@ -220,20 +192,10 @@ class LongIntTable(object):
         factor = 10**(power - (sig_figs + extra_digits))
         sqs = 0
         count = 0
-        if self.total_frequency() > omfg_thisll_take_all_day:
-            for value, frequency in self._table.items():
-                sqs += (frequency//factor) * (avg - value)**2
-                count += frequency
-            new_count = count//factor
-        else:
-            for value, frequency in self._table.items():
-                sqs += (self.divide(frequency, factor, (sig_figs + extra_digits))
-                        * (avg - value)**2)
-                #sqs += (long_int_div(frequency, factor, (sig_figs + extra_digits))
-                #        * (avg - value)**2)
-                count += frequency
-            new_count = self.divide(count, factor, (sig_figs + extra_digits))
-            #new_count = long_int_div(count, factor, (sig_figs + extra_digits))
+        for value, frequency in self._table.items():
+            sqs += (frequency//factor) * (avg - value)**2
+            count += frequency
+        new_count = count//factor
         return round((sqs/new_count)**0.5, sig_figs)
 
     def add(self, times, values):
@@ -342,135 +304,5 @@ class LongIntTable(object):
         self._table[new_val] = self._table.get(new_val, 0)+freq
 
 
-#testing
-import time
-def add_dices(table, num_times, lst):
-    '''repeat the add_ function num_times times.'''
-    for _ in range(num_times):
-        table._add_a_list(lst)
 
-def add_weighted_dice(table, num_times, lst):
-    '''num_times is an int.  repeat add_tuple_list that many times.'''
-    for _ in range(num_times):
-        table._add_tuple_list(lst)
-
-def stddevtst(table, mean):
-    '''regular verstion of stddev for testing'''
-    sqs = 0
-    total_freq = 0
-    for val, freq in table.items():
-        sqs += (mean - val)**2*freq
-        total_freq += freq
-    return (sqs/total_freq)**0.5
-
-def timetrial(lst, num_adds):
-    '''a very lazily written timetrial for add_dice'''
-    lst.sort()
-    dic = {10:0, 11:0, 12:0}
-    for el in lst:
-        dic[el] = 1+dic.get(el, 0)
-    t_list = []
-    for die, weight in dic.items():
-        t_list.append((die, weight))
-    t_list.sort()
-    print 'list', lst, '\ndictionary', dic, '\ntuples', t_list
-
-    start_a = time.clock()
-    a = LongIntTable({0:1})
-    add_dices(a, num_adds, lst)
-    print 'basic\n', time.clock()-start_a
-    print a.mean(), a.stddev(), '\n'
-
-    start_b = time.clock()
-    b = LongIntTable({0:1})
-    add_weighted_dice(b, num_adds, t_list)
-    print 'tuple list\n', time.clock()-start_b
-    print b.mean(), b.stddev(), '\n'
-
-    start_c = time.clock()
-    c = LongIntTable({0:1})
-    c.add(num_adds, lst)
-    print 'add funct list\n', time.clock()-start_c
-    print c.mean(), c.stddev(), '\n'
-
-    start_d = time.clock()
-    d = LongIntTable({0:1})
-    d.add(num_adds, dic)
-    print 'add funct dictionary\n', time.clock()-start_d
-    print d.mean(), d.stddev(), '\n'
-
-    start_e = time.clock()
-    e = LongIntTable({0:1})
-    e.add(num_adds, t_list)
-    print 'add funct tuple list\n', time.clock()-start_e
-    print e.mean(), e.stddev(), '\n'
-
-    start_f = time.clock()
-    f = LongIntTable({0:1})
-    f.add(num_adds, LongIntTable(dic))
-    print 'add funct LIT\n', time.clock()-start_f
-    print f.mean(), f.stddev(), '\n'
-    return a, b, c, d, e, f
-
-def tst_pow(num, exp_top,exp_bottom):
-    start1 = time.clock()
-    print 'LI %s' % (long_int_pow(num, exp_top, exp_bottom))
-    print time.clock() - start1
-    start2 = time.clock()
-    print 'reg %s' % (num**(float(exp_top)/exp_bottom))
-    print time.clock() - start2
-    
-def tst_div(num, denom):
-    tst = LongIntTable({1: 10**1000})
-    start1 = time.clock()
-    lit = tst.divide(num, denom)
-    time1 = time.clock() - start1
-    start2 = time.clock()
-    lid = long_int_div(num, denom)
-    time2 = time.clock() - start2
-    pct = 100*(lid-lit)/lid
-    if isinstance(lid, float):
-        print lid
-    print 'err %s\ntable  time %s\nl.i.d. time %s' % (pct, time1, time2)
-    
-def stddev_time(table):
-    s = time.clock()
-    ans = table.stddev()
-     
-    print '.divide', ans, 'time' , time.clock()-s
-    s = time.clock()
-    ans = stddev_floor(table)
-    print 'floor  ', ans, 'time' , time.clock()-s
-    s = time.clock()
-    ans = stddev_lid(table)
-    print 'lid    ', ans, 'time' , time.clock()-s
-    
-def stddev_floor(table):
-    avg = table.mean()
-    sig_figs = 4
-    extra_digits = 5
-    power = len(str(table.frequency_highest()[1])) - 1
-    factor = 10**(power - (sig_figs + extra_digits))
-    sqs = 0
-    count = 0
-    for value, frequency in table._table.items():
-        sqs += (frequency//factor) * (avg - value)**2
-        count += frequency
-    new_count = count//factor
-    return round((sqs/new_count)**0.5, sig_figs)
-def stddev_lid(table):
-    avg = table.mean()
-    sig_figs = 4
-    extra_digits = 5
-    power = len(str(table.frequency_highest()[1])) - 1
-    factor = 10**(power - (sig_figs + extra_digits))
-    sqs = 0
-    count = 0
-    for value, frequency in table._table.items():
-                
-        sqs += (long_int_div(frequency, factor, (sig_figs + extra_digits))
-                * (avg - value)**2)
-        count += frequency
-    new_count = long_int_div(count, factor, (sig_figs + extra_digits))
-    return round((sqs/new_count)**0.5, sig_figs)
  

@@ -1,17 +1,34 @@
-from longinttable import *
-from dice_classes import *
+from longintmath import *
+from dicestats import *
 from graphing_and_printing import *
 import pylab
+
+import inspect as ins
 
 class SaveList(object):
     def __init__(self):
         self._save_list = []
+        self._use_index = 0
+        self._last_open = None
     def save(self, thing):
-        self._save_list.append(thing)
+        self._save_list.insert(self._use_index, thing)
+        self._last_open = None
+        self._use_index = len(self._save_list)
+    def revert(self, thing):
+        self._save_list.insert(self._use_index, self._last_open)
+        self._last_open = None
+        self._use_index = len(self._save_list)
     def retrieve(self, index):
-        return self._save_list.pop(index)
+        out = self._save_list.pop(index)
+        self._use_index = index
+        try:
+            self._last_open = out.copy()
+        except AttributeError:
+            self._last_open = eval(repr(out))
+        return out
     def rm(self, index):
         del(self._save_list[index])
+        self._use_index = len(self._save_list)
     def __str__(self):
         out = ''
         width = len(str(len(self._save_list)-1))
@@ -20,7 +37,62 @@ class SaveList(object):
                    (str(index).rjust(width), str(self._save_list[index])))
         return out
     
+class Choices(object):
+    def __init__(self, choice_list=None):
+        if choice_list == None:
+            self._choices = []
+        else:
+            self._choices = choice_list
+    
+    def add_choice(self, name, string, *shortcuts):
+        self._choices.append((name, string, shortcuts))
+    def max_str(self):
+        max_len = 0
+        for choice in self._choices:
+            if len(choice[1]) > max_len:
+                max_len = len(choice[1])
+        return max_len
+    def get_command(self):
+        out = raw_input('Please choose an action.\n>>> ')
+        found_it = False
+        for choice in self._choices:
+            if out in choice[2]:
+                return choice[0]
+                found_it = True
+        if not found_it:
+            print 'learn how to pick choices, MF'
+            self.get_command()        
+    def __str__(self):
+        width = self.max_str() + 2
+        out = ''
+        for choice in self._choices:
+            out = (out + 'for '+choice[1].ljust(width)+ ' please type: ' 
+                   + ', '.join(choice[2]) + '\n')
+        return out
 
+class Menu(object):
+    def __init__(self, name, choices):
+        self._name = name
+        self._choices = choices
+    def print_choices(self):
+        print self._choices
+    def run(self, **kwargs):
+        print self
+        command = self._choices.get_command()
+        args = ins.getargspec(command)[0]
+        command_args = {}
+        for kw, val in kwargs.items():
+            if kw in args:
+                command_args[kw] = val 
+        return command(**command_args)
+    def __str__(self):
+        return self._name + '\n' + str(self._choices)
+
+dur = Choices()
+dur.add_choice(long_int_div, 'long', 'l')
+dur.add_choice(long_int_pow, 'pow', 'p')
+tst = Menu('tst', dur)        
+         
 
 def main_menu():
     choices = ('Make a new table:'.ljust(30)+"enter 'new' or 'n'\n"+
@@ -55,19 +127,19 @@ def new_table():
 
 
 def table_actions(table):
-    menu_choices = {'add dice': ('add', 'a'),
-                    'save this table' : ('save', 's'),
-                    'get stats' : ('get', 'g'),
-                    'make graphs' : ('make', 'm'),
-                    'back to main menu' : ('back', 'b'), 
-                    'quit' : ('quit', 'q'),   
-                    }
+    choices = {'add dice': ('add', 'a', adder(table)),
+                'save this table' : ('save', 's'),
+                'get stats' : ('get', 'g'),
+                'make graphs' : ('make', 'm'),
+                'back to main menu' : ('back', 'b'), 
+                'quit' : ('quit', 'q'),   
+                }
     print '  '+str(table)
     for choice, kw in menu_choices.items():
         width = 20 - len(choice)
         print '  To %s,%stype: "%s" or "%s"' % (choice, width*' ', kw[0], kw[1])
     ans = raw_input('>>> ')
-    if ans in ('q', 'quit'): check_save('quit', table)
+    if ans in choice: check_save('quit', table)
     elif ans in ('back', 'b'): check_save('main', table)
     elif ans in ('g', 'get'): get_stats(table)
     elif ans in ('m', 'make'): graphing(table)

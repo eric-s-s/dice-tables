@@ -140,7 +140,11 @@ def stats(table, values):
     for the values in the list.'''
     all_combos = table.total_frequency()
     lst_frequency = 0
-    for value in values:
+    no_copies = []
+    for number in values:
+        if number not in no_copies:
+            no_copies.append(number)
+    for value in no_copies:
         lst_frequency += table.frequency(value)[1]
 
     if lst_frequency == 0:
@@ -152,7 +156,7 @@ def stats(table, values):
     lst_frequency_str = scinote(lst_frequency)
     chance_str = scinote(chance)
     all_combos_str = scinote(all_combos)
-    values_str = list_to_string(values)
+    values_str = list_to_string(no_copies)
     print
     print ('%s occurred %s times out of a total of %s possible combinations' %
            (values_str, lst_frequency_str, all_combos_str))
@@ -160,33 +164,4 @@ def stats(table, values):
     print ('the chance of %s is 1 in %s or %s percent' %
            (values_str, chance_str, pct))
     print
-
-
-#TODO delete.  for eval.
-def stddevtst(table):
-    '''for evaluating stddev'''
-    avg = table.mean()
-    sqs = 0
-    count = 0
-    for roll, freq in table.frequency_all():
-        sqs += freq*(((avg - roll)**2))
-        count += freq
-    return round((sqs/count)**0.5, 4)
-
-def stddeverr(table):
-    '''compares stddevtst to the table method and sees pct diff'''
-    accurate = stddevtst(table)
-    approx = table.stddev()
-    return 100*(accurate - approx)/accurate
-
-from dice_classes import add_dice
-def showit2(table):
-    '''the final function for stddev checking.  adds a die and prints pctdiff'''
-    for _ in range(100):
-        add_dice(table)
-        print str(stddeverr(table))
-def highest(table):
-    '''quick! gimme the highest val, nicely displayed'''
-    return scinote(table.frequency_highest()[1])
-#TODO ends
 
