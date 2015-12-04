@@ -1,5 +1,5 @@
 '''for all things dicey.  this contains DiceInfo and DiceTable and add_dice.'''
-from longinttable import LongIntTable
+from longintmath import LongIntTable
 
 class DiceInfo(object):
     '''dice info is an object that stores and returns info on a set of dice.

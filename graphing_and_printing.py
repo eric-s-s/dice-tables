@@ -2,7 +2,7 @@
 main functions are - grapher(), truncate_grapher(), fancy_grapher()
 print_table() and stats()'''
 
-
+from longintmath import long_int_div as li_div
 import pylab
 
 
@@ -72,7 +72,7 @@ def graph_list(table):
     divstring = '1'
     #this sets the divisor so that max height of graph is MAX_GRAPH_HEIGHT x's
     if max_frequency > max_graph_height:
-        divisor = table.divide(max_frequency, max_graph_height)
+        divisor = li_div(max_frequency, max_graph_height, 5)
         divstring = scinote(divisor)
 
     for value, frequency in table.frequency_all():
@@ -150,8 +150,8 @@ def stats(table, values):
     if lst_frequency == 0:
         print 'no results'
         return None
-    chance = table.divide(all_combos, lst_frequency, 4)
-    pct = 100 * table.divide(lst_frequency, all_combos, 3)
+    chance = li_div(all_combos, lst_frequency, 4)
+    pct = 100 * li_div(lst_frequency, all_combos, 3)
 
     lst_frequency_str = scinote(lst_frequency)
     chance_str = scinote(chance)

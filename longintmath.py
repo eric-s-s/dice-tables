@@ -8,9 +8,7 @@ def long_int_div(numerator, denominator, sig_figs=8):
     exp_ans = exp(numerator) - exp(denominator)
     man_ans = mantissa(numerator, man_figs)/mantissa(denominator, man_figs)
     return make_answer(man_ans, exp_ans, sig_figs)
-        
-    
-    
+
 def long_int_times(factor_1, factor_2, sig_figs=8):
     '''does float multiplication for any number, including long ints
     returns floats where possible, otherwise long ints.'''
@@ -18,7 +16,7 @@ def long_int_times(factor_1, factor_2, sig_figs=8):
     exp_ans = exp(factor_1) + exp(factor_2)
     man_ans = mantissa(factor_1, man_figs) * mantissa(factor_2, man_figs)
     return make_answer(man_ans, exp_ans, sig_figs)
-    
+
 def long_int_pow(number, numerator, denominator, sig_figs=8):
     '''does anything to any exp.  inputs can be ints or floats.
     returns floats where possible, otherwise long ints.'''
@@ -31,7 +29,6 @@ def long_int_pow(number, numerator, denominator, sig_figs=8):
     total_exp = exp(man_ans)+exp_ans
     total_man = mantissa(man_ans, man_figs)
     return make_answer(total_man, total_exp, sig_figs)
-    
 
 #the helper functions for the float-math functions
 def exp(num):
@@ -47,7 +44,7 @@ def exp(num):
         count = -1
         for digit in after_decimal:
             if digit == '0':
-                count -=1
+                count -= 1
             else:
                 return count
 def mantissa(num, sig_figs=10):
@@ -68,7 +65,7 @@ def mantissa(num, sig_figs=10):
         factor = 10**(-exp(num))
         #return round(num*factor, sig_figs)
         return num*factor
-    
+
 def make_answer(a_mantissa, exponent, sig_figs):
     '''takes raw answer and outputs appropriate answer'''
     sig_figs -= 1
@@ -86,8 +83,7 @@ def make_answer(a_mantissa, exponent, sig_figs):
         new_pow = exponent - sig_figs
         return new_mantissa*10**new_pow
 
-    
-        
+
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurences of all unassigned intergers.'''
@@ -174,7 +170,6 @@ class LongIntTable(object):
         new_dic = dict((val, freq) for val, freq in self.frequency_all())
         return LongIntTable(new_dic)
 
-    
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
