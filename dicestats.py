@@ -125,7 +125,7 @@ class DiceTable(LongIntTable):
         self._last_die = new_dice_info.get_dic()
     def get_list(self):
         '''return the dice list'''
-        return self._dice_list
+        return self._dice_list[:]
     def get_last(self):
         '''return the dict of the last die added'''
         if self._last_die == None:

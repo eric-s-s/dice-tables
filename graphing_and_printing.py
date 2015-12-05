@@ -76,7 +76,7 @@ def graph_list(table):
         divstring = scinote(divisor)
 
     for value, frequency in table.frequency_all():
-        num_of_xs = int(round(table.divide(frequency, divisor)))
+        num_of_xs = int(round(li_div(frequency, divisor)))
         output_list.append((value,
                             justify_right(value, max_value) +':'+num_of_xs*'x'))
 
@@ -131,8 +131,9 @@ def fancy_grapher(table, figure=1, style='bo'):
 
     pylab.xlabel('values')
     pylab.title('all the combinations for '+str(table))
-    pylab.plot(x_axis, y_axis, style)
-    pylab.draw()
+    line, = pylab.plot(x_axis, y_axis, style)
+    line.set_ydata(y_axis)
+    pylab.show()
 
 
 def stats(table, values):
@@ -157,10 +158,12 @@ def stats(table, values):
     chance_str = scinote(chance)
     all_combos_str = scinote(all_combos)
     values_str = list_to_string(no_copies)
+    #add extra space to str(table) \n parts so it prints purty after 'for '
+    added_width = 4
     print
     print ('%s occurred %s times out of a total of %s possible combinations' %
            (values_str, lst_frequency_str, all_combos_str))
-    print 'for %s,' % (table)
+    print 'for %s,' % (str(table).replace('\n', '\n' + added_width*' '))
     print ('the chance of %s is 1 in %s or %s percent' %
            (values_str, chance_str, pct))
     print
