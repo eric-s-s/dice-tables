@@ -262,7 +262,7 @@ def graphing(table):
 def fancy(table):
     '''print a pylab graph'''
     points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
-    colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'l', 'w')
+    colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k', 'w')
     style = random.choice(points)+random.choice(colors)
 
     global GLOBAL_COUNT
