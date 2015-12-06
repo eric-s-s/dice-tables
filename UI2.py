@@ -114,7 +114,7 @@ class Choices(object):
 
 
 GLOBAL_SAVE_LIST = SaveList()
-GLOBAL_COUNT = 1
+GLOBAL_COUNT = 0
 def main_menu():
     '''the start of a chain of menus'''
     m_choices = Choices('To',
@@ -177,7 +177,7 @@ def quit_program():
     '''quits and manages global variables on the way out'''
     GLOBAL_SAVE_LIST.forget_last()
     global GLOBAL_COUNT
-    GLOBAL_COUNT = 1
+    GLOBAL_COUNT = 0
     raise SystemExit('exiting program')
 
 def new_table():
@@ -190,12 +190,12 @@ def table_actions(table):
     '''all the actions you ever wanted to do on a dice table'''
     t_choices = Choices('to',
                         [(adder, (table), 'ADD dice', ('add', 'a')),
+                         (get_stats, (table), 'GET stats', ('get', 'g')),
+                         (graphing, (table), 'MAKE graphs', ('make', 'm')),
                          (save, (table, 'action'), 'SAVE the table',
                           ('save', 's')),
                          (save_new, (table), 'save the table as NEW',
                           ('new', 'n')),
-                         (get_stats, (table), 'GET stats', ('get', 'g')),
-                         (graphing, (table), 'MAKE graphs', ('make', 'm')),
                          (save, (table, 'main menu'), 'BACK to main menu',
                           ('back', 'b')),
                          (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
@@ -236,6 +236,7 @@ def save_it(menu_choice):
 def get_stats(table):
     '''gets stats for your table'''
     print '\n\nhere is your table info\n'
+    table.weights_info()
     print table
     print ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
            % (table.values_min(), table.values_max(),
@@ -259,18 +260,24 @@ def graphing(table):
                           ('graph', 'g'))])
     g_choices.do_user_choice()
     table_actions(table)
+
 def fancy(table):
     '''print a pylab graph'''
     points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
     colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k', 'w')
     style = random.choice(points)+random.choice(colors)
-
+    overlay = raw_input('overlay on old grap(y/n)?\n>>> ')
     global GLOBAL_COUNT
+    if overlay != 'y':
+        GLOBAL_COUNT += 1
     figure = GLOBAL_COUNT
-    GLOBAL_COUNT += 1
     pylab.ion()
-    gap.fancy_grapher(table, figure, style)
+    if overlay == 'y':
+        gap.fancy_grapher_pct(table, figure, style, True)
+    else:
+        gap.fancy_grapher_pct(table, figure, style)
     pylab.pause(0.1)
+
 def adder(table):
     '''the first function for the add dice process'''
     same_dice = Choices('To', [(add_same, (table), 'add the SAME die', ('s')),

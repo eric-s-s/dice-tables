@@ -109,7 +109,7 @@ def truncate_grapher(table):
         print 'not included:', list_to_string(excluded).replace(',', ' and')
     print table
 
-def fancy_grapher(table, figure=1, style='bo'):
+def fancy_grapher(table, figure=1, style='bo', legend=False):
     '''table is a LongIntTable. makes a pylab plot of a table.
     You can set other figures and styles'''
     x_axis = []
@@ -131,10 +131,32 @@ def fancy_grapher(table, figure=1, style='bo'):
 
     pylab.xlabel('values')
     pylab.title('all the combinations for '+str(table))
-    line, = pylab.plot(x_axis, y_axis, style)
+    line, = pylab.plot(x_axis, y_axis, style, label=str(table))
+    if legend:
+        pylab.legend(loc='best')
     line.set_ydata(y_axis)
     pylab.show()
 
+def fancy_grapher_pct(table, figure=1, style='bo', legend=False):
+    '''table is a LongIntTable. makes a pylab plot of a table.
+    You can set other figures and styles'''
+    x_axis = []
+    y_axis = []
+    pylab.figure(figure)
+    pylab.ylabel('pct of the total occurences')
+    factor = li_div(table.total_frequency(), 100, 4)
+
+    for value, frequency in table.frequency_all():
+        x_axis.append(value)
+        y_axis.append(li_div(frequency, factor, 4))
+
+    pylab.xlabel('values')
+    pylab.title('all the combinations for '+str(table))
+    line, = pylab.plot(x_axis, y_axis, style, label=str(table))
+    if legend:
+        pylab.legend(loc='best')
+    line.set_ydata(y_axis)
+    pylab.show()
 
 def stats(table, values):
     '''table is a LongIntTable. values is a list. prints stats information

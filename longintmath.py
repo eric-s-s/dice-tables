@@ -53,17 +53,14 @@ def mantissa(num, sig_figs=10):
         return 0
     elif 'e' in str(num):
         the_mantissa = float(str(num).split('e')[0])
-        #return round(mantissa, sig_figs)
         return the_mantissa
     elif abs(num) >= 1:
         factor = 10**(exp(num) - sig_figs - 1)
         reduced = num//factor
         reduced = float(reduced)
-        #return round(reduced/(10**(sig_figs+1)), sig_figs)
         return reduced/10**(sig_figs+1)
     else:
         factor = 10**(-exp(num))
-        #return round(num*factor, sig_figs)
         return num*factor
 
 def make_answer(a_mantissa, exponent, sig_figs):
@@ -75,7 +72,6 @@ def make_answer(a_mantissa, exponent, sig_figs):
     max_float_exp = 300
     if exponent < -max_float_exp:
         return 0.0
-    #print 'exp = %s\nmantissa = %s' % (exp, mantissa)
     if exponent <= max_float_exp:
         return round(a_mantissa*10**exponent, sig_figs - exponent)
     if exponent > max_float_exp:
@@ -93,8 +89,6 @@ class LongIntTable(object):
         '''seed_dictionary is a dictionary of ints
         {value1: frequency of value1, value2: frequency of value 2, ...}'''
         self._table = seed_dictionary.copy()
-        #for value, frequency in seed_dictionary.items():
-        #   self._table[value] = frequency
         self._overflow_control = False
 
     def values(self):
@@ -157,7 +151,6 @@ class LongIntTable(object):
         return ('table from %s to %s' %
                 (self.values_min(), self.values_max()))
 
-    #the next three functions deal with overflow
     def check_overflow(self):
         '''if table is too big, and overflow control is false, set to true'''
         if (not self._overflow_control and
@@ -234,7 +227,6 @@ class LongIntTable(object):
                 return new_list
 
         the_list = _fastest(to_add)
-        #print the_list
         #if a list of ints is faster, will do that
         if isinstance(the_list[0], int):
             for _ in range(times):
