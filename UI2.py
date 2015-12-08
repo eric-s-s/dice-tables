@@ -265,7 +265,7 @@ def fancy(table):
     '''print a pylab graph'''
     points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
     colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k', 'w')
-    style = random.choice(points)+random.choice(colors)
+    style = random.choice(points) + '-' + random.choice(colors)
     overlay = raw_input('overlay on old grap(y/n)?\n>>> ')
     global GLOBAL_COUNT
     if overlay != 'y':
