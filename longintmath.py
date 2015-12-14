@@ -80,6 +80,28 @@ def make_answer(a_mantissa, exponent, sig_figs):
         return new_mantissa*10**new_pow
 
 
+def make_tuple_list(an_input):
+    '''get the zero values out to speed up and things and then convert 
+    to an ordered tuple list'''
+        
+    if isinstance(an_input, LongIntTable):
+        temp_out = an_input.frequency_all()
+    elif isinstance(an_input, list) and isinstance(an_input[0], int):
+        make_dic = {}
+        for number in an_input:
+            make_dic[number] = make_dic.get(number, 0)+1
+        temp_out = [(val, freq) for val, freq in make_dic.items()]
+    elif isinstance(an_input, dict):
+        temp_out = [(val, freq) for val, freq in an_input.items()]
+    else:
+        temp_out = an_input[:]
+    out = []
+    for pair in temp_out:
+        if pair[1] != 0:
+            out.append(pair)
+    out.sort()
+    return out
+
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurences of all unassigned intergers.'''
@@ -247,7 +269,7 @@ class LongIntTable(object):
             for val in lst:
                 newdic[value+val] = (newdic.get(value+val, 0)+current_frequency)
         self._table = newdic
-
+        
     def _add_tuple_list(self, lst):
         '''as add_list_to_values, but now pass a list of tuples of ints.
         [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
@@ -259,7 +281,35 @@ class LongIntTable(object):
                     newdic[value+val] = (newdic.get(value+val, 0)+
                                          freq*current_frequency)
         self._table = newdic
-
+    def remove(self, times, to_remove):
+        new_remove = make_tuple_list(to_remove)
+        for _ in range(times):
+            self._remove_tuple_list(new_remove)
+    
+        
+                    
+    def _remove_tuple_list(self, tuple_list):
+        '''tuple_list is a sorted list of tuples (value, frequency) with NO ZERO
+        frequencies.  does the opposite of _add_tuple_list'''
+        
+        tuples_min = tuple_list[0][0]
+        tuples_max = tuple_list[-1][0]
+        
+        start = self.values_min()-tuples_min  
+        stop = self.values_max()- tuples_max
+        new_dic = {}
+        for value in range(start, stop+1):
+            try:
+                new_dic_val = self._table[value+tuples_min]
+                for tup_val, tup_weight in tuple_list[1:]:
+                    the_diff = tup_val - tuples_min
+                    new_dic_val = new_dic_val - (new_dic.get(value - the_diff, 0) *
+                                                tup_weight)
+                new_dic[value] = new_dic_val / tuple_list[0][1]
+            except KeyError:
+                continue 
+        self._table = new_dic
+    
     def merge(self, other):
         '''other can be LongIntTable, dictionary of ints {value:freq} or list
         of int tuples [(value, freq)].  adds all those value, freq to self'''
@@ -291,5 +341,6 @@ class LongIntTable(object):
         self._table[new_val] = self._table.get(new_val, 0)+freq
 
 
+        
 
  

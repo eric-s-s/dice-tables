@@ -106,7 +106,8 @@ class DiceTable(LongIntTable):
     def __init__(self):
         LongIntTable.__init__(self, {0:1})
         self._dice_list = []
-        self._dice_list.sort()
+        #TODO - is this here for a reason?
+        #self._dice_list.sort()
         self._last_die = None
 
     def update_list(self, new_dice_info):
@@ -125,7 +126,10 @@ class DiceTable(LongIntTable):
         self._last_die = new_dice_info.get_dic()
     def get_list(self):
         '''return the dice list'''
-        return self._dice_list[:]
+        new_list = []
+        for dice in self._dice_list:
+            new_list.append(dice.copy())
+        return new_list
     def get_last(self):
         '''return the dict of the last die added'''
         if self._last_die == None:
@@ -159,7 +163,7 @@ class DiceTable(LongIntTable):
         new.update_frequency(0, 0)
         new.merge(new_dic)
         return new
-
+            
 def add_dice(table, num=1, size='last'):
     '''uses num and size to make a DiceInfo.  updates the table's list and uses
     the DiceInfo dict to call LongIntTable.add() on the table'''
@@ -168,3 +172,18 @@ def add_dice(table, num=1, size='last'):
     dice_to_add = DiceInfo(num, size)
     table.update_list(dice_to_add)
     table.add(num, dice_to_add.get_dic())
+    
+def remove_dice(table, num=1, size='last'):
+    if size == 'last':
+        size = table.get_last()
+    dice_to_remove = DiceInfo(-num, size)
+    illegal = True
+    for dice in table.get_list():
+        if dice_to_remove == dice:
+            if dice.get_num() >= num:
+                illegal = False
+    if illegal:
+        raise ValueError('dice not in table, or removed too many dice')
+    else:
+        table.remove(num, dice_to_remove.get_dic())
+        table.update_list(dice_to_remove)
