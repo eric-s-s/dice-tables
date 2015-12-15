@@ -1,6 +1,9 @@
 ''' this module contains the class LongIntTable and longint math that the table
 needs to deal with it's BFN'''
 #these three functions are concerned with float-math for long ints.
+
+
+#TODO make these wrapper functions
 def long_int_div(numerator, denominator, sig_figs=8):
     '''does float division for any number, including long ints
     returns floats where possible, otherwise long ints.'''
@@ -80,27 +83,7 @@ def make_answer(a_mantissa, exponent, sig_figs):
         return new_mantissa*10**new_pow
 
 
-def make_tuple_list(an_input):
-    '''get the zero values out to speed up and things and then convert 
-    to an ordered tuple list'''
-        
-    if isinstance(an_input, LongIntTable):
-        temp_out = an_input.frequency_all()
-    elif isinstance(an_input, list) and isinstance(an_input[0], int):
-        make_dic = {}
-        for number in an_input:
-            make_dic[number] = make_dic.get(number, 0)+1
-        temp_out = [(val, freq) for val, freq in make_dic.items()]
-    elif isinstance(an_input, dict):
-        temp_out = [(val, freq) for val, freq in an_input.items()]
-    else:
-        temp_out = an_input[:]
-    out = []
-    for pair in temp_out:
-        if pair[1] != 0:
-            out.append(pair)
-    out.sort()
-    return out
+
 
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
@@ -199,7 +182,10 @@ class LongIntTable(object):
         sig_figs = 4
         extra_digits = 5
         power = len(str(self.frequency_highest()[1])) - 1
-        factor = 10**(power - (sig_figs + extra_digits))
+        if power < 2 * (sig_figs + extra_digits):
+            factor = 1
+        else:
+            factor = 10**(power - (sig_figs + extra_digits))
         sqs = 0
         count = 0
         for value, frequency in self._table.items():
@@ -209,54 +195,44 @@ class LongIntTable(object):
         return round((sqs/new_count)**0.5, sig_figs)
 
     def add(self, times, values):
-        '''this updates your table to be the frequency of it's orignal values
-        plus the new list of values and frequencies
-        times is (pos int) how many times to add the values to the table.
-        values contains only ints.  it can be
-        1 - lst of ints, 2 - list of tuples of [(val, freq), ...]
-        3 - dict{val:freq, ...}, 4 - LongIntTable
+        '''times is positive int. values is a list of tuple(value, frequency)
+        only in value, NO ZERO FREQUENCIES ALLOWED!
+        this function adds your table's values and frequency and the values's.
+        
         here's how it works - original list event A is 3 out of 5.
         event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
         A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
-        #first convert any input to the same kind
-        if isinstance(values, LongIntTable):
-            to_add = values.frequency_all()
-        elif isinstance(values, list) and isinstance(values[0], int):
-            make_dic = {}
-            for number in values:
-                make_dic[number] = make_dic.get(number, 0)+1
-            to_add = [(val, freq) for val, freq in make_dic.items()]
-        elif isinstance(values, dict):
-            to_add = [(val, freq) for val, freq in values.items()]
-        else:
-            to_add = values[:]
-        to_add.sort()
+        if times < 1:
+            raise ValueError('times must be a positive int')
+        
+        values.sort()
         def _fastest(tuple_list):
             '''returns fastest method'''
             difference = 0
             cut_off = 3
+            use_tuples = True
             for pair in tuple_list:
                 frequency = pair[1]
-                if frequency != 0:
-                    difference += abs(frequency) - 1
+                difference += abs(frequency) - 1
             if difference > cut_off:
-                return tuple_list
+                return tuple_list, use_tuples
             else:
+                use_tuples = False
                 new_list = []
                 for val, freq in tuple_list:
                     for _ in range(freq):
-                        new_list.append(val)
-                return new_list
+                        new_list.append(val)    
+                return new_list, use_tuples
 
-        the_list = _fastest(to_add)
+        the_list, use_tuples = _fastest(values)
         #if a list of ints is faster, will do that
-        if isinstance(the_list[0], int):
+        if use_tuples:
             for _ in range(times):
-                self._add_a_list(the_list)
+                self._add_tuple_list(the_list)
         #otherwise adds by tuple
         else:
             for _ in range(times):
-                self._add_tuple_list(the_list)
+                self._add_a_list(the_list)
 
     def _add_a_list(self, lst):
         '''lst is ints. takes the table.  for each int in the list, makes new
@@ -277,21 +253,26 @@ class LongIntTable(object):
         newdic = {}
         for value, current_frequency in self._table.items():
             for val, freq in lst:
-                if freq != 0:
-                    newdic[value+val] = (newdic.get(value+val, 0)+
-                                         freq*current_frequency)
+                newdic[value+val] = (newdic.get(value+val, 0)+
+                                     freq*current_frequency)
         self._table = newdic
+    
     def remove(self, times, to_remove):
-        new_remove = make_tuple_list(to_remove)
+        '''times is positive int. values is a list of tuple(value, frequency)
+        only in value, NO ZERO FREQUENCIES ALLOWED!
+        this function reverses previous adds.  if you remove something you never
+        added, or remove it more times than you added it, that's on you.'''
+        if times < 1:
+            raise ValueError('times must be a positive int')
         for _ in range(times):
-            self._remove_tuple_list(new_remove)
+            self._remove_tuple_list(to_remove)
     
         
                     
     def _remove_tuple_list(self, tuple_list):
         '''tuple_list is a sorted list of tuples (value, frequency) with NO ZERO
         frequencies.  does the opposite of _add_tuple_list'''
-        
+        tuple_list.sort()
         tuples_min = tuple_list[0][0]
         tuples_max = tuple_list[-1][0]
         

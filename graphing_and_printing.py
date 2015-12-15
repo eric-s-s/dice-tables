@@ -8,21 +8,30 @@ import pylab
 
 #helper function. used everywhere to make numbers look purty.
 def scinote(num):
-    '''checks a positive int or float.  outputs a string of the number.
+    '''checks a int or float.  outputs a string of the number.
     float(string) will give you the number.
     if number lower than scinonote_cutoff, no change.
     if number already in scientific notation, just prints first 4 digits
     else prints first four digits in scientific notation.'''
+    dig_len = 4
     scinote_cutoff = 10**6
-    if num < scinote_cutoff:
+    negative = False
+    if num < 0:
+        negative = True
+    if abs(num) < scinote_cutoff:
         return str(num)
     elif 'e' in str(num):
         left, right = str(num).split('e')
-        return left[0:5]+'e'+right
+        if negative:
+            return left[0:dig_len+2]+'e'+right
+        else:
+            return left[0:dig_len+1]+'e'+right
     else:
-        string = str(int(num))
+        string = str(int(abs(num)))
         power = str(len(string)-1)
-        digits = string[0]+'.'+string[1:4]
+        digits = string[0]+'.'+string[1:dig_len]
+        if negative:
+            digits = '-'+digits
         return digits+'e+'+power
 
 #helper function for truncate_grapher() and stats()

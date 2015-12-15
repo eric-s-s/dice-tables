@@ -1,6 +1,7 @@
 '''for all things dicey.  this contains DiceInfo and DiceTable and add_dice.'''
 from longintmath import LongIntTable
 
+#TODO remove the number here and put it in dice list.  this is now Die
 class DiceInfo(object):
     '''dice info is an object that stores and returns info on a set of dice.
     it has the number, kind, weight info for a weighted die. negative rolls
@@ -44,7 +45,7 @@ class DiceInfo(object):
             if freq != 1:
                 return False
         return True
-
+    #TODO remove
     def get_num(self):
         '''returns the number of dice recorded'''
         return self._num
@@ -57,6 +58,7 @@ class DiceInfo(object):
     def get_weight(self):
         '''returns the weight of the die'''
         return self._weight
+    #TODO return a str, don't print
     def weight_info(self):
         '''prints out detailed weight info'''
         print self
@@ -65,7 +67,7 @@ class DiceInfo(object):
         else:
             for val, freq in self._dic.items():
                 print '    a roll of %s has a weight of %s' % (val, freq)
-
+    #TODO remove and put in dicetable
     def add_num(self, num):
         '''increases the number of dice recorded'''
         self._num += num
@@ -93,23 +95,24 @@ class DiceInfo(object):
             return out
         else:
             return out + ' W: %s' % (self._weight)
+    #TODO should eb able to remove
     def copy(self):
         '''make a copy of the diceinfo'''
         new_dic = self.get_dic()
         new_num = self.get_num()
         return DiceInfo(new_num, new_dic)
 
-
+#TODO change the list.  now a tuplelist of (Die, num) Die first will .sort() by Die
+#everything must be rewritten.  THIS WILL AFFECT UI
 class DiceTable(LongIntTable):
     '''this is a LongIntTable with a list that holds information about the dice
     added to it.'''
     def __init__(self):
         LongIntTable.__init__(self, {0:1})
         self._dice_list = []
-        #TODO - is this here for a reason?
-        #self._dice_list.sort()
         self._last_die = None
-
+    
+    #TODO rewrite
     def update_list(self, new_dice_info):
         '''adds new dice info to the list. if the new dice is the same as an
         old one, just adds the number instead. makes this die's dict the
@@ -124,6 +127,7 @@ class DiceTable(LongIntTable):
             self._dice_list.append(new_dice_info)
         self._dice_list.sort()
         self._last_die = new_dice_info.get_dic()
+    #TODO
     def get_list(self):
         '''return the dice list'''
         new_list = []
@@ -142,6 +146,7 @@ class DiceTable(LongIntTable):
             print 'No "last die"'
         else:
             print DiceInfo(1, self.get_last())
+    #TODO this prints and it should returna str
     def weights_info(self):
         '''prints detailed info of dice in the list'''
         for dice_info in self._dice_list:
@@ -163,7 +168,7 @@ class DiceTable(LongIntTable):
         new.update_frequency(0, 0)
         new.merge(new_dic)
         return new
-            
+#TODO these should be dicetable methods.  move in there. clean up so easier to read.            
 def add_dice(table, num=1, size='last'):
     '''uses num and size to make a DiceInfo.  updates the table's list and uses
     the DiceInfo dict to call LongIntTable.add() on the table'''
@@ -171,7 +176,11 @@ def add_dice(table, num=1, size='last'):
         size = table.get_last()
     dice_to_add = DiceInfo(num, size)
     table.update_list(dice_to_add)
-    table.add(num, dice_to_add.get_dic())
+    tuple_list = []
+    for value, frequency in dice_to_add.get_dic().items():
+        if frequency != 0:
+            tuple_list.append((value, frequency))
+    table.add(num, tuple_list)
     
 def remove_dice(table, num=1, size='last'):
     if size == 'last':
@@ -182,8 +191,13 @@ def remove_dice(table, num=1, size='last'):
         if dice_to_remove == dice:
             if dice.get_num() >= num:
                 illegal = False
+                break
     if illegal:
         raise ValueError('dice not in table, or removed too many dice')
     else:
-        table.remove(num, dice_to_remove.get_dic())
+        tuple_list = []
+        for value, frequency in dice_to_remove.get_dic().items():
+            if frequency != 0:
+                tuple_list.append((value, frequency))
+        table.remove(num, tuple_list)
         table.update_list(dice_to_remove)

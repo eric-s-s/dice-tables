@@ -2,7 +2,7 @@ import longintmath as lim
 import dicestats as ds
 import graphing_and_printing as gap
 import time
-
+import decimal as dec
 #testing
 import time
 def add_dices(table, num_times, lst):
@@ -93,7 +93,7 @@ def tst_div(num, denom):
 def stddev_time(table):
     s = time.clock()
     ans = stddev_div(table) 
-    print 'div    ', ans, 'time' , time.clock()-s
+    print 'dec    ', ans, 'time' , time.clock()-s
     s = time.clock()
     ans = stddev_floor(table)
     print 'floor  ', ans, 'time' , time.clock()-s
@@ -104,24 +104,26 @@ def stddev_time(table):
 def stddev_div(table):
     avg = table.mean()
     sig_figs = 4
-    extra_digits = 5
-    power = len(str(table.frequency_highest()[1])) - 1
-    factor = 10**(power - (sig_figs + extra_digits))
-    sqs = 0
+    #extra_digits = 5
+    #power = len(str(table.frequency_highest()[1])) - 1
+    #factor = 10**(power - (sig_figs + extra_digits))
+    sqs = dec.Decimal(0)
     count = 0
     for value, frequency in table._table.items():        
-        sqs += (table.divide(frequency, factor, (sig_figs + extra_digits))
-                * (avg - value)**2)
+        sqs += dec.Decimal(frequency) * dec.Decimal(((avg - value)**2))
         count += frequency
-    new_count = table.divide(count, factor, (sig_figs + extra_digits))
-    return round((sqs/new_count)**0.5, sig_figs)
+    new_count = dec.Decimal(count)
+    return round(float((sqs/new_count)**dec.Decimal(0.5)), sig_figs)
         
 def stddev_floor(table):
     avg = table.mean()
     sig_figs = 4
     extra_digits = 5
     power = len(str(table.frequency_highest()[1])) - 1
-    factor = 10**(power - (sig_figs + extra_digits))
+    if power < 2*(sig_figs+extra_digits):
+        factor = 1
+    else:
+        factor = 10**(power - (sig_figs + extra_digits))
     sqs = 0
     count = 0
     for value, frequency in table._table.items():
@@ -171,11 +173,24 @@ def highest(table):
     return gap.scinote(table.frequency_highest()[1])
 #TODO ends
 
-def lim_tst_pow_man(num):
-    try:
-        out =  lim.mantissa(num)*10**lim.exp(num)
-    except OverflowError:
-        temp = int(lim.mantissa(num)*10**12)
-        out = temp*10**(lim.exp(num)-12)
-    print out
-    print 100*(num - out)/out, 'pct'
+def make_tuple_list(an_input):
+    '''get the zero values out to speed up and things and then convert 
+    to an ordered tuple list'''
+        
+    if isinstance(an_input, lim.LongIntTable):
+        temp_out = an_input.frequency_all()
+    elif isinstance(an_input, list) and isinstance(an_input[0], int):
+        make_dic = {}
+        for number in an_input:
+            make_dic[number] = make_dic.get(number, 0)+1
+        temp_out = [(val, freq) for val, freq in make_dic.items()]
+    elif isinstance(an_input, dict):
+        temp_out = [(val, freq) for val, freq in an_input.items()]
+    else:
+        temp_out = an_input[:]
+    out = []
+    for pair in temp_out:
+        if pair[1] != 0:
+            out.append(pair)
+    out.sort()
+    return out
