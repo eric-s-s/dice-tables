@@ -4,7 +4,9 @@ import graphing_and_printing as gap
 import time
 import decimal as dec
 #testing
-import time
+
+
+
 def add_dices(table, num_times, lst):
     '''repeat the add_ function num_times times.'''
     for _ in range(num_times):
@@ -20,14 +22,14 @@ def add_weighted_dice(table, num_times, lst):
 def timetrial(lst, num_adds):
     '''a very lazily written timetrial for add_dice'''
     lst.sort()
-    dic = {10:0, 11:0, 12:0}
+    dic = {}
     for el in lst:
         dic[el] = 1+dic.get(el, 0)
     t_list = []
     for die, weight in dic.items():
         t_list.append((die, weight))
     t_list.sort()
-    print 'list', lst, '\ndictionary', dic, '\ntuples', t_list
+    print 'list', lst, '\ntuples', t_list, '\n'
 
     start_a = time.clock()
     a = lim.LongIntTable({0:1})
@@ -41,58 +43,17 @@ def timetrial(lst, num_adds):
     print 'tuple list\n', time.clock()-start_b
     print b.mean(), b.stddev(), '\n'
 
-    start_c = time.clock()
-    c = lim.LongIntTable({0:1})
-    c.add(num_adds, lst)
-    print 'add funct list\n', time.clock()-start_c
-    print c.mean(), c.stddev(), '\n'
-
-    start_d = time.clock()
-    d = lim.LongIntTable({0:1})
-    d.add(num_adds, dic)
-    print 'add funct dictionary\n', time.clock()-start_d
-    print d.mean(), d.stddev(), '\n'
-
-    start_e = time.clock()
-    e = lim.LongIntTable({0:1})
-    e.add(num_adds, t_list)
-    print 'add funct tuple list\n', time.clock()-start_e
-    print e.mean(), e.stddev(), '\n'
-
-    start_f = time.clock()
-    f = lim.LongIntTable({0:1})
-    f.add(num_adds, lim.LongIntTable(dic))
-    print 'add funct LIT\n', time.clock()-start_f
-    print f.mean(), f.stddev(), '\n'
-    return a, b, c, d, e, f
-
-
-
-
-def tst_pow(num, exp_top,exp_bottom):
-    start1 = time.clock()
-    print 'LI %s' % (lim.long_int_pow(num, exp_top, exp_bottom))
-    print time.clock() - start1
-    start2 = time.clock()
-    print 'reg %s' % (num**(float(exp_top)/exp_bottom))
-    print time.clock() - start2
     
-def tst_div(num, denom):
-    tst = lim.LongIntTable({1: 10**1000})
-    start1 = time.clock()
-    lit = tst.divide(num, denom)
-    time1 = time.clock() - start1
-    start2 = time.clock()
-    lid = lim.long_int_div(num, denom)
-    time2 = time.clock() - start2
-    pct = 100*(lid-lit)/lid
-    if isinstance(lid, float):
-        print lid
-    print 'err %s\ntable  time %s\nl.i.d. time %s' % (pct, time1, time2)
+    return a, b
+
+
+
+
+
     
 def stddev_time(table):
     s = time.clock()
-    ans = stddev_div(table) 
+    ans = stddev_dec(table) 
     print 'dec    ', ans, 'time' , time.clock()-s
     s = time.clock()
     ans = stddev_floor(table)
@@ -101,7 +62,7 @@ def stddev_time(table):
     ans = stddev_lid(table)
     print 'lid    ', ans, 'time' , time.clock()-s
 
-def stddev_div(table):
+def stddev_dec(table):
     avg = table.mean()
     sig_figs = 4
     #extra_digits = 5
@@ -140,10 +101,10 @@ def stddev_lid(table):
     sqs = 0
     count = 0
     for value, frequency in table._table.items():        
-        sqs += (lim.long_int_div(frequency, factor, (sig_figs + extra_digits))
+        sqs += (lim.long_int_div(frequency, factor)
                 * (avg - value)**2)
         count += frequency
-    new_count = lim.long_int_div(count, factor, (sig_figs + extra_digits))
+    new_count = lim.long_int_div(count, factor)
     return round((sqs/new_count)**0.5, sig_figs)
 
 def stddev_basic(table):
@@ -163,11 +124,12 @@ def stddeverr(table, function):
     approx = function(table)
     return 100*(accurate - approx)/accurate
 
-def showit2(table, function):
+def stddev_tester(table, function):
     '''the final function for stddev checking.  adds a die and prints pctdiff'''
     for _ in range(100):
         ds.add_dice(table)
         print str(stddeverr(table, function))
+
 def highest(table):
     '''quick! gimme the highest val, nicely displayed'''
     return gap.scinote(table.frequency_highest()[1])
@@ -194,3 +156,68 @@ def make_tuple_list(an_input):
             out.append(pair)
     out.sort()
     return out
+
+def time_scinote(num, dig_len):
+     start = time.clock()
+     print gap.scinote(num, dig_len)
+     print 'time %s' % (time.clock()-start)
+def time_fg(table):
+     start = time.clock()
+     gap.fancy_grapher_pct(table)
+     print 'time %s' % (time.clock()-start)  
+
+
+def tst_scinote(num, dig_len=4):
+    exp = get_exp(num)
+    mantissa = get_mantissa(num, dig_len+2)
+    while mantissa >= 10:
+        mantissa = mantissa/10.0
+        exp +=1
+    while mantissa < 1:
+        mantissa = mantissa*10.0
+        exp -=1
+    mantissa = round(mantissa, dig_len - 1)
+    if exp > 6:
+        return '%se+%s' % (mantissa, exp)
+    elif exp < -4:
+        return '%se%s' % (mantissa, exp)
+    #elif exp - dig_len >= 0:
+    #    return add_commas(str(int(mantissa*10**exp)))
+    #else:
+    #    return add_commas(str(mantissa*10**exp))    
+def get_exp(num):
+    '''return the exp of a number'''
+    if num == 0:
+        return 1
+    if 'e' in str(num):
+        return int(str(num).split('e')[1])
+    elif 'E' in str(num):
+        return int(str(num).split('E')[1])
+    elif abs(num) >= 1:
+        return len(str(abs(int(num))))-1
+    else:
+        after_decimal = str(num).split('.')[1]
+        count = -1
+        for digit in after_decimal:
+            if digit == '0':
+                count -= 1
+            else:
+                return count
+def get_mantissa(num, sig_figs=10):
+    '''mantissa(1.23455e+245) returns 1.23455 with a min of sig_fig digits.'''
+    if num == 0:
+        return 0
+    elif 'e' in str(num):
+        the_mantissa = float(str(num).split('e')[0])
+        return the_mantissa
+    elif 'E' in str(num):
+        the_mantissa = float(str(num).split('E')[0])
+        return the_mantissa
+    elif abs(num) >= 1:
+        factor = 10**(get_exp(num) - sig_figs - 1)
+        reduced = num//factor
+        reduced = float(reduced)
+        return reduced/10**(sig_figs+1)
+    else:
+        factor = 10**(-get_exp(num))
+        return num*factor    

@@ -1,87 +1,30 @@
 ''' this module contains the class LongIntTable and longint math that the table
 needs to deal with it's BFN'''
-#these three functions are concerned with float-math for long ints.
 
-
-#TODO make these wrapper functions
-def long_int_div(numerator, denominator, sig_figs=8):
-    '''does float division for any number, including long ints
-    returns floats where possible, otherwise long ints.'''
-    man_figs = sig_figs+2
-    exp_ans = exp(numerator) - exp(denominator)
-    man_ans = mantissa(numerator, man_figs)/mantissa(denominator, man_figs)
-    return make_answer(man_ans, exp_ans, sig_figs)
-
-def long_int_times(factor_1, factor_2, sig_figs=8):
-    '''does float multiplication for any number, including long ints
-    returns floats where possible, otherwise long ints.'''
-    man_figs = sig_figs+2
-    exp_ans = exp(factor_1) + exp(factor_2)
-    man_ans = mantissa(factor_1, man_figs) * mantissa(factor_2, man_figs)
-    return make_answer(man_ans, exp_ans, sig_figs)
-
-def long_int_pow(number, numerator, denominator, sig_figs=8):
-    '''does anything to any exp.  inputs can be ints or floats.
-    returns floats where possible, otherwise long ints.'''
-    man_figs = sig_figs+2
-    exp_num = exp(number)
-    exp_remainder = exp_num % denominator
-    exp_ans = (exp_num//denominator)*numerator
-    man_ans = mantissa(number, man_figs)*10**exp_remainder
-    man_ans = man_ans**(numerator/float(denominator))
-    total_exp = exp(man_ans)+exp_ans
-    total_man = mantissa(man_ans, man_figs)
-    return make_answer(total_man, total_exp, sig_figs)
-
-#the helper functions for the float-math functions
-def exp(num):
-    '''return the exp of a number'''
-    if num == 0:
-        return 1
-    if 'e' in str(num):
-        return int(str(num).split('e')[1])
-    elif abs(num) >= 1:
-        return len(str(abs(int(num))))-1
+#these three functions and helper are concerned with float-math for long ints.
+from decimal import Decimal as dec
+def convert_back(num):
+    '''helper to long_int_function.  takes a Decimal and returns float if
+    possible, else, long_int'''
+    if float(num) == float('inf') or float(num) == float('-inf'):
+        return long(num)
     else:
-        after_decimal = str(num).split('.')[1]
-        count = -1
-        for digit in after_decimal:
-            if digit == '0':
-                count -= 1
-            else:
-                return count
-def mantissa(num, sig_figs=10):
-    '''mantissa(1.23455e+245) returns 1.23455 up to sig_fig digits.'''
-    if num == 0:
-        return 0
-    elif 'e' in str(num):
-        the_mantissa = float(str(num).split('e')[0])
-        return the_mantissa
-    elif abs(num) >= 1:
-        factor = 10**(exp(num) - sig_figs - 1)
-        reduced = num//factor
-        reduced = float(reduced)
-        return reduced/10**(sig_figs+1)
-    else:
-        factor = 10**(-exp(num))
-        return num*factor
+        return float(num)
 
-def make_answer(a_mantissa, exponent, sig_figs):
-    '''takes raw answer and outputs appropriate answer'''
-    sig_figs -= 1
-    if a_mantissa < 1:
-        a_mantissa *= 10
-        exponent -= 1
-    max_float_exp = 300
-    if exponent < -max_float_exp:
-        return 0.0
-    if exponent <= max_float_exp:
-        return round(a_mantissa*10**exponent, sig_figs - exponent)
-    if exponent > max_float_exp:
-        new_mantissa = int(round(a_mantissa, sig_figs)*10**(sig_figs))
-        new_pow = exponent - sig_figs
-        return new_mantissa*10**new_pow
+def long_int_div(numerator, denominator):
+    '''returns a float division of numbers even if they are over 1e+308'''
+    ans = dec(numerator) / dec(denominator)
+    return convert_back(ans)
 
+def long_int_times(number1, number2):
+    '''returns a float times of numbers even if they are over 1e+308'''
+    ans = dec(number1) * dec(number2)
+    return convert_back(ans)
+
+def long_int_pow(number, exponent):
+    '''returns a float exponent of numbers even if they are over 1e+308'''
+    ans = dec(number)**dec(exponent)
+    return convert_back(ans)
 
 
 
@@ -89,12 +32,10 @@ class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurences of all unassigned intergers.'''
 
-    OVERFLOW_CUTOFF = 10**100
     def __init__(self, seed_dictionary):
         '''seed_dictionary is a dictionary of ints
         {value1: frequency of value1, value2: frequency of value 2, ...}'''
         self._table = seed_dictionary.copy()
-        self._overflow_control = False
 
     def values(self):
         '''return the all the values, in order, that have non-zero frequency'''
@@ -156,13 +97,6 @@ class LongIntTable(object):
         return ('table from %s to %s' %
                 (self.values_min(), self.values_max()))
 
-    def check_overflow(self):
-        '''if table is too big, and overflow control is false, set to true'''
-        if (not self._overflow_control and
-                self.total_frequency() > self.OVERFLOW_CUTOFF):
-            self._overflow_control = True
-        return self._overflow_control
-
     def copy(self):
         '''returns a copy of a LIT'''
         new_dic = dict((val, freq) for val, freq in self.frequency_all())
@@ -171,10 +105,9 @@ class LongIntTable(object):
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
-        sig_figs = 8
         numerator = sum([value*freq for value, freq in self._table.items()])
         denominator = self.total_frequency()
-        return long_int_div(numerator, denominator, sig_figs)
+        return long_int_div(numerator, denominator)
     def stddev(self):
         '''returns the standdard deviation of the table, with special measures
         to deal with long ints.'''
@@ -198,13 +131,13 @@ class LongIntTable(object):
         '''times is positive int. values is a list of tuple(value, frequency)
         only in value, NO ZERO FREQUENCIES ALLOWED!
         this function adds your table's values and frequency and the values's.
-        
+
         here's how it works - original list event A is 3 out of 5.
         event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
         A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
         if times < 1:
             raise ValueError('times must be a positive int')
-        
+
         values.sort()
         def _fastest(tuple_list):
             '''returns fastest method'''
@@ -221,7 +154,7 @@ class LongIntTable(object):
                 new_list = []
                 for val, freq in tuple_list:
                     for _ in range(freq):
-                        new_list.append(val)    
+                        new_list.append(val)
                 return new_list, use_tuples
 
         the_list, use_tuples = _fastest(values)
@@ -245,7 +178,7 @@ class LongIntTable(object):
             for val in lst:
                 newdic[value+val] = (newdic.get(value+val, 0)+current_frequency)
         self._table = newdic
-        
+
     def _add_tuple_list(self, lst):
         '''as add_list_to_values, but now pass a list of tuples of ints.
         [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
@@ -256,7 +189,7 @@ class LongIntTable(object):
                 newdic[value+val] = (newdic.get(value+val, 0)+
                                      freq*current_frequency)
         self._table = newdic
-    
+
     def remove(self, times, to_remove):
         '''times is positive int. values is a list of tuple(value, frequency)
         only in value, NO ZERO FREQUENCIES ALLOWED!
@@ -266,17 +199,15 @@ class LongIntTable(object):
             raise ValueError('times must be a positive int')
         for _ in range(times):
             self._remove_tuple_list(to_remove)
-    
-        
-                    
+
     def _remove_tuple_list(self, tuple_list):
         '''tuple_list is a sorted list of tuples (value, frequency) with NO ZERO
         frequencies.  does the opposite of _add_tuple_list'''
         tuple_list.sort()
         tuples_min = tuple_list[0][0]
         tuples_max = tuple_list[-1][0]
-        
-        start = self.values_min()-tuples_min  
+
+        start = self.values_min()-tuples_min
         stop = self.values_max()- tuples_max
         new_dic = {}
         for value in range(start, stop+1):
@@ -285,12 +216,12 @@ class LongIntTable(object):
                 for tup_val, tup_weight in tuple_list[1:]:
                     the_diff = tup_val - tuples_min
                     new_dic_val = new_dic_val - (new_dic.get(value - the_diff, 0) *
-                                                tup_weight)
+                                                 tup_weight)
                 new_dic[value] = new_dic_val / tuple_list[0][1]
             except KeyError:
-                continue 
+                continue
         self._table = new_dic
-    
+
     def merge(self, other):
         '''other can be LongIntTable, dictionary of ints {value:freq} or list
         of int tuples [(value, freq)].  adds all those value, freq to self'''
@@ -322,6 +253,5 @@ class LongIntTable(object):
         self._table[new_val] = self._table.get(new_val, 0)+freq
 
 
-        
 
  

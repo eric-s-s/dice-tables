@@ -7,32 +7,55 @@ import pylab
 
 
 #helper function. used everywhere to make numbers look purty.
-def scinote(num):
-    '''checks a int or float.  outputs a string of the number.
-    float(string) will give you the number.
-    if number lower than scinonote_cutoff, no change.
-    if number already in scientific notation, just prints first 4 digits
-    else prints first four digits in scientific notation.'''
-    dig_len = 4
-    scinote_cutoff = 10**6
-    negative = False
-    if num < 0:
-        negative = True
-    if abs(num) < scinote_cutoff:
-        return str(num)
-    elif 'e' in str(num):
-        left, right = str(num).split('e')
-        if negative:
-            return left[0:dig_len+2]+'e'+right
+def scinote(num, dig_len=4):
+    '''num is int, float or long.  dig_len is 18>int >=2 returns a nice formatted
+    string for any number.  rounds to dig_len. (dig_len over 18 makes errors in
+    output unless the number is higher than 10**309. this is for readability.
+    for high precision, use the "decimal" module.)'''
+    sci_power_cutoff = 7
+    if num == 0:
+        return '0.0'
+    #numbers less than sci_power_cutoff are appropriately rounded and comma-ed
+    if 1 < abs(num) < 10**sci_power_cutoff:
+        left = str(abs(num)).split('.')[0]
+        int_digits = len(left)
+        if dig_len > int_digits:
+            num = float(round(num, dig_len - int_digits))
         else:
-            return left[0:dig_len+1]+'e'+right
+            num = int(round(num, dig_len - int_digits))
+        return '{:,}'.format(num)
     else:
-        string = str(int(abs(num)))
-        power = str(len(string)-1)
-        digits = string[0]+'.'+string[1:dig_len]
-        if negative:
-            digits = '-'+digits
-        return digits+'e+'+power
+        try:
+            str_format = '{:.%sg}' % (dig_len)
+            count = 0
+            #a workaround for when sci_power_cutoff <= power(num) < dig_len
+            while 'e' not in str_format.format(num) and num > 1:
+                num *= 10.0
+                count += 1
+
+            if count == 0:
+                return str_format.format(num)
+            else:
+                mantissa, power = str_format.format(num).split('+')
+                power = str(int(power) - count)
+                return mantissa + '+' + power
+        except OverflowError:
+            return long_note(num, dig_len)
+
+def long_note(num, dig_len):
+    '''converts long ints over 1e+308 to sci notation. helper to scinote'''
+    num_str = str(abs(num))
+    power = len(num_str) - 1
+    digits = num_str[0] + '.' + num_str[1:dig_len - 1]
+    #this if/else rounds the final digit
+    if int(num_str[dig_len]) >= 5:
+        last_digit = str(int(num_str[dig_len - 1]) + 1)
+    else:
+        last_digit = num_str[dig_len - 1]
+    if num < 0:
+        digits = '-' + digits
+    return '%s%se+%s' % (digits, last_digit, power)
+
 
 #helper function for truncate_grapher() and stats()
 def list_to_string(lst):
@@ -81,7 +104,7 @@ def graph_list(table):
     divstring = '1'
     #this sets the divisor so that max height of graph is MAX_GRAPH_HEIGHT x's
     if max_frequency > max_graph_height:
-        divisor = li_div(max_frequency, max_graph_height, 5)
+        divisor = li_div(max_frequency, max_graph_height)
         divstring = scinote(divisor)
 
     for value, frequency in table.frequency_all():
@@ -124,12 +147,12 @@ def fancy_grapher(table, figure=1, style='bo', legend=False):
     x_axis = []
     y_axis = []
     factor = 1
-
+    too_big_for_pylab = 10**300
     pylab.figure(figure)
     pylab.ylabel('number of occurences')
     #A work-around for the limitations of pylab.
     #It can't handle really fucking big ints and can't use my workarounds
-    if table.check_overflow():
+    if table.total_frequency() > too_big_for_pylab:
         power = len(str(table.frequency_highest()[1])) - 5
         factor = 10**power
         pylab.ylabel('number of occurences times 10^'+str(power))
@@ -153,11 +176,11 @@ def fancy_grapher_pct(table, figure=1, style='bo', legend=False):
     y_axis = []
     pylab.figure(figure)
     pylab.ylabel('pct of the total occurences')
-    factor = li_div(table.total_frequency(), 100, 4)
+    factor = li_div(table.total_frequency(), 100)
 
     for value, frequency in table.frequency_all():
         x_axis.append(value)
-        y_axis.append(li_div(frequency, factor, 4))
+        y_axis.append(li_div(frequency, factor))
 
     pylab.xlabel('values')
     pylab.title('all the combinations for '+str(table))
@@ -182,9 +205,9 @@ def stats(table, values):
     if lst_frequency == 0:
         print 'no results'
         return None
-    chance = li_div(all_combos, lst_frequency, 4)
-    pct = 100 * li_div(lst_frequency, all_combos, 3)
-
+    chance = li_div(all_combos, lst_frequency)
+    pct = 100 * li_div(lst_frequency, all_combos)
+    pct_str = scinote(pct)
     lst_frequency_str = scinote(lst_frequency)
     chance_str = scinote(chance)
     all_combos_str = scinote(all_combos)
@@ -196,6 +219,6 @@ def stats(table, values):
            (values_str, lst_frequency_str, all_combos_str))
     print 'for %s,' % (str(table).replace('\n', '\n' + added_width*' '))
     print ('the chance of %s is 1 in %s or %s percent' %
-           (values_str, chance_str, pct))
+           (values_str, chance_str, pct_str))
     print
 
