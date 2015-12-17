@@ -8,7 +8,7 @@ import graphing_and_printing as gap
 import pylab
 import random
 from copy import deepcopy
-
+#TODO add and remove changed.  also, str methods for dice table.  change it all
 class SaveList(object):
     '''this class save copies of objects and returns them. uses copy.deepcopy().
     this SHOULD keep any mutability problems from happening.'''
@@ -286,7 +286,7 @@ def adder(table):
     same_dice.do_user_choice()
 def add_same(table):
     '''process for adding the same kind of dice'''
-    if table.get_last() == None:
+    if table.last_info() == 'None':
         print 'Never added a die'
         add_new(table)
     num_dice = get_num('How many dice would you like to add?', table)
@@ -308,7 +308,7 @@ def add_new(table):
     if no_weight == 'y':
         print 'please wait. adding dice. this may take time.\n...'
         print ''
-        ds.add_dice(table, num_dice, size)
+        ds.add_dice(table, num_dice, ds.Die(size))
     else:
         out_dic = {}
         print 'time to make weights for a D%s' % (size)
@@ -317,7 +317,7 @@ def add_new(table):
             weight = get_num(question, table, True)
             out_dic[d_val] = weight
         print 'please wait. adding dice. this may take time.\n...'
-        ds.add_dice(table, num_dice, out_dic)
+        ds.add_dice(table, num_dice, ds.WeightedDie(out_dic))
     print 'all done.  there! that wasn\'t so bad. back to action menu'
     table_actions(table)
 

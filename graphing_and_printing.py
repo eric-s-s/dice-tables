@@ -15,35 +15,28 @@ def scinote(num, dig_len=4):
     sci_power_cutoff = 7
     if num == 0:
         return '0.0'
-    #numbers less than sci_power_cutoff are appropriately rounded and comma-ed
-    if 1 < abs(num) < 10**sci_power_cutoff:
+    #abs(numbers) less than one use the general format to dig_len precision
+    elif 0 < abs(num) < 1:
+        str_format = '{:.%sg}' % (dig_len)
+        return str_format.format(num)
+    #1 <= abs(numbers) < sci_power_cutoff are appropriately rounded and comma-ed
+    elif 1 <= abs(num) < 10**sci_power_cutoff:
         left = str(abs(num)).split('.')[0]
         int_digits = len(left)
-        if dig_len > int_digits:
+        if dig_len > int_digits and isinstance(num, float):
             num = float(round(num, dig_len - int_digits))
         else:
-            num = int(round(num, dig_len - int_digits))
+            num = int(round(num, 0))
         return '{:,}'.format(num)
     else:
         try:
-            str_format = '{:.%sg}' % (dig_len)
-            count = 0
-            #a workaround for when sci_power_cutoff <= power(num) < dig_len
-            while 'e' not in str_format.format(num) and num > 1:
-                num *= 10.0
-                count += 1
-
-            if count == 0:
-                return str_format.format(num)
-            else:
-                mantissa, power = str_format.format(num).split('+')
-                power = str(int(power) - count)
-                return mantissa + '+' + power
+            str_format = '{:.%se}' % (dig_len-1)
+            return str_format.format(num)
         except OverflowError:
             return long_note(num, dig_len)
 
 def long_note(num, dig_len):
-    '''converts long ints over 1e+308 to sci notation. helper to scinote'''
+    '''converts long ints over +/-1e+308 to sci notation. helper to scinote'''
     num_str = str(abs(num))
     power = len(num_str) - 1
     digits = num_str[0] + '.' + num_str[1:dig_len - 1]
