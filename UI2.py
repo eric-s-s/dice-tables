@@ -8,7 +8,7 @@ import graphing_and_printing as gap
 import pylab
 import random
 from copy import deepcopy
-#TODO add and remove changed.  also, str methods for dice table.  change it all
+
 class SaveList(object):
     '''this class save copies of objects and returns them. uses copy.deepcopy().
     this SHOULD keep any mutability problems from happening.'''
@@ -190,6 +190,7 @@ def table_actions(table):
     '''all the actions you ever wanted to do on a dice table'''
     t_choices = Choices('to',
                         [(adder, (table), 'ADD dice', ('add', 'a')),
+                         (remover, (table), 'REMOVE dice', ('rm', 'r')),
                          (get_stats, (table), 'GET stats', ('get', 'g')),
                          (graphing, (table), 'MAKE graphs', ('make', 'm')),
                          (save, (table, 'action'), 'SAVE the table',
@@ -201,8 +202,7 @@ def table_actions(table):
                          (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
     print '\n\nyou current dice are:'
     print table
-    print 'the last die added was:'
-    table.last_die_info()
+    print 'the last die added was:%s' % (table.get_last())
     t_choices.do_user_choice()
 
 def save_new(table):
@@ -286,7 +286,7 @@ def adder(table):
     same_dice.do_user_choice()
 def add_same(table):
     '''process for adding the same kind of dice'''
-    if table.last_info() == 'None':
+    if table.get_last() == None:
         print 'Never added a die'
         add_new(table)
     num_dice = get_num('How many dice would you like to add?', table)
@@ -303,12 +303,18 @@ def add_new(table):
         print table
     num_dice = get_num('How many dice would you like to add?', table)
     size = get_num('what size for your dice?', table)
+    mod_str = raw_input('to put a modifier on your dice, enter an int. \n' +
+                        'else enter any key. >>> ')
+    try:
+        mod = int(mod_str)
+    except ValueError:
+        mod = 0
     print '\n\nenter "y" for regular dice or anykey for weighted dice'
     no_weight = raw_input('>>> ')
     if no_weight == 'y':
         print 'please wait. adding dice. this may take time.\n...'
         print ''
-        ds.add_dice(table, num_dice, ds.Die(size))
+        ds.add_dice(table, num_dice, size, mod)
     else:
         out_dic = {}
         print 'time to make weights for a D%s' % (size)
@@ -317,10 +323,26 @@ def add_new(table):
             weight = get_num(question, table, True)
             out_dic[d_val] = weight
         print 'please wait. adding dice. this may take time.\n...'
-        ds.add_dice(table, num_dice, ds.WeightedDie(out_dic))
+        ds.add_dice(table, num_dice, out_dic, mod)
     print 'all done.  there! that wasn\'t so bad. back to action menu'
     table_actions(table)
 
+def remover(table):
+    '''uses user input to remove a dice from the table'''
+    the_list = table.get_list()
+    if the_list == []:
+        print 'cannot remove from empty list'
+        table_actions(table)
+    for index in range(len(the_list)):
+        die, number = the_list[index]
+        print 'index %s -> %s %s' % (index, number, die)
+    print 'choose die by index'
+    the_index = get_num_range(table, 0, len(the_list) - 1)
+    rm_die, highest_num = the_list[the_index]
+    print 'choose how many dice to remove'
+    rm_num = get_num_range(table, 0, highest_num)
+    table.remove_die(rm_num, rm_die)
+    table_actions(table)
 
 def get_num(question, table, zero_ok=False):
     '''used by several functions to make sure user input is either a whole or
@@ -345,6 +367,16 @@ def get_num(question, table, zero_ok=False):
                 print ('well, ok. you can try 0 if you like. but that\'s as low'
                        + ' as i go!')
             print
+def get_num_range(table, bottom, top):
+    '''prompts the user choose an int in the range, (bottom <= choice <= top)
+    keeps prompting user until inputs proper answer or type 'q', 'quit' '''
+    question = 'Please input an interger from %s to %s' % (bottom, top)
+    while True:
+        answer = get_num(question, table, True)
+        if bottom <= answer <= top:
+            return answer
+        else:
+            print '\nnaughty naughty out of range'
 
 def make_a_list(table):
     '''take user input of a range of numbers
