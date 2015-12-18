@@ -46,7 +46,7 @@ class WeightedDie(object):
     def __init__(self, dictionary_input):
         '''dictionary input is a dictionary of int, value:weight {1:3, 2:1, 3:1}
         create a D3 that rolls a one 3 times more than a two or a three.'''
-        self._dic = dictionary_input
+        self._dic = dictionary_input.copy()
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
 
@@ -190,7 +190,8 @@ def make_die(table, die_input):
 #helper to make_die
 def dictionary_maker(mystery_input):
     '''mystery input can be a list, a list of tuples or a dictionary. returns the
-    dictionary of the input'''
+    dictionary of the input. all are shallow copies!! if elements are mutable,
+    new element points to original element.'''
     if isinstance(mystery_input, list):
         if isinstance(mystery_input[0], tuple):
             return dict(pair for pair in mystery_input)
@@ -200,7 +201,7 @@ def dictionary_maker(mystery_input):
                 out[value] = out.get(value, 0) + 1
             return out
     else:
-        return dict((pair) for pair in mystery_input.items())
+        return mystery_input.copy()
 
 def add_dice(table, num=1, die_input='last'):
     '''a wrapper function to make table.add_dice quicker and easier. takes legal
