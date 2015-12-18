@@ -16,6 +16,9 @@ class Die(object):
     def get_weight(self):
         '''returns the weight of the die'''
         return self._weight
+    def get_copy(self):
+        '''returns a copy of the die object'''
+        return Die(self._die_size)
     def tuple_list(self):
         '''returns the tuple list that is the dice values'''
         return [(value, 1) for value in range(1, self._die_size + 1)]
@@ -29,7 +32,10 @@ class Die(object):
 
     def __eq__(self, other):
         '''two DiceInfo are equal if their tuple lists match'''
-        return self.tuple_list() == other.tuple_list()
+        if not isinstance(other, Die):
+            return False
+        else:
+            return self.get_size() == other.get_size()
 
     def __str__(self):
         return 'D%s' % (self._die_size)
@@ -37,24 +43,10 @@ class Die(object):
 
 class WeightedDie(object):
     '''stores and returns info for a weighted die.'''
-    def __init__(self, die_input):
-        '''die_input can be a list of values, or a dictionary or a list
-        of tuples.  weights - positive intergers and 0.  die values are
-        positive ints. [1,1,1,2,3], {1:3, 2:1, 3:1} and [(1,3), (2,1), (3,1)] all
+    def __init__(self, dictionary_input):
+        '''dictionary input is a dictionary of int, value:weight {1:3, 2:1, 3:1}
         create a D3 that rolls a one 3 times more than a two or a three.'''
-        #helper for init function
-        def _make_dic(an_input):
-            '''turns any appropriate die representation into a dictionary'''
-            if isinstance(an_input, dict):
-                return an_input
-            elif isinstance(an_input, list) and isinstance(an_input[0], int):
-                dic = {}
-                for val in an_input:
-                    dic[val] = dic.get(val, 0) + 1
-                return dic
-            elif isinstance(an_input, list) and isinstance(an_input[0], tuple):
-                return dict((pair) for pair in an_input)
-        self._dic = _make_dic(die_input)
+        self._dic = dictionary_input
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
 
@@ -64,7 +56,10 @@ class WeightedDie(object):
     def get_weight(self):
         '''returns the weight of the die'''
         return self._weight
-
+    def get_copy(self):
+        '''returns a copy of the die'''
+        new_dic = self._dic.copy()
+        return WeightedDie(new_dic)
     def tuple_list(self):
         '''returns the tuple list that is the dice values'''
         out = []
@@ -82,14 +77,16 @@ class WeightedDie(object):
         return out
 
     def __lt__(self, other):
-        '''dice info's are compared by size of dice, not number of dice'''
+        '''dice info's are compared by size of dice, and then weight'''
         return (self.get_size() < other.get_size() or self.get_size() ==
-                other.get_size() and self.get_weight < other.get_weight())
+                other.get_size() and self.get_weight() < other.get_weight())
 
     def __eq__(self, other):
-        '''two DiceInfo are equal if their dictionary of values are a match'''
-        return self.tuple_list() == other.tuple_list()
-
+        '''two Dice are equal if their dictionary of values are a match'''
+        if not isinstance(other, WeightedDie):
+            return False
+        else:
+            return self.tuple_list() == other.tuple_list()
     def __str__(self):
         return 'D%s  W:%s' % (self._die_size, self._weight)
 
@@ -133,9 +130,12 @@ class DiceTable(LongIntTable):
                 break
         return answer
 
-    def last_tuple(self):
+    def get_last(self):
         '''return tuple list of the last die added'''
-        return self._last_die.tuple_list()
+        if self._last_die is None:
+            return None
+        else:
+            return self._last_die.get_copy()
     def last_info(self, weight_info=False):
         '''returns str of either last die or it's weight info'''
         if weight_info:
@@ -156,54 +156,65 @@ class DiceTable(LongIntTable):
             out_str = out_str + '%s%s\n' % (number, die)
         return out_str.rstrip('\n')
 
-    def add_dice(self, num=1, die='last'):
-        '''adds dice to the table and updates the table, list.  die is a  Die or
-        WeightedDie and num is a positive int.'''
-        if die == 'last':
-            to_add = self._last_die
-        else:
-            to_add = die
-        self.add(num, to_add.tuple_list())
-        self.update_list(num, to_add)
+    def add_die(self, num, die):
+        '''adds the die to the table num times and updates the table, list.  die
+        is a  Die or WeightedDie and num is a positive int.'''
+        self.add(num, die.tuple_list())
+        self.update_list(num, die)
 
-    def remove_dice(self, num=1, die='last'):
+    def remove_die(self, num, die):
         '''die is a  Die or WeightedDie and num is a positive int.first makes
         sure the dice to be removed are in the list. then removes those dice
         from the list and the table.'''
-        if die == 'last':
-            to_rm = self._last_die
-        else:
-            to_rm = die
-        if self.number_of_dice(to_rm) - num < 0:
+        if self.number_of_dice(die) - num < 0:
             raise ValueError('dice not in table, or removed too many dice')
         else:
-            self.remove(num, to_rm.tuple_list())
-            self.update_list(-num, to_rm)
+            self.remove(num, die.tuple_list())
+            self.update_list(-num, die)
 
-
-def make_die(die_input):
+#some wrapper functions for ease of use
+def make_die(table, die_input):
     '''takes legal input for Die or WeightedDie and returns object. input can
     be int for Die, or list, tuple_list, dict for WeightedDie. [1,1,1,2,3],
     {1:3, 2:1, 3:1} [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
     where one gets rolled 3 times as often as 2 or 3'''
-    if isinstance(die_input, int):
+    if die_input == 'last':
+        if table.get_last() == None:
+            raise ValueError('no last die')
+        return table.get_last()
+    elif isinstance(die_input, int):
         return Die(die_input)
     else:
-        return WeightedDie(die_input)
+        return WeightedDie(dictionary_maker(die_input))
 
-def add_wrapper(table, num=1, die_input='last'):
+#helper to make_die
+def dictionary_maker(mystery_input):
+    '''mystery input can be a list, a list of tuples or a dictionary. returns the
+    dictionary of the input'''
+    if isinstance(mystery_input, list):
+        if isinstance(mystery_input[0], tuple):
+            return dict(pair for pair in mystery_input)
+        else:
+            out = {}
+            for value in mystery_input:
+                out[value] = out.get(value, 0) + 1
+            return out
+    else:
+        return dict((pair) for pair in mystery_input.items())
+
+def add_dice(table, num=1, die_input='last'):
     '''a wrapper function to make table.add_dice quicker and easier. takes legal
     input for Die or WeightedDie and returns object. input can be int for Die,
     or list, tuple_list, dict for WeightedDie. [1,1,1,2,3], {1:3, 2:1, 3:1}
     [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
     where one gets rolled 3 times as often as 2 or 3'''
-    table.add_dice(num, make_die(die_input))
+    table.add_die(num, make_die(table, die_input))
 
-def remove_wrapper(table, num=1, die_input='last'):
+def remove_dice(table, num=1, die_input='last'):
     '''a wrapper function to make table.remove_dice quicker and easier. takes
     legal input for Die or WeightedDie and returns object. input can be int for
     Die, or list, tuple_list, dict for WeightedDie. [1,1,1,2,3], {1:3, 2:1, 3:1}
     [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
     where one gets rolled 3 times as often as 2 or 3'''
-    table.remove_dice(num, make_die(die_input))
+    table.remove_die(num, make_die(table, die_input))
 
