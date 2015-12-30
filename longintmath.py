@@ -3,7 +3,7 @@ needs to deal with it's BFN'''
 
 #these three functions and helper are concerned with float-math for long ints.
 from decimal import Decimal as dec
-def convert_back(num):
+def _convert_back(num):
     '''helper to long_int_function.  takes a Decimal and returns float if
     possible, else, long_int'''
     if float(num) == float('inf') or float(num) == float('-inf'):
@@ -14,23 +14,25 @@ def convert_back(num):
 def long_int_div(numerator, denominator):
     '''returns a float division of numbers even if they are over 1e+308'''
     ans = dec(numerator) / dec(denominator)
-    return convert_back(ans)
+    return _convert_back(ans)
 
 def long_int_times(number1, number2):
     '''returns a float times of numbers even if they are over 1e+308'''
     ans = dec(number1) * dec(number2)
-    return convert_back(ans)
+    return _convert_back(ans)
 
 def long_int_pow(number, exponent):
     '''returns a float exponent of numbers even if they are over 1e+308'''
     ans = dec(number)**dec(exponent)
-    return convert_back(ans)
+    return _convert_back(ans)
 
 
 
 class LongIntTable(object):
     '''a table of big fucking numbers and some math function for them.
-    The table implicitly contains 0 occurences of all unassigned intergers.'''
+    The table implicitly contains 0 occurences of all unassigned intergers.
+    THIS TABLE SHOULD ONLY CONTAIN INT OR LONG.  it will not raise errors if you
+    put in other values, but there is not telling what problems will happen.'''
 
     def __init__(self, seed_dictionary):
         '''seed_dictionary is a dictionary of ints
@@ -107,6 +109,8 @@ class LongIntTable(object):
         and wonder what the mean is?'''
         numerator = sum([value*freq for value, freq in self._table.items()])
         denominator = self.total_frequency()
+        if denominator == 0:
+            raise ZeroDivisionError('there are no values in the table')
         return long_int_div(numerator, denominator)
     def stddev(self):
         '''returns the standdard deviation of the table, with special measures
@@ -128,8 +132,8 @@ class LongIntTable(object):
         return round((sqs/new_count)**0.5, sig_figs)
 
     def add(self, times, values):
-        '''times is positive int. values is a list of tuple(value, frequency)
-        only in value, NO ZERO FREQUENCIES ALLOWED!
+        '''times is positive int. values is a list of tuples(value, frequency)
+        value and frequency are ints or longs, NO NEGATIVE FREQUENCIES ALLOWED!
         this function adds your table's values and frequency and the values's.
 
         here's how it works - original list event A is 3 out of 5.
@@ -137,8 +141,7 @@ class LongIntTable(object):
         A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
         if times < 1:
             raise ValueError('times must be a positive int')
-
-        values.sort()
+        to_add = self._check_cull_sort(values)
         def _fastest(tuple_list):
             '''returns fastest method'''
             difference = 0
@@ -146,7 +149,7 @@ class LongIntTable(object):
             use_tuples = True
             for pair in tuple_list:
                 frequency = pair[1]
-                difference += abs(frequency) - 1
+                difference += frequency - 1
             if difference > cut_off:
                 return tuple_list, use_tuples
             else:
@@ -157,7 +160,7 @@ class LongIntTable(object):
                         new_list.append(val)
                 return new_list, use_tuples
 
-        the_list, use_tuples = _fastest(values)
+        the_list, use_tuples = _fastest(to_add)
         #if a list of ints is faster, will do that
         if use_tuples:
             for _ in range(times):
@@ -166,6 +169,20 @@ class LongIntTable(object):
         else:
             for _ in range(times):
                 self._add_a_list(the_list)
+    @staticmethod
+    def _check_cull_sort(tuple_list):
+        '''prepares a list for add and remove.  removes zero values, raises
+        errors where appropriate and returns a sorted list.'''
+        new_list = []
+        for val, freq in tuple_list:
+            if freq < 0:
+                raise ValueError('frequencies may not be negative')
+            if freq != 0:
+                new_list.append((val, freq))
+        if new_list == []:
+            raise ValueError('cannot add an empty list')
+        new_list.sort()
+        return new_list
 
     def _add_a_list(self, lst):
         '''lst is ints. takes the table.  for each int in the list, makes new
@@ -192,18 +209,19 @@ class LongIntTable(object):
 
     def remove(self, times, to_remove):
         '''times is positive int. values is a list of tuple(value, frequency)
-        only in value, NO ZERO FREQUENCIES ALLOWED!
+        value and frequency are long or int. NO NEGATIVE FREQUENCIES ALLOWED!
         this function reverses previous adds.  if you remove something you never
-        added, or remove it more times than you added it, that's on you.'''
+        added, or remove it more times than you added it, THERE IS NO RECORD OF
+        WHAT YOU ADDED AND NO ERROR WILL BE RAISED. PLEASE BE CAREFUL.'''
         if times < 1:
             raise ValueError('times must be a positive int')
+        remove_now = self._check_cull_sort(to_remove)
         for _ in range(times):
-            self._remove_tuple_list(to_remove)
+            self._remove_tuple_list(remove_now)
 
     def _remove_tuple_list(self, tuple_list):
         '''tuple_list is a sorted list of tuples (value, frequency) with NO ZERO
         frequencies.  does the opposite of _add_tuple_list'''
-        tuple_list.sort()
         tuples_min = tuple_list[0][0]
         tuples_max = tuple_list[-1][0]
 

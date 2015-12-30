@@ -221,3 +221,21 @@ def get_mantissa(num, sig_figs=10):
     else:
         factor = 10**(-get_exp(num))
         return num*factor    
+        
+def int_time():
+    x = 123456789*10**400
+    y = 123456*10**3
+    start = time.clock()
+    for _ in range(999):
+        x *= y
+    #print x
+    print time.clock() - start
+    
+def dec_time():
+    x = dec.Decimal(123456789*10**400)
+    y = dec.Decimal(123456*10**3)
+    start = time.clock()
+    for _ in range(999):
+        x *=y
+    #print x
+    print time.clock() - start

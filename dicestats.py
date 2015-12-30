@@ -19,23 +19,24 @@ class Die(object):
     def tuple_list(self):
         '''returns the tuple list that is the dice values'''
         return [(value, 1) for value in range(1, self._die_size + 1)]
-    def weight_info(self):
-        '''returns detailed weight info'''
-        return '%s\n    No weights' % (self)
+
+    @staticmethod
+    def weight_info():
+        '''returns detailed weight info, indented'''
+        return '    No weights'
+    def multiply_str(self, number):
+        '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
+        return '%s%s' % (number, self)
+    def __str__(self):
+        return 'D%s' % (self._die_size)
+
     def __lt__(self, other):
         '''dice are compared by size and then weight.'''
         return (self.get_size() < other.get_size() or self.get_size() ==
                 other.get_size() and self.get_weight() < other.get_weight())
-
     def __eq__(self, other):
         '''two DiceInfo are equal if their tuple lists match'''
-        if not isinstance(other, Die):
-            return False
-        else:
-            return self.tuple_list() == other.tuple_list()
-
-    def __str__(self):
-        return 'D%s' % (self._die_size)
+        return self.tuple_list() == other.tuple_list()
 
 class ModDie(Die):
     '''a Die with a modifier.  i.e. D6-3.'''
@@ -58,6 +59,9 @@ class ModDie(Die):
         return [(value + self._mod, 1)
                 for value in range(1, self._die_size + 1)]
 
+    def multiply_str(self, number):
+        '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
+        return '%s%s%s' % (number, str(self)[:-1], number * abs(self._mod))
     def __str__(self):
         return 'D{0}{1:+}'.format(self._die_size, self._mod)
 
@@ -87,13 +91,19 @@ class WeightedDie(object):
                 out.append((value, weight))
         out.sort()
         return out
+
     def weight_info(self):
-        '''returns detailed weight info'''
-        out = str(self)
+        '''returns detailed weight info, indented'''
+        out = ''
         for roll in range(1, self._die_size + 1):
-            out = (out +'\n    a roll of %s has a weight of %s' %
+            out = (out +'    a roll of %s has a weight of %s\n' %
                    (roll, self._dic.get(roll, 0)))
-        return out
+        return out.rstrip('\n')
+    def multiply_str(self, number):
+        '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
+        return '%s%s' % (number, self)
+    def __str__(self):
+        return 'D%s  W:%s' % (self._die_size, self._weight)
 
     def __lt__(self, other):
         '''dice info's are compared by size of dice, and then weight'''
@@ -102,12 +112,7 @@ class WeightedDie(object):
 
     def __eq__(self, other):
         '''two Dice are equal if their dictionary of values are a match'''
-        if not isinstance(other, WeightedDie):
-            return False
-        else:
-            return self.tuple_list() == other.tuple_list()
-    def __str__(self):
-        return 'D%s  W:%s' % (self._die_size, self._weight)
+        return self.tuple_list() == other.tuple_list()
 
 class ModWeightedDie(WeightedDie):
     '''stores and returns info for a weighted die. and a modifier modifies the
@@ -134,6 +139,11 @@ class ModWeightedDie(WeightedDie):
                 out.append((value + self._mod, weight))
         out.sort()
         return out
+
+    def multiply_str(self, number):
+        '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
+        return '{0}D{1}{2:+}  W:{3}'.format(number, self._die_size,
+                                            number * self._mod, self._weight)
     def __str__(self):
         return 'D{0}{1:+}  W:{2}'.format(self._die_size, self._mod, self._weight)
 
@@ -185,15 +195,14 @@ class DiceTable(LongIntTable):
         '''return detailed info of dice in the list'''
         out_str = ''
         for die, number in self._dice_list:
-            out_str = (out_str + '%s%s\n\n' %
-                       (number, _adjust_mod(die.weight_info(), number)))
+            out_str = (out_str + '%s\n%s\n\n' %
+                       (die.multiply_str(number), die.weight_info()))
         return out_str.rstrip('\n')
 
     def __str__(self):
         out_str = ''
         for die, number in self._dice_list:
-            out_str = out_str + '%s%s\n' % (number,
-                                            _adjust_mod(str(die), number))
+            out_str = out_str + '%s\n' % (die.multiply_str(number))
         return out_str.rstrip('\n')
 
     def add_die(self, num, die):
@@ -212,19 +221,7 @@ class DiceTable(LongIntTable):
             self.remove(num, die.tuple_list())
             self.update_list(-num, die)
 
-def _adjust_mod(die_string, number):
-    '''when generating 'numberDdie', if str(die) has a modifier, multiply it by
-    the number and return the new string'''
-    if '+' in die_string:
-        left, right = die_string.split('+', 1)
-        new_num = int(right[0]) * number
-        return '%s+%s%s' % (left, new_num, right[1:])
-    elif '-' in die_string:
-        left, right = die_string.split('-', 1)
-        new_num = int(right[0]) * number
-        return '%s-%s%s' % (left, new_num, right[1:])
-    else:
-        return die_string[:]
+
 
 #some wrapper functions for ease of use
 def make_die(table, die_input, mod):
