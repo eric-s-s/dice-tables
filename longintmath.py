@@ -1,10 +1,10 @@
 ''' this module contains the class LongIntTable and longint math that the table
 needs to deal with it's BFN'''
 
-#these three functions and helper are concerned with float-math for long ints.
+#these functions are concerned with float-math for long ints.
 from decimal import Decimal as dec
 def _convert_back(num):
-    '''helper to long_int_function.  takes a Decimal and returns float if
+    '''helper function.  takes a Decimal and returns float if
     possible, else, long_int'''
     if float(num) == float('inf') or float(num) == float('-inf'):
         return long(num)
@@ -99,11 +99,6 @@ class LongIntTable(object):
         return ('table from %s to %s' %
                 (self.values_min(), self.values_max()))
 
-    def copy(self):
-        '''returns a copy of a LIT'''
-        new_dic = dict((val, freq) for val, freq in self.frequency_all())
-        return LongIntTable(new_dic)
-
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
@@ -112,24 +107,23 @@ class LongIntTable(object):
         if denominator == 0:
             raise ZeroDivisionError('there are no values in the table')
         return long_int_div(numerator, denominator)
-    def stddev(self):
+    def stddev(self, decimal_place=4):
         '''returns the standdard deviation of the table, with special measures
         to deal with long ints.'''
         avg = self.mean()
-        sig_figs = 4
         extra_digits = 5
         power = len(str(self.frequency_highest()[1])) - 1
-        if power < 2 * (sig_figs + extra_digits):
+        if power < 2 * (decimal_place + extra_digits):
             factor = 1
         else:
-            factor = 10**(power - (sig_figs + extra_digits))
+            factor = 10**(power - (decimal_place + extra_digits))
         sqs = 0
         count = 0
         for value, frequency in self._table.items():
             sqs += (frequency//factor) * (avg - value)**2
             count += frequency
         new_count = count//factor
-        return round((sqs/new_count)**0.5, sig_figs)
+        return round((sqs/new_count)**0.5, decimal_place)
 
     def add(self, times, values):
         '''times is positive int. values is a list of tuples(value, frequency)
@@ -241,17 +235,10 @@ class LongIntTable(object):
         self._table = new_dic
 
     def merge(self, other):
-        '''other can be LongIntTable, dictionary of ints {value:freq} or list
-        of int tuples [(value, freq)].  adds all those value, freq to self'''
-        if isinstance(other, LongIntTable):
-            for val, freq in other.frequency_all():
-                self._table[val] = self._table.get(val, 0) + freq
-        elif isinstance(other, dict):
-            for val, freq in other.items():
-                self._table[val] = self._table.get(val, 0) + freq
-        else:
-            for val, freq in other:
-                self._table[val] = self._table.get(val, 0) + freq
+        '''other is list of int tuples [(value, freq)].  adds all those value,
+        freq to self'''
+        for val, freq in other:
+            self._table[val] = self._table.get(val, 0) + freq
 
     def update_frequency(self, value, new_freq):
         '''looks up a value, and changes its frequency to the new one'''
