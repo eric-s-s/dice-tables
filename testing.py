@@ -17,20 +17,107 @@ def add_weighted_dice(table, num_times, lst):
     for _ in range(num_times):
         table._add_tuple_list(lst)
 
+def time_it(tuple_list):
+    list_too_long = 1000
+    diff_too_high = 100
+    use_tuple = True
+    num_vals = len(tuple_list)
+    #if num_vals > list_too_long:
+    #    return tuple_list, use_tuple
+    #freq_tot = sum([pair[1] for pair in tuple_list])
+    #if freq_tot - num_vals > diff_too_high:
+    #    return tuple_list, use_tuple
+    
+    int_list = []
+    for val, freq in tuple_list:
+        int_list = int_list + [val] * freq
+    #test_a = lim.LongIntTable(dict((val, val*2) for val in range(50)))
+    #test_b = lim.LongIntTable(dict((val, val*2) for val in range(50)))
+    #test_times = 100
+    time_limit = 0.1
+    test_a = lim.LongIntTable(dict(tuple_list))
+    elapsed_time_t = 0
+    tuple_count = 0
+    tuple_time = time.clock()
+    
+    while elapsed_time_t < time_limit:
+        test_a._add_tuple_list(tuple_list)
+        tuple_count +=1
+        elapsed_time_t = time.clock() - tuple_time
+    
+    test_b = lim.LongIntTable(dict(tuple_list))
+    elapsed_time_i = 0
+    int_count = 0
+    int_time = time.clock()
+    while elapsed_time_i < time_limit:
+        test_b._add_a_list(int_list)
+        int_count +=1
+        elapsed_time_i = time.clock() - int_time
+    
+    print 'tuple', tuple_count, elapsed_time_t
+    print 'ints ', int_count, elapsed_time_i
+    if tuple_count == int_count:
+        if elapsed_time_t < elapsed_time_i:
+            return use_tuple
+        else:
+            return not use_tuple
+    elif tuple_count > int_count:
+        #return tuple_list, use_tuple
+        return use_tuple
+    else:
+        #return int_list, not use_tuple
+        return not use_tuple
+        
+    
+def gen_spread(val_range):
+    mod = val_range + 1
+    while mod > 0:
+        lst = []
+        for val in range(1, val_range+1):
+            lst.append((val, int(val % mod == 0) + 1))
+        mod -= 1
+        yield lst    
 
+def gen_one_point(val_range, loc='mid'):
+    '''a generator for a list of tuples, 1 - val_range. add one to loc = "start",
+    "mid" or "end"'''
+    lst = [(val, 1) for val in range(1, val_range + 1)]
+    if loc == 'start':
+        index = 0
+    elif loc == 'end':
+        index = len(lst) - 1
+    else:
+        index = val_range // 2
+    index_val = lst[index][0]
+    while True:
+        yield lst
+        current_freq = lst[index][1]
+        lst[index] = (index_val, current_freq + 1)
+        
+def gen_n_points(val_range, num_points):
+    lst = [(val, 1) for val in range(1, val_range + 1)]
+    factor = val_range / float(num_points + 1)
+    indexes = [int(factor * multiplier) for multiplier in range(1, num_points + 1)]
+    print indexes
+    while True:
+        yield lst
+        #for index in range(step-1, val_range, step)[:num_points]:
+        for index in indexes:
+            val, freq = lst[index]
+            lst[index] = (val, freq + 1)
+            
+        
 
-def timetrial(lst, num_adds):
+def timetrial(t_list, num_adds):
     '''a very lazily written timetrial for add_dice'''
-    lst.sort()
-    dic = {}
-    for el in lst:
-        dic[el] = 1+dic.get(el, 0)
-    t_list = []
-    for die, weight in dic.items():
-        t_list.append((die, weight))
     t_list.sort()
+    lst = []
+    for val, freq in t_list:
+        lst = lst + [val] * freq
     print 'list', lst, '\ntuples', t_list, '\n'
-
+    number_of_vals = len(t_list)
+    number_of_freq = len(lst)
+    print 'freqs to vals is %s' % (number_of_freq/float(number_of_vals))
     start_a = time.clock()
     a = lim.LongIntTable({0:1})
     add_dices(a, num_adds, lst)

@@ -35,8 +35,8 @@ class LongIntTable(object):
     put in other values, but there is not telling what problems will happen.'''
 
     def __init__(self, seed_dictionary):
-        '''seed_dictionary is a dictionary of ints
-        {value1: frequency of value1, value2: frequency of value 2, ...}'''
+        '''seed_dictionary is a dictionary of ints. frequencies must be positive.
+        {value1: (frequency of value1), value2: (frequency of value 2), ...}'''
         self._table = seed_dictionary.copy()
 
     def values(self):
@@ -138,20 +138,20 @@ class LongIntTable(object):
         to_add = self._check_cull_sort(values)
         def _fastest(tuple_list):
             '''returns fastest method'''
-            difference = 0
-            cut_off = 3
+            experimentally_determined_ratio = 1.4
+            number_of_values = len(tuple_list)
+            total_freq = 0
             use_tuples = True
             for pair in tuple_list:
-                frequency = pair[1]
-                difference += frequency - 1
-            if difference > cut_off:
+                total_freq += pair[1]
+            list_ratio = total_freq/float(number_of_values)
+            if list_ratio > experimentally_determined_ratio:
                 return tuple_list, use_tuples
             else:
                 use_tuples = False
                 new_list = []
                 for val, freq in tuple_list:
-                    for _ in range(freq):
-                        new_list.append(val)
+                    new_list = new_list + [val] * freq
                 return new_list, use_tuples
 
         the_list, use_tuples = _fastest(to_add)

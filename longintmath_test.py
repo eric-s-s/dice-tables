@@ -30,6 +30,7 @@ class TestLIMFunc(unittest.TestCase):
 
         result1 = lim.long_int_div(self.float_big, self.float_sm)
         self.error_tester(result1, 10**400)
+        self.assertAlmostEqual(result1, 10**400, delta=10**390)
 
         result2 = lim.long_int_div(self.long_big, -self.float_big)
         self.error_tester(result2, -10**700)
@@ -251,9 +252,11 @@ class TestAddRm(unittest.TestCase):
         self.basic1.remove(1, self.other_tuples)
         self.assertEqual(self.basic1.frequency_all(), [(0, 1)])
 
-SUITE = unittest.TestLoader().loadTestsFromTestCase(TestLIMFunc)
-SUITE_A = unittest.TestLoader().loadTestsFromTestCase(TestLITable)
-SUITE_B = unittest.TestLoader().loadTestsFromTestCase(TestAddRm)
-SUITE.addTest(SUITE_A)
-SUITE.addTest(SUITE_B)
-unittest.TextTestRunner(verbosity=4).run(SUITE)
+#SUITE = unittest.TestLoader().loadTestsFromTestCase(TestLIMFunc)
+#SUITE_A = unittest.TestLoader().loadTestsFromTestCase(TestLITable)
+#SUITE_B = unittest.TestLoader().loadTestsFromTestCase(TestAddRm)
+#SUITE.addTest(SUITE_A)
+#SUITE.addTest(SUITE_B)
+#unittest.TextTestRunner(verbosity=4).run(SUITE)
+if __name__ == '__main__':
+    unittest.main()
