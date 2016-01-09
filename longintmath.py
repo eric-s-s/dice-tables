@@ -191,7 +191,7 @@ class LongIntTable(object):
         self._table = newdic
 
     def _add_tuple_list(self, lst):
-        '''as add_list_to_values, but now pass a list of tuples of ints.
+        '''as add_a_list, but now pass a list of tuples of ints.
         [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
         efficient if numbers repeat a lot in your list.'''
         newdic = {}
