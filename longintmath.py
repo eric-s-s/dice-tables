@@ -35,7 +35,7 @@ class LongIntTable(object):
     put in other values, but there is not telling what problems will happen.'''
 
     def __init__(self, seed_dictionary):
-        '''seed_dictionary is a dictionary of ints. frequencies must be positive.
+        '''seed_dictionary is a dictionary of ints. frequencies MUST BE POSITIVE.
         {value1: (frequency of value1), value2: (frequency of value 2), ...}'''
         self._table = seed_dictionary.copy()
 
