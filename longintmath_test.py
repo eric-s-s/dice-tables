@@ -195,7 +195,7 @@ class TestLongIntTable(unittest.TestCase):
         self.identity_a.add(1, low_ratio_tuples)
         self.assertEqual(self.identity_a.frequency_all(), low_ratio_tuples)
     def test_add_works_with_high_total_frequency_to_number_of_vals(self):
-        high_ratio_tuples = [(1, 10*100), (2, 10*1000)]
+        high_ratio_tuples = [(1, 10**100), (2, 10**1000)]
         self.identity_a.add(1, high_ratio_tuples)
         self.assertEqual(self.identity_a.frequency_all(), high_ratio_tuples)
 

@@ -144,7 +144,7 @@ class LongIntTable(object):
             use_tuples = True
             for pair in tuple_list:
                 total_freq += pair[1]
-            list_ratio = total_freq/float(number_of_values)
+            list_ratio = long_int_div(total_freq, number_of_values)
             if list_ratio > experimentally_determined_ratio:
                 return tuple_list, use_tuples
             else:
