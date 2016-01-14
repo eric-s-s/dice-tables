@@ -1,12 +1,14 @@
+#TODO remove last die.   adjust here, api at bottom and UI2
+
 '''for all things dicey.  this contains DiceInfo and DiceTable and add_dice.'''
 from longintmath import LongIntTable
 
 
 class Die(object):
     '''makes instance of a die.  it has a size and a weight of 0 (for comparing
-    with weighted dice which have non-zero weight'''
+    with weighted dice which have non-zero weight)'''
     def __init__(self, die_size):
-        '''die size is a positive int. creates a die containing 1 - die_size
+        '''die size is a positive int. creates a die containing 1 to die_size
         values'''
         self._die_size = die_size
         self._weight = 0
@@ -31,12 +33,20 @@ class Die(object):
         return 'D%s' % (self._die_size)
 
     def __lt__(self, other):
-        '''dice are compared by size and then weight.'''
-        return (self.get_size() < other.get_size() or self.get_size() ==
-                other.get_size() and self.get_weight() < other.get_weight())
+        '''Dice are compared by size, then weight, then tuple_list'''
+        return ((self.get_size(), self.get_weight(), self.tuple_list()) <
+                (other.get_size(), other.get_weight(), other.tuple_list()))
     def __eq__(self, other):
-        '''two DiceInfo are equal if their tuple lists match'''
+        '''two Dice are equal if their tuple lists match'''
         return self.tuple_list() == other.tuple_list()
+    def __ne__(self, other):
+        return not self.tuple_list() == other.tuple_list()
+    def __le__(self, other):
+        return self < other or self == other
+    def __gt__(self, other):
+        return not self <= other
+    def __ge__(self, other):
+        return self == other or self > other
 
 class ModDie(Die):
     '''a Die with a modifier.  i.e. D6-3.'''
@@ -48,12 +58,6 @@ class ModDie(Die):
     def get_modifier(self):
         '''returns the modifier of a modded die'''
         return self._mod
-    def get_weight(self):
-        '''the mod affects the weight infinitessimally for purposes of weight
-        comparisons but not for the __str__ method (which accounts for the mod
-        in a different way).'''
-        return self._weight + 0.01*self._mod
-
     def tuple_list(self):
         '''returns the tuple list with the values adjusted by the modifier'''
         return [(value + self._mod, 1)
@@ -106,13 +110,20 @@ class WeightedDie(object):
         return 'D%s  W:%s' % (self._die_size, self._weight)
 
     def __lt__(self, other):
-        '''dice info's are compared by size of dice, and then weight'''
-        return (self.get_size() < other.get_size() or self.get_size() ==
-                other.get_size() and self.get_weight() < other.get_weight())
-
+        '''dice  are compared by size, then weight, then tuple_list'''
+        return ((self.get_size(), self.get_weight(), self.tuple_list()) <
+                (other.get_size(), other.get_weight(), other.tuple_list()))
     def __eq__(self, other):
         '''two Dice are equal if their dictionary of values are a match'''
         return self.tuple_list() == other.tuple_list()
+    def __ne__(self, other):
+        return not self.tuple_list() == other.tuple_list()
+    def __le__(self, other):
+        return self < other or self == other
+    def __gt__(self, other):
+        return not self <= other
+    def __ge__(self, other):
+        return self == other or self > other
 
 class ModWeightedDie(WeightedDie):
     '''stores and returns info for a weighted die. and a modifier modifies the
@@ -126,11 +137,6 @@ class ModWeightedDie(WeightedDie):
     def get_modifier(self):
         '''returns the modifier on the die'''
         return self._mod
-    def get_weight(self):
-        '''the mod affects the weight infinitessimally for purposes of weight
-        comparisons but not for the __str__ method (which accounts for the mod
-        in a different way).'''
-        return self._weight + 0.01*self._mod
     def tuple_list(self):
         '''returns the tuple list that is the dice values adjust by the mod'''
         out = []
@@ -153,7 +159,7 @@ class DiceTable(LongIntTable):
     def __init__(self):
         LongIntTable.__init__(self, {0:1})
         self._dice_list = []
-        self._last_die = None
+        self._last_die = Die(0)
 
     def update_list(self, add_number, new_die):
         '''adds die and number of dice to the list. if die is already in list,
@@ -230,7 +236,7 @@ def make_die(table, die_input, mod):
     [1,1,1,2,3], {1:3, 2:1, 3:1}, [(1,3), (2,1), (3,1)] all make a weighted die
     of size 3 and where one gets rolled 3 times as often as 2 or 3'''
     if die_input == 'last':
-        if table.get_last() == None:
+        if table.get_last() == Die(0):
             raise ValueError('no last die')
         return table.get_last()
     elif isinstance(die_input, int):

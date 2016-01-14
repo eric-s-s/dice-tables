@@ -202,7 +202,8 @@ def table_actions(table):
                          (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
     print '\n\nyou current dice are:'
     print table
-    print 'the last die added was:%s' % (table.get_last())
+    if not table.get_last() == ds.Die(0):
+        print 'the last die added was:%s' % (table.get_last())
     t_choices.do_user_choice()
 
 def save_new(table):
@@ -236,9 +237,8 @@ def save_it(menu_choice):
 def get_stats(table):
     '''gets stats for your table'''
     print '\n\nhere is your table info\n'
-    table.weights_info()
-    print table
-    print ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
+    print table.weights_info()
+    print ('\nthe range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
            % (table.values_min(), table.values_max(),
               table.mean(), table.stddev()))
     usr_input = make_a_list(table)
@@ -286,7 +286,7 @@ def adder(table):
     same_dice.do_user_choice()
 def add_same(table):
     '''process for adding the same kind of dice'''
-    if table.get_last() == None:
+    if table.get_last() == ds.Die(0):
         print 'Never added a die'
         add_new(table)
     num_dice = get_num('How many dice would you like to add?', table)

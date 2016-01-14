@@ -1,6 +1,5 @@
 ''' this module contains the class LongIntTable and longint math that the table
 needs to deal with it's BFN'''
-
 #these functions are concerned with float-math for long ints.
 from decimal import Decimal as dec
 def _convert_back(num):
@@ -133,7 +132,7 @@ class LongIntTable(object):
         here's how it works - original list event A is 3 out of 5.
         event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
         A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
-        if times < 1:
+        if times < 0:
             raise ValueError('times must be a positive int')
         to_add = self._check_cull_sort(values)
         def _fastest(tuple_list):
@@ -207,7 +206,7 @@ class LongIntTable(object):
         this function reverses previous adds.  if you remove something you never
         added, or remove it more times than you added it, THERE IS NO RECORD OF
         WHAT YOU ADDED AND NO ERROR WILL BE RAISED. PLEASE BE CAREFUL.'''
-        if times < 1:
+        if times < 0:
             raise ValueError('times must be a positive int')
         remove_now = self._check_cull_sort(to_remove)
         for _ in range(times):

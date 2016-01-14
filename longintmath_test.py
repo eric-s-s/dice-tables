@@ -144,6 +144,9 @@ class TestLongIntTable(unittest.TestCase):
         table = lim.LongIntTable(dict(TUPLES_WITH_ONE_HIGHEST))
         mean = (-1 * 2 + 1 * 2 + 2 * 3) / float(2 + 2 + 3)
         self.assertEqual(table.mean(), mean)
+    def test_mean_with_large_number_table(self):
+        table = lim.LongIntTable(dict(TUPLES_FOR_STDDEV_SMALL))
+        self.assertEqual(table.mean(), 0)
 
 
     def test_stddev_for_table_with_highest_frequency_below_cutoff(self):
@@ -195,7 +198,7 @@ class TestLongIntTable(unittest.TestCase):
         self.identity_a.add(1, low_ratio_tuples)
         self.assertEqual(self.identity_a.frequency_all(), low_ratio_tuples)
     def test_add_works_with_high_total_frequency_to_number_of_vals(self):
-        high_ratio_tuples = [(1, 10**100), (2, 10**1000)]
+        high_ratio_tuples = [(1, 10**1000), (2, 10**1000)]
         self.identity_a.add(1, high_ratio_tuples)
         self.assertEqual(self.identity_a.frequency_all(), high_ratio_tuples)
 
@@ -210,10 +213,20 @@ class TestLongIntTable(unittest.TestCase):
         self.identity_a.add(2, tuple_list)
         self.assertEqual(self.identity_a.frequency_all(),
                          [(2, 4), (3, 8), (4, 4)])
+    def test_add_works_with_long_large_number_list(self):
+        tuple_list = [(x, 10**1000) for x in range(-1000, 1000)]
+        self.identity_a.add(1, tuple_list)
+        self.assertEqual(self.identity_a.frequency_all(), tuple_list)
     def test_remove_removes_correctly(self):
         self.identity_a.add(5, TUPLES_WITHOUT_ZERO)
         self.identity_b.add(10, TUPLES_WITHOUT_ZERO)
         self.identity_b.remove(5, TUPLES_WITHOUT_ZERO)
+        self.assertEqual(self.identity_a.frequency_all(),
+                         self.identity_b.frequency_all())
+    def test_remove_works_for_large_numbers(self):
+        self.identity_a.add(1, TUPLES_FOR_STDDEV_LARGE)
+        self.identity_b.add(2, TUPLES_FOR_STDDEV_LARGE)
+        self.identity_b.remove(1, TUPLES_FOR_STDDEV_LARGE)
         self.assertEqual(self.identity_a.frequency_all(),
                          self.identity_b.frequency_all())
 
