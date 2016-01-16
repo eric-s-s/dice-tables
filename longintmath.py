@@ -125,7 +125,7 @@ class LongIntTable(object):
         return round((sqs/new_count)**0.5, decimal_place)
 
     def add(self, times, values):
-        '''times is positive int. values is a list of tuples(value, frequency)
+        '''times is positive int or 0. values is a list of tuples(value, frequency)
         value and frequency are ints or longs, NO NEGATIVE FREQUENCIES ALLOWED!
         this function adds your table's values and frequency and the values's.
 
@@ -201,7 +201,7 @@ class LongIntTable(object):
         self._table = newdic
 
     def remove(self, times, to_remove):
-        '''times is positive int. values is a list of tuple(value, frequency)
+        '''times is positive int or 0. values is a list of tuple(value, frequency)
         value and frequency are long or int. NO NEGATIVE FREQUENCIES ALLOWED!
         this function reverses previous adds.  if you remove something you never
         added, or remove it more times than you added it, THERE IS NO RECORD OF

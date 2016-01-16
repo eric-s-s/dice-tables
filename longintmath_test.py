@@ -186,7 +186,7 @@ class TestLongIntTable(unittest.TestCase):
         self.assertRaisesRegexp(ValueError, 'cannot add an empty list',
                                 self.identity_a.add, 1, [(1, 0)])
         self.assertRaisesRegexp(ValueError, 'times must be a positive int',
-                                self.identity_a.add, 0, [(1, 1)])
+                                self.identity_a.add, -1, [(1, 1)])
         self.assertRaisesRegexp(ValueError, 'frequencies may not be negative',
                                 self.identity_a.add, 1, [(1, -1)])
         self.assertEqual(self.identity_a.frequency_all(), [(0, 1)])
