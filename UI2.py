@@ -285,7 +285,7 @@ def adder(table):
 def add_old(table):
     '''process for adding the same kind of dice'''
     add_die, empty_check = choose_a_die(table)
-    
+
     if empty_check == 0:
         print 'Never added a die'
         add_new(table)
@@ -295,7 +295,7 @@ def add_old(table):
     table.add_die(num_dice, add_die)
     print 'all done.  there! that wasn\'t so bad. back to action menu'
     table_actions(table)
-def add_new(table):    
+def add_new(table):
     '''process for adding new dice'''
     if str(table) == '':
         print '\n\nyou current table is empty'
@@ -309,15 +309,15 @@ def add_new(table):
     table_actions(table)
 def make_die(table):
     '''the top level menu to get user to make a die'''
-    dice_type = Choices('To', 
-                        [(make_basic, (table, False), 
+    dice_type = Choices('To',
+                        [(make_basic, (table, False),
                           'make a BASIC die', ('b',)),
                          (make_basic, (table, True),
-                          'make a BASIC die with MODIFIER', ('bn',)),
-                         (make_weighted, (table, False), 
-                         'make a WEIGHTED die', ('w',)),
-                         (make_weighted, (table, True), 
-                          'make a WEIGHTED die with MODIFIER', ('wm',)), 
+                          'make a BASIC die with MODIFIER', ('bm',)),
+                         (make_weighted, (table, False),
+                          'make a WEIGHTED die', ('w',)),
+                         (make_weighted, (table, True),
+                          'make a WEIGHTED die with MODIFIER', ('wm',)),
                          (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
     return dice_type.do_user_choice()
 def make_basic(table, mod_it):
@@ -345,7 +345,7 @@ def make_weighted(table, mod_it):
 
 def remover(table):
     '''uses user input to remove a dice from the table'''
-    rm_die, highest_num  = choose_a_die(table)
+    rm_die, highest_num = choose_a_die(table)
     if highest_num == 0:
         print 'cannot remove from an empty list'
         table_actions(table)
@@ -367,7 +367,7 @@ def choose_a_die(table):
     print 'choose die by index'
     the_index = get_num_range(table, 0, len(dice_list) - 1)
     die, number = dice_list[the_index]
-    return die, number    
+    return die, number
 def get_num(question, table, zero_ok=False, neg_ok=False):
     '''used by several functions to make sure user input is either a whole or
     counting number.  prompts with question(a string) and returns when the user
@@ -386,7 +386,7 @@ def get_num(question, table, zero_ok=False, neg_ok=False):
         elif int(ans) == 0 and zero_ok:
             return 0
         elif int(ans) < 0 and neg_ok:
-            return int(ans)    
+            return int(ans)
         else:
             print 'try something greater than 0. that would totally work!'
             if zero_ok:
@@ -417,8 +417,8 @@ def make_a_list(table):
             for value in user_input.split(','):
                 no_dashes = value.split('-')
                 #single pos or neg number
-                if (len(no_dashes) == 1 or 
-                    no_dashes[0] in ('', ' ') and len(no_dashes) == 2):
+                if (len(no_dashes) == 1 or
+                        no_dashes[0] in ('', ' ') and len(no_dashes) == 2):
                     out.append(int(value))
                 #pos or neg numbers separated by a '-'
                 else:

@@ -1,5 +1,3 @@
-#TODO remove last die.   adjust here, api at bottom and UI2
-
 '''for all things dicey.  this contains DiceInfo and DiceTable and add_dice.'''
 from longintmath import LongIntTable
 
@@ -37,10 +35,10 @@ class Die(object):
         return ((self.get_size(), self.get_weight(), self.tuple_list()) <
                 (other.get_size(), other.get_weight(), other.tuple_list()))
     def __eq__(self, other):
-        '''two Dice are equal if their tuple lists match'''
-        return self.tuple_list() == other.tuple_list()
+        return ((self.tuple_list(), self.get_size(), self.get_weight()) ==
+                (other.tuple_list(), other.get_size(), other.get_weight()))
     def __ne__(self, other):
-        return not self.tuple_list() == other.tuple_list()
+        return not self == other
     def __le__(self, other):
         return self < other or self == other
     def __gt__(self, other):
@@ -115,10 +113,10 @@ class WeightedDie(object):
         return ((self.get_size(), self.get_weight(), self.tuple_list()) <
                 (other.get_size(), other.get_weight(), other.tuple_list()))
     def __eq__(self, other):
-        '''two Dice are equal if their dictionary of values are a match'''
-        return self.tuple_list() == other.tuple_list()
+        return ((self.tuple_list(), self.get_size(), self.get_weight()) ==
+                (other.tuple_list(), other.get_size(), other.get_weight()))
     def __ne__(self, other):
-        return not self.tuple_list() == other.tuple_list()
+        return not self == other
     def __le__(self, other):
         return self < other or self == other
     def __gt__(self, other):
@@ -212,8 +210,8 @@ class DiceTable(LongIntTable):
         self.update_list(num, die)
 
     def remove_die(self, num, die):
-        '''die is a  Die or WeightedDie and num is a positive int or 0.first 
-        makes sure the dice to be removed are in the list. then removes those 
+        '''die is a  Die or WeightedDie and num is a positive int or 0.first
+        makes sure the dice to be removed are in the list. then removes those
         dice from the list and the table.'''
         if self.number_of_dice(die) - num < 0:
             raise ValueError('dice not in table, or removed too many dice')
@@ -224,7 +222,7 @@ class DiceTable(LongIntTable):
 
 
 #some wrapper functions for ease of use
-def make_die(table, die_input, mod):
+def make_die(die_input, mod):
     '''takes legal input for Die or WeightedDie and returns object. input can
     be int for Die, or list, tuple_list, dict for WeightedDie. mod is an int
     [1,1,1,2,3], {1:3, 2:1, 3:1}, [(1,3), (2,1), (3,1)] all make a weighted die
@@ -262,7 +260,7 @@ def add_dice(table, num, die_input, mod=0):
     or list, tuple_list, dict for WeightedDie. mod is an int[1,1,1,2,3],
     {1:3, 2:1, 3:1} [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
     where one gets rolled 3 times as often as 2 or 3'''
-    table.add_die(num, make_die(table, die_input, mod))
+    table.add_die(num, make_die(die_input, mod))
 
 def remove_dice(table, num, die_input, mod=0):
     '''a wrapper function to make table.remove_dice quicker and easier. takes
@@ -270,5 +268,5 @@ def remove_dice(table, num, die_input, mod=0):
     Die, or list, tuple_list, dict for WeightedDie. mod is an int[1,1,1,2,3],
     {1:3, 2:1, 3:1} [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
     where one gets rolled 3 times as often as 2 or 3'''
-    table.remove_die(num, make_die(table, die_input, mod))
+    table.remove_die(num, make_die(die_input, mod))
 

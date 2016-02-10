@@ -30,7 +30,7 @@ def scinote(num, dig_len=4):
         return '{:,}'.format(num)
     else:
         try:
-            str_format = '{:.%se}' % (dig_len-1)
+            str_format = '{:0%s.%se}' % (dig_len-1, dig_len-1)
             return str_format.format(num)
         except OverflowError:
             return long_note(num, dig_len)
@@ -39,15 +39,13 @@ def long_note(num, dig_len):
     '''converts long ints over +/-1e+308 to sci notation. helper to scinote'''
     num_str = str(abs(num))
     power = len(num_str) - 1
-    digits = num_str[0] + '.' + num_str[1:dig_len - 1]
-    #this if/else rounds the final digit
-    if int(num_str[dig_len]) >= 5:
-        last_digit = str(int(num_str[dig_len - 1]) + 1)
-    else:
-        last_digit = num_str[dig_len - 1]
+    digits = num_str[0] + '.' + num_str[1:dig_len + 1]
+    #this rounds the final digit
+    digits_float = float(digits)
+    rounded_digits = str(round(digits_float, dig_len-1)).ljust(dig_len + 1, '0')
     if num < 0:
-        digits = '-' + digits
-    return '%s%se+%s' % (digits, last_digit, power)
+        rounded_digits = '-' + rounded_digits
+    return '%se+%s' % (rounded_digits, power)
 
 
 #helper function for truncate_grapher() and stats()
