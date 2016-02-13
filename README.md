@@ -1,45 +1,38 @@
-#contains two modules
+#main module to run things is UI2.py
 
+##UI2.py requirements
+python 2.something. probably 2.7
 
-##dice_class.py
-###contains dice table class and its functions
+libraries - pylab, decimal.  pylab should be set to an interactive backend
 
-the class object
+###how to use UI2.py
+if started as main, runs main_menu().  or in an interperter, type main_menu()
 
-makes a table of all possible outcomes for a a certain number of dice.
-for instance 2d6 has 36 possibilities, with 6 combinations for "7" so rolling a 7 is 1 in 6
-this class creates a table of all the dice rolls you can get with a set of dice and how many combinations for each roll.
-it also records how many dice and what kind
-to deal with overflow problems, it also records if floats are allowed.  when the numbers are too big, floats throw an error.
+##details of base modules and classes.
 
+###longintmath.py 
+3 wrapper functions for performing float math on large numbers and the LongIntTable class.
+####LongIntTable class - a table for keeping track of large numbers of values and their frequencies.
+a table for statistical events that can be expressed as intergers and added to each other.
+for instance - {0:1, 1:1} representing 1 head and 1 tail.  adding a flip [(0, 1), (1, 1)] 
+makes {0:1, 1:2, 2:1} TT = 1/4, HT = 2/4, HH = 1/4.
+main methods are add, remove, mean, stddev and information retrieval functions
 
-###class functions and init
-x = DiceTable(dsize)
+###dicestats.py
+####Die classes - Die, ModDie(Die), WeightedDie, ModWeightedDie(WeightedDie)
+two classes for making diffrenent kinds of dice representations.  these are classes for providing
+string methods and tuple lists of each die.  a mod die is the base class with a +/- mod.
 
-class init creates 0d(dsize) table, a dicesize and total dice of 0
+####DiceTable class.
+a LongIntTable that has a list of dice to keep track of dice added and removed from the table.
 
-x.add_a_die() = adds a die of dsize.     
-x.add_many_dice(number) = adds number of dice.
+###graphing_and_printing.py
+####functions for displaying info of DiceTable and LongIntTable class	
 
-x.stddev()    
-x.mean()    
-just what you think
-
-x.int_or_float(num) outputs number as float (even if originally int) if allowed. -- for overflow control
-
-x.roll_range()  (also roll_range_top and roll_range_bottom) gives range of rolls
-
-x.roll_frequency(roll)  (also roll_frequency_range/all/highest) returns tuple or list of tuples of roll,frequency
-
-x.dice_size() x.number_of_dice()  x.total_combinations()  all tell what and how many dice or dval^num_dice 
-
-#graphing_and_printing.py
-##5 main functions
-
-grapher(x), turncate_grapher(x), fancy_grapher(x) all print a graph.
+grapher(x), truncate_grapher(x), fancy_grapher(x), fancy_grapher_pct(x) all print a graph.
 
 **note**
-fancy_grapher needs to import pylab - you should have it with any python
+fancy_graphers need to import pylab 
 
 print_table(x) prints out the table
 

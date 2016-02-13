@@ -97,8 +97,8 @@ class Choices(object):
             print '\n\n%s' % (self)
             out = raw_input('Please choose an action.\n>>> ')
             try:
-                self.do_choice(out)
-                break
+                return self.do_choice(out)
+                #break
             except IndexError:
                 print 'learn how to pick choices, MF'
                 continue
@@ -202,7 +202,6 @@ def table_actions(table):
                          (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
     print '\n\nyou current dice are:'
     print table
-    print 'the last die added was:%s' % (table.get_last())
     t_choices.do_user_choice()
 
 def save_new(table):
@@ -212,9 +211,9 @@ def save_new(table):
 def save(table, menu_choice):
     '''if you got here by quitting or back to main, checks to see if you
     want to save, then continues to your action'''
-    s_actions = Choices('', [(quit_program, (), 'q', ('quit')),
-                             (main_menu, (), 'm', ('main menu')),
-                             (table_actions, (table), 'a', ('action'))])
+    s_actions = Choices('', [(quit_program, (), 'q', ('quit',)),
+                             (main_menu, (), 'm', ('main menu',)),
+                             (table_actions, (table), 'a', ('action',))])
     yes = True
     if menu_choice != 'action':
         yes = save_it(menu_choice)
@@ -236,14 +235,13 @@ def save_it(menu_choice):
 def get_stats(table):
     '''gets stats for your table'''
     print '\n\nhere is your table info\n'
-    table.weights_info()
-    print table
-    print ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
+    print table.weights_info()
+    print ('\nthe range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
            % (table.values_min(), table.values_max(),
               table.mean(), table.stddev()))
     usr_input = make_a_list(table)
     gap.stats(table, usr_input)
-    raw_input('when you are done, (gently) hit ENTER ')
+    raw_input('when you are done, hit ENTER ')
     table_actions(table)
 
 def graphing(table):
@@ -256,7 +254,7 @@ def graphing(table):
                          (gap.truncate_grapher, (table),
                           'TRUNCATED graph with all boring bits removed',
                           ('trunc', 't')),
-                         (fancy, (table), 'a fancy but buggy pylab GRAPH',
+                         (fancy, (table), 'a fancy pylab GRAPH',
                           ('graph', 'g'))])
     g_choices.do_user_choice()
     table_actions(table)
@@ -264,9 +262,9 @@ def graphing(table):
 def fancy(table):
     '''print a pylab graph'''
     points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
-    colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k', 'w')
+    colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k')
     style = random.choice(points) + '-' + random.choice(colors)
-    overlay = raw_input('overlay on old grap(y/n)?\n>>> ')
+    overlay = raw_input('overlay on old graph(y/n)?\n>>> ')
     global GLOBAL_COUNT
     if overlay != 'y':
         GLOBAL_COUNT += 1
@@ -280,18 +278,21 @@ def fancy(table):
 
 def adder(table):
     '''the first function for the add dice process'''
-    same_dice = Choices('To', [(add_same, (table), 'add the SAME die', ('s')),
-                               (add_new, (table), 'add a NEW die', ('n')),
+    same_dice = Choices('To', [(add_old, (table), 'add a PREVIOUS die', ('p',)),
+                               (add_new, (table), 'add a NEW die', ('n',)),
                                (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
     same_dice.do_user_choice()
-def add_same(table):
+def add_old(table):
     '''process for adding the same kind of dice'''
-    if table.get_last() == None:
+    add_die, empty_check = choose_a_die(table)
+
+    if empty_check == 0:
         print 'Never added a die'
         add_new(table)
+    print add_die
     num_dice = get_num('How many dice would you like to add?', table)
     print 'please wait. adding dice. this may take time.\n...'
-    ds.add_dice(table, num_dice)
+    table.add_die(num_dice, add_die)
     print 'all done.  there! that wasn\'t so bad. back to action menu'
     table_actions(table)
 def add_new(table):
@@ -301,50 +302,73 @@ def add_new(table):
     else:
         print '\n\nhere is your table info'
         print table
+    new_die = make_die(table)
     num_dice = get_num('How many dice would you like to add?', table)
-    size = get_num('what size for your dice?', table)
-    mod_str = raw_input('to put a modifier on your dice, enter an int. \n' +
-                        'else enter any key. >>> ')
-    try:
-        mod = int(mod_str)
-    except ValueError:
-        mod = 0
-    print '\n\nenter "y" for regular dice or anykey for weighted dice'
-    no_weight = raw_input('>>> ')
-    if no_weight == 'y':
-        print 'please wait. adding dice. this may take time.\n...'
-        print ''
-        ds.add_dice(table, num_dice, size, mod)
-    else:
-        out_dic = {}
-        print 'time to make weights for a D%s' % (size)
-        for d_val in range(1, size+1):
-            question = 'enter an int value for the weight of roll: %s' % (d_val)
-            weight = get_num(question, table, True)
-            out_dic[d_val] = weight
-        print 'please wait. adding dice. this may take time.\n...'
-        ds.add_dice(table, num_dice, out_dic, mod)
+    table.add_die(num_dice, new_die)
     print 'all done.  there! that wasn\'t so bad. back to action menu'
     table_actions(table)
+def make_die(table):
+    '''the top level menu to get user to make a die'''
+    dice_type = Choices('To',
+                        [(make_basic, (table, False),
+                          'make a BASIC die', ('b',)),
+                         (make_basic, (table, True),
+                          'make a BASIC die with MODIFIER', ('bm',)),
+                         (make_weighted, (table, False),
+                          'make a WEIGHTED die', ('w',)),
+                         (make_weighted, (table, True),
+                          'make a WEIGHTED die with MODIFIER', ('wm',)),
+                         (save, (table, 'quit'), 'QUIT', ('quit', 'q'))])
+    return dice_type.do_user_choice()
+def make_basic(table, mod_it):
+    '''takes user inpute to create a Die or ModDie'''
+    size = get_num('what size for your dice?', table)
+    if mod_it:
+        mod = get_num('+/- how much?', table, True, True)
+        return ds.ModDie(size, mod)
+    else:
+        return ds.Die(size)
+def make_weighted(table, mod_it):
+    '''takes user input to create a WeightedDie or ModWeightedDie'''
+    size = get_num('what size for your dice?', table)
+    out_dic = {}
+    print 'time to make weights for a D%s' % (size)
+    for d_val in range(size, 0, -1):
+        question = 'enter an int value for the weight of roll: %s' % (d_val)
+        weight = get_num(question, table, True)
+        out_dic[d_val] = weight
+    if mod_it:
+        mod = get_num('+/- how much?', table, True, True)
+        return ds.ModWeightedDie(out_dic, mod)
+    else:
+        return ds.WeightedDie(out_dic)
 
 def remover(table):
     '''uses user input to remove a dice from the table'''
-    the_list = table.get_list()
-    if the_list == []:
-        print 'cannot remove from empty list'
+    rm_die, highest_num = choose_a_die(table)
+    if highest_num == 0:
+        print 'cannot remove from an empty list'
         table_actions(table)
-    for index in range(len(the_list)):
-        die, number = the_list[index]
-        print 'index %s -> %s %s' % (index, number, die)
-    print 'choose die by index'
-    the_index = get_num_range(table, 0, len(the_list) - 1)
-    rm_die, highest_num = the_list[the_index]
+    print rm_die
     print 'choose how many dice to remove'
     rm_num = get_num_range(table, 0, highest_num)
     table.remove_die(rm_num, rm_die)
     table_actions(table)
 
-def get_num(question, table, zero_ok=False):
+def choose_a_die(table):
+    '''makes user choose a die from a table's list. or returns dummy die of zero
+    counts if list is empty'''
+    dice_list = table.get_list()
+    if dice_list == []:
+        return ds.Die(1), 0
+    for index in range(len(dice_list)):
+        die, number = dice_list[index]
+        print 'index %s -> %s %s' % (index, number, die)
+    print 'choose die by index'
+    the_index = get_num_range(table, 0, len(dice_list) - 1)
+    die, number = dice_list[the_index]
+    return die, number
+def get_num(question, table, zero_ok=False, neg_ok=False):
     '''used by several functions to make sure user input is either a whole or
     counting number.  prompts with question(a string) and returns when the user
     finally gets their act together'''
@@ -361,12 +385,13 @@ def get_num(question, table, zero_ok=False):
             return int(ans)
         elif int(ans) == 0 and zero_ok:
             return 0
+        elif int(ans) < 0 and neg_ok:
+            return int(ans)
         else:
             print 'try something greater than 0. that would totally work!'
             if zero_ok:
                 print ('well, ok. you can try 0 if you like. but that\'s as low'
-                       + ' as i go!')
-            print
+                       + ' as i go!\n')
 def get_num_range(table, bottom, top):
     '''prompts the user choose an int in the range, (bottom <= choice <= top)
     keeps prompting user until inputs proper answer or type 'q', 'quit' '''
@@ -390,18 +415,30 @@ def make_a_list(table):
         out = []
         try:
             for value in user_input.split(','):
-                if '-' in value:
-                    start, end = value.split('-')
+                no_dashes = value.split('-')
+                #single pos or neg number
+                if (len(no_dashes) == 1 or
+                        no_dashes[0] in ('', ' ') and len(no_dashes) == 2):
+                    out.append(int(value))
+                #pos or neg numbers separated by a '-'
+                else:
+                    if len(no_dashes) == 2:
+                        start, end = no_dashes
+                    elif no_dashes[0] in ('', ' '):
+                        start = '-' + no_dashes[1]
+                        if no_dashes[2] in ('', ' '):
+                            end = '-' + no_dashes[3]
+                        else:
+                            end = no_dashes[2]
+                    else:
+                        start = no_dashes[0]
+                        end = '-' + no_dashes[2]
                     start = int(start)
                     end = int(end)
-                    if start <= end:
-                        for num in range(start, end+1):
-                            out.append(num)
+                    if start < end:
+                        out.extend(range(start, end+1))
                     else:
-                        for num in range(end, start+1):
-                            out.append(num)
-                else:
-                    out.append(int(value))
+                        out.extend(range(end, start+1))
             break
         except ValueError:
             print 'ooops.  looks like someone can\'t follow directions.'

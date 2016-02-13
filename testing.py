@@ -18,19 +18,19 @@ def add_weighted_dice(table, num_times, lst):
         table._add_tuple_list(lst)
 
 
+            
+        
 
-def timetrial(lst, num_adds):
+def timetrial(t_list, num_adds):
     '''a very lazily written timetrial for add_dice'''
-    lst.sort()
-    dic = {}
-    for el in lst:
-        dic[el] = 1+dic.get(el, 0)
-    t_list = []
-    for die, weight in dic.items():
-        t_list.append((die, weight))
     t_list.sort()
+    lst = []
+    for val, freq in t_list:
+        lst = lst + [val] * freq
     print 'list', lst, '\ntuples', t_list, '\n'
-
+    number_of_vals = len(t_list)
+    number_of_freq = len(lst)
+    print 'freqs to vals is %s' % (number_of_freq/float(number_of_vals))
     start_a = time.clock()
     a = lim.LongIntTable({0:1})
     add_dices(a, num_adds, lst)
@@ -157,70 +157,7 @@ def make_tuple_list(an_input):
     out.sort()
     return out
 
-def time_scinote(num, dig_len):
-     start = time.clock()
-     print gap.scinote(num, dig_len)
-     print 'time %s' % (time.clock()-start)
-def time_fg(table):
-     start = time.clock()
-     gap.fancy_grapher_pct(table)
-     print 'time %s' % (time.clock()-start)  
 
-
-def tst_scinote(num, dig_len=4):
-    exp = get_exp(num)
-    mantissa = get_mantissa(num, dig_len+2)
-    while mantissa >= 10:
-        mantissa = mantissa/10.0
-        exp +=1
-    while mantissa < 1:
-        mantissa = mantissa*10.0
-        exp -=1
-    mantissa = round(mantissa, dig_len - 1)
-    if exp > 6:
-        return '%se+%s' % (mantissa, exp)
-    elif exp < -4:
-        return '%se%s' % (mantissa, exp)
-    #elif exp - dig_len >= 0:
-    #    return add_commas(str(int(mantissa*10**exp)))
-    #else:
-    #    return add_commas(str(mantissa*10**exp))    
-def get_exp(num):
-    '''return the exp of a number'''
-    if num == 0:
-        return 1
-    if 'e' in str(num):
-        return int(str(num).split('e')[1])
-    elif 'E' in str(num):
-        return int(str(num).split('E')[1])
-    elif abs(num) >= 1:
-        return len(str(abs(int(num))))-1
-    else:
-        after_decimal = str(num).split('.')[1]
-        count = -1
-        for digit in after_decimal:
-            if digit == '0':
-                count -= 1
-            else:
-                return count
-def get_mantissa(num, sig_figs=10):
-    '''mantissa(1.23455e+245) returns 1.23455 with a min of sig_fig digits.'''
-    if num == 0:
-        return 0
-    elif 'e' in str(num):
-        the_mantissa = float(str(num).split('e')[0])
-        return the_mantissa
-    elif 'E' in str(num):
-        the_mantissa = float(str(num).split('E')[0])
-        return the_mantissa
-    elif abs(num) >= 1:
-        factor = 10**(get_exp(num) - sig_figs - 1)
-        reduced = num//factor
-        reduced = float(reduced)
-        return reduced/10**(sig_figs+1)
-    else:
-        factor = 10**(-get_exp(num))
-        return num*factor    
         
 def int_time():
     x = 123456789*10**400

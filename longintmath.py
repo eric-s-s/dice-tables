@@ -1,10 +1,9 @@
 ''' this module contains the class LongIntTable and longint math that the table
 needs to deal with it's BFN'''
-
-#these three functions and helper are concerned with float-math for long ints.
+#these functions are concerned with float-math for long ints.
 from decimal import Decimal as dec
 def _convert_back(num):
-    '''helper to long_int_function.  takes a Decimal and returns float if
+    '''helper function.  takes a Decimal and returns float if
     possible, else, long_int'''
     if float(num) == float('inf') or float(num) == float('-inf'):
         return long(num)
@@ -35,8 +34,8 @@ class LongIntTable(object):
     put in other values, but there is not telling what problems will happen.'''
 
     def __init__(self, seed_dictionary):
-        '''seed_dictionary is a dictionary of ints
-        {value1: frequency of value1, value2: frequency of value 2, ...}'''
+        '''seed_dictionary is a dictionary of ints. frequencies MUST BE POSITIVE.
+        {value1: (frequency of value1), value2: (frequency of value 2), ...}'''
         self._table = seed_dictionary.copy()
 
     def values(self):
@@ -99,11 +98,6 @@ class LongIntTable(object):
         return ('table from %s to %s' %
                 (self.values_min(), self.values_max()))
 
-    def copy(self):
-        '''returns a copy of a LIT'''
-        new_dic = dict((val, freq) for val, freq in self.frequency_all())
-        return LongIntTable(new_dic)
-
     def mean(self):
         '''i mean, don't you just sometimes look at a table of values
         and wonder what the mean is?'''
@@ -112,52 +106,51 @@ class LongIntTable(object):
         if denominator == 0:
             raise ZeroDivisionError('there are no values in the table')
         return long_int_div(numerator, denominator)
-    def stddev(self):
+    def stddev(self, decimal_place=4):
         '''returns the standdard deviation of the table, with special measures
         to deal with long ints.'''
         avg = self.mean()
-        sig_figs = 4
         extra_digits = 5
         power = len(str(self.frequency_highest()[1])) - 1
-        if power < 2 * (sig_figs + extra_digits):
+        if power < 2 * (decimal_place + extra_digits):
             factor = 1
         else:
-            factor = 10**(power - (sig_figs + extra_digits))
+            factor = 10**(power - (decimal_place + extra_digits))
         sqs = 0
         count = 0
         for value, frequency in self._table.items():
             sqs += (frequency//factor) * (avg - value)**2
             count += frequency
         new_count = count//factor
-        return round((sqs/new_count)**0.5, sig_figs)
+        return round((sqs/new_count)**0.5, decimal_place)
 
     def add(self, times, values):
-        '''times is positive int. values is a list of tuples(value, frequency)
+        '''times is positive int or 0. values is a list of tuples(value, frequency)
         value and frequency are ints or longs, NO NEGATIVE FREQUENCIES ALLOWED!
         this function adds your table's values and frequency and the values's.
 
         here's how it works - original list event A is 3 out of 5.
         event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
         A+A = 3*2, A+B = (3*1+5*2) B+B = 5*1.  new dict = {AA:6, AB:8, BB:5}'''
-        if times < 1:
+        if times < 0:
             raise ValueError('times must be a positive int')
         to_add = self._check_cull_sort(values)
         def _fastest(tuple_list):
             '''returns fastest method'''
-            difference = 0
-            cut_off = 3
+            experimentally_determined_ratio = 1.4
+            number_of_values = len(tuple_list)
+            total_freq = 0
             use_tuples = True
             for pair in tuple_list:
-                frequency = pair[1]
-                difference += frequency - 1
-            if difference > cut_off:
+                total_freq += pair[1]
+            list_ratio = long_int_div(total_freq, number_of_values)
+            if list_ratio > experimentally_determined_ratio:
                 return tuple_list, use_tuples
             else:
                 use_tuples = False
                 new_list = []
                 for val, freq in tuple_list:
-                    for _ in range(freq):
-                        new_list.append(val)
+                    new_list = new_list + [val] * freq
                 return new_list, use_tuples
 
         the_list, use_tuples = _fastest(to_add)
@@ -197,7 +190,7 @@ class LongIntTable(object):
         self._table = newdic
 
     def _add_tuple_list(self, lst):
-        '''as add_list_to_values, but now pass a list of tuples of ints.
+        '''as add_a_list, but now pass a list of tuples of ints.
         [(2,3), (5,7)] means add 2 three times and add 5 seven times. much more
         efficient if numbers repeat a lot in your list.'''
         newdic = {}
@@ -208,12 +201,12 @@ class LongIntTable(object):
         self._table = newdic
 
     def remove(self, times, to_remove):
-        '''times is positive int. values is a list of tuple(value, frequency)
+        '''times is positive int or 0. values is a list of tuple(value, frequency)
         value and frequency are long or int. NO NEGATIVE FREQUENCIES ALLOWED!
         this function reverses previous adds.  if you remove something you never
         added, or remove it more times than you added it, THERE IS NO RECORD OF
         WHAT YOU ADDED AND NO ERROR WILL BE RAISED. PLEASE BE CAREFUL.'''
-        if times < 1:
+        if times < 0:
             raise ValueError('times must be a positive int')
         remove_now = self._check_cull_sort(to_remove)
         for _ in range(times):
@@ -241,17 +234,10 @@ class LongIntTable(object):
         self._table = new_dic
 
     def merge(self, other):
-        '''other can be LongIntTable, dictionary of ints {value:freq} or list
-        of int tuples [(value, freq)].  adds all those value, freq to self'''
-        if isinstance(other, LongIntTable):
-            for val, freq in other.frequency_all():
-                self._table[val] = self._table.get(val, 0) + freq
-        elif isinstance(other, dict):
-            for val, freq in other.items():
-                self._table[val] = self._table.get(val, 0) + freq
-        else:
-            for val, freq in other:
-                self._table[val] = self._table.get(val, 0) + freq
+        '''other is list of int tuples [(value, freq)].  adds all those value,
+        freq to self'''
+        for val, freq in other:
+            self._table[val] = self._table.get(val, 0) + freq
 
     def update_frequency(self, value, new_freq):
         '''looks up a value, and changes its frequency to the new one'''
