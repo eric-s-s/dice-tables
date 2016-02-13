@@ -1,8 +1,44 @@
 '''for all things dicey.  this contains DiceInfo and DiceTable and add_dice.'''
 from longintmath import LongIntTable
 
+class ProtoDie(object):
+    '''a blanket object for any kind of die so that different types of Die can
+    be compared.  all Die objects need these five methods.'''
+    def get_size(self):
+        '''return the size of the die'''
+        raise NotImplementedError
+    def get_weight(self):
+        '''return the total weight of the die, if weighted'''
+        raise NotImplementedError
+    def tuple_list(self):
+        '''return an ordered tuple list of [(die, weight) ... ] with zero weights
+        removed'''
+        raise NotImplementedError
+    def weight_info(self):
+        '''return detailed info of how the die is weighted'''
+        raise NotImplementedError
+    def multiply_str(self, number):
+        '''return a string that is the die string multiplied by a number. i.e.,
+        D6+1 times 3 is 3D6+3'''
+        raise NotImplementedError
 
-class Die(object):
+    def __lt__(self, other):
+        '''Dice are compared by size, then weight, then tuple_list'''
+        return ((self.get_size(), self.get_weight(), self.tuple_list()) <
+                (other.get_size(), other.get_weight(), other.tuple_list()))
+    def __eq__(self, other):
+        return ((self.tuple_list(), self.get_size(), self.get_weight()) ==
+                (other.tuple_list(), other.get_size(), other.get_weight()))
+    def __ne__(self, other):
+        return not self == other
+    def __le__(self, other):
+        return self < other or self == other
+    def __gt__(self, other):
+        return not self <= other
+    def __ge__(self, other):
+        return self == other or self > other
+
+class Die(ProtoDie):
     '''makes instance of a die.  it has a size and a weight of 0 (for comparing
     with weighted dice which have non-zero weight)'''
     def __init__(self, die_size):
@@ -20,31 +56,14 @@ class Die(object):
         '''returns the tuple list that is the dice values'''
         return [(value, 1) for value in range(1, self._die_size + 1)]
 
-    @staticmethod
-    def weight_info():
+    def weight_info(self):
         '''returns detailed weight info, indented'''
-        return '    No weights'
+        return str(self) + '\n    No weights'
     def multiply_str(self, number):
         '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
         return '%s%s' % (number, self)
     def __str__(self):
         return 'D%s' % (self._die_size)
-
-    def __lt__(self, other):
-        '''Dice are compared by size, then weight, then tuple_list'''
-        return ((self.get_size(), self.get_weight(), self.tuple_list()) <
-                (other.get_size(), other.get_weight(), other.tuple_list()))
-    def __eq__(self, other):
-        return ((self.tuple_list(), self.get_size(), self.get_weight()) ==
-                (other.tuple_list(), other.get_size(), other.get_weight()))
-    def __ne__(self, other):
-        return not self == other
-    def __le__(self, other):
-        return self < other or self == other
-    def __gt__(self, other):
-        return not self <= other
-    def __ge__(self, other):
-        return self == other or self > other
 
 class ModDie(Die):
     '''a Die with a modifier.  i.e. D6-3.'''
@@ -68,7 +87,7 @@ class ModDie(Die):
         return 'D{0}{1:+}'.format(self._die_size, self._mod)
 
 
-class WeightedDie(object):
+class WeightedDie(ProtoDie):
     '''stores and returns info for a weighted die.'''
     def __init__(self, dictionary_input):
         '''dictionary input is a dictionary of value:weight. values are positive
@@ -97,7 +116,7 @@ class WeightedDie(object):
 
     def weight_info(self):
         '''returns detailed weight info, indented'''
-        out = ''
+        out = str(self) + '\n'
         for roll in range(1, self._die_size + 1):
             out = (out +'    a roll of %s has a weight of %s\n' %
                    (roll, self._dic.get(roll, 0)))
@@ -107,22 +126,6 @@ class WeightedDie(object):
         return '%s%s' % (number, self)
     def __str__(self):
         return 'D%s  W:%s' % (self._die_size, self._weight)
-
-    def __lt__(self, other):
-        '''dice  are compared by size, then weight, then tuple_list'''
-        return ((self.get_size(), self.get_weight(), self.tuple_list()) <
-                (other.get_size(), other.get_weight(), other.tuple_list()))
-    def __eq__(self, other):
-        return ((self.tuple_list(), self.get_size(), self.get_weight()) ==
-                (other.tuple_list(), other.get_size(), other.get_weight()))
-    def __ne__(self, other):
-        return not self == other
-    def __le__(self, other):
-        return self < other or self == other
-    def __gt__(self, other):
-        return not self <= other
-    def __ge__(self, other):
-        return self == other or self > other
 
 class ModWeightedDie(WeightedDie):
     '''stores and returns info for a weighted die. and a modifier modifies the
@@ -193,8 +196,9 @@ class DiceTable(LongIntTable):
         '''return detailed info of dice in the list'''
         out_str = ''
         for die, number in self._dice_list:
-            out_str = (out_str + '%s\n%s\n\n' %
-                       (die.multiply_str(number), die.weight_info()))
+            out_str = (out_str +
+                       die.weight_info().replace(str(die), die.multiply_str(number))
+                       + '\n\n')
         return out_str.rstrip('\n')
 
     def __str__(self):

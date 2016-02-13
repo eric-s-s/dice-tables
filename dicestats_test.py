@@ -18,19 +18,6 @@ class TestDiceStats(unittest.TestCase):
     def tearDown(self):
         del self.table
 
-    def test_die_get_size(self):
-        self.assertEqual(ds.Die(6).get_size(), 6)
-    def test_die_get_weight(self):
-        self.assertEqual(ds.Die(10).get_weight(), 0)
-    def test_die_tuple_list(self):
-        self.assertEqual(ds.Die(100).tuple_list(),
-                         [(x, 1) for x in range(1, 101)])
-    def test_die_weight_info(self):
-        self.assertEqual(ds.Die(10000).weight_info(), '    No weights')
-    def test_die_str(self):
-        self.assertEqual(str(ds.Die(1234)), 'D1234')
-    def test_die_multiply_str(self):
-        self.assertEqual(ds.Die(5).multiply_str(-2.3e-20), '-2.3e-20D5')
     def test_die_equal(self):
         self.assertEqual(ds.Die(3) == ds.Die(3), True)
         self.assertEqual(ds.Die(0) == ds.Die(5), False)
@@ -62,6 +49,43 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(D4 < ds.ModDie(4, 0), False)
         self.assertEqual(D4 < ds.ModDie(4, 1), True)
         self.assertEqual(D4 < ds.ModDie(4, -1), False)
+
+    def test_WeightedDie_eq(self):
+        dic = {1:1, 2:2}
+        self.assertEqual(ds.WeightedDie(dic), ds.WeightedDie(dic))
+        self.assertNotEqual(ds.WeightedDie(dic), ds.WeightedDie({2:2}))
+    def test_WeightedDie_not_equal_Die_with_same_dictionary(self):
+        self.assertNotEqual(D4, D4W4)
+    def test_WeightedDie_lt_by_size(self):
+        self.assertTrue(D4W10 < ds.WeightedDie({5:1}))
+    def test_WeightedDie_lt_by_weight(self):
+        self.assertTrue(D4W4 < D4W10)
+    def test_WeightedDie_lt_by_tuple_list(self):
+        smaller_weight_ten = dict((x, x) for x in range(1, 5))
+        self.assertTrue(ds.WeightedDie(smaller_weight_ten) < D4W10)
+    def test_WeightedDie_eq_lt_gt_strange_case(self):
+        die1 = ds.WeightedDie({1:2, 2:0})
+        die2 = ds.WeightedDie({1:2})
+        self.assertFalse(die1 == die2)
+        self.assertFalse(die1.get_size() == die2.get_size())
+        self.assertTrue(die1 > die2)
+        self.assertTrue(die2 < die1)
+
+
+    def test_die_get_size(self):
+        self.assertEqual(ds.Die(6).get_size(), 6)
+    def test_die_get_weight(self):
+        self.assertEqual(ds.Die(10).get_weight(), 0)
+    def test_die_tuple_list(self):
+        self.assertEqual(ds.Die(100).tuple_list(),
+                         [(x, 1) for x in range(1, 101)])
+    def test_die_weight_info(self):
+        self.assertEqual(ds.Die(10000).weight_info(), 'D10000\n    No weights')
+    def test_die_str(self):
+        self.assertEqual(str(ds.Die(1234)), 'D1234')
+    def test_die_multiply_str(self):
+        self.assertEqual(ds.Die(5).multiply_str(-2.3e-20), '-2.3e-20D5')
+        
     def test_ModDie_get_modifier(self):
         self.assertEqual(ds.ModDie(7, 33).get_modifier(), 33)
     def test_ModDie_tuple_list(self):
@@ -90,7 +114,8 @@ class TestDiceStats(unittest.TestCase):
                          tuples_no_zeros)
     def test_WeightedDie_weight_info(self):
         dic = dict((x, x+1) for x in range(1, 6, 2))
-        weights_str = ('    a roll of 1 has a weight of 2\n' +
+        weights_str = ('D5  W:12\n'+
+                       '    a roll of 1 has a weight of 2\n' +
                        '    a roll of 2 has a weight of 0\n' +
                        '    a roll of 3 has a weight of 4\n' +
                        '    a roll of 4 has a weight of 0\n' +
@@ -100,27 +125,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(str(D4W10), 'D4  W:10')
     def test_WeightedDie_multiply_str(self):
         self.assertEqual(D4W10.multiply_str(10), '10D4  W:10')
-    def test_WeightedDie_eq(self):
-        dic = {1:1, 2:2}
-        self.assertEqual(ds.WeightedDie(dic), ds.WeightedDie(dic))
-        self.assertNotEqual(ds.WeightedDie(dic), ds.WeightedDie({2:2}))
-    def test_WeightedDie_not_equal_Die_with_same_dictionary(self):
-        self.assertNotEqual(D4, D4W4)
-    def test_WeightedDie_lt_by_size(self):
-        self.assertTrue(D4W10 < ds.WeightedDie({5:1}))
-    def test_WeightedDie_lt_by_weight(self):
-        self.assertTrue(D4W4 < D4W10)
-    def test_WeightedDie_lt_by_tuple_list(self):
-        smaller_weight_ten = dict((x, x) for x in range(1, 5))
-        self.assertTrue(ds.WeightedDie(smaller_weight_ten) < D4W10)
-    def test_WeightedDie_eq_lt_gt_strange_case(self):
-        die1 = ds.WeightedDie({1:2, 2:0})
-        die2 = ds.WeightedDie({1:2})
-        self.assertFalse(die1 == die2)
-        self.assertFalse(die1.get_size() == die2.get_size())
-        self.assertTrue(die1 > die2)
-        self.assertTrue(die2 < die1)
-
+    
     def test_ModWeightedDie_get_mod(self):
         self.assertEqual(D4W10PLUS2.get_modifier(), 2)
     def test_ModWeightedDie_tuple_list(self):
