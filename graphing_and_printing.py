@@ -105,7 +105,13 @@ def graph_list(table):
 
     output_list.append((None, 'each x represents '+divstring+' occurences'))
     return output_list
-
+def print_table_string(table):
+    '''returns a string of the table printout'''
+    max_value = table.values_max()
+    outstr = ''
+    for value, frequency in table.frequency_all():
+        outstr = outstr + justify_right(value, max_value) +':'+scinote(frequency) + '\n'
+    return outstr
 def print_table(table):
     '''table is a LongIntTable. Prints all the values and their frequencies.'''
     max_value = table.values_max()
@@ -141,6 +147,7 @@ def fancy_grapher(table, figure=1, style='bo', legend=False):
     too_big_for_pylab = 10**300
     pylab.figure(figure)
     pylab.ylabel('number of occurences')
+    pylab.ion()
     #A work-around for the limitations of pylab.
     #It can't handle really fucking big ints and can't use my workarounds
     if table.total_frequency() > too_big_for_pylab:
@@ -167,6 +174,7 @@ def fancy_grapher_pct(table, figure=1, style='bo', legend=False):
     y_axis = []
     pylab.figure(figure)
     pylab.ylabel('pct of the total occurences')
+    pylab.ion()
     factor = li_div(table.total_frequency(), 100)
 
     for value, frequency in table.frequency_all():
