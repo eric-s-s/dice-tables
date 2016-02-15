@@ -110,7 +110,7 @@ def print_table_string(table):
     max_value = table.values_max()
     outstr = ''
     for value, frequency in table.frequency_all():
-        outstr = outstr + justify_right(value, max_value) +':'+scinote(frequency) + '\n'
+        outstr = outstr + justify_right(value, max_value) +': '+scinote(frequency) + '\n'
     return outstr
 def print_table(table):
     '''table is a LongIntTable. Prints all the values and their frequencies.'''
@@ -202,22 +202,21 @@ def stats(table, values):
         lst_frequency += table.frequency(value)[1]
 
     if lst_frequency == 0:
-        print 'no results'
-        return None
+        #print 'no results'
+        #return None
+        return 'no results'
     chance = li_div(all_combos, lst_frequency)
     pct = 100 * li_div(lst_frequency, all_combos)
-    pct_str = scinote(pct)
-    lst_frequency_str = scinote(lst_frequency)
-    chance_str = scinote(chance)
-    all_combos_str = scinote(all_combos)
+
     values_str = list_to_string(no_copies)
     #add extra space to str(table) \n parts so it prints purty after 'for '
     added_width = 4
-    print
-    print ('%s occurred %s times out of a total of %s possible combinations' %
-           (values_str, lst_frequency_str, all_combos_str))
-    print 'for %s,' % (str(table).replace('\n', '\n' + added_width*' '))
-    print ('the chance of %s is 1 in %s or %s percent' %
-           (values_str, chance_str, pct_str))
-    print
+    #print
 
+    out_str = ('%s occurred %s times \nout of a total of %s possible combinations' %
+               (values_str, scinote(lst_frequency), scinote(all_combos)))
+    out_str = out_str + '\nfor %s,' % (str(table).replace('\n', '\n' + added_width*' '))
+    out_str = out_str + ('\nthe chance of %s is \n1 in %s or \n%s percent' %
+                         (values_str, scinote(chance), scinote(pct)))
+    #print
+    return out_str
