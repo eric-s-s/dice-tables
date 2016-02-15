@@ -165,7 +165,7 @@ class App:
     def set_size(self, number):
         self.die_size_scale.set(number)
     def add_weights(self):
-        self.weight_dictionary = {0:1}
+        self.weight_dictionary = {1:0}
         self.weight_widgets = []
         self.weight_window = tk.Toplevel()
         self.weight_frame = tk.Frame(self.weight_window)
