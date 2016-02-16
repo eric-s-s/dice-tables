@@ -2,8 +2,8 @@ import Tkinter as tk
 import dicestats as ds
 import graphing_and_printing as gap
 import random
-
-class App:
+import pylab
+class App(object):
     def __init__(self, master):
         self.info_frame = tk.Frame(master)
         self.info_frame.pack(side=tk.LEFT, fill=tk.BOTH)
@@ -28,6 +28,7 @@ class App:
         self.table = ds.DiceTable()
         self.use_weights = False
         self.weight_dictionary = {1:0}
+        self.graph_figure = 1
         self.weight_widgets = []
         self.change_widgets = []
         #infoframe
@@ -106,12 +107,21 @@ class App:
         self.d100.grid(row=6, column=1)
 
         #stat_graph_frame
-        self.graph_button = tk.Button(self.stat_graph_frame, text='graph',
-                                      command=self.graph_it, bg='light yellow')
-        self.graph_button.grid(row=2, column=1, pady=30)
-        self.stats_button = tk.Button(self.stat_graph_frame, text='stats',
+        self.graph_button = tk.Button(self.stat_graph_frame, text='overlay\ngraph',
+                                      command=lambda: self.graph_it(new=False),
+                                      bg='light yellow')
+        self.graph_button.grid(row=2, column=1, sticky=tk.S+tk.E)
+        self.graph_clear = tk.Button(self.stat_graph_frame, text='clear', fg='red',
+                                     command=self.clear_graph, bg='light yellow')
+        self.graph_clear.grid(row=2, column=2, sticky=tk.S+tk.W)
+        self.graph_new = tk.Button(self.stat_graph_frame, text='one-off\ngraph',
+                                   command=lambda: self.graph_it(new=True),
+                                   bg='light yellow')
+        self.graph_new.grid(row=2, column=1, sticky=tk.N+tk.E)
+        self.stats_button = tk.Button(self.stat_graph_frame, text='get\nstats',
+                                      height=3, width=8,
                                       command=self.stats_it, bg='light yellow')
-        self.stats_button.grid(row=2, column=0, pady=30)
+        self.stats_button.grid(row=2, column=0, pady=20)
         self.stats_label1 = tk.Label(self.stat_graph_frame,
                                      text='assign star/stop\nand click button for stats')
         self.stats_label1.grid(row=0, column=0, pady=30)
@@ -123,7 +133,7 @@ class App:
         self.stats_start.grid(row=1, column=0)
         self.stats_stop.grid(row=1, column=1)
         self.stats_text_box = tk.Text(self.stat_graph_frame, width=60, height=20)
-        self.stats_text_box.grid(row=3, column=0, columnspan=2)
+        self.stats_text_box.grid(row=3, column=0, columnspan=3)
         #all_info_frame
         self.all_info_label = tk.Label(self.all_info_frame, fg='white', bg='blue',
                                        text=('here are all the rolls\n'+
@@ -138,11 +148,28 @@ class App:
 
 
 
-    def graph_it(self):
+    def graph_it(self, new=False):
         points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
         colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k')
         the_style = random.choice(points) + '-' + random.choice(colors)
-        gap.fancy_grapher_pct(self.table, figure=2, style=the_style, legend=True)
+        figure_obj = pylab.figure(0)
+        fig_num = 0
+        if new:
+            figure_obj = pylab.figure(1)
+            fig_num = 1
+            #pylab.show()
+            pylab.clf()
+        gap.fancy_grapher_pct(self.table, figure=fig_num, style=the_style, legend=True)
+        pylab.pause(0.1)
+        figure_obj.canvas.manager.window.activateWindow()
+        figure_obj.canvas.manager.window.raise_()
+
+    def clear_graph(self):
+        figure_obj = pylab.figure(0)
+        pylab.cla()
+        pylab.pause(0.1)
+        figure_obj.canvas.manager.window.activateWindow()
+        figure_obj.canvas.manager.window.raise_()
     def stats_it(self):
         start = self.stats_start.get()
         stop = self.stats_stop.get()
@@ -159,7 +186,7 @@ class App:
         self.update_change_frame()
     def stats_string_maker(self, table):
         out = ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
-               % (table.values_min(), table.values_max(), table.mean(),
+               % (table.values_min(), table.values_max(), round(table.mean(), 4),
                   table.stddev()))
         return out
     def set_size(self, number):
@@ -196,6 +223,8 @@ class App:
             count += 1
         #dic_disp = tk.Label(self.add_frame, text=str(self.weight_dictionary))
         #dic_disp.grid()
+        if sum(self.weight_dictionary.values()) == 0:
+            self.use_weights = False
         self.weight_window.destroy()
     def add_new(self):
         #num_dice_scale+die_size_scale+die_modifier_scale
