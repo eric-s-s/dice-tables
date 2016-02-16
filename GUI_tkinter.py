@@ -152,13 +152,15 @@ class App(object):
         points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
         colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k')
         the_style = random.choice(points) + '-' + random.choice(colors)
-        figure_obj = pylab.figure(0)
-        fig_num = 0
+        
         if new:
             figure_obj = pylab.figure(1)
             fig_num = 1
             #pylab.show()
             pylab.clf()
+        else:
+            figure_obj = pylab.figure(0)
+            fig_num = 0 
         gap.fancy_grapher_pct(self.table, figure=fig_num, style=the_style, legend=True)
         pylab.pause(0.1)
         figure_obj.canvas.manager.window.activateWindow()
