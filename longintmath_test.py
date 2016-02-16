@@ -1,3 +1,4 @@
+# pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''tests for the longintmath.py module'''
 import unittest
 import longintmath as lim
@@ -51,7 +52,7 @@ class TestLongIntMathFunctionsDivTimesPow(unittest.TestCase):
     def test_long_pow_with_float_power(self):
         result = lim.long_int_pow(LONG_BIG, 2.5)
         self.assertAlmostEqual(result, 10**2500, delta=10**2490)
-
+#todo get rid of these constants
 TUPLES_WITH_ZERO = [(1, 2), (2, 0), (-1, 2)]
 TUPLES_WITHOUT_ZERO = [(-1, 2), (1, 2)]
 TUPLES_WITH_TWO_HIGHEST = [(1, 2), (2, 1), (-1, 2)]
@@ -73,9 +74,11 @@ class TestLongIntTable(unittest.TestCase):
 
         del self.neg2_to_pos2_freq3
         del self.empty_table
+#todo explicit dictionary in test so not looking up stuff
     def test_values_sorts_and_removes_zeros(self):
         test_table = lim.LongIntTable(dict(TUPLES_WITH_ZERO))
         self.assertEqual(test_table.values(), [-1, 1])
+#todo code empty table explicityly
     def test_values_returns_empty_list_for_empty_table(self):
         self.assertEqual(self.empty_table.values(), [])
 
@@ -108,6 +111,7 @@ class TestLongIntTable(unittest.TestCase):
                          [(-2, 3), (-1, 3), (0, 3), (1, 3), (2, 3)])
     def test_frequency_all_return_empty_for_empty_table(self):
         self.assertEqual(self.empty_table.frequency_all(), [])
+#todo explicit tuple lists in tests
     def test_frequency_all_sorts_and_does_not_return_zero_frequencies(self):
         table = lim.LongIntTable(dict(TUPLES_WITH_ZERO))
         self.assertEqual(table.frequency_all(), [(-1, 2), (1, 2)])

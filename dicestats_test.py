@@ -3,6 +3,8 @@
 import unittest
 import dicestats as ds
 
+#todo get rid of these and use simpler test fixtures
+#ie WeightedDie({5:1}) is just fine
 D4 = ds.Die(4)
 D4W4 = ds.WeightedDie(dict((x, 1) for x in range(1, 5)))
 D10 = ds.Die(10)
@@ -41,6 +43,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.Die(4) >= ds.Die(4), True)
         self.assertEqual(ds.Die(4) >= ds.Die(3), True)
 
+#todo don't use D4 constant
     def test_die_moddie_eq(self):
         self.assertEqual(D4 == ds.ModDie(4, 0), True)
         self.assertEqual(ds.ModDie(4, 1) == D4, False)
@@ -49,7 +52,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(D4 < ds.ModDie(4, 0), False)
         self.assertEqual(D4 < ds.ModDie(4, 1), True)
         self.assertEqual(D4 < ds.ModDie(4, -1), False)
-
+#todo make consistent with old stuff
     def test_WeightedDie_eq(self):
         dic = {1:1, 2:2}
         self.assertEqual(ds.WeightedDie(dic), ds.WeightedDie(dic))
@@ -57,14 +60,16 @@ class TestDiceStats(unittest.TestCase):
     def test_WeightedDie_not_equal_Die_with_same_dictionary(self):
         self.assertNotEqual(D4, D4W4)
     def test_WeightedDie_lt_by_size(self):
-        self.assertTrue(D4W10 < ds.WeightedDie({5:1}))
+        D5W1 = ds.WeightedDie({5:1})
+        self.assertTrue(D4W10 < D5W1)
     def test_WeightedDie_lt_by_weight(self):
         self.assertTrue(D4W4 < D4W10)
     def test_WeightedDie_lt_by_tuple_list(self):
         smaller_weight_ten = dict((x, x) for x in range(1, 5))
         self.assertTrue(ds.WeightedDie(smaller_weight_ten) < D4W10)
+#todo update test name to be more explicit edge case
     def test_WeightedDie_eq_lt_gt_strange_case(self):
-        die1 = ds.WeightedDie({1:2, 2:0})
+        die1 = ds.WeightedDie({2:0})
         die2 = ds.WeightedDie({1:2})
         self.assertFalse(die1 == die2)
         self.assertFalse(die1.get_size() == die2.get_size())
@@ -90,6 +95,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.ModDie(7, 33).get_modifier(), 33)
     def test_ModDie_tuple_list(self):
         self.assertEqual(ds.ModDie(3, 2).tuple_list(), [(3, 1), (4, 1), (5, 1)])
+#todo this belongs in dice equality        
     def test_modDie_with_zero_mod_is_Die(self):
         self.assertEqual(ds.ModDie(10, 0), ds.Die(10))
     def test_modDie_string(self):
@@ -101,6 +107,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_WeightedDie_get_size(self):
         self.assertEqual(ds.WeightedDie({5:2, 2:5}).get_size(), 5)
+#todo KIS for next 3
     def test_WeightedDie_get_weight(self):
         dic = dict((x, 2*x) for x in range(1, 6))
         self.assertEqual(ds.WeightedDie(dic).get_weight(), 2*(1+2+3+4+5))
@@ -145,7 +152,7 @@ class TestDiceStats(unittest.TestCase):
         self.table.update_list(3, D4)
         self.table.update_list(2, D4)
         self.assertIn((D4, 5), self.table.get_list())
-    def test_DiceTable_update_list_doesnt_add_similar_dice(self):
+    def test_DiceTable_update_list_doesnt_combine_similar_dice(self):
         self.table.update_list(3, D4)
         self.table.update_list(2, D4W4)
         self.assertIn((D4W4, 2), self.table.get_list())
@@ -204,7 +211,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertRaisesRegexp(ValueError,
                                 'dice not in table, or removed too many dice',
                                 self.table.remove_die, 1, D4)
-    def test_remove_die_rases_error_if_too_many_dice_removed(self):
+    def test_remove_die_raises_error_if_too_many_dice_removed(self):
         self.table.add_die(3, D4)
         self.assertRaisesRegexp(ValueError,
                                 'dice not in table, or removed too many dice',
