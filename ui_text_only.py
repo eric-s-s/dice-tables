@@ -61,9 +61,9 @@ class Choices(object):
     (function name, (args for function), 'what to display', ('cmnd1', 'cmd2'...))
     '''
     def __init__(self, filler, choice_list=None):
-        '''nose_choice = Choices(['to', (pick_nose, (nose, finger),
+        '''nose_choice = Choices('to', [(pick_nose, (nose, finger),
                                          'pick yr nose',('p', 'pick')),
-                                        ( (choice2) )]'''
+                                        ( (choice2) )])'''
         if choice_list == None:
             self._choices = []
         else:
@@ -240,7 +240,7 @@ def get_stats(table):
            % (table.values_min(), table.values_max(),
               table.mean(), table.stddev()))
     usr_input = make_a_list(table)
-    gap.stats(table, usr_input)
+    print gap.stats(table, usr_input)
     raw_input('when you are done, hit ENTER ')
     table_actions(table)
 

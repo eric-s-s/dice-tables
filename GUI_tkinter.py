@@ -61,7 +61,7 @@ class App(object):
 
         self.update_change_frame()
         self.add_rm_button = tk.Button(self.change_frame, text='add/remove',
-                                       bg='pale turquoise', command=self.add_rm)
+                                       bg='pale turquoise', command=self.add_rm, padx=30)
         self.add_rm_button.pack()
 
 
@@ -286,7 +286,7 @@ class App(object):
                 max_remove = number
             scale = tk.Scale(self.change_frame, from_=-1 * max_remove, to=max_add,
                              orient=tk.HORIZONTAL, label=scale_label)
-            scale.pack()
+            scale.pack(fill=tk.X)
             self.change_widgets.append((scale, die))
 
 
