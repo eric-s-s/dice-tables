@@ -110,30 +110,32 @@ class App(object):
         self.graph_button = tk.Button(self.stat_graph_frame, text='overlay\ngraph',
                                       command=lambda: self.graph_it(new=False),
                                       bg='light yellow')
-        self.graph_button.grid(row=2, column=1, sticky=tk.S+tk.E)
+        self.graph_button.grid(row=2, column=0, sticky=tk.S+tk.E)
         self.graph_clear = tk.Button(self.stat_graph_frame, text='clear', fg='red',
                                      command=self.clear_graph, bg='light yellow')
-        self.graph_clear.grid(row=2, column=2, sticky=tk.S+tk.W)
+        self.graph_clear.grid(row=2, column=1, sticky=tk.S+tk.W)
         self.graph_new = tk.Button(self.stat_graph_frame, text='one-off\ngraph',
                                    command=lambda: self.graph_it(new=True),
                                    bg='light yellow')
-        self.graph_new.grid(row=2, column=1, sticky=tk.N+tk.E)
-        self.stats_button = tk.Button(self.stat_graph_frame, text='get\nstats',
-                                      height=3, width=8,
-                                      command=self.stats_it, bg='light yellow')
-        self.stats_button.grid(row=2, column=0, pady=20)
+        self.graph_new.grid(row=2, column=0, sticky=tk.N+tk.W)
+        #self.stats_button = tk.Button(self.stat_graph_frame, text='get\nstats',
+        #                              height=3, width=8,
+        #                              command=self.stats_it, bg='light yellow')
+        #self.stats_button.grid(row=2, column=0, pady=20)
         self.stats_label1 = tk.Label(self.stat_graph_frame,
-                                     text='assign star/stop\nand click button for stats')
-        self.stats_label1.grid(row=0, column=0, pady=30)
+                                     text='assign start/stop\n for stats')
+        self.stats_label1.grid(row=0, column=0, pady=20)
         self.stats_label2 = tk.Label(self.stat_graph_frame,
                                      text='click graph button\nfor graph')
-        self.stats_label2.grid(row=0, column=1, pady=30)
-        self.stats_start = tk.Scale(self.stat_graph_frame, label='stats start value')
-        self.stats_stop = tk.Scale(self.stat_graph_frame, label='stats stop value')
-        self.stats_start.grid(row=1, column=0)
-        self.stats_stop.grid(row=1, column=1)
-        self.stats_text_box = tk.Text(self.stat_graph_frame, width=60, height=20)
-        self.stats_text_box.grid(row=3, column=0, columnspan=3)
+        self.stats_label2.grid(row=0, column=1, pady=20)
+        self.stats_left = tk.Scale(self.stat_graph_frame, label='stats value 1',
+                                    command=self.stats_it_left)
+        self.stats_right = tk.Scale(self.stat_graph_frame, label='stats value 2', 
+                                   command=self.stats_it_right)
+        self.stats_left.grid(row=1, column=0)
+        self.stats_right.grid(row=1, column=1)
+        self.stats_text_box = tk.Text(self.stat_graph_frame, width=50, height=20)
+        self.stats_text_box.grid(row=3, column=0, columnspan=2)
         #all_info_frame
         self.all_info_label = tk.Label(self.all_info_frame, fg='white', bg='blue',
                                        text=('here are all the rolls\n'+
@@ -172,16 +174,21 @@ class App(object):
         pylab.pause(0.1)
         figure_obj.canvas.manager.window.activateWindow()
         figure_obj.canvas.manager.window.raise_()
-    def stats_it(self):
-        start = self.stats_start.get()
-        stop = self.stats_stop.get()
-        if start < stop:
-            input_lst = range(start, stop + 1)
+    def stats_it(self, left, right):
+        left = int(left)
+        right = int(right)
+        if left < right:
+            input_lst = range(left, right + 1)
         else:
-            input_lst = range(stop, start + 1)
+            input_lst = range(right, left + 1)
         self.stats_text_box.delete(1.0, tk.END)
         self.stats_text_box.insert(tk.END, gap.stats(self.table, input_lst))
-
+    def stats_it_left(self, left):
+        right = self.stats_right.get()
+        self.stats_it(left, right)
+    def stats_it_right(self, right):
+        left = self.stats_left.get()
+        self.stats_it(left, right)
     def restart_table(self):
         self.table = ds.DiceTable()
         self.mutate_labels()
@@ -223,13 +230,10 @@ class App(object):
         for widget in self.weight_widgets:
             self.weight_dictionary[count] = widget.get()
             count += 1
-        #dic_disp = tk.Label(self.add_frame, text=str(self.weight_dictionary))
-        #dic_disp.grid()
         if sum(self.weight_dictionary.values()) == 0:
             self.use_weights = False
         self.weight_window.destroy()
     def add_new(self):
-        #num_dice_scale+die_size_scale+die_modifier_scale
         mod = self.die_modifier_scale.get()
         if self.use_weights:
             if mod == 0:
@@ -266,8 +270,8 @@ class App(object):
                                              self.table.weights_info()))
 
         val_min, val_max = self.table.values_range()
-        self.stats_start.config(from_=val_min, to=val_max)
-        self.stats_stop.config(from_=val_min, to=val_max)
+        self.stats_left.config(from_=val_min, to=val_max)
+        self.stats_right.config(from_=val_min, to=val_max)
 
         self.text_box.delete(1.0, tk.END)
         self.text_box.insert(tk.END, gap.print_table_string(self.table))
