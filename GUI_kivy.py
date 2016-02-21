@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.stacklayout import StackLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
@@ -47,14 +48,38 @@ class StatBox(BoxLayout):
         new_text = gap.stats(self.table, stat_list).replace(' possible', '')
         self.ids['stat_text'].text = new_text
 class ScrollLabel(ScrollView):
-    text = StringProperty('')
-class WeightPopup(Popup):
     pass
-        
+    def set_text(self, new_text):
+        self.ids['scroll_label'].text = new_text
+class WeightPopupContents(StackLayout):
+    pass
+    #def assign_cols(self, col):
+    #    self.cols = col   
+    def assign_sliders(self, die_size):
+        #self.assign_cols(die_size//10 + 1)
+        for roll in range(1, die_size + 1):
+            slider = HorSlider(size_hint=(None,0.1), width=150)
+            slider.write_holder(roll)
+            slider.write_label('weight for ' + str(roll))
+            self.add_widget(slider)
+    def return_dictionary(self):
+        out = {}
+        for child in self.children[:]:
+            if isinstance(child, HorSlider):
+                roll = child.get_holder()
+                out[roll] = int(child.get_value())
+        return out.copy()
 class HorSlider(BoxLayout):
-    pass
+    def __init__(self, **kwargs):
+        super(HorSlider, self).__init__(**kwargs)
+        self.holder=None
     def write_label(self, text):
         self.ids['hor_title'].text = text
+    def write_holder(self, new_val):
+        self.holder = new_val
+    def get_holder(self):
+        out = self.holder
+        return out
     def get_value(self):
         return int(self.ids['hor_slider'].value)
 
@@ -102,27 +127,49 @@ class DicePlatform(BoxLayout):
         figure_obj.canvas.manager.window.raise_()        
 #generally ok.  layout sux        
     def weight_it(self):
-        self.weight_popup = WeightPopup()
+        size = int(self.ids['blah'].value)
+        cell_size = 150
+        popup_width = cell_size*(size//10 + 1) 
+        self.contents = WeightPopupContents()
+        size_limit = 600
+        pad_size = size_limit + 60
+        if popup_width > size_limit:
+            self.contents.size_hint = (None, None)
+            new_width = cell_size * ((size+2)//10 +1)
+            that_way = Label(text='[b]DRAG\n====>[/b]', size_hint=(None, None), 
+                             size=(100, 50), font_size=20, markup=True) 
+            self.contents.add_widget(that_way)
+            self.contents.assign_sliders(size)
+            def wrapper(instance):
+                self.record_weight()
+            self.second_button = Button(text='record\nweights', size_hint=(None, None), 
+                                  size=(100, 50), on_press=wrapper) 
+            self.contents.add_widget(self.second_button)
+            self.contents.size = (new_width, size_limit)
+            scroller = ScrollView(size_hint=(None, None), size=(size_limit, size_limit),
+                                  scroll_timeout=70)
+            scroller.add_widget(self.contents)
+            self.weight_popup = Popup(title='weight', content=scroller, 
+                                  size_hint=(None, None),size=(pad_size, pad_size))
+        else:
+            self.contents.assign_sliders(size)
+            self.weight_popup = Popup(title='weight', content=self.contents, 
+                                      size_hint=(None, None),
+                                      size=(popup_width, size_limit))
         self.weight_popup.open()
-        box = self.weight_popup.ids['pop_up_frame']
-        for count in range(5):
-            temp = HorSlider()
-            temp.write_label('hah' + str(count))
-            box.add_widget(temp)
+        
 #record_weight ok    
     def record_weight(self):
-        count = 1
+        self.weight_dictionary = self.contents.return_dictionary()
         self.use_weights = True
-        for widget in self.weight_popup.ids['pop_up_frame'].children[:]:
-            if isinstance(widget, HorSlider):
-                self.weight_dictionary[count] = widget.get_value()
-            count += 1
+        print self.weight_dictionary
         if sum(self.weight_dictionary.values()) == 0:
             self.use_weights = False
         self.weight_popup.dismiss()
-        #print self.weight_dictionary
+
     def updater(self):
         self.ids['the_stat_box'].assign_limits()
+        #self.ids['all_rolls_label'].set_text(gap.print_table_string(self.table))
         self.ids['all_rolls_label'].text = gap.print_table_string(self.table)
 class DiceTableApp(App):
     def build(self):

@@ -19,7 +19,7 @@
             text:'suck it'
             orientation:'vertical'
             min:1
-            max:50
+            max:100
             value:5
             step:1
         Label:
@@ -119,7 +119,7 @@
             font_size: 20
             text:'here are all the rolls\nand their frequency' 
 
-        ScrollLabel:
+        TextInput:
             canvas:
                 Color:
                     rgba: 0,1,0,0.5
@@ -133,32 +133,20 @@
         
         
             
-<WeightPopup>:
-    BoxLayout:
-        orientation:'vertical'
-        id:pop_up_frame
-        Button:
-            id: dsfdsfgdg
-            color:1,0,0,1
-            background_color:5,5,1,5
-            text: 'add stuff'
-            size_hint: .1,.1
-            on_press: app.root.do_it()
-        Label:
-            text: 'h'   
-            size_hint: .1,.1
- 
-        Button:
-            text:'don'
-            size_hint: .1,.1
-            on_press: root.dismiss() 
-        Button:
-            text:'rec'
-            size_hint: 0.2,0.2 
-            on_press: app.root.record_weight()                  
+<WeightPopupContents>:
+    id:weight_popup_contents
+    orientation:'tb-lr'    
+    Button:
+        id:record
+        text:'record\nweights'
+        size_hint:None, None
+        size: 100, 50
+        on_press: app.root.record_weight() 
+                  
 <ScrollLabel>:
     Label:
-        text: root.text
+        id:scroll_label
+        text: ''
         front_size: 15
         text_size: self.width, None
         size_hint_y: None
@@ -167,10 +155,15 @@
 <HorSlider>:
     BoxLayout:
         orientation:'vertical'
+        size_hint_x: None
+        width: 100
         Label:
+            
             id:hor_title
-            font_size:20
+            font_size:15
         Slider:
+            #size_hint_x: None
+            #width: 20
             id:hor_slider
             orientation:'horizontal'
             min:0
@@ -179,7 +172,7 @@
             step:1 
         Label:
             text: str(int(hor_slider.value))
-            font_size:15    
+            font_size:10    
 <StatBox>:
     BoxLayout:
         orientation: 'vertical'
