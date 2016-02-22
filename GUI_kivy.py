@@ -49,8 +49,35 @@ class StatBox(BoxLayout):
         self.ids['stat_text'].text = new_text
 class ScrollLabel(ScrollView):
     pass
-    def set_text(self, new_text):
-        self.ids['scroll_label'].text = new_text
+    def set_text(self, new_text, new_font_size):
+        page_height = 600
+        height_buffer = 120
+        def splitter(text, line_limit):
+            text = text.rstrip('\n')
+            lines = text.split('\n')
+            num_lines = len(lines)
+            out = []
+            if num_lines % line_limit == 0:
+                pages = num_lines // line_limit
+            else:
+                pages = num_lines // line_limit + 1
+            for count in range(0, (pages - 1)*line_limit, line_limit):
+                page = '\n'.join(lines[count:count+line_limit])
+                out.append(page)    
+            last_page = lines[(pages - 1)*line_limit:]
+            extra_lines = (line_limit - len(last_page)) * [' ']
+            last_page = '\n'.join(last_page + extra_lines)  
+            out.append(last_page)
+            return out
+        pages = splitter(new_text, page_height//new_font_size)
+        container = self.ids['page_container']
+        for child in container.children[:]:
+            container.remove_widget(child)
+        container.height = (page_height + height_buffer) * len(pages)
+        for page in pages:
+            container.add_widget(Label(text=page, font_size=new_font_size, valign='top', 
+                                       size_hint_y=1./len(pages), text_size=(self.width, None)))
+            
 class WeightPopupContents(StackLayout):
     pass
     #def assign_cols(self, col):
@@ -169,8 +196,9 @@ class DicePlatform(BoxLayout):
 
     def updater(self):
         self.ids['the_stat_box'].assign_limits()
-        #self.ids['all_rolls_label'].set_text(gap.print_table_string(self.table))
-        self.ids['all_rolls_label'].text = gap.print_table_string(self.table)
+        self.ids['all_rolls_label'].set_text(gap.print_table_string(self.table), 15)
+        
+        #self.ids['all_rolls_label'].text = gap.print_table_string(self.table)
 class DiceTableApp(App):
     def build(self):
         return DicePlatform()

@@ -113,13 +113,13 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-            size_hint_y:None
-            height:50
+            size_hint_y:.15
+            #height:50
             #width:800
             font_size: 20
             text:'here are all the rolls\nand their frequency' 
 
-        TextInput:
+        ScrollLabel:
             canvas:
                 Color:
                     rgba: 0,1,0,0.5
@@ -127,7 +127,7 @@
                     pos: self.pos
                     size: self.size
             id:all_rolls_label
-            size_hint_y:1
+            size_hint_y:.85
             #height:600
             text:''
         
@@ -144,13 +144,12 @@
         on_press: app.root.record_weight() 
                   
 <ScrollLabel>:
-    Label:
-        id:scroll_label
-        text: ''
-        front_size: 15
-        text_size: self.width, None
-        size_hint_y: None
-        height: self.texture_size[1]
+    BoxLayout:
+        id:page_container
+        size_hint_y:None
+        height: 1000
+        orientation: 'vertical'
+        
 
 <HorSlider>:
     BoxLayout:
