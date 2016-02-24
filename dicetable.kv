@@ -31,7 +31,7 @@
             text: 'pop'
             on_press: root.weight_it()
 	Label:
-#basic_info_frame    
+#change_state_frame    
     BoxLayout:
         #size_hint:None, None
         #width:300
@@ -55,6 +55,11 @@
             center_x: root.width * 3/4
             top: root.top - 50
             text:"0"
+##basic_info_frame
+    #basic_info_box:
+    #    size_hint_x: None
+    #    width: 200
+
 #stat_graph_frame            
     BoxLayout:
         id:stat_graph_frame
@@ -70,69 +75,102 @@
         size_hint_x:None
         width:300
         #height:1500
-        GridLayout:
-            size_hint_y:None
-            height:100
-            padding: 20
-            spacing: 10
-            cols:4
-            Button:
-                id: one_off_graph_stuff
-                text: 'one-off\ngraph'
-                size: self.texture_size
-                on_press: root.graph_it(new=True)
-            Label:
-            Button:
-                id: overlay_graph
-                size: self.texture_size
-                text: 'overlay\ngraph'
-                on_press: root.graph_it()        
-            Button:
-                id: clear
-                size: self.texture_size
-                text: 'clear\noverlay'
-                on_press: root.clear_graph()
+        GraphBox:
+            size_hint:1 , 0.18
+            
                 
         StatBox:
             id:the_stat_box
-            size_hint_y:None
-            height:500
-
-#all_rolls frame
-    GridLayout:
+            size_hint: 1, 0.82
+            #size_hint_y:None
+            #height:500
+#all_rolls_frame
+    PageBox:
+        id:all_rolls_frame
         size_hint_x:None
-        #height:300
         width:200
-        cols:1
-        id:all_rolls
-        orientation:'vertical'
-        Label:
-            canvas:
-                Color:
-                    rgba: 1,0,0,0.5
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            size_hint_y:.15
-            #height:50
-            #width:800
-            font_size: 20
-            text:'here are all the rolls\nand their frequency' 
 
-        ScrollLabel:
-            canvas:
-                Color:
-                    rgba: 0,1,0,0.5
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            id:all_rolls_label
-            size_hint_y:.85
-            #height:600
-            text:''
+<PageBox>:
+    #size_hint_x:None
+    #width:200
+    #cols:1
+    id:all_rolls
+    orientation:'lr-tb'
+    Label:
+        id: page_box_title
+        canvas:
+            Color:
+                rgba: 1,0,0,0.5
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint:1, .15
+        font_size: 20
+        text: 'TITLE'
+    Button:
+        id:go_left
+        size_hint: 0.25, 0.05
+        text: '<==='
+        on_press: root.show_page(root.current_page - 1)
+    TextInput:
+        id:jump_to
+        size_hint: 0.25, 0.05 
+        input_filter:'int'
+        multiline:False
+        text: str(root.current_page + 1)
+        on_text_validate:root.show_page(int(jump_to.text) - 1) 
+        border: 1,3,1,3
+        padding_y:1,1
+        font_size: (lambda:int(0.7 * self.height) if 0.7*self.height < 0.35*self.width else int(0.4 * self.width))()
+    Label:
+        id:page_total
+        size_hint: 0.25, 0.05
+        text: '/%s' % (len(root.pages))
+        #font_size:int(0.7 * self.height)
+        font_size: (lambda:int(0.7 * self.height) if 0.7*self.height < 0.35*self.width else int(0.4 * self.width))()
+    Button:
+        id:go_right
+        size_hint: 0.25, 0.05
+        text: '===>'
+        on_press: root.show_page(root.current_page + 1)
+    Label:
+        canvas:
+            Color:
+                rgba: 0,1,0,0.5
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        id:all_rolls_label
+        size_hint: 1, 0.8
+        #height:600
+        text:''
+        text_size: self.width, self.height
         
         
-            
+<GraphBox>:
+    #size_hint:1 , 0.18
+    #size_hint_y:None
+    #height:100
+    padding: 20
+    spacing: 10
+    Button:
+        id: one_off_graph_stuff
+        text: 'one-off\ngraph'
+        size: self.texture_size
+        on_press: root.graph_it(new=True)
+    Label:
+    Button:
+        id: overlay_graph
+        size: self.texture_size
+        text: 'overlay\ngraph'
+        on_press: root.graph_it()        
+    Button:
+        id: clear
+        size: self.texture_size
+        text: 'clear\noverlay'
+        on_press: root.clear_graph()
+        
+                                
 <WeightPopupContents>:
     id:weight_popup_contents
     orientation:'tb-lr'    
@@ -143,13 +181,9 @@
         size: 100, 50
         on_press: app.root.record_weight() 
                   
-<ScrollLabel>:
-    BoxLayout:
-        id:page_container
-        size_hint_y:None
-        height: 1000
-        orientation: 'vertical'
-        
+
+    
+    
 
 <HorSlider>:
     BoxLayout:
@@ -172,26 +206,54 @@
         Label:
             text: str(int(hor_slider.value))
             font_size:10    
+
+<InfoBox>:
+    orientation:'vertical'
+    Label:
+        id:stat_str
+        size_hint: 1, 0.15
+        text:'test'
+    ScrollView:
+        id:table_str_wrapper
+        size_hint: 1, 0.25
+        Label:
+            id:dice_table_str
+            text: 500*'adfgdg\n'
+            size_hint: 1, None 
+            text_size: self.width, None
+            height: dice_table_str.texture_size[1]
+    PageBox:
+        id:weight_info
+        size_hint: 1, 0.6
+        
 <StatBox>:
     BoxLayout:
         orientation: 'vertical'
         padding: 20
         spacing: 10
-        GridLayout:
-            size_hunt: 1, None
-            cols:4
+        StackLayout:
+            orientation: 'lr-tb'
+            size_hint: 1, 0.4
+            #cols:4
             Label:
                 text:'value 1'
+                #size: self.texture_size
+                size_hint:0.25, 0.05
             Label:
+                size_hint:0.25, 0.05
             Label:
+                size_hint:0.25, 0.05
                 text:'value 2'
+                #size: self.text
             Label:
+                size_hint:0.25, 0.05
             Label:
                 id:start_show
                 text: str(int(start_slider.value))
-                size_hint_y:None
-                height:200
+                size_hint_y:0.8
+                #height:200
                 font_size:15
+                size_hint:0.25, 0.85
             Slider:
                 id:start_slider
                 orientation:'vertical'
@@ -199,12 +261,14 @@
                 max:100
                 value:1
                 step:1
+                size_hint:0.25, 0.85
                 on_touch_move:root.show_stats()
                 on_touch_up:root.show_stats()
             Label:
                 id:stop_show
                 text: str(int(stop_slider.value))
-                font_size:15    
+                font_size:15
+                size_hint:0.25, 0.85    
             Slider:
                 id:stop_slider
                 orientation:'vertical'
@@ -214,27 +278,39 @@
                 step:1
                 on_touch_move:root.show_stats()
                 on_touch_up:root.show_stats()
+                size_hint:0.25, 0.85
             Label:
                 #size: self.texture_size
                 text:'or type\nhere'
-                size_hint_y:None
-                height:30
+                size_hint_y: 0.15
+                #size_hint_y:None
+                #height:30
+                size_hint:0.25, 0.1
             TextInput:
                 id:start_slider_text
                 input_filter:'int'
                 multiline:False
                 text: str(int(start_slider.value))
                 on_text_validate:root.assign_text_value(box='start')
+                border: 1,3,1,3
+                padding_y:1,1
+                font_size:int(0.7 * self.height)
+                size_hint:0.25, 0.15
             Label:
+                size_hint:0.25, 0.1
             TextInput:
                 id:stop_slider_text
                 input_filter:'int'
                 multiline:False
                 text: str(int(stop_slider.value))
                 on_text_validate:root.assign_text_value(box='stop')            
-                
-        
+                size_hint:0.25, 0.15
+                border: 1,3,1,3
+                padding_y:1,1
+                font_size:int(0.7 * self.height)
+                #line_height:self.font_size
         Label:
             id:stat_text
             text:'no stats'
             size: self.texture_size
+            size_hint: 1, 0.6

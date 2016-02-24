@@ -13,6 +13,31 @@ import dicestats as ds
 import graphing_and_printing as gap
 import random
 import pylab 
+class InfoBox(BoxLayout):
+    def __init__(self, parent_app, **kwargs):
+        super(InfoBox, self).__init__(**kwargs)
+        self.parent_app = parent_app
+    #def set_info_box(self):
+        self.ids['weight_info'].set_sizes(15, [0.1, 0.1, 0.8])
+        self.ids['weight_info'].set_title('full weight info')
+    def update_info_box(self):
+        values_min, values_max = self.parent_app.request_handler('range')
+        mean, stddev = self.parent_app.request_handler('mean_stddev')
+        stat_text = ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
+               % (values_min, values_max, round(mean, 4), stddev))
+        self.ids['stat_str'].text = stat_text
+        
+        self.ids['dice_table_str'].text = self.parent_app.request_handler('table_str')
+        self.ids['weight_info'].set_text(self.parent_app.request_handler('weights_info'), 15, 0.65)
+class GraphBox(BoxLayout):
+    def __init__(self, parent_app, **kwargs):
+        super(GraphBox, self).__init__(**kwargs)
+        self.parent_app = parent_app
+
+#TODO:  move graph_it and clear_graph to here.  refactor.  
+#have parent_app manually insert all.  change to satcklayout.     
+#move all stuff to right places
+#            
 class StatBox(BoxLayout):
     def __init__(self, **kwargs):
         super(StatBox, self).__init__(**kwargs)
@@ -47,12 +72,34 @@ class StatBox(BoxLayout):
             stat_list = range(val_1, val_2 + 1)
         new_text = gap.stats(self.table, stat_list).replace(' possible', '')
         self.ids['stat_text'].text = new_text
-class ScrollLabel(ScrollView):
-    pass
-    def set_text(self, new_text, new_font_size):
-        page_height = 600
-        height_buffer = 120
-        def splitter(text, line_limit):
+class PageBox(StackLayout):
+    def __init__(self, **kwargs):
+        super(PageBox, self).__init__(**kwargs)
+        self.pages = ['']
+        self.current_page = 0
+        self.font_size = 15
+    def set_sizes(self, f_size, ratios):
+        self.ids['jump_to'].font_size= f_size
+        self.ids['page_box_title'].size_hint_y = ratios[0]
+        self.ids['go_left'].size_hint_y = ratios[1]
+        self.ids['jump_to'].size_hint_y = ratios[1]
+        self.ids['page_total'].size_hint_y = ratios[1]
+        self.ids['go_right'].size_hint_y = ratios[1]
+        self.ids['all_rolls_label'].size_hint_y = ratios[2]  
+    def set_title(self, title):
+        self.ids['page_box_title'].text = title
+    def show_page(self, number):
+        number = number % len(self.pages)
+        self.current_page = number
+        self.ids['all_rolls_label'].text = self.pages[number]
+        self.ids['all_rolls_label'].font_size =  self.font_size
+        self.ids['all_rolls_label'].text_size = self.ids['all_rolls_label'].size
+        self.ids['jump_to'].text = str(number + 1)
+    def set_text(self, new_text, new_font_size, fudge_factor):
+        self.font_size = new_font_size
+        page_height = self.height
+        new_line_limit = int(fudge_factor * page_height/ float(new_font_size))
+        def page_maker(text, line_limit):
             text = text.rstrip('\n')
             lines = text.split('\n')
             num_lines = len(lines)
@@ -68,15 +115,11 @@ class ScrollLabel(ScrollView):
             extra_lines = (line_limit - len(last_page)) * [' ']
             last_page = '\n'.join(last_page + extra_lines)  
             out.append(last_page)
-            return out
-        pages = splitter(new_text, page_height//new_font_size)
-        container = self.ids['page_container']
-        for child in container.children[:]:
-            container.remove_widget(child)
-        container.height = (page_height + height_buffer) * len(pages)
-        for page in pages:
-            container.add_widget(Label(text=page, font_size=new_font_size, valign='top', 
-                                       size_hint_y=1./len(pages), text_size=(self.width, None)))
+            return out[:]
+        self.pages = page_maker(new_text, new_line_limit)
+        self.ids['page_total'].text = '/%s' % (len(self.pages))
+        self.show_page(self.current_page)
+
             
 class WeightPopupContents(StackLayout):
     pass
@@ -114,14 +157,21 @@ class DicePlatform(BoxLayout):
     def __init__(self, **kwargs):
         super(DicePlatform, self).__init__(**kwargs)
         self.table = ds.DiceTable()
-        self.counter = 5
+        self.counter_temp_thing = 5
         self.use_weights = False
         self.weight_dictionary = {}
         self.ids['the_stat_box'].assign_table(self.table)
-
+        self.ids['all_rolls_frame'].set_title('here are all the rolls\nand their frequency')
+        self.basic_info_box = InfoBox(self)
+        #self.basic_info_box.set_info_box()
+        self.basic_info_box.size_hint_x = None
+        self.basic_info_box.width=300
+        self.add_widget(self.basic_info_box)
+        
+        #self.ids['basic_info_frame'].set_info_box()
     def make_shit(self):
         use_frame = self.ids['add_new']
-        for count in range(self.counter):
+        for count in range(self.counter_temp_thing):
             use_frame.add_widget(Button(text=str(count)))
     def use_shit(self):
         use_frame = self.ids['add_new']
@@ -196,11 +246,21 @@ class DicePlatform(BoxLayout):
 
     def updater(self):
         self.ids['the_stat_box'].assign_limits()
-        self.ids['all_rolls_label'].set_text(gap.print_table_string(self.table), 15)
-        
-        #self.ids['all_rolls_label'].text = gap.print_table_string(self.table)
+        self.ids['all_rolls_frame'].set_text(gap.print_table_string(self.table), 15, 0.65)
+        self.basic_info_box.update_info_box()
+    def request_handler(self, request, *args):
+        if request == 'range':
+            return self.table.values_range()
+        if request == 'mean_stddev':
+            return self.table.mean(), self.table.stddev()
+        if request == 'table_str':
+            return str(self.table)
+        if request == 'weights_info':
+            return self.table.weights_info()
+
 class DiceTableApp(App):
     def build(self):
+        
         return DicePlatform()
         
 if __name__ == '__main__':
