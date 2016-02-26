@@ -9,19 +9,23 @@ from kivy.uix.slider import Slider
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import NumericProperty, ObjectProperty
 from kivy.core.window import Window
+from kivy.uix.carousel import Carousel
 from kivy.clock import Clock
+
 import dicestats as ds
 import graphing_and_printing as gap
 import random
 import pylab 
 
 #tools
-#def font_sizer(height, h_factor, width, w_factor):
-#    if height * h_factor < width * w_factor:
-#        return height * h_factor
-#    else:
-#        return width * w_factor
 
+#class SimpleSlider(Slider):
+#    def __init__(self, **kwargs):
+#        super(SimpleSlider, self).__init__(**kwargs)
+#    def on_touch_move(self, touch):
+#        if self.collide_point(*touch.pos):
+#        # The touch has occurred inside the widgets area. Do stuff!
+#            pass
 class HorSlider(BoxLayout):
     def __init__(self, **kwargs):
         super(HorSlider, self).__init__(**kwargs)
@@ -35,28 +39,41 @@ class HorSlider(BoxLayout):
         return out
     def get_value(self):
         return int(self.ids['hor_slider'].value)
-
-class FlashLabel(Button):
+class FlashButton(Button):
     def __init__(self, **kwargs):
-        super(FlashLabel, self).__init__(**kwargs)
-        self.background_normal=''
-    def add_text(self, text):
-        self.text = text
+        super(FlashButton, self).__init__(**kwargs)
+        self.bind(on_press=self.long_press)
+    def long_press(self, *args):
         self.color = [1,0,0,1]
-        self.background_color = [0.2,0.2,1,0.2]
+        self.background_color = [0.2,0.2,1,1]
         Clock.schedule_once(self.callback, 0.5)
     def callback(self, dt):
         self.color=[1,1,1,1]
-        self.background_color = [0.1,0.1,0.1,0.1]
-        
+        self.background_color = [1,1,1,1]
+class FlashLabel(Button):
+    def __init__(self, do_flash=True, **kwargs):
+        super(FlashLabel, self).__init__(**kwargs)
+        self.background_normal=''
+        self.do_flash = do_flash
+    def add_text(self, text):
+        self.text = text
+        self.color=[1,1,1,1]
+        self.background_color = [0,0,0,0]
+        if self.do_flash:
+            self.color = [1,0,0,1]
+            self.background_color = [0.2,0.2,1,0.2]
+            Clock.schedule_once(self.callback, 0.8)
+    def callback(self, dt):
+        self.color=[1,1,1,1]
+        self.background_color = [0,0,0,0]
 
-class PlusMinusButton(Button):
+class PlusMinusButton(FlashButton):
     def __init__(self, number, **kwargs):
         super(PlusMinusButton, self).__init__(**kwargs)
         self.number = number
         self.text = '{:+}'.format(self.number)
 
-class SizeButton(Button):
+class SizeButton(FlashButton):
     die_size = NumericProperty(1)
         
 class PageBox(BoxLayout):
@@ -105,16 +122,17 @@ class PageBox(BoxLayout):
         self.show_page(self.current_page)
 
 class AddRmDice(BoxLayout):
-    def __init__(self, parent_app, number, die, only_add=False, **kwargs):
+    def __init__(self, parent_app, number, die, only_add=False, do_flash=True, **kwargs):
         super(AddRmDice, self).__init__(**kwargs)
         self._number = number
         self._die = die
         self.parent_app = parent_app
         self.only_add = only_add
+        self.do_flash = do_flash
         self.small = 20
         self.medium = 100
         self.update()
-    def refresh_die(self, number, die):
+    def assign_die(self, number, die):
         self._die = die
         self._number = number
         self.update()
@@ -142,13 +160,10 @@ class AddRmDice(BoxLayout):
             die_string = str(self._die)
         else:
             die_string = self._die.multiply_str(self._number)
-        #flash = FlashLabel()
-        #flash.size_hint=(sz_hnt_x*2, 1)
-        self.add_widget(FlashLabel(size_hint=(sz_hnt_x, 1)))
-        for child in self.children:
-            if isinstance(child, FlashLabel):
-                child.add_text(die_string)
-        #flash.add_text(die_string)
+        flash = FlashLabel(do_flash=self.do_flash)
+        flash.size_hint=(sz_hnt_x*2, 1)
+        self.add_widget(flash)
+        flash.add_text(die_string)
         for number in range(buttons):
             btn = PlusMinusButton(10**number, size_hint=(sz_hnt_x, 1))
             btn.bind(on_press=self.addrm)
@@ -160,18 +175,30 @@ class ChangeBox(GridLayout):
         super(ChangeBox, self).__init__(**kwargs)
         self.parent_app = parent_app
         self.cols = 1
+        self.old_dice_list = []
+    #def update(self):
+    #    Clock.schedule_once(self.delay_update, 0.8)
     def update(self):
         dice_list = self.parent_app.request_info('dice_list')
         self.clear_widgets()
-        new_height = 50
+        new_height = 70
         if dice_list:
             new_height = min(self.height / len(dice_list), new_height) 
         for die, number in dice_list:
-            add_rm = AddRmDice(self, number, die, size_hint=(1,None), height=new_height)
-            self.add_widget(add_rm)
+            if (die, number) in self.old_dice_list:
+                changed = False
+            else:
+                changed = True
+            self.add_rm = AddRmDice(self, number, die, do_flash=changed, size_hint=(1,None), height=new_height)
+            self.add_widget(self.add_rm)
+        self.old_dice_list = dice_list    
     def add(self, number, die, *args):
+        Clock.schedule_once(lambda dt: self.delayed_add(number, die, *args), 0.5)
+    def delayed_add(self, number, die, *args):
         self.parent_app.request_add(number, die)
-    def remove(self, number, die):
+    def remove(self, number, die, *args):
+        Clock.schedule_once(lambda dt: self.delayed_remove(number, die, *args), 0.5)
+    def delayed_remove(self, number, die, *args):
         self.parent_app.request_remove(number, die)    
     
 class AddBox(BoxLayout):
@@ -194,6 +221,7 @@ class AddBox(BoxLayout):
     def assign_size_btn(self, btn):
         self.die_size = btn.die_size
         self.assign_die()
+    
     def assign_mod(self):
         self.mod = int(self.ids['modifier'].value)
         self.assign_die()
@@ -208,10 +236,14 @@ class AddBox(BoxLayout):
                 die = ds.Die(self.die_size)
             else:
                 die = ds.ModDie(self.die_size, self.mod)
-        self.add_it.refresh_die(0, die)
+        self.add_it.assign_die(0, die)
     def add(self, number, die, *args):
+        Clock.schedule_once(lambda dt: self.delayed_add(number, die, *args), 0.5)
+    def delayed_add(self, number, die, *args):
         self.parent_app.request_add(number, die)
-    def remove(self, number, die):
+    def remove(self, number, die, *args):
+        Clock.schedule_once(lambda dt: self.delayed_remove(number, die, *args), 0.5)
+    def delayed_remove(self, number, die, *args):
         self.parent_app.request_remove(number, die)        
     
 
@@ -299,32 +331,36 @@ class AllRollsBox(PageBox):
 #        self.ids['all_rolls'].set_text(text, 15, 0.65)    
 
         
-class DicePlatform(BoxLayout):
+class DicePlatform(Carousel):
     def __init__(self, **kwargs):
         super(DicePlatform, self).__init__(**kwargs)
         self._table = ds.DiceTable()
         self.counter_temp_thing = 5
         self.use_weights = False
         self.weight_dictionary = {}
-        #self.ids['all_rolls_frame'].set_title('here are all the rolls\nand their frequency')
+
         self.bind_children()
         self.pack_children()
-        self.bind(on_resize=self.update_wrapper)
-    def update_wrapper(self,*args):
-        self.updater()
-        print 'trip'
+        self.direction='right'
+        self.loop='true'
+        self.scroll_timeout = 120
+
+    
     def bind_children(self):
         self.stats = StatBox(self, size_hint=(1, 0.8))
         self.graphs = GraphBox(self, size_hint=(1, 0.2))
         
-        self.changer = ChangeBox(self, size_hint=(0.2, 1))
-        self.add_box = AddBox(self, size_hint=(0.2, 1))
-        self.graph_stat = BoxLayout(orientation='vertical', size_hint=(0.2, 1))
-        self.basic_info = InfoBox(self, size_hint=(0.2, 1))
-        self.all_rolls = AllRollsBox(self)
-        self.all_rolls.size_hint=(0.2, 1)
-    
+        self.changer = ChangeBox(self, size_hint=(0.5, 1))
+        self.add_box = AddBox(self, size_hint=(0.5, 1))
         
+        self.basic_info = InfoBox(self, size_hint=(0.5, 1))
+        self.graph_stat = BoxLayout(orientation='vertical', size_hint=(0.5, 1))
+        
+        self.change_add = BoxLayout(orientation='horizontal')
+        self.stat_basic = BoxLayout(orientation='horizontal')
+        
+        self.all_rolls = AllRollsBox(self)
+               
         
         
     def pack_children(self):
@@ -333,10 +369,17 @@ class DicePlatform(BoxLayout):
         self.graph_stat.add_widget(self.graphs)
         self.graph_stat.add_widget(self.stats)
         
-        self.add_widget(self.changer)
-        self.add_widget(self.add_box)
-        self.add_widget(self.basic_info)
-        self.add_widget(self.graph_stat)
+        self.change_add.add_widget(self.changer)
+        self.change_add.add_widget(self.add_box)
+        
+        self.stat_basic.add_widget(self.basic_info)
+        self.stat_basic.add_widget(self.graph_stat)
+        
+        
+        self.add_widget(self.change_add)
+        self.add_widget(self.stat_basic)
+        #self.add_widget(self.basic_info)
+        #self.add_widget(self.graph_stat)
         self.add_widget(self.all_rolls)
         
     def updater(self):
@@ -401,12 +444,12 @@ class DicePlatform(BoxLayout):
 
 
 
-class DiceTableApp(App):
+class DiceCarouselApp(App):
     def build(self):
         bob = DicePlatform()
         #Window.bind(on_resize=bob.update_wrapper)
         return bob
         
 if __name__ == '__main__':
-    DiceTableApp().run()
+    DiceCarouselApp().run()
 

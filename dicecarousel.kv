@@ -123,9 +123,7 @@
         text_size: self.size
         halign: 'center'
         color: 1, 0.2,0.2,1
-    BoxLayout:
-        id: add_it
-        size_hint:1, 0.25
+    
     BoxLayout:
         id: size_mod
         orientation: 'horizontal'
@@ -157,7 +155,15 @@
                     step:1
                     on_touch_move:root.assign_mod()
                     size_hint: 0.75, 1
-            
+                    canvas: 
+                        Color:
+                            rgba:1,0,0,0.5
+                        Rectangle:
+                            size:self.size
+                            pos:self.pos
+    BoxLayout:
+        id: add_it
+        size_hint:1, 0.25     
         
         
 <InfoBox>:
@@ -305,18 +311,6 @@
 
 #parent
 <DicePlatform>:
-    #size_hint:None, None
-    #width:100
-    #height:15000
-    orientation:'horizontal'
-    #Button:
-    #    on_press:root.do_it()
-    #    text:'do'
-    #    size_hint:0.1, 1
-    #BoxLayout:
-    #    size_hint:0.4, 1
-    #    id:graph_stat
-    #    orientation:'vertical'
 
 
 
