@@ -30,14 +30,7 @@ class InfoBox(BoxLayout):
         self.ids['dice_table_str'].text = self.parent_app.request_handler('table_str')
         self.ids['weight_info'].set_text(self.parent_app.request_handler('weights_info'), 15, 0.65)
 class GraphBox(BoxLayout):
-    def __init__(self, parent_app, **kwargs):
-        super(GraphBox, self).__init__(**kwargs)
-        self.parent_app = parent_app
-
-#TODO:  move graph_it and clear_graph to here.  refactor.  
-#have parent_app manually insert all.  change to satcklayout.     
-#move all stuff to right places
-#            
+    pass    
 class StatBox(BoxLayout):
     def __init__(self, **kwargs):
         super(StatBox, self).__init__(**kwargs)
