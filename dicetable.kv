@@ -1,5 +1,6 @@
 #:kivy 1.0.9
 
+
 #tools
 <HorSlider>:
     BoxLayout:
@@ -24,12 +25,6 @@
             font_size:10
 <SizeButton>:
     text:'D' + str(self.die_size)
-
-<AddRmDice>:
-    orientation:'horizontal'
-    padding: 10
-    spacing: 10
-
 
 <PageBox>:
     #size_hint_x:None
@@ -104,14 +99,15 @@
         text:''
         text_size: self.width, self.height
 
+<AddRmDice>:
+    orientation:'horizontal'
+    padding: 10
+    spacing: 10
+
 #big boxes
 <ChangeBox>:
-    #canvas:
-    #    Color:
-    #        rgba: 1,0,0,0.5
-    #    Rectangle:
-    #        pos: self.pos
-    #        size: self.size
+ 
+ 
 <AddBox>:
     id:bob
     orientation:'vertical'
@@ -123,9 +119,7 @@
         text_size: self.size
         halign: 'center'
         color: 1, 0.2,0.2,1
-    BoxLayout:
-        id: add_it
-        size_hint:1, 0.25
+    
     BoxLayout:
         id: size_mod
         orientation: 'horizontal'
@@ -155,17 +149,27 @@
                     max:5
                     value:0
                     step:1
-                    on_touch_move:root.assign_mod()
+                    on_value:root.assign_mod()
                     size_hint: 0.75, 1
-            
+                    canvas: 
+                        Color:
+                            rgba:1,0,0,0.5
+                        Rectangle:
+                            size:self.size
+                            pos:self.pos
+    BoxLayout:
+        id: add_it
+        size_hint:1, 0.25     
         
         
 <InfoBox>:
     orientation:'vertical'
+    padding:10
     Label:
         id:stat_str
         size_hint: 1, 0.15
         text:'test'
+        text_size: self.size
     ScrollView:
         id:table_str_wrapper
         size_hint: 1, 0.25
@@ -175,14 +179,12 @@
             size_hint: 1, None 
             text_size: self.width, None
             height: dice_table_str.texture_size[1]
+            halign: 'center'
     PageBox:
         id:weight_info
         size_hint: 1, 0.6
 
 <GraphBox>:
-    #size_hint:1 , 0.18
-    #size_hint_y:None
-    #height:100
     padding: 20
     spacing: 10
     Button:
@@ -242,8 +244,9 @@
                 value:1
                 step:1
                 size_hint:0.25, 0.82
-                on_touch_move:root.show_stats()
-                on_touch_up:root.show_stats()
+                on_value:root.show_stats()
+                #on_touch_move:root.show_stats()
+                #on_touch_up:root.show_stats()
             Label:
                 id:stop_show
                 text: str(int(stop_slider.value))
@@ -256,8 +259,9 @@
                 max:100
                 value:1
                 step:1
-                on_touch_move:root.show_stats()
-                on_touch_up:root.show_stats()
+                on_value:root.show_stats()
+                #on_touch_move:root.show_stats()
+                #on_touch_up:root.show_stats()
                 size_hint:0.25, 0.82
             #thrid row text input
             Label:
