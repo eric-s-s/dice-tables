@@ -17,8 +17,15 @@ import graphing_and_printing as gap
 import random
 import pylab 
 
+
+
 #tools
 FLASH_DELAY = 0.5
+
+def main():
+    '''gets the current diceplatform so all can call it'''
+    return App.get_running_app().root
+
 # kv file line 4
 class HorSlider(BoxLayout):
     '''a slider of set size that displays it's number and stores a holder for
@@ -151,6 +158,10 @@ class AddRmDice(BoxLayout):
     die=child of dicestats.ProtoDie - the die on the label and what will be called.
     only_add=boolean - false let's you + or - the current die.
     do_flash=boolean - flash the label upon creation.'''
+    
+    #TODO - get rid of all that init stuff. and assign_die().  there's creation 
+    #of empty widget, then then assign_die(die) and 
+    #assing_buttons(label_number, only_add, do_flash)
     def __init__(self, parent_widget, number, die, only_add=False, do_flash=True, **kwargs):
         super(AddRmDice, self).__init__(**kwargs)
         self._number = number
@@ -214,9 +225,9 @@ class ChangeBox(GridLayout):
         self.old_dice_list = []
     def update(self):
         '''updates the current dice after add, rm or clear'''
-        dice_list = self.parent_app.request_info('dice_list')
+        dice_list = main().request_info('dice_list')
         self.clear_widgets()
-        self.add_widget(Button(on_press=self.parent_app.request_reset, text='reset table',
+        self.add_widget(Button(on_press=main().request_reset, text='reset table',
                                font_size=20, size_hint=(1, None), height=60))
         new_height = 70
         if dice_list:
@@ -235,13 +246,13 @@ class ChangeBox(GridLayout):
         Clock.schedule_once(lambda dt: self.delayed_add(number, die, *args), FLASH_DELAY)
     def delayed_add(self, number, die, *args):
         '''see add'''
-        self.parent_app.request_add(number, die)
+        main().request_add(number, die)
     def remove(self, number, die, *args):
         '''delay. same as add'''
         Clock.schedule_once(lambda dt: self.delayed_remove(number, die, *args), FLASH_DELAY)
     def delayed_remove(self, number, die, *args):
         '''see remove'''
-        self.parent_app.request_remove(number, die)    
+        main().request_remove(number, die)    
 # kv file line 110    
 class AddBox(BoxLayout):
     #TODO - put weights and i believe i'll find what i need in branch gui_kivy
@@ -292,13 +303,13 @@ class AddBox(BoxLayout):
         Clock.schedule_once(lambda dt: self.delayed_add(number, die, *args), FLASH_DELAY)
     def delayed_add(self, number, die, *args):
         '''see add'''
-        self.parent_app.request_add(number, die)
+        main().request_add(number, die)
     def remove(self, number, die, *args):
         '''delay. same as add'''
         Clock.schedule_once(lambda dt: self.delayed_remove(number, die, *args), FLASH_DELAY)
     def delayed_remove(self, number, die, *args):
         '''see remove'''
-        self.parent_app.request_remove(number, die)        
+        main().request_remove(number, die)        
 # kv file line 164
 class InfoBox(BoxLayout):
     '''displays basic info about the die. parent app is what's called for dice 
@@ -311,15 +322,15 @@ class InfoBox(BoxLayout):
         self.ids['weight_info'].set_title('full weight info')
     def update(self):
         '''updates all the info in box.'''
-        values_min, values_max = self.parent_app.request_info('range')
-        mean = self.parent_app.request_info('mean')
-        stddev = self.parent_app.request_info('stddev')        
+        values_min, values_max = main().request_info('range')
+        mean = main().request_info('mean')
+        stddev = main().request_info('stddev')        
         stat_text = ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
                % (values_min, values_max, round(mean, 4), stddev))
         self.ids['stat_str'].text = stat_text
         
-        self.ids['dice_table_str'].text = '\n' + self.parent_app.request_info('table_str')
-        self.ids['weight_info'].set_text(self.parent_app.request_info('weights_info'), 15) 
+        self.ids['dice_table_str'].text = '\n' + main().request_info('table_str')
+        self.ids['weight_info'].set_text(main().request_info('weights_info'), 15) 
 # kv file line 186
 class GraphBox(BoxLayout):
 #TODO: complete rewrite using kivy garden graph
@@ -370,7 +381,7 @@ class StatBox(BoxLayout):
         val_2 = int(self.ids['start_slider'].value)
 
         stat_list = range(min(val_1, val_2), max(val_1, val_2) + 1)
-        new_text = '\n' + self.parent_app.request_stats(stat_list).replace(' possible', '')
+        new_text = '\n' + main().request_stats(stat_list).replace(' possible', '')
         text_lines = new_text.count('\n') + 1
         new_font_size = min(0.7 * self.ids['stat_text'].height//text_lines, 
                             int(0.08*self.ids['stat_text'].width))
@@ -388,7 +399,7 @@ class AllRollsBox(PageBox):
         self.set_title('here are all the rolls and their frequency')
     def update(self):
         '''rewrites after dice change'''
-        text = self.parent_app.request_info('all_rolls')
+        text = main().request_info('all_rolls')
         self.set_text(text, 15)   
 
         

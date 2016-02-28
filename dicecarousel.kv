@@ -194,18 +194,18 @@
         size: self.texture_size
         halign: 'center'
         valign: 'middle'
-        on_press: root.parent_app.request_graph(new=True)
+        on_press: app.root.request_graph(new=True)
     Label:
     Button:
         id: overlay_graph
         size: self.texture_size
         text: 'overlay\ngraph'
-        on_press: root.parent_app.request_graph()        
+        on_press: app.root.request_graph()        
     Button:
         id: clear
         size: self.texture_size
         text: 'clear\noverlay'
-        on_press: root.parent_app.request_clear_graph()
+        on_press: app.root.request_clear_graph()
 
 <StatBox>:
     BoxLayout:
