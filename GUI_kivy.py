@@ -553,7 +553,7 @@ class DicePlatform(BoxLayout):
 class DiceTableApp(App):
     def build(self):
         bob = DicePlatform()
-        #Window.bind(on_resize=bob.update_wrapper)
+        Window.size = (1500, 600)
         return bob
 
 if __name__ == '__main__':
