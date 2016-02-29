@@ -3,23 +3,7 @@
 import unittest
 import dicestats as ds
 
-#todo get rid of these and use simpler test fixtures
-#ie WeightedDie({5:1}) is just fine
-D4 = ds.Die(4)
-D4W4 = ds.WeightedDie(dict((x, 1) for x in range(1, 5)))
-D10 = ds.Die(10)
-D4PLUS2 = ds.ModDie(4, 2)
-D4MINUS2 = ds.ModDie(4, -2)
-D4W10 = ds.WeightedDie(dict((x, 5-x) for x in range(1, 5)))
-D4W10PLUS2 = ds.ModWeightedDie(dict((x, 5-x) for x in range(1, 5)), 2)
-D4W10MINUS2 = ds.ModWeightedDie(dict((x, 5-x) for x in range(1, 5)), -2)
-
 class TestDiceStats(unittest.TestCase):
-    #def setUp(self):
-    #    self.table = ds.DiceTable()
-    #def tearDown(self):
-    #    del self.table
-
     def test_die_equal(self):
         self.assertEqual(ds.Die(3) == ds.Die(3), True)
         self.assertEqual(ds.Die(0) == ds.Die(5), False)
