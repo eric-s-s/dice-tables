@@ -1,3 +1,7 @@
+# pylint: disable=no-member, bad-whitespace, trailing-whitespace
+
+#TODO - change all comment refs to 'parent app' 'parent_app'
+
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
@@ -25,6 +29,21 @@ FLASH_DELAY = 0.5
 def main():
     '''gets the current diceplatform so all can call it'''
     return App.get_running_app().root
+    
+def add(number, die, *args):
+        '''delay after call because otherwise button press won't be shown before
+        button gets erased and rewritten'''
+        Clock.schedule_once(lambda dt: delayed_add(number, die, *args), FLASH_DELAY)
+def delayed_add(number, die, *args):
+        '''see add'''
+        main().request_add(number, die)
+
+def remove(number, die, *args):
+        '''for delay. same as add'''
+        Clock.schedule_once(lambda dt: delayed_remove(number, die, *args), FLASH_DELAY)
+def delayed_remove(number, die, *args):
+        '''see remove'''
+        main().request_remove(number, die)
 
 # kv file line 4
 class HorSlider(BoxLayout):
@@ -93,6 +112,9 @@ class PlusMinusButton(FlashButton):
 class SizeButton(FlashButton):
     '''a button for sizing a die.  label is "D(diesize)" defaults to 1'''
     die_size = NumericProperty(1)
+class WeightIt(Button):
+    pass
+
 # kv file line 28        
 class PageBox(BoxLayout):
     '''a box that splits a long text into pages. displays labels of requested page.
@@ -112,6 +134,9 @@ class PageBox(BoxLayout):
     def set_title(self, title):
         '''title is a string'''
         self.ids['page_box_title'].text = title
+    def text_check(self, text):
+        if text:
+            self.show_page(int(text) - 1)
     def show_page(self, number):
         '''display page number (number % total pages)'''
         number = number % len(self.pages)
@@ -150,6 +175,9 @@ class PageBox(BoxLayout):
         self.pages = page_maker(new_text, lines_per_page)
         self.ids['page_total'].text = '/%s' % (len(self.pages))
         self.show_page(self.current_page)
+class WeightPopupContents(ScrollView):
+    pass
+#TODO - remove die from init.  then it can go in .kv file
 # kv file line 101
 class AddRmDice(BoxLayout):
     '''a box taht can call parent_widget's add(num, die) and remove(num, die) funtion
@@ -159,32 +187,22 @@ class AddRmDice(BoxLayout):
     only_add=boolean - false let's you + or - the current die.
     do_flash=boolean - flash the label upon creation.'''
     
-    #TODO - get rid of all that init stuff. and assign_die().  there's creation 
-    #of empty widget, then then assign_die(die) and 
-    #assing_buttons(label_number, only_add, do_flash)
-    def __init__(self, parent_widget, number, die, only_add=False, do_flash=True, **kwargs):
+    def __init__(self, die, **kwargs):
         super(AddRmDice, self).__init__(**kwargs)
-        self._number = number
         self._die = die
-        self.parent_widget = parent_widget
-        self.only_add = only_add
-        self.do_flash = do_flash
         self.small = 20
         self.medium = 100
-        self.update()
-    def assign_die(self, number, die):
+    def assign_die(self, die):
         '''can re-assign number and die after creation.'''
         self._die = die
-        self._number = number
-        self.update()
     def addrm(self, btn):
         '''what is called by the on_press method for packed buttons'''
         times = btn.number
         if times < 0:
-            self.parent_widget.remove(abs(times), self._die)
+            remove(abs(times), self._die)
         else:
-            self.parent_widget.add(times, self._die)
-    def update(self):
+            add(times, self._die)
+    def assign_buttons(self, label_number, only_add=False, do_flash=True):
         '''called at creation and assign_die. packs the box appropriately'''
         self.clear_widgets()
         if self._die.get_size() < self.small:
@@ -194,19 +212,19 @@ class AddRmDice(BoxLayout):
         else:
             buttons = 1
         sz_hnt_x = round(1./(2*buttons + 2), 2)
-        if not self.only_add:
+        if not only_add:
             for number in range(buttons - 1, -1, -1):
                 btn = PlusMinusButton(-10**number, size_hint=(sz_hnt_x, 1))
                 btn.bind(on_press=self.addrm)
                 self.add_widget(btn)
-        if self._number == 0:
+        if label_number == 0:
             die_string = str(self._die)
         else:
-            die_string = self._die.multiply_str(self._number)
+            die_string = self._die.multiply_str(label_number)
         flash = FlashLabel()
         flash.size_hint=(sz_hnt_x*2, 1)
         self.add_widget(flash)
-        flash.add_text(die_string, do_flash=self.do_flash)
+        flash.add_text(die_string, do_flash=do_flash)
         for number in range(buttons):
             btn = PlusMinusButton(10**number, size_hint=(sz_hnt_x, 1))
             btn.bind(on_press=self.addrm)
@@ -218,9 +236,8 @@ class ChangeBox(GridLayout):
     '''displays current dice and allows to change. parent app is what's called 
     for dice actions and info updates. all calls are 
     self.parent_app.request_something(*args).'''
-    def __init__(self, parent_app, **kwargs):
+    def __init__(self, **kwargs):
         super(ChangeBox, self).__init__(**kwargs)
-        self.parent_app = parent_app
         self.cols = 1
         self.old_dice_list = []
     def update(self):
@@ -237,36 +254,24 @@ class ChangeBox(GridLayout):
                 changed = False
             else:
                 changed = True
-            add_rm = AddRmDice(self, number, die, do_flash=changed, size_hint=(0.8,None), height=new_height)
+            add_rm = AddRmDice(die, size_hint=(0.8,None), height=new_height)
+            add_rm.assign_buttons(number, do_flash=changed)
             self.add_widget(add_rm)
         self.old_dice_list = dice_list    
-    def add(self, number, die, *args):
-        '''delay after call because otherwise button press won't be shown before
-        button gets erased and rewritten'''
-        Clock.schedule_once(lambda dt: self.delayed_add(number, die, *args), FLASH_DELAY)
-    def delayed_add(self, number, die, *args):
-        '''see add'''
-        main().request_add(number, die)
-    def remove(self, number, die, *args):
-        '''delay. same as add'''
-        Clock.schedule_once(lambda dt: self.delayed_remove(number, die, *args), FLASH_DELAY)
-    def delayed_remove(self, number, die, *args):
-        '''see remove'''
-        main().request_remove(number, die)    
+    
 # kv file line 110    
 class AddBox(BoxLayout):
     #TODO - put weights and i believe i'll find what i need in branch gui_kivy
     '''box for adding new dice.  parent app is what's called for dice actions and
     info updates. all calls are self.parent_app.request_something(*args).'''
-    def __init__(self, parent_app, **kwargs):
+    def __init__(self, **kwargs):
         super(AddBox, self).__init__(**kwargs)
-        self.parent_app = parent_app
         self.mod = 0
         self.dictionary = {}
         self.die_size = 6
-        self.use_weights = False
         
-        self.add_it = AddRmDice(self, 0, ds.Die(6), only_add=True, size_hint=(1, 1))
+        self.add_it = AddRmDice(ds.Die(6), size_hint=(1, 1))
+        self.add_it.assign_buttons(0, only_add=True, do_flash=True)
         self.pack()
     def pack(self):
         '''how the box is packed'''
@@ -279,14 +284,25 @@ class AddBox(BoxLayout):
         '''assigns the die size and die when a preset btn is pushed'''
         self.die_size = btn.die_size
         self.assign_die()
-    
+    def assign_size_text(self):
+        '''asigns the die size and die when text is entered'''
+        top = 200
+        bottom = 2
+        int_string = self.ids['custom_input'].text
+        if int_string:
+            self.die_size = int(self.ids['custom_input'].text)
+            if self.die_size < bottom:
+                self.die_size = bottom
+            if self.die_size > top:
+                self.die_size = top
+            self.assign_die()
     def assign_mod(self):
         '''assigns a die modifier and new die when slider is moved'''
         self.mod = int(self.ids['modifier'].value)
         self.assign_die()
     def assign_die(self):
         '''all changes to size, mod and weight call this function'''
-        if self.use_weights:
+        if self.dictionary:
             if self.mod == 0:
                 die = ds.WeightedDie(self.dictionary)
             else:
@@ -296,28 +312,35 @@ class AddBox(BoxLayout):
                 die = ds.Die(self.die_size)
             else:
                 die = ds.ModDie(self.die_size, self.mod)
-        self.add_it.assign_die(0, die)
-    def add(self, number, die, *args):
-        '''delay after call because otherwise button press won't be shown before
-        button gets erased and rewritten'''
-        Clock.schedule_once(lambda dt: self.delayed_add(number, die, *args), FLASH_DELAY)
-    def delayed_add(self, number, die, *args):
-        '''see add'''
-        main().request_add(number, die)
-    def remove(self, number, die, *args):
-        '''delay. same as add'''
-        Clock.schedule_once(lambda dt: self.delayed_remove(number, die, *args), FLASH_DELAY)
-    def delayed_remove(self, number, die, *args):
-        '''see remove'''
-        main().request_remove(number, die)        
+        
+        self.dictionary = {}
+        self.add_it.assign_die(die)
+        self.add_it.assign_buttons(0, only_add=True, do_flash=True)
+    def add_weights(self):
+        cell_size = 150
+        self.contents = WeightPopupContents
+        container = self.contents.ids['slider_container']
+        container.add_widget(WeightIt(on_press=self.record_weights))
+        
+    
+    def record_weights(self, button):
+        for child in self.contents.children:
+            if isinstance(child, HorSlider):
+                self.dictionary[child.get_holder()] = child.get_value()
+        if sum(self.dictionary.values()) == 0:
+            self.dictionary = {}
+        self.assign_die()
+        self.weight_popup.dismiss()
+        
+
+    
 # kv file line 164
 class InfoBox(BoxLayout):
     '''displays basic info about the die. parent app is what's called for dice 
     actions and info updates. all calls are 
     self.parent_app.request_something(*args).'''
-    def __init__(self, parent_app, **kwargs):
+    def __init__(self, **kwargs):
         super(InfoBox, self).__init__(**kwargs)
-        self.parent_app = parent_app
         self.ids['weight_info'].reset_sizes(15, [0.1, 0.1, 0.8])
         self.ids['weight_info'].set_title('full weight info')
     def update(self):
@@ -336,25 +359,21 @@ class GraphBox(BoxLayout):
 #TODO: complete rewrite using kivy garden graph
     '''buttons for making graphs.  parent app is what's called for dice actions
     and info updates. all calls are self.parent_app.request_something(*args).'''
-    def __init__(self, parent_app, **kwargs):
+    def __init__(self, **kwargs):
         super(GraphBox, self).__init__(**kwargs)
-        self.parent_app = parent_app
 
 # kv file line 209
 class StatBox(BoxLayout):
     '''box for getting and displaying stats about rolls. parent app is what's
     called for dice actions and info updates. all calls are 
     self.parent_app.request_something(*args).'''
-    def __init__(self, parent_app, **kwargs):
+    def __init__(self, **kwargs):
         super(StatBox, self).__init__(**kwargs)
-        self.parent_app = parent_app
         self.text_lines = 1
-        #self.ids['stat_text'].font_size = (lambda:self.ids['stat_text'].height//15)()
-        #self.ids['stat_text'].height = 1
-        #self.bind(on_texture_size = self.font_sizer)
+
     def update(self):
         '''called when dice list changes.'''
-        val_min, val_max = self.parent_app.request_info('range')
+        val_min, val_max = main().request_info('range')
         self.ids['stop_slider'].min = val_min
         self.ids['start_slider'].min = val_min
         self.ids['stop_slider'].max = val_max
@@ -362,9 +381,9 @@ class StatBox(BoxLayout):
 
     def assign_text_value(self, box='start'):
         '''called by text_input to assign that value to sliders and show stats'''
-        val_min, val_max = self.parent_app.request_info('range')
+        val_min, val_max = main().request_info('range')
         change_str = self.ids[box + '_slider_text'].text
-        if change_str != '':
+        if change_str:
             if int(change_str) < val_min:
                 val_new = val_min
             elif int(change_str) > val_max:
@@ -393,9 +412,8 @@ class AllRollsBox(PageBox):
     '''a pagebox that display the frequency for each roll in the table. parent 
     app is what's called for dice actions and info updates. all calls are 
     self.parent_app.request_something(*args).'''
-    def __init__(self, parent_app, **kwargs):
+    def __init__(self, **kwargs):
         PageBox.__init__(self)
-        self.parent_app = parent_app
         self.set_title('here are all the rolls and their frequency')
     def update(self):
         '''rewrites after dice change'''
@@ -419,19 +437,19 @@ class DicePlatform(Carousel):
     
     def bind_children(self):
         '''creates all children'''
-        self.stats = StatBox(self, size_hint=(1, 0.8))
-        self.graphs = GraphBox(self, size_hint=(1, 0.2))
+        self.stats = StatBox(size_hint=(1, 0.8))
+        self.graphs = GraphBox(size_hint=(1, 0.2))
         
-        self.changer = ChangeBox(self, size_hint=(0.5, 1))
-        self.add_box = AddBox(self, size_hint=(0.5, 1))
+        self.changer = ChangeBox(size_hint=(0.5, 1))
+        self.add_box = AddBox(size_hint=(0.5, 1))
         
-        self.basic_info = InfoBox(self, size_hint=(0.5, 1))
+        self.basic_info = InfoBox(size_hint=(0.5, 1))
         self.graph_stat = BoxLayout(orientation='vertical', size_hint=(0.5, 1))
         
         self.change_add = BoxLayout(orientation='horizontal')
         self.stat_basic = BoxLayout(orientation='horizontal')
         
-        self.all_rolls = AllRollsBox(self)
+        self.all_rolls = AllRollsBox()
         
     def pack_children(self):
         '''  change_box add_box | basic_info graphs |all_rolls

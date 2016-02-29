@@ -25,7 +25,10 @@
             font_size:10
 <SizeButton>:
     text:'D' + str(self.die_size)
-
+<WeightIt>:
+    text:'record\nweights'
+    size_hint:None, None
+    size: 100, 50
 <PageBox>:
     #size_hint_x:None
     #width:200
@@ -65,7 +68,7 @@
             input_filter:'int'
             multiline:False
             #text: str(root.current_page + 1)
-            on_text_validate:root.show_page(int(jump_to.text) - 1) 
+            on_text_validate:lambda: root.text_check(jump_to.text)
             border: 1,3,1,3
             padding_y: 1,1
             font_size: (lambda:min(int(0.7 * self.height), int(0.35 * self.width)))()
@@ -99,6 +102,14 @@
         text:''
         text_size: self.width, self.height
 
+<WeightPopupContents>:
+    height: min(main().height, contents.height)
+    width: min(main().width, contents.width)
+    StackLayout:
+        id: slider_container
+        orientation: 'tb-lr'
+        size_hint: None, None
+
 <AddRmDice>:
     orientation:'horizontal'
     padding: 10
@@ -119,7 +130,42 @@
         text_size: self.size
         halign: 'center'
         color: 1, 0.2,0.2,1
-    
+    BoxLayout:
+        id: custom
+        size_hint:1, 0.3
+        spacing: 30
+        padding: 30
+        BoxLayout:
+            orientation: 'vertical'
+            id: custom_size
+            size_hint: 0.5, 1
+            Label:
+                size_hint: 1, None
+                
+                text: 'type custom die size from 2-200 and press enter'
+                
+                font_size: 15
+                height: custom_size.height - custom_input.height
+                text_size: self.size
+                
+            TextInput:
+                id:custom_input
+                size_hint: 1, None
+                height: self.font_size + 10
+                input_filter:'int'
+                multiline:False
+                font_size: 20
+                on_text: root.assign_size_text() 
+                border: 1,3,1,3
+                padding_y: 1,1
+        Button:
+            id:make_weights
+            size_hint: 0.5, 1
+            text: 'make weights'
+            text_size: self.size
+            font_size: 20
+            halign: 'center'
+            valign: 'middle'
     BoxLayout:
         id: size_mod
         orientation: 'horizontal'
@@ -134,6 +180,7 @@
             Label:
                 text:'add a modifier'
                 text_size: self.size
+                halign: 'center'
                 size_hint: 1, 0.2
             BoxLayout:
                 orientation: 'horizontal'
@@ -160,6 +207,8 @@
     BoxLayout:
         id: add_it
         size_hint:1, 0.25     
+
+
         
         
 <InfoBox>:
