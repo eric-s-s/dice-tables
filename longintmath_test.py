@@ -1,3 +1,4 @@
+# pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''tests for the longintmath.py module'''
 import unittest
 import longintmath as lim
@@ -52,144 +53,158 @@ class TestLongIntMathFunctionsDivTimesPow(unittest.TestCase):
         result = lim.long_int_pow(LONG_BIG, 2.5)
         self.assertAlmostEqual(result, 10**2500, delta=10**2490)
 
-TUPLES_WITH_ZERO = [(1, 2), (2, 0), (-1, 2)]
-TUPLES_WITHOUT_ZERO = [(-1, 2), (1, 2)]
-TUPLES_WITH_TWO_HIGHEST = [(1, 2), (2, 1), (-1, 2)]
-TUPLES_WITH_ONE_HIGHEST = [(1, 2), (2, 3), (-1, 2)]
-TUPLES_FOR_STDDEV_SMALL = [(2, 1), (-2, 1), (1, 1), (-1, 1)]
-TUPLES_FOR_STDDEV_LARGE = [(2, 10**1000), (-2, 10**1000),
-                           (1, 10**1000), (-1, 10**1000)]
 class TestLongIntTable(unittest.TestCase):
     def setUp(self):
         self.identity_a = lim.LongIntTable({0:1})
         self.identity_b = lim.LongIntTable({0:1})
 
-        self.neg2_to_pos2_freq3 = lim.LongIntTable(dict([(x, 3) for x in
-                                                         range(-2, 3)]))
-        self.empty_table = lim.LongIntTable({1:0, 2:0})
     def tearDown(self):
         del self.identity_a
         del self.identity_b
 
-        del self.neg2_to_pos2_freq3
-        del self.empty_table
     def test_values_sorts_and_removes_zeros(self):
-        test_table = lim.LongIntTable(dict(TUPLES_WITH_ZERO))
-        self.assertEqual(test_table.values(), [-1, 1])
+        test_table = lim.LongIntTable({0:1, 1:0})
+        self.assertEqual(test_table.values(), [0])
     def test_values_returns_empty_list_for_empty_table(self):
-        self.assertEqual(self.empty_table.values(), [])
+        empty = lim.LongIntTable({})
+        self.assertEqual(empty.values(), [])
 
     def test_values_min_returns_min_value(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.values_min(), -2)
+        min_val_neg_one = lim.LongIntTable({1:1, -1:1})
+        self.assertEqual(min_val_neg_one.values_min(), -1)
     def test_values_max_returns_max_value(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.values_max(), 2)
+        max_val_neg_one = lim.LongIntTable({-1:1, -2:1})
+        self.assertEqual(max_val_neg_one.values_max(), -1)
     def test_values_range_returns_minmax(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.values_range(), (-2, 2))
+        zero_to_two = lim.LongIntTable({0:2, 1:1, 2:5, 4:0})
+        self.assertEqual(zero_to_two.values_range(), (0, 2))
 
     def test_values_min_returns_none_for_empty_table(self):
-        self.assertIsNone(self.empty_table.values_min())
+        empty = lim.LongIntTable({})
+        self.assertIsNone(empty.values_min())
     def test_values_max_returns_none_for_empty_table(self):
-        self.assertIsNone(self.empty_table.values_max())
+        empty = lim.LongIntTable({})
+        self.assertIsNone(empty.values_max())
     def test_values_range_returns_none_none_for_empty_table(self):
-        self.assertEqual(self.empty_table.values_range(), (None, None))
+        empty = lim.LongIntTable({})
+        self.assertEqual(empty.values_range(), (None, None))
 
 
     def test_frequency_returns_value_frequency_as_tuple(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(0), (0, 3))
+        zero_three = lim.LongIntTable({0:3})
+        self.assertEqual(zero_three.frequency(0), (0, 3))
     def test_frequency_returns_zero_frequency_for_empty_value(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(100), (100, 0))
+        zero_three = lim.LongIntTable({0:3})
+        self.assertEqual(zero_three.frequency(100), (100, 0))
 
     def test_frequency_range_returns_correct_tuple_list(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency_range(-4, 2),
-                         [(-4, 0), (-3, 0), (-2, 3), (-1, 3), (0, 3), (1, 3)])
+        table = lim.LongIntTable({1:1, 2:2})
+        self.assertEqual(table.frequency_range(0, 4),
+                         [(0, 0), (1, 1), (2, 2), (3, 0)])
 
     def test_frequency_all_returns_for_normal_case(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency_all(),
-                         [(-2, 3), (-1, 3), (0, 3), (1, 3), (2, 3)])
+        table = lim.LongIntTable({1:1, 2:2})
+        self.assertEqual(table.frequency_all(),
+                         [(1, 1), (2, 2)])
     def test_frequency_all_return_empty_for_empty_table(self):
-        self.assertEqual(self.empty_table.frequency_all(), [])
+        empty = lim.LongIntTable({})
+        self.assertEqual(empty.frequency_all(), [])
     def test_frequency_all_sorts_and_does_not_return_zero_frequencies(self):
-        table = lim.LongIntTable(dict(TUPLES_WITH_ZERO))
+        table = lim.LongIntTable({1:2, 2:0, -1:2})
         self.assertEqual(table.frequency_all(), [(-1, 2), (1, 2)])
 
     def test_frequency_highest_returns_either_tuple_with_highest(self):
-        table = lim.LongIntTable(dict(TUPLES_WITH_TWO_HIGHEST))
-        self.assertIn(table.frequency_highest(), TUPLES_WITHOUT_ZERO)
+        table = lim.LongIntTable({-1:5, 0:1, 2:5})
+        self.assertIn(table.frequency_highest(), [(-1, 5), (2, 5)])
     def test_frequency_highest_returns_only_the_highest(self):
-        table = lim.LongIntTable(dict(TUPLES_WITH_ONE_HIGHEST))
-        self.assertEqual(table.frequency_highest(), (2, 3))
+        table = lim.LongIntTable({-1:5, 0:1, 2:3})
+        self.assertEqual(table.frequency_highest(), (-1, 5))
     def test_frequency_highest_handles_empty_table(self):
-        self.assertEqual(self.empty_table.frequency_highest(), (None, 0))
+        empty = lim.LongIntTable({})
+        self.assertEqual(empty.frequency_highest(), (None, 0))
 
     def test_total_frequency_is_zero_for_empty_table(self):
-        self.assertEqual(self.empty_table.total_frequency(), 0)
+        empty = lim.LongIntTable({})
+        self.assertEqual(empty.total_frequency(), 0)
     def test_total_frequency_returns_correct_value_table(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.total_frequency(), 5*3)
+        table = lim.LongIntTable({1:2, 3:4})
+        self.assertEqual(table.total_frequency(), 2+4)
 
 
     def test_string_returns_min_to_max(self):
-        self.assertEqual(str(self.neg2_to_pos2_freq3), 'table from -2 to 2')
+        table = lim.LongIntTable({-1:1, 2:1, 5:1})
+        self.assertEqual(str(table), 'table from -1 to 5')
     def test_string_is_in_order_and_ignores_high_zero_values(self):
-        table = lim.LongIntTable(dict(TUPLES_WITH_ZERO))
+        table = lim.LongIntTable({2:0, 1:1, -1:1, -2:0})
         self.assertEqual(str(table), 'table from -1 to 1')
     def test_string_of_empty_table(self):
-        self.assertEqual(str(self.empty_table), 'table from None to None')
+        empty = lim.LongIntTable({})
+        self.assertEqual(str(empty), 'table from None to None')
 
 
     def test_mean_normal_case(self):
-        self.assertEqual(self.neg2_to_pos2_freq3.mean(), 0)
+        table = lim.LongIntTable({-1:5, 1:5})
+        self.assertEqual(table.mean(), 0)
     def test_mean_empty_list_raises_zero_division_error(self):
-        self.assertRaises(ZeroDivisionError, self.empty_table.mean)
+        empty = lim.LongIntTable({})
+        self.assertRaisesRegexp(ZeroDivisionError,
+                                'there are no values in the table', empty.mean)
     def test_mean_with_non_uniform_table(self):
-        table = lim.LongIntTable(dict(TUPLES_WITH_ONE_HIGHEST))
-        mean = (-1 * 2 + 1 * 2 + 2 * 3) / float(2 + 2 + 3)
+        table = lim.LongIntTable({1:2, 2:5})
+        mean = (2 + 10) / float(2 + 5)
         self.assertEqual(table.mean(), mean)
     def test_mean_with_large_number_table(self):
-        table = lim.LongIntTable(dict(TUPLES_FOR_STDDEV_SMALL))
-        self.assertEqual(table.mean(), 0)
+        table = lim.LongIntTable({1:2*10**1000, 2:2*10**1000})
+        self.assertEqual(table.mean(), 1.5)
 
 
     def test_stddev_for_table_with_highest_frequency_below_cutoff(self):
-        low_freq = lim.LongIntTable(dict(TUPLES_FOR_STDDEV_SMALL))
-        self.assertEqual(low_freq.stddev(), round(2.5**0.5, 4))
+        low_freq = lim.LongIntTable({2:1, -2:1, 1:1, -1:1})
+        self.assertEqual(low_freq.stddev(), round((10/4.)**0.5, 4))
     def test_stddev_for_below_cutoff_table_with_more_decimals(self):
-        low_freq = lim.LongIntTable(dict(TUPLES_FOR_STDDEV_SMALL))
-        self.assertEqual(low_freq.stddev(decimal_place=10), round(2.5**0.5, 10))
+        low_freq = lim.LongIntTable({2:1, -2:1, 1:1, -1:1})
+        self.assertEqual(low_freq.stddev(decimal_place=10), round((10/4.)**0.5, 10))
 
     def test_stddev_for_table_with_highest_frequency_above_cutoff(self):
-        low_freq = lim.LongIntTable(dict(TUPLES_FOR_STDDEV_LARGE))
-        self.assertEqual(low_freq.stddev(), round(2.5**0.5, 4))
+        high_freq = lim.LongIntTable({2:10**50, -2:10**50, 1:10**50, -1:10**50})
+        self.assertEqual(high_freq.stddev(), round((10/4.)**0.5, 4))
     def test_stddev_for_above_cutoff_table_with_more_decimals(self):
-        low_freq = lim.LongIntTable(dict(TUPLES_FOR_STDDEV_LARGE))
-        self.assertEqual(low_freq.stddev(decimal_place=10), round(2.5**0.5, 10))
+        high_freq = lim.LongIntTable({2:10**50, -2:10**50, 1:10**50, -1:10**50})
+        self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5**0.5, 10))
 
 
     def test_merge_adds_old_vals_and_makes_new_vals(self):
-        table = lim.LongIntTable(dict((x, 1) for x in range(1, 4)))
-        table.merge([(x, 1) for x in range(-1, 3)])
+        table = lim.LongIntTable({1:1, 2:1, 3:1})
+        table.merge({-1:1, 0:1, 1:1, 2:1}.items())
         self.assertEqual(table.frequency_all(),
                          [(-1, 1), (0, 1), (1, 2), (2, 2), (3, 1)])
 
     def test_update_frequency(self):
-        self.neg2_to_pos2_freq3.update_frequency(2, 5)
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(2)[1], 5)
+        table = lim.LongIntTable({1:1, 2:2})
+        table.update_frequency(2, 5)
+        self.assertEqual(table.frequency(2)[1], 5)
+    def test_update_frequency_when_update_value_not_in_table(self):
+        table = lim.LongIntTable({1:1})
+        table.update_frequency(2, 5)
+        self.assertEqual(table.frequency(2)[1], 5)
     def test_update_value_ow(self):
-        self.neg2_to_pos2_freq3.update_value_ow(2, 5)
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(2)[1], 0)
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(5)[1], 3)
+        table = lim.LongIntTable({1:100, 2:2})
+        table.update_value_ow(1, 2)
+        self.assertEqual(table.frequency_all(), [(2, 100)])
     def test_update_value_add(self):
-        self.neg2_to_pos2_freq3.update_value_add(2, 1)
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(2)[1], 0)
-        self.assertEqual(self.neg2_to_pos2_freq3.frequency(1)[1], 6)
+        table = lim.LongIntTable({1:100, 2:2})
+        table.update_value_add(1, 2)
+        self.assertEqual(table.frequency_all(), [(2, 102)])
 
     def test_add_error_raising_and_errors_do_not_mutate_table(self):
+        identity = lim.LongIntTable({0:1})
         self.assertRaisesRegexp(ValueError, 'cannot add an empty list',
-                                self.identity_a.add, 1, [(1, 0)])
+                                identity.add, 1, [(1, 0)])
         self.assertRaisesRegexp(ValueError, 'times must be a positive int',
-                                self.identity_a.add, -1, [(1, 1)])
+                                identity.add, -1, [(1, 1)])
         self.assertRaisesRegexp(ValueError, 'frequencies may not be negative',
-                                self.identity_a.add, 1, [(1, -1)])
-        self.assertEqual(self.identity_a.frequency_all(), [(0, 1)])
+                                identity.add, 1, [(1, -1)])
+        self.assertEqual(identity.frequency_all(), [(0, 1)])
 #the next two tests test that add works for the two cases for _fastest()
 #_fastest() is found in the the add() method
 #for details of adding ints vs tuples, see testing_add_speed.py
@@ -203,9 +218,10 @@ class TestLongIntTable(unittest.TestCase):
         self.assertEqual(self.identity_a.frequency_all(), high_ratio_tuples)
 
     def test_one_multiple_add_is_multiple_single_adds(self):
-        self.identity_a.add(1, TUPLES_WITHOUT_ZERO)
-        self.identity_a.add(1, TUPLES_WITHOUT_ZERO)
-        self.identity_b.add(2, TUPLES_WITHOUT_ZERO)
+        tuples = [(1, 2), (3, 4)]
+        self.identity_a.add(1, tuples)
+        self.identity_a.add(1, tuples)
+        self.identity_b.add(2, tuples)
         self.assertEqual(self.identity_a.frequency_all(),
                          self.identity_b.frequency_all())
     def test_add_adds_correctly(self):
@@ -218,35 +234,42 @@ class TestLongIntTable(unittest.TestCase):
         self.identity_a.add(1, tuple_list)
         self.assertEqual(self.identity_a.frequency_all(), tuple_list)
     def test_remove_removes_correctly(self):
-        self.identity_a.add(5, TUPLES_WITHOUT_ZERO)
-        self.identity_b.add(10, TUPLES_WITHOUT_ZERO)
-        self.identity_b.remove(5, TUPLES_WITHOUT_ZERO)
+        arbitrary_tuples = [(-5, 2), (0, 5), (3, 10)]
+        self.identity_a.add(5, arbitrary_tuples)
+        self.identity_b.add(10, arbitrary_tuples)
+        self.identity_b.remove(5, arbitrary_tuples)
         self.assertEqual(self.identity_a.frequency_all(),
                          self.identity_b.frequency_all())
     def test_remove_works_for_large_numbers(self):
-        self.identity_a.add(1, TUPLES_FOR_STDDEV_LARGE)
-        self.identity_b.add(2, TUPLES_FOR_STDDEV_LARGE)
-        self.identity_b.remove(1, TUPLES_FOR_STDDEV_LARGE)
+        arbitrary_tuples_large = [(-5, 10**500), (0, 5*10**700), (3, 2**1000)]
+
+        self.identity_a.add(1, arbitrary_tuples_large)
+        self.identity_b.add(2, arbitrary_tuples_large)
+        self.identity_b.remove(1, arbitrary_tuples_large)
         self.assertEqual(self.identity_a.frequency_all(),
                          self.identity_b.frequency_all())
 
     def test_add_adds_same_regardless_of_order(self):
-        self.identity_a.add(1, TUPLES_WITH_TWO_HIGHEST)
-        self.identity_a.add(2, TUPLES_WITH_ONE_HIGHEST)
-        self.identity_b.add(2, TUPLES_WITH_ONE_HIGHEST)
-        self.identity_b.add(1, TUPLES_WITH_TWO_HIGHEST)
+        arbitrary_a = [(1, 2), (3, 10**456)]
+        arbitrary_b = [(0, 5), (-1, 2)]
+        self.identity_a.add(1, arbitrary_a)
+        self.identity_a.add(2, arbitrary_b)
+        self.identity_b.add(2, arbitrary_b)
+        self.identity_b.add(1, arbitrary_a)
         self.assertEqual(self.identity_a.frequency_all(),
                          self.identity_b.frequency_all())
 
     def test_remove_removes_same_regardless_of_order(self):
-        self.identity_a.add(5, TUPLES_WITH_TWO_HIGHEST)
-        self.identity_a.add(5, TUPLES_WITH_ONE_HIGHEST)
-        self.identity_b.add(1, TUPLES_WITH_ONE_HIGHEST)
-        self.identity_b.add(1, TUPLES_WITH_TWO_HIGHEST)
-        self.identity_a.remove(3, TUPLES_WITH_TWO_HIGHEST)
-        self.identity_a.remove(3, TUPLES_WITH_ONE_HIGHEST)
-        self.identity_a.remove(1, TUPLES_WITH_ONE_HIGHEST)
-        self.identity_a.remove(1, TUPLES_WITH_TWO_HIGHEST)
+        arbitrary_a = [(-1, 2), (3, 5)]
+        arbitrary_b = [(100, 4), (0, 9)]
+        self.identity_a.add(5, arbitrary_a)
+        self.identity_a.add(5, arbitrary_b)
+        self.identity_b.add(1, arbitrary_b)
+        self.identity_b.add(1, arbitrary_a)
+        self.identity_a.remove(3, arbitrary_a)
+        self.identity_a.remove(3, arbitrary_b)
+        self.identity_a.remove(1, arbitrary_b)
+        self.identity_a.remove(1, arbitrary_a)
         self.assertEqual(self.identity_a.frequency_all(),
                          self.identity_b.frequency_all())
 
