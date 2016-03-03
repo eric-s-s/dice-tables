@@ -1,7 +1,6 @@
 # pylint: disable=no-member, bad-whitespace, trailing-whitespace
 
 #TODO - change all comment refs to 'parent app' 'parent_app'
-
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
@@ -11,15 +10,23 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 from kivy.uix.scrollview import ScrollView
-from kivy.properties import NumericProperty, ObjectProperty
+from kivy.uix.spinner import Spinner
+from kivy.uix.dropdown import DropDown
+from kivy.properties import NumericProperty, ListProperty, StringProperty, BooleanProperty
 from kivy.core.window import Window
 from kivy.uix.carousel import Carousel
 from kivy.clock import Clock
-
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
+from kivy.uix.checkbox import CheckBox
 import dicestats as ds
 import graphing_and_printing as gap
-import random
-import pylab
+from longintmath import long_int_div as li_div
+
+from kivy.garden.graph import Graph, MeshLinePlot
+#graph = Graph(xlabel='X', ylabel='Y', x_ticks_minor=5,
+#x_ticks_major=25, y_ticks_major=1,
+#y_grid_label=True, x_grid_label=True, padding=5,
+#x_grid=True, y_grid=True, xmin=-0, xmax=100, ymin=-1, ymax=1)
 
 
 
@@ -44,8 +51,8 @@ def remove(number, die, *args):
 def delayed_remove(number, die, *args):
         '''see remove'''
         main().request_remove(number, die)
-
-# kv file line 5
+      
+        
 class HorSlider(BoxLayout):
     '''a slider of set size that displays it's number and stores a holder for
     future reference (used here to get roll numbers on die weights)'''
@@ -117,6 +124,29 @@ class WeightIt(Button):
     '''just a DRY button.'''
     pass
 # kv file line 32
+class PlotObject(Label):
+    pts = ListProperty([(0, 1)])
+    x_min = NumericProperty(0)
+    x_max = NumericProperty(0)
+    y_min = NumericProperty(0)
+    y_max = NumericProperty(1)
+class PlotCheckBox(BoxLayout):
+    '''a checkbox with associated label and function to return label if box checked'''
+    text = StringProperty('')
+    active = BooleanProperty(False)
+    def __init__(self, **kwargs):
+        super(PlotCheckBox, self).__init__(**kwargs)
+        self.ids['check_box'].bind(active=self.change_active)
+        self.identity = self.text
+    def change_active(self, checkbox, value):
+        self.active=self.ids['check_box'].active
+    def two_line_text(self, split_char):
+        if self.ids['scroller'].width < len(self.text)*self.ids['label'].font_size/4:
+            self.identity = self.text
+            line_1 = self.text[:len(self.text)/2]
+            line_2 = self.text[len(self.text)/2:]
+            self.text = line_1 + line_2.replace(split_char, '\n', 1)
+            
 class WeightsPopup(Popup):
     '''the popup called when weighting a die'''
     pass
@@ -383,10 +413,48 @@ class InfoBox(BoxLayout):
 # kv file line 243
 class GraphBox(BoxLayout):
 #TODO: complete rewrite using kivy garden graph
+#che
     '''buttons for making graphs.  parent app is what's called for dice actions
     and info updates. all calls are self.parent_app.request_something(*args).'''
     def __init__(self, **kwargs):
         super(GraphBox, self).__init__(**kwargs)
+        self.plot_history = []
+        self.plot_current = PlotObject(text='')
+        #self.ids['graph_space'].add_widget(Label(text='huh',size_hint=(1,0.5)))
+        self.ids['graph_space'].add_widget(PlotCheckBox(size_hint=(1,0.5)))
+    def update(self):
+        new_string = main().request_info('table_str').replace('\n', ' \\ ')
+        self.plot_current = PlotObject(text=new_string)
+        #if self.plot_history:
+        #    self.plot_history[-1] = 
+        #else:
+        #    self.plot_history[0] = PlotObject(new_pts, new_string)
+        self.ids['graph_space'].clear_widgets()
+        self.ids['graph_space'].add_widget(Label(text='past graphs', size_hint=(1, 0.1)))
+        for item in self.plot_history[::-1]:
+            check = PlotCheckBox(text=item.text, size_hint=(1, 0.1), active=False)
+            check.two_line_text('\\')
+            self.ids['graph_space'].add_widget(check)
+        self.ids['graph_space'].add_widget(Label(text='new table', size_hint=(1, 0.1)))
+        check = PlotCheckBox(text=self.plot_current.text, size_hint=(1, 0.1), active=True)
+        check.two_line_text('\\')
+        self.ids['graph_space'].add_widget(check)
+    def graph_it(self):
+        #new_history = self.plot_history[-1:]
+        new_history = []
+        for index in range(len(self.plot_history)):
+            if self.ids['graph_space'].children[index + 2].active:
+                new_history.append(self.plot_history[index])
+        if self.ids['graph_space'].children[0].active and self.plot_current.text:
+            self.plot_current = main().request_plot_object()
+            insert = True
+            for plot_object in new_history:
+                if self.plot_current.pts == plot_object.pts:
+                    insert = False
+            if insert:
+                new_history.insert(0, self.plot_current)
+        self.plot_history = new_history[:]
+        self.update()
 
 # kv file line 266
 class StatBox(BoxLayout):
@@ -446,9 +514,14 @@ class AllRollsBox(PageBox):
         text = main().request_info('all_rolls')
         self.set_text(text, 15)
 
-
+def on_checkbox_active(checkbox, value):
+    if value:
+        print('The checkbox', checkbox, 'is active')
+    else:
+        print('The checkbox', checkbox, 'is inactive')
 # kv file line 367
-class DicePlatform(Carousel):
+class DicePlatform(TabbedPanel):
+#class DicePlatform(Carousel):
     '''the main box.  the parent_app.'''
     def __init__(self, **kwargs):
         super(DicePlatform, self).__init__(**kwargs)
@@ -460,12 +533,12 @@ class DicePlatform(Carousel):
         self.direction='right'
         self.loop='true'
         self.scroll_timeout = 120
-
-
+        self.do_default_tab = False
+        self.plot_history = []
     def bind_children(self):
         '''creates all children'''
-        self.stats = StatBox(size_hint=(1, 0.8))
-        self.graphs = GraphBox(size_hint=(1, 0.2))
+        self.stats = StatBox(size_hint=(1, 1))
+        #self.graphs = GraphBox(size_hint = (0.5, 1))
 
         self.changer = ChangeBox(size_hint=(0.5, 1))
         self.add_box = AddBox(size_hint=(0.5, 1))
@@ -475,13 +548,30 @@ class DicePlatform(Carousel):
 
         self.change_add = BoxLayout(orientation='horizontal')
         self.stat_basic = BoxLayout(orientation='horizontal')
+        self.crap = BoxLayout(orientation='horizontal')        
+        
+        self.all_rolls = AllRollsBox(size_hint = (0.5, 1))
+        def p(*args):
+            for arg in args:
+                
+                print arg
+        self.drp = DropDown()
+        for index in range(10):
+            btn = Button(text='Value %d' % index, size_hint_y=None, height=44)
+            btn.bind(on_release=lambda btn: self.drp.select(btn.text))
 
-        self.all_rolls = AllRollsBox()
+    
+            self.drp.add_widget(btn)
+        self.drp.on_select = p
+        self.check = GraphBox(size_hint=(0.5, 0.9))
+        
+        
+        self.thebtn = Button(text='do', on_release=self.drp.open, size_hint=(0.5, 0.1))
 
     def pack_children(self):
         '''  change_box add_box | basic_info graphs |all_rolls
                                              stats             '''
-        self.graph_stat.add_widget(self.graphs)
+        #self.graph_stat.add_widget(self.graphs)
         self.graph_stat.add_widget(self.stats)
 
         self.change_add.add_widget(self.changer)
@@ -489,18 +579,31 @@ class DicePlatform(Carousel):
 
         self.stat_basic.add_widget(self.basic_info)
         self.stat_basic.add_widget(self.graph_stat)
+        
+        self.crap.add_widget(self.all_rolls)
+        self.crap.add_widget(self.thebtn)
+        self.crap.add_widget(self.check)
 
 
-        self.add_widget(self.change_add)
-        self.add_widget(self.stat_basic)
-        self.add_widget(self.all_rolls)
-
+        self.add_widget(TabbedPanelItem(content=self.change_add, text='change'))
+        self.add_widget(TabbedPanelItem(content=self.stat_basic, text='stats'))
+        self.add_widget(TabbedPanelItem(content=self.crap, text='rolls'))
+        
+        #self.add_widget(self.change_add)
+        #self.add_widget(self.stat_basic)
+        #self.add_widget(self.crap)
+        
     def updater(self):
         '''updates appropriate things for any die add or remove'''
+        self.all_rolls.height = self.current_tab.content.height
         self.stats.update()
         self.all_rolls.update()
         self.changer.update()
         self.basic_info.update()
+        self.check.update()
+        
+        
+            
     def request_info(self, request):
         '''returns requested info to child widget'''
         requests = {'range': [self._table.values_range, ()],
@@ -514,29 +617,22 @@ class DicePlatform(Carousel):
         return command(*args)
     def request_stats(self, stat_list):
         return gap.stats(self._table, stat_list)
-    def request_graph(self, new=False):
-        '''creates a pylab graph'''
-        points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
-        colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k')
-        the_style = random.choice(points) + '-' + random.choice(colors)
-        if new:
-            figure_obj = pylab.figure(1)
-            fig_num = 1
-            pylab.clf()
-        else:
-            figure_obj = pylab.figure(0)
-            fig_num = 0
-        gap.fancy_grapher_pct(self._table, figure=fig_num, style=the_style, legend=True)
-        pylab.pause(0.1)
-        figure_obj.canvas.manager.window.activateWindow()
-        figure_obj.canvas.manager.window.raise_()
-    def request_clear_graph(self):
-        '''clears the pylab overlay graph'''
-        figure_obj = pylab.figure(0)
-        pylab.cla()
-        pylab.pause(0.1)
-        figure_obj.canvas.manager.window.activateWindow()
-        figure_obj.canvas.manager.window.raise_()
+    def request_plot_object(self):
+        new_object = PlotObject(text = str(self._table).replace('\n' , ' \\ '))
+        x_axis = []
+        y_axis = []
+        factor = li_div(self._table.total_frequency(), 100)
+
+        for value, frequency in self._table.frequency_all():
+            x_axis.append(value)
+            y_axis.append(li_div(frequency, factor))
+        
+        new_object.x_min = min(x_axis)
+        new_object.x_max = max(x_axis)
+        new_object.y_min = min(y_axis)
+        new_object.y_max = max(y_axis)
+        new_object.pts = [(x_axis[index], y_axis[index]) for index in range(len(x_axis))]
+        return new_object
     def request_add(self, number, die):
         '''adds dice to table'''
         self._table.add_die(number, die)

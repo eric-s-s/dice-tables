@@ -27,6 +27,21 @@
     text:'record\nweights'
     size_hint:None, None
     size: 100, 50
+<PlotCheckBox>:
+    orientation: 'horizontal'
+    CheckBox:
+        id: check_box
+        size_hint: 0.1, 0.5
+        active: root.active
+    ScrollView:
+        id:scroller
+        size_hint: 0.9, 1
+        PlotObject:
+            id:label
+            text: root.text
+            size_hint: None, 1
+            width: self.texture_size[0]
+          
 <WeightsPopup>:
     size_hint: None, None
     title: 'using weighted dice? for shame! cheater!'
@@ -234,27 +249,26 @@
         size_hint: 1, 0.6
 
 <GraphBox>:
-    padding: 20
-    spacing: 10
+    #padding: 20
+    #spacing: 10
+    orientation: 'vertical'
+    BoxLayout:
+        id: graph_space
+        orientation: 'vertical'
+        size_hint: 1, 0.9
+            #Label:
+            #CheckLabel:
     Button:
+        
         id: one_off_graph_stuff
-        text: 'one - off graph'
+        text: 'grap_it'
         text_size: self.size
         size: self.texture_size
+        size_hint: 0.3, 0.1
         halign: 'center'
         valign: 'middle'
-        on_press: app.root.request_graph(new=True)
-    Label:
-    Button:
-        id: overlay_graph
-        size: self.texture_size
-        text: 'overlay\ngraph'
-        on_press: app.root.request_graph()
-    Button:
-        id: clear
-        size: self.texture_size
-        text: 'clear\noverlay'
-        on_press: app.root.request_clear_graph()
+        on_press: root.graph_it()
+    
 
 <StatBox>:
     BoxLayout:
