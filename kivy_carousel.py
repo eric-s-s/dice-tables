@@ -10,11 +10,8 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.spinner import Spinner
 from kivy.uix.dropdown import DropDown
-from kivy.properties import NumericProperty, ListProperty, StringProperty, BooleanProperty
-from kivy.core.window import Window
-from kivy.uix.carousel import Carousel
+from kivy.properties import NumericProperty, ListProperty, StringProperty, BooleanProperty, ObjectProperty
 from kivy.clock import Clock
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.checkbox import CheckBox
@@ -23,10 +20,7 @@ import graphing_and_printing as gap
 from longintmath import long_int_div as li_div
 
 from kivy.garden.graph import Graph, MeshLinePlot
-#graph = Graph(xlabel='X', ylabel='Y', x_ticks_minor=5,
-#x_ticks_major=25, y_ticks_major=1,
-#y_grid_label=True, x_grid_label=True, padding=5,
-#x_grid=True, y_grid=True, xmin=-0, xmax=100, ymin=-1, ymax=1)
+
 
 
 
@@ -123,33 +117,147 @@ class SizeButton(FlashButton):
 class WeightIt(Button):
     '''just a DRY button.'''
     pass
+class WeightsPopup(Popup):
+    '''the popup called when weighting a die'''
+    pass
 # kv file line 32
+
 class PlotObject(Label):
+    '''a label taht contains all the needed info for kivy.garden.graph'''
     pts = ListProperty([(0, 1)])
     x_min = NumericProperty(0)
     x_max = NumericProperty(0)
     y_min = NumericProperty(0)
     y_max = NumericProperty(1)
+    
+    def __eq__(self, other):
+        return self.pts == other.pts
+    def __ne__(self, other):
+        return not self == other
+class ObjectButton(Button):
+    obj = ObjectProperty(PlotObject())
+class ObjectScroller(ScrollView):
+    obj = ObjectProperty(PlotObject()) 
+    text = StringProperty('')
+    #pass   
+class PlotPopup(Popup):
+    '''popup containing the graph'''
+    def __init__(self, **kwargs):
+        super(PlotPopup, self).__init__(**kwargs)
+        self._plot_list = []
+        self.legend = DropDown(dismiss_on_select=False)
+    def add_list(self, new_list):
+        self._plot_list = new_list[:]
+        self.make_graph()
+        self.make_legend()
+    def make_graph(self):
+        colors = [[0, 0.2, 1, 1], [0.2, 1.0, 0, 1], [0.8, 1.0, 0.1, 1],
+                  [1, 0.4, 0.2, 1], [1, 0.8, 0, 1], [0.6, 0, 0.8, 1],
+                  [1, 0, 0.2, 1]]
+        color_count = 0
+        x_mins = []
+        #y_mins = []
+        x_maxs = []
+        y_maxs = []
+        y_ticks = [0.1, 0.2, 0.5, 1, 5, 10]
+        x_ticks = [1, 2, 5, 10, 50, 100, 500, 1000]
+        for plot_obj in self._plot_list:
+            new_color = colors[color_count]
+            color_count = (color_count + 1) % len(colors)
+            plot_obj.color=new_color
+            self.ids['graph'].add_plot(MeshLinePlot(points=plot_obj.pts, 
+                                                    color=new_color))
+            x_mins.append(plot_obj.x_min)
+            #y_mins.append(plot_obj.y_min)
+            x_maxs.append(plot_obj.x_max)
+            y_maxs.append(plot_obj.y_max)
+        x_range = [min(x_mins), max(x_maxs)]
+        y_range = [0, max(y_maxs)]
+        x_tick_num = (x_range[1]-x_range[0])/20.
+        for tick in x_ticks:
+            if x_tick_num < tick:
+                x_tick_num = tick
+                break
+        y_tick_num = (y_range[1]-y_range[0])/20.
+        for tick in y_ticks:
+            if y_tick_num < tick:
+                y_tick_num = tick
+                break
+        x_range[0] -= x_range[0] % x_tick_num
+        self.ids['graph'].x_ticks_major = x_tick_num
+        self.ids['graph'].y_ticks_major = y_tick_num
+        self.ids['graph'].xmin = x_range[0]
+        self.ids['graph'].ymin = -y_tick_num
+        self.ids['graph'].xmax = x_range[1]
+        self.ids['graph'].ymax = y_range[1] 
+    def make_legend(self):
+        '''created the dropdown menu that's called by 'legend' button'''
+        for plot_obj in self._plot_list:
+            
+            btn = ObjectButton(text=plot_obj.text, size_hint=(None, None), height=44, 
+                               obj=plot_obj, color=plot_obj.color)
+            btn.bind(on_release=lambda btn:self.legend.select(btn.obj))
+            self.legend.add_widget(btn)
+        self.legend.on_select=self.flash_plot
+        self.ids['legend'].bind(on_release = self.legend.open)
+        self.ids['legend'].bind(on_release = self.resize)
+        self.legend.bind(on_dismiss=self.shrink_button)
+    def shrink_button(self, event):
+        '''make legend button small again after dismiss drop down'''
+        self.ids['legend'].width = 50
+    def resize(self, *args):
+        '''on release, resize drop down to fit widest button'''
+        widths = [50]    
+        for btn in self.legend.children[0].children:
+            btn.width =btn.texture_size[0] + 10
+            widths.append(btn.width)
+        self.ids['legend'].width = max(widths)
+    def flash_plot(self, obj, second_time=False):
+        '''on press, highlight selected graph'''
+        for plot in self.ids['graph'].plots:
+            if plot.points == obj.pts:
+                temp_color = plot.color
+                for index in range(3):
+                    temp_color[index] = 1-temp_color[index]
+                temp_color = [1,1,1,1]
+                #plot.color = temp_color
+                self.ids['graph'].remove_plot(plot)
+                self.ids['graph'].add_plot(MeshLinePlot(points=obj.pts, 
+                                                    color=temp_color))
+        if second_time:
+            Clock.schedule_once(lambda dt:self._callback(obj, True), FLASH_DELAY)
+        else:
+            Clock.schedule_once(lambda dt:self._callback(obj), FLASH_DELAY)
+    def _callback(self, obj, second_time=False):
+        '''resets graph to original color'''
+        for plot in self.ids['graph'].plots:
+            if plot.points == obj.pts:
+                plot.color = obj.color
+        if not second_time:
+            Clock.schedule_once(lambda dt:self.flash_plot(obj, True), FLASH_DELAY)
+
+
 class PlotCheckBox(BoxLayout):
     '''a checkbox with associated label and function to return label if box checked'''
     text = StringProperty('')
     active = BooleanProperty(False)
     def __init__(self, **kwargs):
         super(PlotCheckBox, self).__init__(**kwargs)
-        self.ids['check_box'].bind(active=self.change_active)
+        self.ids['check_box'].bind(active=self._change_active)
         self.identity = self.text
-    def change_active(self, checkbox, value):
+    def _change_active(self, checkbox, value):
+        '''a helper function to bind checkbox active to main active'''
         self.active=self.ids['check_box'].active
     def two_line_text(self, split_char):
+        '''makes a new two-line display label while presering original in 
+        self.identity'''
         if self.ids['scroller'].width < len(self.text)*self.ids['label'].font_size/4:
             self.identity = self.text
             line_1 = self.text[:len(self.text)/2]
             line_2 = self.text[len(self.text)/2:]
             self.text = line_1 + line_2.replace(split_char, '\n', 1)
             
-class WeightsPopup(Popup):
-    '''the popup called when weighting a die'''
-    pass
+
 # kv file line 46
 class PageBox(BoxLayout):
     '''a box that splits a long text into pages. displays labels of requested page.
@@ -214,12 +322,9 @@ class PageBox(BoxLayout):
 #TODO - remove die from init.  make it object property?  then it can go in .kv file
 # kv file line 119
 class AddRmDice(BoxLayout):
-    '''a box taht can call parent_widget's add(num, die) and remove(num, die) funtion
+    '''a box taht calls add(num, die) and remove(num, die) funtion
     when pressed.
-    number=int - how many dice on the label. 0 means just str(die) displayed.
-    die=child of dicestats.ProtoDie - the die on the label and what will be called.
-    only_add=boolean - false let's you + or - the current die.
-    do_flash=boolean - flash the label upon creation.'''
+    '''
 
     def __init__(self, die, **kwargs):
         super(AddRmDice, self).__init__(**kwargs)
@@ -237,7 +342,9 @@ class AddRmDice(BoxLayout):
         else:
             add(times, self._die)
     def assign_buttons(self, label_number, only_add=False, do_flash=True):
-        '''called at creation and assign_die. packs the box appropriately'''
+        '''assigns buttons to the box.  label_number is an int.  0 displays the
+        str(die), otherwise die.multiply_str(number). only_add controls if there
+        are minus buttons.  do_flash flashes the label'''
         self.clear_widgets()
         if self._die.get_size() < self.small:
             buttons = 3
@@ -420,15 +527,10 @@ class GraphBox(BoxLayout):
         super(GraphBox, self).__init__(**kwargs)
         self.plot_history = []
         self.plot_current = PlotObject(text='')
-        #self.ids['graph_space'].add_widget(Label(text='huh',size_hint=(1,0.5)))
         self.ids['graph_space'].add_widget(PlotCheckBox(size_hint=(1,0.5)))
     def update(self):
         new_string = main().request_info('table_str').replace('\n', ' \\ ')
         self.plot_current = PlotObject(text=new_string)
-        #if self.plot_history:
-        #    self.plot_history[-1] = 
-        #else:
-        #    self.plot_history[0] = PlotObject(new_pts, new_string)
         self.ids['graph_space'].clear_widgets()
         self.ids['graph_space'].add_widget(Label(text='past graphs', size_hint=(1, 0.1)))
         for item in self.plot_history[::-1]:
@@ -441,21 +543,38 @@ class GraphBox(BoxLayout):
         self.ids['graph_space'].add_widget(check)
     def graph_it(self):
         #new_history = self.plot_history[-1:]
-        new_history = []
+        to_plot = []
         for index in range(len(self.plot_history)):
             if self.ids['graph_space'].children[index + 2].active:
-                new_history.append(self.plot_history[index])
+                to_plot.append(self.plot_history[index])
         if self.ids['graph_space'].children[0].active and self.plot_current.text:
             self.plot_current = main().request_plot_object()
-            insert = True
-            for plot_object in new_history:
-                if self.plot_current.pts == plot_object.pts:
-                    insert = False
-            if insert:
-                new_history.insert(0, self.plot_current)
+            to_history = True
+            to_to_plot = True
+            #for plot_object in self.plot_history:
+            #    if self.plot_current.pts == plot_object.pts:
+            #        to_history = False
+            #if to_history:
+            if self.plot_current not in self.plot_history:
+                self.plot_history.insert(0, self.plot_current)
+            if self.plot_current not in to_plot:
+                to_plot.insert(0, self.plot_current)
+            
+        self.update()
+        if to_plot:
+            plotter = PlotPopup()
+            plotter.add_list(to_plot)
+            plotter.open()
+    def clear_all(self):
+        self.plot_history = []
+        self.update()
+    def clear_selected(self):
+        new_history = []
+        for index in range(len(self.plot_history)):
+            if not self.ids['graph_space'].children[index + 2].active:
+                new_history.append(self.plot_history[index])
         self.plot_history = new_history[:]
         self.update()
-
 # kv file line 266
 class StatBox(BoxLayout):
     '''box for getting and displaying stats about rolls. parent app is what's
@@ -550,23 +669,23 @@ class DicePlatform(TabbedPanel):
         self.stat_basic = BoxLayout(orientation='horizontal')
         self.crap = BoxLayout(orientation='horizontal')        
         
-        self.all_rolls = AllRollsBox(size_hint = (0.5, 1))
-        def p(*args):
-            for arg in args:
-                
-                print arg
-        self.drp = DropDown()
-        for index in range(10):
-            btn = Button(text='Value %d' % index, size_hint_y=None, height=44)
-            btn.bind(on_release=lambda btn: self.drp.select(btn.text))
-
-    
-            self.drp.add_widget(btn)
-        self.drp.on_select = p
-        self.check = GraphBox(size_hint=(0.5, 0.9))
+        self.all_rolls = AllRollsBox(size_hint = (1, 1))
+#        def p(*args):
+#            for arg in args:
+#                
+#                print arg
+#        self.drp = DropDown()
+#        for index in range(10):
+#            btn = Button(text='Value %d' % index, size_hint_y=None, height=44)
+#            btn.bind(on_release=lambda btn: self.drp.select(btn.text))
+#
+#    
+#            self.drp.add_widget(btn)
+#        self.drp.on_select = p
+        self.check = GraphBox(size_hint=(1, 1))
         
         
-        self.thebtn = Button(text='do', on_release=self.drp.open, size_hint=(0.5, 0.1))
+        #self.thebtn = Button(text='do', on_release=self.drp.open, size_hint=(0.5, 0.1))
 
     def pack_children(self):
         '''  change_box add_box | basic_info graphs |all_rolls
@@ -581,7 +700,7 @@ class DicePlatform(TabbedPanel):
         self.stat_basic.add_widget(self.graph_stat)
         
         self.crap.add_widget(self.all_rolls)
-        self.crap.add_widget(self.thebtn)
+        #self.crap.add_widget(self.thebtn)
         self.crap.add_widget(self.check)
 
 

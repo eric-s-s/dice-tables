@@ -26,22 +26,7 @@
 <WeightIt>:
     text:'record\nweights'
     size_hint:None, None
-    size: 100, 50
-<PlotCheckBox>:
-    orientation: 'horizontal'
-    CheckBox:
-        id: check_box
-        size_hint: 0.1, 0.5
-        active: root.active
-    ScrollView:
-        id:scroller
-        size_hint: 0.9, 1
-        PlotObject:
-            id:label
-            text: root.text
-            size_hint: None, 1
-            width: self.texture_size[0]
-          
+    size: 100, 50          
 <WeightsPopup>:
     size_hint: None, None
     title: 'using weighted dice? for shame! cheater!'
@@ -55,6 +40,78 @@
             spacing: 10
             padding: 10
             size:1000, 1000
+
+<ObjectScroller>:
+    size_hint: None, None
+    size: 100, 50
+    FloatLayout:
+        orientation: 'horizontal'
+        cols:2
+        size_hint: None, 1
+        width: 500
+        #ObjectButton:
+        #    obj: root.obj
+        #    id: button
+        #    text: 'O'
+        #    valign: 'middle'
+        #    size_hint: None, 1
+        #    width: 15
+        #    pos: (0,0)
+        ObjectButton:
+            obj: root.obj
+            id: button
+            valign: 'middle'
+            text: root.text
+            size_hint: None, 1
+            halign: 'left'
+            width: self.texture_size[0]
+            color: 1,1,1,1
+            pos: (0,0)
+            
+            
+<PlotPopup>:
+    title: 'yur graph'
+    ScatterLayout:
+        id: graph_container
+        Graph:
+            id: graph
+            xlabel: 'the rolls'
+            ylabel: 'percent chance'
+            y_grid_label: True
+            x_grid_label: True
+            x_grid: True
+            y_grid: True
+            x_ticks_major: 2
+            y_ticks_major: 1
+            #tick_color: 1,1,1,0.5
+        Button:
+            text:'done'
+            size_hint: 0.1, 0.1
+            on_press: root.dismiss()
+        Button:
+            id: legend
+            text:'legend'
+            size_hint: None, 0.1
+            width: 50
+            pos_hint: {'x': 0, 'y': 0.9}
+            
+        
+            
+            
+<PlotCheckBox>:
+    orientation: 'horizontal'
+    CheckBox:
+        id: check_box
+        size_hint: 0.1, 0.5
+        active: root.active
+    ScrollView:
+        id:scroller
+        size_hint: 0.9, 1
+        Label:
+            id:label
+            text: root.text
+            size_hint: None, 1
+            width: self.texture_size[0]
 
 <PageBox>:
     id:all_rolls
@@ -136,14 +193,6 @@
 <AddBox>:
     id:bob
     orientation:'vertical'
-    Label:
-        id: drag
-        size_hint:1, 0.05
-        text: '<====DRAG====>'
-        font_size: 20
-        text_size: self.size
-        halign: 'center'
-        color: 1, 0.2,0.2,1
     BoxLayout:
         id: custom
         size_hint:1, 0.3
@@ -155,9 +204,7 @@
             size_hint: 0.5, 1
             Label:
                 size_hint: 1, None
-
                 text: 'type custom die size from 2-200'
-
                 font_size: 18
                 height: custom_size.height - custom_input.height
                 text_size: self.size
@@ -223,9 +270,6 @@
         id: add_it
         size_hint:1, 0.25
 
-
-
-
 <InfoBox>:
     orientation:'vertical'
     padding:10
@@ -258,18 +302,35 @@
         size_hint: 1, 0.9
             #Label:
             #CheckLabel:
-    Button:
-        
-        id: one_off_graph_stuff
-        text: 'grap_it'
-        text_size: self.size
-        size: self.texture_size
-        size_hint: 0.3, 0.1
-        halign: 'center'
-        valign: 'middle'
-        on_press: root.graph_it()
-    
-
+    BoxLayout:
+        size_hint: 1, 0.1
+        Button:
+            id: graph_stuff
+            text: 'graph it'
+            text_size: self.size
+            size: self.texture_size
+            size_hint: 0.33, 1
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.graph_it()
+        Button:
+            id: clear_all
+            text: 'clear history'
+            text_size: self.size
+            size: self.texture_size
+            size_hint: 0.33, 1
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.clear_all()    
+        Button:
+            id: clear_selected
+            text: 'clear selected'
+            text_size: self.size
+            size: self.texture_size
+            size_hint: 0.33, 1
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.clear_selected()
 <StatBox>:
     BoxLayout:
         orientation: 'vertical'
@@ -278,14 +339,13 @@
             size_hint: 1, 0.4
             #top row - value1 value2
             Label:
-                text:'value 1'
-                #size: self.texture_size
+                text:'\nvalue 1'
                 size_hint:0.25, 0.03
             Label:
                 size_hint:0.25, 0.03
             Label:
                 size_hint:0.25, 0.03
-                text:'value 2'
+                text:'\nvalue 2'
                 #size: self.text
             Label:
                 size_hint:0.25, 0.03
