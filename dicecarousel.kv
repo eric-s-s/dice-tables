@@ -66,10 +66,7 @@
             size_hint: None, 0.1
             width: 50
             pos_hint: {'x': 0, 'y': 0.9}
-            
-        
-            
-            
+           
 <PlotCheckBox>:
     orientation: 'horizontal'
     CheckBox:
@@ -160,7 +157,12 @@
 
 #big boxes
 <ChangeBox>:
-
+    Label: 
+        text: 'nothing added yet, use the "add" tab'
+        text_size:self.size
+        font_size: 25
+        valign: 'top'
+        halign: 'center'
 
 <AddBox>:
     id:bob
@@ -265,15 +267,11 @@
         size_hint: 1, 0.6
 
 <GraphBox>:
-    #padding: 20
-    #spacing: 10
     orientation: 'vertical'
     BoxLayout:
         id: graph_space
         orientation: 'vertical'
         size_hint: 1, 0.9
-            #Label:
-            #CheckLabel:
     BoxLayout:
         size_hint: 1, 0.1
         Button:
@@ -305,29 +303,30 @@
             on_press: root.clear_selected()
 <StatBox>:
     BoxLayout:
+        spacing: 10
         orientation: 'vertical'
-        GridLayout:
-            cols:4
+        Label:
+            id: table_info
+            size_hint: 1, 0.2
+            text: 'no dice yet'
+            font_size: 20
+            text_size: self.size
+            valign: 'middle'
+            halign: 'center'
+        FloatLayout:
             size_hint: 1, 0.4
             #top row - value1 value2
             Label:
-                text:'\nvalue 1'
-                size_hint:0.25, 0.03
+                text:'value 1'
+                text_size: self.size
+                size_hint:0.25, 0.1
+                pos_hint: {'x': 0.1, 'y': 1}
             Label:
-                size_hint:0.25, 0.03
-            Label:
-                size_hint:0.25, 0.03
-                text:'\nvalue 2'
-                #size: self.text
-            Label:
-                size_hint:0.25, 0.03
-            #2nd row slider and label
-            Label:
-                id:start_show
-                text: str(int(start_slider.value))
-                size_hint_y:0.8
-                font_size:15
-                size_hint:0.25, 0.82
+                size_hint:0.25, 0.1
+                text: 'value 2'
+                text_size: self.size
+                pos_hint: {'x': 0.5, 'y': 1}
+            #2nd row slider
             Slider:
                 id:start_slider
                 orientation:'vertical'
@@ -337,11 +336,7 @@
                 step:1
                 size_hint:0.25, 0.82
                 on_value:root.show_stats()
-            Label:
-                id:stop_show
-                text: str(int(stop_slider.value))
-                font_size:15
-                size_hint:0.25, 0.82
+                pos_hint: {'x': 0.2, 'y': 0.2}
             Slider:
                 id:stop_slider
                 orientation:'vertical'
@@ -351,10 +346,13 @@
                 step:1
                 on_value:root.show_stats()
                 size_hint:0.25, 0.82
+                pos_hint: {'x': 0.6, 'y': 0.2}
             #thrid row text input
             Label:
-                text:'or type\nhere'
-                size_hint:0.25, 0.15
+                text:'may type\nin values'
+                text_size: self.size
+                size_hint:0.2, 0.15
+                pos_hint: {'x': 0.05, 'y': 0}
             TextInput:
                 id:start_slider_text
                 input_filter:'int'
@@ -364,47 +362,50 @@
                 border: 1,3,1,3
                 padding_y:1,1
                 font_size:(lambda:min(int(0.7 * self.height), int(0.3 * self.width)))()
-                size_hint:0.25, 0.15
-            Label:
-                size_hint:0.25, 0.15
+                size_hint:0.3, 0.15
+                pos_hint: {'x': 0.2, 'y': 0.0}
             TextInput:
                 id:stop_slider_text
                 input_filter:'int'
                 multiline:False
                 text: str(int(stop_slider.value))
                 on_text_validate:root.assign_text_value(box='stop')
-                size_hint:0.25, 0.15
+                size_hint:0.3, 0.15
                 border: 1,3,1,3
                 padding_y:1,1
                 font_size:(lambda:min(int(0.7 * self.height), int(0.3 * self.width)))()
+                pos_hint: {'x': 0.6, 'y': 0.0}
         Label:
             id:stat_text
             text:'no stats'
             text_size:self.size
-            size: self.texture_size
-            size_hint: 1, 0.6
+            font_size: 20
+            #size: self.texture_size
+            size_hint: 1, 0.4
             valign:'top'
 
 
 
 #parent
 <DicePlatform>:
+    default_tab: adder
     TabbedPanelItem:
         text:'changer'
         ChangeBox:
             id: change_box
     TabbedPanelItem:
+        id: adder
         text: 'add'
         AddBox:
             id: add_box
     TabbedPanelItem:
-        text: 'stats'
-        StatBox:
-            id: stat_box
-    TabbedPanelItem:
         text: 'graph'
         GraphBox:
             id: graph_box
+    TabbedPanelItem:
+        text: 'stats'
+        StatBox:
+            id: stat_box
     TabbedPanelItem:
         text: 'info'
         BoxLayout:
