@@ -41,38 +41,11 @@
             padding: 10
             size:1000, 1000
 
-<ObjectScroller>:
-    size_hint: None, None
-    size: 100, 50
-    FloatLayout:
-        orientation: 'horizontal'
-        cols:2
-        size_hint: None, 1
-        width: 500
-        #ObjectButton:
-        #    obj: root.obj
-        #    id: button
-        #    text: 'O'
-        #    valign: 'middle'
-        #    size_hint: None, 1
-        #    width: 15
-        #    pos: (0,0)
-        ObjectButton:
-            obj: root.obj
-            id: button
-            valign: 'middle'
-            text: root.text
-            size_hint: None, 1
-            halign: 'left'
-            width: self.texture_size[0]
-            color: 1,1,1,1
-            pos: (0,0)
-            
-            
 <PlotPopup>:
-    title: 'yur graph'
+    title: 'click the legend button for legend.  click on a label to highlight that plot.'
     ScatterLayout:
         id: graph_container
+        do_rotation: False
         Graph:
             id: graph
             xlabel: 'the rolls'
@@ -83,7 +56,6 @@
             y_grid: True
             x_ticks_major: 2
             y_ticks_major: 1
-            #tick_color: 1,1,1,0.5
         Button:
             text:'done'
             size_hint: 0.1, 0.1
@@ -417,6 +389,32 @@
 
 #parent
 <DicePlatform>:
-
+    TabbedPanelItem:
+        text:'changer'
+        ChangeBox:
+            id: change_box
+    TabbedPanelItem:
+        text: 'add'
+        AddBox:
+            id: add_box
+    TabbedPanelItem:
+        text: 'stats'
+        StatBox:
+            id: stat_box
+    TabbedPanelItem:
+        text: 'graph'
+        GraphBox:
+            id: graph_box
+    TabbedPanelItem:
+        text: 'info'
+        BoxLayout:
+            id: all_rolls_info
+            orientation: 'horizontal'
+            AllRollsBox:
+                id: all_rolls_box
+            InfoBox:
+                id: info_box
+            
+    
 
 

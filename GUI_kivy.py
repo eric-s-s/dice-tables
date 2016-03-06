@@ -1,8 +1,5 @@
-# pylint: disable=no-member, bad-whitespace, trailing-whitespace
-
-#TODO - change all comment refs to 'parent app' 'parent_app'
-
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.stacklayout import StackLayout
@@ -11,15 +8,18 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 from kivy.uix.scrollview import ScrollView
-from kivy.properties import NumericProperty, ObjectProperty
-from kivy.core.window import Window
-from kivy.uix.carousel import Carousel
+from kivy.uix.dropdown import DropDown
+from kivy.properties import NumericProperty, ListProperty, StringProperty, BooleanProperty, ObjectProperty
 from kivy.clock import Clock
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
+from kivy.uix.checkbox import CheckBox
 
 import dicestats as ds
 import graphing_and_printing as gap
-import random
-import pylab
+from longintmath import long_int_div as li_div
+
+from kivy.garden.graph import Graph, MeshLinePlot
+
 
 
 
@@ -44,7 +44,8 @@ def remove(number, die, *args):
 def delayed_remove(number, die, *args):
         '''see remove'''
         main().request_remove(number, die)
-
+      
+        
 # kv file line 5
 class HorSlider(BoxLayout):
     '''a slider of set size that displays it's number and stores a holder for
@@ -120,7 +121,146 @@ class WeightIt(Button):
 class WeightsPopup(Popup):
     '''the popup called when weighting a die'''
     pass
-# kv file line 44
+
+# kv file line NONE
+class PlotObject(Label):
+    '''a label taht contains all the needed info for kivy.garden.graph'''
+    pts = ListProperty([(0, 1)])
+    x_min = NumericProperty(0)
+    x_max = NumericProperty(0)
+    y_min = NumericProperty(0)
+    y_max = NumericProperty(1)
+    
+    def __eq__(self, other):
+        return self.pts == other.pts
+    def __ne__(self, other):
+        return not self == other
+# kv file line NONE
+class ObjectButton(Button):
+    '''simply a button with an object attached'''
+    obj = ObjectProperty(PlotObject())   
+# kv file line 72
+class PlotPopup(Popup):
+    '''popup containing the graph'''
+    def __init__(self, **kwargs):
+        super(PlotPopup, self).__init__(**kwargs)
+        self._plot_list = []
+        self.legend = DropDown(dismiss_on_select=False)
+    def add_list(self, new_list):
+        self._plot_list = new_list[:]
+        self.make_graph()
+        self.make_legend()
+    def make_graph(self):
+        colors = [[0, 0.2, 1, 1], [0.2, 1.0, 0, 1], [0.8, 1.0, 0.1, 1],
+                  [1, 0.4, 0.2, 1], [1, 0.8, 0, 1], [0.6, 0, 0.8, 1],
+                  [1, 0, 0.2, 1]]
+        color_count = 0
+        x_mins = []
+        #y_mins = []
+        x_maxs = []
+        y_maxs = []
+        y_ticks = [0.1, 0.2, 0.5, 1, 5, 10]
+        x_ticks = [1, 2, 5, 10, 50, 100, 500, 1000]
+        for plot_obj in self._plot_list:
+            new_color = colors[color_count]
+            color_count = (color_count + 1) % len(colors)
+            plot_obj.color=new_color
+            self.ids['graph'].add_plot(MeshLinePlot(points=plot_obj.pts, 
+                                                    color=new_color))
+            x_mins.append(plot_obj.x_min)
+            #y_mins.append(plot_obj.y_min)
+            x_maxs.append(plot_obj.x_max)
+            y_maxs.append(plot_obj.y_max)
+        x_range = [min(x_mins), max(x_maxs)]
+        y_range = [0, max(y_maxs)]
+        x_tick_num = (x_range[1]-x_range[0])/20.
+        for tick in x_ticks:
+            if x_tick_num < tick:
+                x_tick_num = tick
+                break
+        y_tick_num = (y_range[1]-y_range[0])/20.
+        for tick in y_ticks:
+            if y_tick_num < tick:
+                y_tick_num = tick
+                break
+        x_range[0] -= x_range[0] % x_tick_num
+        self.ids['graph'].x_ticks_major = x_tick_num
+        self.ids['graph'].y_ticks_major = y_tick_num
+        self.ids['graph'].xmin = x_range[0]
+        self.ids['graph'].ymin = -y_tick_num
+        self.ids['graph'].xmax = x_range[1]
+        self.ids['graph'].ymax = y_range[1] 
+    def make_legend(self):
+        '''created the dropdown menu that's called by 'legend' button'''
+        for plot_obj in self._plot_list:
+            
+            btn = ObjectButton(text=plot_obj.text, size_hint=(None, None), height=44, 
+                               obj=plot_obj, color=plot_obj.color)
+            btn.bind(on_release=lambda btn:self.legend.select(btn.obj))
+            self.legend.add_widget(btn)
+        self.legend.on_select=self.flash_plot
+        self.ids['legend'].bind(on_release = self.legend.open)
+        self.ids['legend'].bind(on_release = self.resize)
+        self.legend.bind(on_dismiss=self.shrink_button)
+    def shrink_button(self, event):
+        '''make legend button small again after dismiss drop down'''
+        self.ids['legend'].width = 50
+    def resize(self, *args):
+        '''on release, resize drop down to fit widest button'''
+        widths = [50]    
+        for btn in self.legend.children[0].children:
+            btn.width =btn.texture_size[0] + 10
+            widths.append(btn.width)
+        self.ids['legend'].width = max(widths)
+    def flash_plot(self, obj, second_time=False):
+        '''on press, highlight selected graph'''
+        for plot in self.ids['graph'].plots:
+            if plot.points == obj.pts:
+                temp_color = plot.color
+                for index in range(3):
+                    temp_color[index] = 1-temp_color[index]
+                temp_color = [1,1,1,1]
+                #plot.color = temp_color
+                self.ids['graph'].remove_plot(plot)
+                self.ids['graph'].add_plot(MeshLinePlot(points=obj.pts, 
+                                                    color=temp_color))
+        if second_time:
+            Clock.schedule_once(lambda dt:self._callback(obj, True), FLASH_DELAY)
+        else:
+            Clock.schedule_once(lambda dt:self._callback(obj), FLASH_DELAY)
+    def _callback(self, obj, second_time=False):
+        '''resets graph to original color'''
+        for plot in self.ids['graph'].plots:
+            if plot.points == obj.pts:
+                plot.color = obj.color
+        if not second_time:
+            Clock.schedule_once(lambda dt:self.flash_plot(obj, True), FLASH_DELAY)
+
+
+# kv file line 101
+class PlotCheckBox(BoxLayout):
+    '''a checkbox with associated label and function to return label if box checked'''
+    text = StringProperty('')
+    active = BooleanProperty(False)
+    def __init__(self, **kwargs):
+        super(PlotCheckBox, self).__init__(**kwargs)
+        self.ids['check_box'].bind(active=self._change_active)
+        self.identity = self.text
+        
+    def _change_active(self, checkbox, value):
+        '''a helper function to bind checkbox active to main active'''
+        self.active=self.ids['check_box'].active
+    def two_line_text(self, split_char):
+        '''makes a new two-line display label while presering original in 
+        self.identity'''
+        if self.ids['scroller'].width < len(self.text)*self.ids['label'].font_size/4:
+            self.identity = self.text
+            line_1 = self.text[:len(self.text)/2]
+            line_2 = self.text[len(self.text)/2:]
+            self.text = line_1 + line_2.replace(split_char, '\n', 1)
+            
+
+# kv file line 116
 class PageBox(BoxLayout):
     '''a box that splits a long text into pages. displays labels of requested page.
     default size ratio is TITLE = 0.15, buttons = 0.05, text=0.8.'''
@@ -140,6 +280,7 @@ class PageBox(BoxLayout):
         '''title is a string'''
         self.ids['page_box_title'].text = title
     def text_check(self, text):
+        '''passes text input to show_page'''
         if text:
             self.show_page(int(text) - 1)
     def show_page(self, number):
@@ -181,14 +322,11 @@ class PageBox(BoxLayout):
         self.ids['page_total'].text = '/%s' % (len(self.pages))
         self.show_page(self.current_page)
 #TODO - remove die from init.  make it object property?  then it can go in .kv file
-# kv file line 112
+# kv file line 184
 class AddRmDice(BoxLayout):
-    '''a box taht can call parent_widget's add(num, die) and remove(num, die) funtion
+    '''a box taht calls add(num, die) and remove(num, die) funtion
     when pressed.
-    number=int - how many dice on the label. 0 means just str(die) displayed.
-    die=child of dicestats.ProtoDie - the die on the label and what will be called.
-    only_add=boolean - false let's you + or - the current die.
-    do_flash=boolean - flash the label upon creation.'''
+    '''
 
     def __init__(self, die, **kwargs):
         super(AddRmDice, self).__init__(**kwargs)
@@ -206,7 +344,9 @@ class AddRmDice(BoxLayout):
         else:
             add(times, self._die)
     def assign_buttons(self, label_number, only_add=False, do_flash=True):
-        '''called at creation and assign_die. packs the box appropriately'''
+        '''assigns buttons to the box.  label_number is an int.  0 displays the
+        str(die), otherwise die.multiply_str(number). only_add controls if there
+        are minus buttons.  do_flash flashes the label'''
         self.clear_widgets()
         if self._die.get_size() < self.small:
             buttons = 3
@@ -234,7 +374,7 @@ class AddRmDice(BoxLayout):
             self.add_widget(btn)
 
 #big_boxes
-# kv file line 118
+# kv file line 190
 class ChangeBox(GridLayout):
     '''displays current dice and allows to change. parent app is what's called
     for dice actions and info updates. all calls are
@@ -262,9 +402,8 @@ class ChangeBox(GridLayout):
             self.add_widget(add_rm)
         self.old_dice_list = dice_list
 
-# kv file line 121
+# kv file line 193
 class AddBox(BoxLayout):
-    #TODO - put weights and i believe i'll find what i need in branch gui_kivy
     '''box for adding new dice.  parent app is what's called for dice actions and
     info updates. all calls are self.parent_app.request_something(*args).'''
     def __init__(self, **kwargs):
@@ -275,8 +414,8 @@ class AddBox(BoxLayout):
 
         self.add_it = AddRmDice(ds.Die(6), size_hint=(1, 1))
         self.add_it.assign_buttons(0, only_add=True, do_flash=True)
-        self.pack()
-    def pack(self):
+        #self.pack()
+    def initialize(self):
         '''how the box is packed'''
         self.ids['add_it'].add_widget(self.add_it)
         for number in [2, 4, 6, 8, 10, 12, 20, 100]:
@@ -329,7 +468,7 @@ class AddBox(BoxLayout):
         width = cell_size * cols_without_drag
         drag_it = Label(text='[b]DRAG\n====>[/b]', size_hint=(None, None),
                          size=(100, 50), font_size=20, markup=True)
-        self.popup = WeightsPopup(height = min(main().height, height + padding * 2))
+        self.popup = WeightsPopup(height = min(main().height, height + padding * 8))
         contents = self.popup.ids['contents']
         if width < main().width:
             self.popup.width = width + cols_without_drag * padding + 2 * padding
@@ -359,13 +498,14 @@ class AddBox(BoxLayout):
         self.popup.dismiss()
 
 
-# kv file line 214
+# kv file line 273
 class InfoBox(BoxLayout):
     '''displays basic info about the die. parent app is what's called for dice
     actions and info updates. all calls are
     self.parent_app.request_something(*args).'''
     def __init__(self, **kwargs):
         super(InfoBox, self).__init__(**kwargs)
+    def initialize(self):
         self.ids['weight_info'].reset_sizes(15, [0.1, 0.1, 0.8])
         self.ids['weight_info'].set_title('full weight info')
     def update(self):
@@ -376,18 +516,62 @@ class InfoBox(BoxLayout):
         stat_text = ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
                % (values_min, values_max, round(mean, 4), stddev))
         self.ids['stat_str'].text = stat_text
-
         self.ids['dice_table_str'].text = '\n' + main().request_info('table_str')
         self.ids['weight_info'].set_text(main().request_info('weights_info'), 15)
-# kv file line 236
+# kv file line 295
 class GraphBox(BoxLayout):
 #TODO: complete rewrite using kivy garden graph
+#che
     '''buttons for making graphs.  parent app is what's called for dice actions
     and info updates. all calls are self.parent_app.request_something(*args).'''
     def __init__(self, **kwargs):
         super(GraphBox, self).__init__(**kwargs)
-
-# kv file line 259
+        self.plot_history = []
+        self.plot_current = PlotObject(text='')
+    def initialize(self):
+        self.ids['graph_space'].add_widget(PlotCheckBox(size_hint=(1,0.5)))
+    def update(self):
+        new_string = main().request_info('table_str').replace('\n', ' \\ ')
+        self.plot_current = PlotObject(text=new_string)
+        self.ids['graph_space'].clear_widgets()
+        self.ids['graph_space'].add_widget(Label(text='past graphs', size_hint=(1, 0.1)))
+        for item in self.plot_history[::-1]:
+            check = PlotCheckBox(text=item.text, size_hint=(1, 0.1), active=False)
+            check.two_line_text('\\')
+            self.ids['graph_space'].add_widget(check)
+        self.ids['graph_space'].add_widget(Label(text='new table', size_hint=(1, 0.1)))
+        check = PlotCheckBox(text=self.plot_current.text, size_hint=(1, 0.1), active=True)
+        check.two_line_text('\\')
+        self.ids['graph_space'].add_widget(check)
+    def graph_it(self):
+        #new_history = self.plot_history[-1:]
+        to_plot = []
+        for index in range(len(self.plot_history)):
+            if self.ids['graph_space'].children[index + 2].active:
+                to_plot.append(self.plot_history[index])
+        if self.ids['graph_space'].children[0].active and self.plot_current.text:
+            self.plot_current = main().request_plot_object()
+            if self.plot_current not in self.plot_history:
+                self.plot_history.insert(0, self.plot_current)
+            if self.plot_current not in to_plot:
+                to_plot.insert(0, self.plot_current)
+            
+        self.update()
+        if to_plot:
+            plotter = PlotPopup()
+            plotter.add_list(to_plot)
+            plotter.open()
+    def clear_all(self):
+        self.plot_history = []
+        self.update()
+    def clear_selected(self):
+        new_history = []
+        for index in range(len(self.plot_history)):
+            if not self.ids['graph_space'].children[index + 2].active:
+                new_history.append(self.plot_history[index])
+        self.plot_history = new_history[:]
+        self.update()
+# kv file line 334
 class StatBox(BoxLayout):
     '''box for getting and displaying stats about rolls. parent app is what's
     called for dice actions and info updates. all calls are
@@ -403,7 +587,7 @@ class StatBox(BoxLayout):
         self.ids['start_slider'].min = val_min
         self.ids['stop_slider'].max = val_max
         self.ids['start_slider'].max = val_max
-
+        self.show_stats()
     def assign_text_value(self, box='start'):
         '''called by text_input to assign that value to sliders and show stats'''
         val_min, val_max = main().request_info('range')
@@ -438,55 +622,50 @@ class AllRollsBox(PageBox):
     app is what's called for dice actions and info updates. all calls are
     self.parent_app.request_something(*args).'''
     def __init__(self, **kwargs):
-        PageBox.__init__(self)
-        self.set_title('here are all the rolls and their frequency')
+        super(AllRollsBox, self).__init__(**kwargs)
+    def initialize(self):
+        self.set_title('here are all the rolls and their frequency')   
     def update(self):
         '''rewrites after dice change'''
         text = main().request_info('all_rolls')
         self.set_text(text, 15)
 
-
-# kv file line 342
+# kv file line 419
 class DicePlatform(BoxLayout):
+    '''the main box.  the parent_app.'''
     def __init__(self, **kwargs):
         super(DicePlatform, self).__init__(**kwargs)
         self._table = ds.DiceTable()
-        self.bind_children()
-        self.pack_children()
 
+  
 
-    def bind_children(self):
-        self.stats = StatBox(size_hint=(1, 0.8))
-        self.graphs = GraphBox(size_hint=(1, 0.2))
-
-        self.changer = ChangeBox(size_hint=(0.2, 1))
-        self.add_box = AddBox(size_hint=(0.2, 1))
-        self.graph_stat = BoxLayout(orientation='vertical', size_hint=(0.2, 1))
-        self.basic_info = InfoBox(size_hint=(0.2, 1))
-        self.all_rolls = AllRollsBox()
-        self.all_rolls.size_hint=(0.2, 1)
-
-
-
-
-    def pack_children(self):
-        '''  change_box | add_box | basic_info | graphs |all_rolls
-                                               | stats             '''
-        self.graph_stat.add_widget(self.graphs)
-        self.graph_stat.add_widget(self.stats)
-
-        self.add_widget(self.changer)
-        self.add_widget(self.add_box)
-        self.add_widget(self.basic_info)
-        self.add_widget(self.graph_stat)
-        self.add_widget(self.all_rolls)
+        self.direction='right'
+        self.loop='true'
+        self.scroll_timeout = 120
+        self.do_default_tab = False
+        self.initializer()
+    def initializer(self):
+        self.ids['add_box'].initialize()
+        self.ids['graph_box'].initialize()
+        self.ids['info_box'].initialize()
+        self.ids['all_rolls_box'].initialize()
+        
+        #self.stats.height = self.current_tab.content.height
+        
 
     def updater(self):
         '''updates appropriate things for any die add or remove'''
-        self.stats.update()
-        self.all_rolls.update()
-        self.changer.update()
-        self.basic_info.update()
+        #self.ids['info_box'].ids['weight_info'].height = 0.6*self.current_tab.content.height
+        
+        
+        self.ids['change_box'].update()
+        self.ids['stat_box'].update()
+        self.ids['graph_box'].update()
+        self.ids['all_rolls_box'].update()
+        self.ids['info_box'].update()
+       
+        
+            
     def request_info(self, request):
         '''returns requested info to child widget'''
         requests = {'range': [self._table.values_range, ()],
@@ -500,29 +679,22 @@ class DicePlatform(BoxLayout):
         return command(*args)
     def request_stats(self, stat_list):
         return gap.stats(self._table, stat_list)
-    def request_graph(self, new=False):
-        '''creates a pylab graph'''
-        points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
-        colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k')
-        the_style = random.choice(points) + '-' + random.choice(colors)
-        if new:
-            figure_obj = pylab.figure(1)
-            fig_num = 1
-            pylab.clf()
-        else:
-            figure_obj = pylab.figure(0)
-            fig_num = 0
-        gap.fancy_grapher_pct(self._table, figure=fig_num, style=the_style, legend=True)
-        pylab.pause(0.1)
-        figure_obj.canvas.manager.window.activateWindow()
-        figure_obj.canvas.manager.window.raise_()
-    def request_clear_graph(self):
-        '''clears the pylab overlay graph'''
-        figure_obj = pylab.figure(0)
-        pylab.cla()
-        pylab.pause(0.1)
-        figure_obj.canvas.manager.window.activateWindow()
-        figure_obj.canvas.manager.window.raise_()
+    def request_plot_object(self):
+        new_object = PlotObject(text = str(self._table).replace('\n' , ' \\ '))
+        x_axis = []
+        y_axis = []
+        factor = li_div(self._table.total_frequency(), 100)
+
+        for value, frequency in self._table.frequency_all():
+            x_axis.append(value)
+            y_axis.append(li_div(frequency, factor))
+        
+        new_object.x_min = min(x_axis)
+        new_object.x_max = max(x_axis)
+        new_object.y_min = min(y_axis)
+        new_object.y_max = max(y_axis)
+        new_object.pts = [(x_axis[index], y_axis[index]) for index in range(len(x_axis))]
+        return new_object
     def request_add(self, number, die):
         '''adds dice to table'''
         self._table.add_die(number, die)
@@ -541,12 +713,6 @@ class DicePlatform(BoxLayout):
         '''reset dice table'''
         self._table = ds.DiceTable()
         self.updater()
-
-
-
-
-
-
 
 
 # kv file line NONE
