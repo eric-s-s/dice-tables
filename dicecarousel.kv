@@ -1,0 +1,421 @@
+#:kivy 1.0.9
+
+
+#tools
+<HorSlider>:
+    BoxLayout:
+        orientation:'vertical'
+        size_hint_x: None
+        width: 100
+        Label:
+
+            id:hor_title
+            font_size:15
+        Slider:
+            id:hor_slider
+            orientation:'horizontal'
+            min:0
+            max:10
+            value:1
+            step:1
+        Label:
+            text: str(int(hor_slider.value))
+            font_size:10
+<SizeButton>:
+    text:'D' + str(self.die_size)
+<WeightIt>:
+    text:'record\nweights'
+    size_hint:None, None
+    size: 100, 50          
+<WeightsPopup>:
+    size_hint: None, None
+    title: 'using weighted dice? for shame! cheater!'
+    ScrollView:
+        id:scroll_shell
+        scroll_timeout:70
+        StackLayout:
+            id: contents
+            orientation: 'tb-lr'
+            size_hint: None, None
+            spacing: 10
+            padding: 10
+            size:1000, 1000
+
+<PlotPopup>:
+    title: 'click the legend button for legend.  click on a label to highlight that plot.'
+    ScatterLayout:
+        id: graph_container
+        do_rotation: False
+        Graph:
+            id: graph
+            xlabel: 'the rolls'
+            ylabel: 'percent chance'
+            y_grid_label: True
+            x_grid_label: True
+            x_grid: True
+            y_grid: True
+            x_ticks_major: 2
+            y_ticks_major: 1
+        Button:
+            text:'done'
+            size_hint: 0.1, 0.1
+            on_press: root.dismiss()
+        Button:
+            id: legend
+            text:'legend'
+            size_hint: None, 0.1
+            width: 50
+            pos_hint: {'x': 0, 'y': 0.9}
+           
+<PlotCheckBox>:
+    orientation: 'horizontal'
+    CheckBox:
+        id: check_box
+        size_hint: 0.1, 0.5
+        active: root.active
+    ScrollView:
+        id:scroller
+        size_hint: 0.9, 1
+        Label:
+            id:label
+            text: root.text
+            size_hint: None, 1
+            width: self.texture_size[0]
+
+<PageBox>:
+    id:all_rolls
+    orientation:'vertical'
+    Label:
+        id: page_box_title
+        canvas:
+            Color:
+                rgba: 1,0,0,0.5
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint:1, .15
+        font_size: 20
+        text: 'TITLE'
+        text_size:self.size
+    BoxLayout:
+        id:buttons_container
+        orientation: 'horizontal'
+        size_hint: 1, 0.05
+        Button:
+            id:go_left
+            size_hint: 0.25, 1
+            text: '<==='
+            text_size:self.size
+            halign: 'right'
+            valign: 'middle'
+            shorten:True
+            shorten_from: 'right'
+            max_lines: 1
+            on_press: root.show_page(root.current_page - 1)
+        TextInput:
+            id:jump_to
+            size_hint: 0.25, 1
+            input_filter:'int'
+            multiline:False
+            on_text_validate: root.text_check(jump_to.text)
+            border: 1,3,1,3
+            padding_y: 1,1
+            font_size: (lambda:min(int(0.7 * self.height), int(0.35 * self.width)))()
+        Label:
+            id:page_total
+            size_hint: 0.25, 1
+            #text: '/%s' % (len(root.pages))
+            #font_size:int(0.7 * self.height)
+            font_size: (lambda:min(int(0.7 * self.height), int(0.35 * self.width)))()
+        Button:
+            id:go_right
+            size_hint: 0.25, 1
+            text: '===>'
+            text_size:self.size
+            halign: 'left'
+            valign: 'middle'
+            shorten:True
+            shorten_from: 'left'
+            max_lines: 1
+            on_press: root.show_page(root.current_page + 1)
+    Label:
+        canvas:
+            Color:
+                rgba: 0,1,0,0.5
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        id:text_container
+        size_hint: 1, 0.8
+        text:''
+        text_size: self.width, self.height
+
+<AddRmDice>:
+    orientation:'horizontal'
+    padding: 10
+    spacing: 10
+
+#big boxes
+<ChangeBox>:
+    Label: 
+        text: 'nothing added yet, use the "add" tab'
+        text_size:self.size
+        font_size: 25
+        valign: 'top'
+        halign: 'center'
+
+<AddBox>:
+    id:bob
+    orientation:'vertical'
+    BoxLayout:
+        id: custom
+        size_hint:1, 0.3
+        spacing: 30
+        padding: 30
+        BoxLayout:
+            orientation: 'vertical'
+            id: custom_size
+            size_hint: 0.5, 1
+            Label:
+                size_hint: 1, None
+                text: 'type custom die size from 2-200'
+                font_size: 18
+                height: custom_size.height - custom_input.height
+                text_size: self.size
+
+            TextInput:
+                id:custom_input
+                size_hint: 1, None
+                height: self.font_size + 10
+                input_filter:'int'
+                multiline:False
+                font_size: 20
+                on_text: root.assign_size_text()
+                border: 1,3,1,3
+                padding_y: 1,1
+        Button:
+            id:make_weights
+            size_hint: 0.5, 1
+            text: 'make weights'
+            text_size: self.size
+            font_size: 20
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.add_weights()
+    BoxLayout:
+        id: size_mod
+        orientation: 'horizontal'
+        size_hint: 1, 0.4
+        GridLayout:
+            id:presets
+            rows: 2
+            size_hint: 0.75, 1
+        BoxLayout:
+            orientation:'vertical'
+            size_hint: 0.25, 1
+            Label:
+                text:'add a modifier'
+                text_size: self.size
+                halign: 'center'
+                size_hint: 1, 0.2
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.8
+                Label:
+                    id: slider_num
+                    text: str(int(modifier.value))
+                    size_hint: 0.25, 1
+                Slider:
+                    id: modifier
+                    orientation: 'vertical'
+                    min:-5
+                    max:5
+                    value:0
+                    step:1
+                    on_value:root.assign_mod()
+                    size_hint: 0.75, 1
+                    canvas:
+                        Color:
+                            rgba:1,0,0,0.5
+                        Rectangle:
+                            size:self.size
+                            pos:self.pos
+    BoxLayout:
+        id: add_it
+        size_hint:1, 0.25
+
+<InfoBox>:
+    orientation:'vertical'
+    padding:10
+    Label:
+        id:stat_str
+        size_hint: 1, 0.15
+        text:'test'
+        text_size: self.size
+    ScrollView:
+        id:table_str_wrapper
+        size_hint: 1, 0.25
+        Label:
+            id:dice_table_str
+            text: 500*'adfgdg\n'
+            size_hint: 1, None
+            text_size: self.width, None
+            height: dice_table_str.texture_size[1]
+            halign: 'center'
+    PageBox:
+        id:weight_info
+        size_hint: 1, 0.6
+
+<GraphBox>:
+    orientation: 'vertical'
+    BoxLayout:
+        id: graph_space
+        orientation: 'vertical'
+        size_hint: 1, 0.9
+    BoxLayout:
+        size_hint: 1, 0.1
+        Button:
+            id: graph_stuff
+            text: 'graph it'
+            text_size: self.size
+            size: self.texture_size
+            size_hint: 0.33, 1
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.graph_it()
+        Button:
+            id: clear_all
+            text: 'clear history'
+            text_size: self.size
+            size: self.texture_size
+            size_hint: 0.33, 1
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.clear_all()    
+        Button:
+            id: clear_selected
+            text: 'clear selected'
+            text_size: self.size
+            size: self.texture_size
+            size_hint: 0.33, 1
+            halign: 'center'
+            valign: 'middle'
+            on_press: root.clear_selected()
+<StatBox>:
+    BoxLayout:
+        spacing: 10
+        orientation: 'vertical'
+        Label:
+            id: table_info
+            size_hint: 1, 0.2
+            text: 'no dice yet'
+            font_size: 20
+            text_size: self.size
+            valign: 'middle'
+            halign: 'center'
+        FloatLayout:
+            size_hint: 1, 0.4
+            #top row - value1 value2
+            Label:
+                text:'value 1'
+                text_size: self.size
+                size_hint:0.25, 0.1
+                pos_hint: {'x': 0.1, 'y': 1}
+            Label:
+                size_hint:0.25, 0.1
+                text: 'value 2'
+                text_size: self.size
+                pos_hint: {'x': 0.5, 'y': 1}
+            #2nd row slider
+            Slider:
+                id:start_slider
+                orientation:'vertical'
+                min:0
+                max:100
+                value:1
+                step:1
+                size_hint:0.25, 0.82
+                on_value:root.show_stats()
+                pos_hint: {'x': 0.2, 'y': 0.2}
+            Slider:
+                id:stop_slider
+                orientation:'vertical'
+                min:0
+                max:100
+                value:1
+                step:1
+                on_value:root.show_stats()
+                size_hint:0.25, 0.82
+                pos_hint: {'x': 0.6, 'y': 0.2}
+            #thrid row text input
+            Label:
+                text:'may type\nin values'
+                text_size: self.size
+                size_hint:0.2, 0.15
+                pos_hint: {'x': 0.05, 'y': 0}
+            TextInput:
+                id:start_slider_text
+                input_filter:'int'
+                multiline:False
+                text: str(int(start_slider.value))
+                on_text_validate:root.assign_text_value(box='start')
+                border: 1,3,1,3
+                padding_y:1,1
+                font_size:(lambda:min(int(0.7 * self.height), int(0.3 * self.width)))()
+                size_hint:0.3, 0.15
+                pos_hint: {'x': 0.2, 'y': 0.0}
+            TextInput:
+                id:stop_slider_text
+                input_filter:'int'
+                multiline:False
+                text: str(int(stop_slider.value))
+                on_text_validate:root.assign_text_value(box='stop')
+                size_hint:0.3, 0.15
+                border: 1,3,1,3
+                padding_y:1,1
+                font_size:(lambda:min(int(0.7 * self.height), int(0.3 * self.width)))()
+                pos_hint: {'x': 0.6, 'y': 0.0}
+        Label:
+            id:stat_text
+            text:'no stats'
+            text_size:self.size
+            font_size: 20
+            #size: self.texture_size
+            size_hint: 1, 0.4
+            valign:'top'
+
+
+
+#parent
+<DicePlatform>:
+    default_tab: adder
+    TabbedPanelItem:
+        text:'changer'
+        ChangeBox:
+            id: change_box
+    TabbedPanelItem:
+        id: adder
+        text: 'add'
+        AddBox:
+            id: add_box
+    TabbedPanelItem:
+        text: 'graph'
+        GraphBox:
+            id: graph_box
+    TabbedPanelItem:
+        text: 'stats'
+        StatBox:
+            id: stat_box
+    TabbedPanelItem:
+        text: 'info'
+        BoxLayout:
+            id: all_rolls_info
+            orientation: 'horizontal'
+            AllRollsBox:
+                id: all_rolls_box
+            InfoBox:
+                id: info_box
+            
+    
+
+

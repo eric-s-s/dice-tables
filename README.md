@@ -1,12 +1,29 @@
-#main module to run things is UI2.py
+##currently 4 uis
+general requirements - python 2.7, 
 
-##UI2.py requirements
-python 2.something. probably 2.7
+non-basic libraries - pylab, (kivy)
+	
+pylab shold be set to interactive backend
+###GUI_tkinter.py
+a simple and clean GUI using tkinter
 
-libraries - pylab, decimal.  pylab should be set to an interactive backend
+additional requirements -  tkinter which should already be there is you have pylab
 
-###how to use UI2.py
-if started as main, runs main_menu().  or in an interperter, type main_menu()
+to run - type python gui_tkinter.py in command shell or run in interpreter
+
+###kivy_carousel.py, GUI_kivy.py
+kivy_carousel swipes between 3 windows
+
+GUI_kivy is one long window
+
+additional requirements - kivy 
+
+to run - type python <filename> in command shell.  will not work in interpreter
+
+###ui_text_only.py
+a text ui that can be run from interpreter or command line.  least attractive option
+
+to run - type python ui_text_only.py
 
 ##details of base modules and classes.
 
