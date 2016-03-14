@@ -13,9 +13,9 @@ from kivy.properties import (NumericProperty, ListProperty, StringProperty,
 from kivy.clock import Clock
 from kivy.uix.tabbedpanel import TabbedPanel
 
-import dicestats as ds
-import graphing_and_printing as gap
-from longintmath import long_int_div as li_div
+import dicetables.dicestats as ds
+import dicetables.graphing_and_printing as gap
+from dicetables import long_int_div as li_div
 
 from kivy.garden.graph import MeshLinePlot
 
@@ -718,7 +718,7 @@ class DicePlatform(TabbedPanel):
         self.updater()
 
 # kv file line NONE
-class DiceCarouselApp(App):
+class DiceTableTabbedApp(App):
     '''the app.  it's the dice platform'''
     def build(self):
         current_app = DicePlatform()
@@ -726,6 +726,6 @@ class DiceCarouselApp(App):
         return current_app
 
 if __name__ == '__main__':
-    to_run = DiceCarouselApp()
+    to_run = DiceTableTabbedApp()
     to_run.run()
 

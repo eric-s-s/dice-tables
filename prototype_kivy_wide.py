@@ -714,12 +714,12 @@ class DicePlatform(BoxLayout):
         self.updater()
 
 # kv file line NONE
-class DiceTableApp(App):
+class DiceTableWideApp(App):
     def build(self):
         bob = DicePlatform()
         Window.size = (1500, 700)
         return bob
 
 if __name__ == '__main__':
-    DiceTableApp().run()
+    DiceTableWideApp().run()
 

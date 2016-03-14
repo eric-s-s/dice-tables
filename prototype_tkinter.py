@@ -1,6 +1,6 @@
 import Tkinter as tk
-import dicestats as ds
-import graphing_and_printing as gap
+import dicetables.dicestats as ds
+import dicetables.graphing_and_printing as gap
 import random
 import pylab
 class App(object):
