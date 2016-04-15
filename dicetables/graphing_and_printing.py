@@ -39,7 +39,7 @@ def long_note(num, dig_len):
     '''converts long ints over +/-1e+308 to sci notation. helper to scinote'''
     num_str = str(abs(num))
     power = len(num_str) - 1
-    digits = num_str[0] + '.' + num_str[1:dig_len + 1]
+    digits = num_str[0] + '.' + num_str[1:dig_len + 2]
     #this rounds the final digit
     digits_float = float(digits)
     rounded_digits = str(round(digits_float, dig_len-1)).ljust(dig_len + 1, '0')

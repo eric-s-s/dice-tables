@@ -3,7 +3,7 @@ from longintmath import LongIntTable
 
 class ProtoDie(object):
     '''a blanket object for any kind of die so that different types of Die can
-    be compared.  all Die objects need these five methods.'''
+    be compared.  all Die objects need these five methods. str and repr'''
     def get_size(self):
         '''return the size of the die'''
         raise NotImplementedError
@@ -20,6 +20,10 @@ class ProtoDie(object):
     def multiply_str(self, number):
         '''return a string that is the die string multiplied by a number. i.e.,
         D6+1 times 3 is 3D6+3'''
+        raise NotImplementedError
+    def __str__(self):
+        raise NotImplementedError
+    def __repr__(self):
         raise NotImplementedError
 
     def __lt__(self, other):
@@ -64,6 +68,8 @@ class Die(ProtoDie):
         return '%s%s' % (number, self)
     def __str__(self):
         return 'D%s' % (self._die_size)
+    def __repr__(self):
+        return 'Die({})'.format(self.get_size())
 
 class ModDie(Die):
     '''a Die with a modifier.  i.e. D6-3.'''
@@ -85,8 +91,9 @@ class ModDie(Die):
         return '%s%s%s' % (number, str(self)[:-1], number * abs(self._mod))
     def __str__(self):
         return 'D{0}{1:+}'.format(self._die_size, self._mod)
-
-
+    def __repr__(self):
+        return 'ModDie({}, {})'.format(self.get_size(), self.get_modifier())
+    
 class WeightedDie(ProtoDie):
     '''stores and returns info for a weighted die.'''
     def __init__(self, dictionary_input):
@@ -126,6 +133,8 @@ class WeightedDie(ProtoDie):
         return '%s%s' % (number, self)
     def __str__(self):
         return 'D%s  W:%s' % (self._die_size, self._weight)
+    def __repr__(self):
+        return 'WeightedDie({})'.format(dict(self.tuple_list()))
 
 class ModWeightedDie(WeightedDie):
     '''stores and returns info for a weighted die. and a modifier modifies the
@@ -154,6 +163,10 @@ class ModWeightedDie(WeightedDie):
                                             number * self._mod, self._weight)
     def __str__(self):
         return 'D{0}{1:+}  W:{2}'.format(self._die_size, self._mod, self._weight)
+    def __repr__(self):
+        mod = self.get_modifier()
+        no_mod = [(pair[0] - mod, pair[1]) for pair in self.tuple_list()]
+        return 'ModWeightedDie({}, {})'.format(dict(no_mod), mod)
 
 class DiceTable(LongIntTable):
     '''this is a LongIntTable with a list that holds information about the dice
@@ -225,52 +238,5 @@ class DiceTable(LongIntTable):
 
 
 
-#some wrapper functions for ease of use
-def make_die(die_input, mod):
-    '''takes legal input for Die or WeightedDie and returns object. input can
-    be int for Die, or list, tuple_list, dict for WeightedDie. mod is an int
-    [1,1,1,2,3], {1:3, 2:1, 3:1}, [(1,3), (2,1), (3,1)] all make a weighted die
-    of size 3 and where one gets rolled 3 times as often as 2 or 3'''
-    if isinstance(die_input, int):
-        if mod == 0:
-            return Die(die_input)
-        else:
-            return ModDie(die_input, mod)
-    else:
-        if mod == 0:
-            return WeightedDie(dictionary_maker(die_input))
-        else:
-            return ModWeightedDie(dictionary_maker(die_input), mod)
 
-#helper to make_die
-def dictionary_maker(mystery_input):
-    '''mystery input can be a list, a list of tuples or a dictionary. returns the
-    dictionary of the input. all are shallow copies!! if elements are mutable,
-    new element points to original element.'''
-    if isinstance(mystery_input, list):
-        if isinstance(mystery_input[0], tuple):
-            return dict(pair for pair in mystery_input)
-        else:
-            out = {}
-            for value in mystery_input:
-                out[value] = out.get(value, 0) + 1
-            return out
-    else:
-        return mystery_input.copy()
-
-def add_dice(table, num, die_input, mod=0):
-    '''a wrapper function to make table.add_dice quicker and easier. takes legal
-    input for Die or WeightedDie and returns object. input can be int for Die,
-    or list, tuple_list, dict for WeightedDie. mod is an int[1,1,1,2,3],
-    {1:3, 2:1, 3:1} [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
-    where one gets rolled 3 times as often as 2 or 3'''
-    table.add_die(num, make_die(die_input, mod))
-
-def remove_dice(table, num, die_input, mod=0):
-    '''a wrapper function to make table.remove_dice quicker and easier. takes
-    legal input for Die or WeightedDie and returns object. input can be int for
-    Die, or list, tuple_list, dict for WeightedDie. mod is an int[1,1,1,2,3],
-    {1:3, 2:1, 3:1} [(1,3), (2,1), (3,1)] all make a weighted die of size 3 and
-    where one gets rolled 3 times as often as 2 or 3'''
-    table.remove_die(num, make_die(die_input, mod))
 

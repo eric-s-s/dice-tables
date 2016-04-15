@@ -1,7 +1,7 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''unittests for dicestats.py'''
 import unittest
-import dicestats as ds
+import dicetables.dicestats as ds
 
 class TestDiceStats(unittest.TestCase):
     def test_die_equal(self):
@@ -62,6 +62,8 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.Die(10000).weight_info(), 'D10000\n    No weights')
     def test_die_str(self):
         self.assertEqual(str(ds.Die(1234)), 'D1234')
+    def test_die_repr(self):
+        self.assertEqual(repr(ds.Die(123)), 'Die(123)')
     def test_die_multiply_str(self):
         self.assertEqual(ds.Die(5).multiply_str(101), '101D5')
 
@@ -71,6 +73,8 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.ModDie(2, 5).tuple_list(), [(1+5, 1), (2+5, 1)])
     def test_moddie_string(self):
         self.assertEqual(str(ds.ModDie(10, 0)), 'D10+0')
+    def test_moddie_repr(self):
+        self.assertEqual(repr(ds.ModDie(5, -1)), 'ModDie(5, -1)')
     def test_moddie_multiply_str_pos_mod(self):
         self.assertEqual(ds.ModDie(5, 3).multiply_str(2), '2D5+6')
     def test_moddie_multiply_str_neg_mod(self):
@@ -95,6 +99,9 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.WeightedDie(dic).weight_info(), weights_str)
     def test_weighteddie_str(self):
         self.assertEqual(str(ds.WeightedDie({1:1, 5:3})), 'D5  W:4')
+    def test_weighteddie_repr(self):
+        self.assertEqual(repr(ds.WeightedDie({1:1, 5:3})), 
+                         'WeightedDie({1: 1, 5: 3})')
     def test_weighteddie_multiply_str(self):
         self.assertEqual(ds.WeightedDie({1:1, 5:3}).multiply_str(2), '2D5  W:4')
 
@@ -107,6 +114,9 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(str(ds.ModWeightedDie({1:2}, 3)), 'D1+3  W:2')
     def test_modweighteddie_string_for_negative_mod(self):
         self.assertEqual(str(ds.ModWeightedDie({1:2}, -3)), 'D1-3  W:2')
+    def test_modweighteddie_repr(self):
+        self.assertEqual(repr(ds.ModWeightedDie({1:2}, -3)),
+                         'ModWeightedDie({1: 2}, -3)')
     def test_modweighteddie_multiply_str_for_positive_mod(self):
         self.assertEqual(ds.ModWeightedDie({1:2}, 3).multiply_str(5), '5D1+15  W:2')
     def test_modweighteddie_multiply_str_for_negative_mod(self):
