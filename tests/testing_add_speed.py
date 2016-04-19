@@ -1,7 +1,7 @@
 '''a module solely for finding how add_a_list and add_tuple_list compare.
 it's effectively the empirical proof for how LongIntTable.add() chooses
 the fastest method with it's _fastest() function.'''
-import longintmath as lim
+import dicetables.longintmath as lim
 import time
 import pylab
 import random
@@ -239,7 +239,7 @@ def quick_and_dirty_ui():
         print 'the graphs intersect at %s' % (intersection)
         pylab.pause(0.1)
 
-def test_num_adds(num_vals, start_add, stop_add):
+def tst_num_adds(num_vals, start_add, stop_add):
     '''shows how the intersecion varies with different numbers of adds'''
     start_list = random_list(num_vals)
     num_points = num_vals // 5
@@ -259,7 +259,7 @@ def test_num_adds(num_vals, start_add, stop_add):
     pylab.ylabel('intersections')
     return out_lst
 
-def test_num_vals(star_vals, stop_vals, num_adds):
+def tst_num_vals(star_vals, stop_vals, num_adds):
     '''shows how the intesection varies with different number of values in a
     list'''
     x_axis = range(star_vals, stop_vals + 1)

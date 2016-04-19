@@ -1,7 +1,7 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''tests for the longintmath.py module'''
 import unittest
-import longintmath as lim
+import dicetables.longintmath as lim
 
 
 FLOAT_BIG = 1e+300

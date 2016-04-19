@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='dicetables',
-      version='0.3.0',
+      version='0.3.2',
       description='fun with dice',
       keywords='dice, die, statistics, table, probability, combinations',
       url='http://github.com/eric-s-s/dice-tables',

@@ -1,8 +1,8 @@
 import Tkinter as tk
 import dicetables.dicestats as ds
-import dicetables.graphing_and_printing as gap
-import random
+import dicetables.tableinfo as ti
 import pylab
+from itertools import cycle as itertools_cycle
 class App(object):
     def __init__(self, master):
         self.info_frame = tk.Frame(master)
@@ -148,22 +148,38 @@ class App(object):
         self.text_box.pack()
         self.text_scrollbar.config(command=self.text_box.yview)
 
-
-
-    def graph_it(self, new=False):
-        points = ('o', '<', '>', 'v', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd')
-        colors = ('b', 'g', 'y', 'r', 'c', 'm', 'y', 'k')
-        the_style = random.choice(points) + '-' + random.choice(colors)
+        self.points = itertools_cycle(['o', '<', '>', 'v', 's', 'p', '*', 'h', 'H',
+                                  '+', 'x', 'D', 'd'])
+        self.colors = itertools_cycle(['b', 'g', 'y', 'r', 'c', 'm', 'y', 'k'])
+    def graph_it(self, new=False): 
+        pylab.ion()
+        
+#    
+#    
+#    pylab.title('all the combinations for '+str(table))
+#    line, = pylab.plot(x_axis, y_axis, style, label=str(table))
+#    if legend:
+#        pylab.legend(loc='best')
+        
+        
+        the_style = '{}-{}'.format(next(self.points), next(self.colors))
         
         if new:
             figure_obj = pylab.figure(1)
-            fig_num = 1
+            #fig_num = 1
             #pylab.show()
             pylab.clf()
         else:
             figure_obj = pylab.figure(0)
-            fig_num = 0 
-        gap.fancy_grapher_pct(self.table, figure=fig_num, style=the_style, legend=True)
+            #fig_num = 0 
+        #gap.fancy_grapher_pct(self.table, figure=fig_num, style=the_style, legend=True)
+        x_axis, y_axis = ti.graph_pts(self.table)
+        pylab.ylabel('pct of the total occurences')
+        pylab.xlabel('values')
+        pylab.title('all the combinations for '+str(self.table))
+        pylab.plot(x_axis, y_axis, the_style, label=str(self.table))
+        if not new:
+            pylab.legend(loc='best')
         pylab.pause(0.1)
         figure_obj.canvas.manager.window.activateWindow()
         figure_obj.canvas.manager.window.raise_()
@@ -182,7 +198,12 @@ class App(object):
         else:
             input_lst = range(right, left + 1)
         self.stats_text_box.delete(1.0, tk.END)
-        self.stats_text_box.insert(tk.END, gap.stats(self.table, input_lst))
+        lst, combos, total, chance, pct = ti.stats(self.table, input_lst)
+        text = ('out of {} total combinations,\n{} occurred {} times\n'
+                .format(total, lst, combos) +
+                'that\'s a 1 in {} chance\nor {} percent'
+                .format(chance, pct))
+        self.stats_text_box.insert(tk.END, text)
     def stats_it_left(self, left):
         right = self.stats_right.get()
         self.stats_it(left, right)
@@ -274,7 +295,7 @@ class App(object):
         self.stats_right.config(from_=val_min, to=val_max)
 
         self.text_box.delete(1.0, tk.END)
-        self.text_box.insert(tk.END, gap.print_table_string(self.table))
+        self.text_box.insert(tk.END, ti.full_table_string(self.table))
 
 
 
