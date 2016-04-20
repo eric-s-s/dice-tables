@@ -152,31 +152,17 @@ class App(object):
                                   '+', 'x', 'D', 'd'])
         self.colors = itertools_cycle(['b', 'g', 'y', 'r', 'c', 'm', 'y', 'k'])
     def graph_it(self, new=False): 
-        pylab.ion()
-        
-#    
-#    
-#    pylab.title('all the combinations for '+str(table))
-#    line, = pylab.plot(x_axis, y_axis, style, label=str(table))
-#    if legend:
-#        pylab.legend(loc='best')
-        
-        
-        the_style = '{}-{}'.format(next(self.points), next(self.colors))
-        
+        pylab.ion()    
+        the_style = '{}-{}'.format(next(self.points), next(self.colors))       
         if new:
             figure_obj = pylab.figure(1)
-            #fig_num = 1
-            #pylab.show()
             pylab.clf()
         else:
             figure_obj = pylab.figure(0)
-            #fig_num = 0 
-        #gap.fancy_grapher_pct(self.table, figure=fig_num, style=the_style, legend=True)
         x_axis, y_axis = ti.graph_pts(self.table)
         pylab.ylabel('pct of the total occurences')
         pylab.xlabel('values')
-        pylab.title('all the combinations for '+str(self.table))
+        pylab.title('all the combinations for {}'.format(self.table))
         pylab.plot(x_axis, y_axis, the_style, label=str(self.table))
         if not new:
             pylab.legend(loc='best')
@@ -201,8 +187,7 @@ class App(object):
         lst, combos, total, chance, pct = ti.stats(self.table, input_lst)
         text = ('out of {} total combinations,\n{} occurred {} times\n'
                 .format(total, lst, combos) +
-                'that\'s a 1 in {} chance\nor {} percent'
-                .format(chance, pct))
+                'that\'s a 1 in {} chance\nor {} percent'.format(chance, pct))
         self.stats_text_box.insert(tk.END, text)
     def stats_it_left(self, left):
         right = self.stats_right.get()
