@@ -100,8 +100,15 @@ class TestDiceStats(unittest.TestCase):
     def test_weighteddie_str(self):
         self.assertEqual(str(ds.WeightedDie({1:1, 5:3})), 'D5  W:4')
     def test_weighteddie_repr(self):
-        self.assertEqual(repr(ds.WeightedDie({1:1, 5:3})), 
-                         'WeightedDie({1: 1, 5: 3})')
+        self.assertEqual(repr(ds.WeightedDie({1:1, 2:3})), 
+                         'WeightedDie({1: 1, 2: 3})')
+    def test_weighteddie_repr_edge_case(self):
+        die1 = ds.WeightedDie({1:1, 3:0})
+        die2 = ds.WeightedDie({1:1, 2:0, 3:0})
+        the_repr = 'WeightedDie({1: 1, 2: 0, 3: 0})'
+        self.assertEqual(repr(die1), the_repr)
+        self.assertEqual(repr(die2), the_repr)
+        self.assertEqual(die1, die2)
     def test_weighteddie_multiply_str(self):
         self.assertEqual(ds.WeightedDie({1:1, 5:3}).multiply_str(2), '2D5  W:4')
 
