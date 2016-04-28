@@ -26,15 +26,22 @@ class ProtoDie(object):
     def __repr__(self):
         raise NotImplementedError
     def __hash__(self):
-        return hash(repr(self))
+        return hash('hash of {!r}, {}, {}, {}'.format(self, self.get_size(),
+                                                      self.get_weight(),
+                                                      self.tuple_list()))
 
     def __lt__(self, other):
-        '''Dice are compared by size, then weight, then tuple_list'''
-        return ((self.get_size(), self.get_weight(), self.tuple_list()) <
-                (other.get_size(), other.get_weight(), other.tuple_list()))
+        '''Dice are compared by size, then weight, then tuple_list, and finally
+        repr'''
+        return (
+            (self.get_size(), self.get_weight(), self.tuple_list(), repr(self)) <
+            (other.get_size(), other.get_weight(), other.tuple_list(), repr(other))
+            )
     def __eq__(self, other):
-        return ((self.tuple_list(), self.get_size(), self.get_weight()) ==
-                (other.tuple_list(), other.get_size(), other.get_weight()))
+        return (
+            (self.get_size(), self.get_weight(), self.tuple_list(), repr(self)) ==
+            (other.get_size(), other.get_weight(), other.tuple_list(), repr(other))
+            )
     def __ne__(self, other):
         return not self == other
     def __le__(self, other):

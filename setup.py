@@ -16,8 +16,7 @@ setup(name='dicetables',
         'Programming Language :: Python :: 2.7',  
       ],
       packages=['dicetables', 'tests'],
-      #install_requires=[
-      #  'matplotlib', 'kivy', 'kivy-garden' 
-      #],
+      test_suite='nose.collector',
+      tests_require=['nose'],
       include_package_data=True,
       zip_safe=False)

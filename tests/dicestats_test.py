@@ -27,15 +27,13 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.Die(4) >= ds.Die(4), True)
         self.assertEqual(ds.Die(4) >= ds.Die(3), True)
     def test_die_moddie_eq(self):
-        self.assertEqual(ds.Die(4) == ds.ModDie(4, 0), True)
         self.assertEqual(ds.ModDie(4, 1) == ds.Die(4), False)
         self.assertEqual(ds.Die(4) == ds.ModDie(4, -1), False)
     def test_die_moddie_lt(self):
-        self.assertEqual(ds.Die(4) < ds.ModDie(4, 0), False)
         self.assertEqual(ds.Die(4) < ds.ModDie(4, 1), True)
         self.assertEqual(ds.Die(4) < ds.ModDie(4, -1), False)
-    def test_moddie_with_zero_mod_equals_die(self):
-        self.assertEqual(ds.ModDie(10, 0), ds.Die(10))
+    def test_moddie_with_zero_mod_not_equal_die_due_to_repr(self):
+        self.assertEqual(ds.ModDie(10, 0) != ds.Die(10), True)
 
     def test_weighteddie_eq(self):
         self.assertEqual(ds.WeightedDie({1:1}) == ds.WeightedDie({1:1}), True)
@@ -48,8 +46,11 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.WeightedDie({2:2}) < ds.WeightedDie({2:3}), True)
     def test_weighteddie_lt_by_tuple_list(self):
         self.assertEqual(ds.WeightedDie({1:1, 2:2}) < ds.WeightedDie({1:2, 2:1}), True)
-    def test_modweighteddie_with_zero_mod_equals_weighteddie(self):
-        self.assertEqual(ds.WeightedDie({1:2}) == ds.ModWeightedDie({1:2}, 0), True)
+    def test_die_lt_by_repr(self):
+        self.assertEqual(ds.WeightedDie({1:1}) > ds.ModWeightedDie({1:1}, 0), True)
+
+    def test_modweighteddie_with_zero_mod_not_equal_weighteddie(self):
+        self.assertEqual(ds.WeightedDie({1:2}) == ds.ModWeightedDie({1:2}, 0), False)
 
 
     def test_die_get_size(self):
@@ -100,7 +101,7 @@ class TestDiceStats(unittest.TestCase):
     def test_weighteddie_str(self):
         self.assertEqual(str(ds.WeightedDie({1:1, 5:3})), 'D5  W:4')
     def test_weighteddie_repr(self):
-        self.assertEqual(repr(ds.WeightedDie({1:1, 2:3})), 
+        self.assertEqual(repr(ds.WeightedDie({1:1, 2:3})),
                          'WeightedDie({1: 1, 2: 3})')
     def test_weighteddie_repr_edge_case(self):
         die1 = ds.WeightedDie({1:1, 3:0})
