@@ -6,7 +6,7 @@ def _convert_back(num):
     '''helper function.  takes a Decimal and returns float if
     possible, else, long_int'''
     if float(num) == float('inf') or float(num) == float('-inf'):
-        return long(num)
+        return int(num)
     else:
         return float(num)
 

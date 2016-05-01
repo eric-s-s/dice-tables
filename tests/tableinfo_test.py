@@ -72,8 +72,9 @@ class TestTableInfo(unittest.TestCase):
                          '1: 1\n2: 0.0\n3: 1\n')
 
     def test_graph_pts_raises_error_for_empty_table(self):
-        self.assertRaisesRegexp(ValueError, 'empty table',
-                                ti.graph_pts, LongIntTable({}))
+        with self.assertRaises(ValueError) as cm:
+            ti.graph_pts(LongIntTable({}))
+        self.assertEqual(cm.exception.args[0], 'empty table')
     def test_graph_pts_adds_zeroes(self):
         table = LongIntTable({1: 1, 3: 1})
         self.assertEqual(ti.graph_pts(table, percent=False), ([1, 2, 3], [1, 0, 1]))
@@ -107,8 +108,9 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.graph_pts_overflow(table),
                          (([1, 2], [10**4, 0]), '1.0e+1996'))
     def test_graph_pts_overflow_raises_error_for_empty_table(self):
-        self.assertRaisesRegexp(ValueError, 'empty table',
-                                ti.graph_pts_overflow, LongIntTable({}))
+        with self.assertRaises(ValueError) as cm:
+            ti.graph_pts_overflow(LongIntTable({}))
+        self.assertEqual(cm.exception.args[0], 'empty table')
 
     def test_ascii_graph_helper_for_empty_table(self):
         empty_result = ti.ascii_graph_helper(LongIntTable({}))

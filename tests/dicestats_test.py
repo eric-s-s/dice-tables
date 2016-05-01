@@ -208,15 +208,17 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(table.frequency_all(), [(0, 1)])
     def test_remove_die_raises_error_if_die_not_in_table(self):
         table = ds.DiceTable()
-        self.assertRaisesRegexp(ValueError,
-                                'dice not in table, or removed too many dice',
-                                table.remove_die, 1, ds.Die(4))
+        with self.assertRaises(ValueError) as cm:
+            table.remove_die(1, ds.Die(4))
+        self.assertEqual(cm.exception.args[0],
+                         'dice not in table, or removed too many dice')
     def test_remove_die_raises_error_if_too_many_dice_removed(self):
         table = ds.DiceTable()
         table.add_die(3, ds.Die(4))
-        self.assertRaisesRegexp(ValueError,
-                                'dice not in table, or removed too many dice',
-                                table.remove_die, 4, ds.Die(4))
+        with self.assertRaises(ValueError) as cm:
+            table.remove_die(4, ds.Die(4))
+        self.assertEqual(cm.exception.args[0],
+                         'dice not in table, or removed too many dice')
 
 if __name__ == '__main__':
     unittest.main()
