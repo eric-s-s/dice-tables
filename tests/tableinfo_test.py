@@ -1,5 +1,9 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''tests for the tableinfo.py module'''
+
+from __future__ import absolute_import
+
+
 import unittest
 from dicetables import LongIntTable
 import dicetables.tableinfo as ti

@@ -1,4 +1,7 @@
 '''for all things dicey.  this contains DiceInfo and DiceTable and add_dice.'''
+from __future__ import absolute_import
+
+
 from dicetables.longintmath import LongIntTable
 
 class ProtoDie(object):
@@ -74,9 +77,9 @@ class Die(ProtoDie):
         return str(self) + '\n    No weights'
     def multiply_str(self, number):
         '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
-        return '%s%s' % (number, self)
+        return '{}{}'.format(number, self)
     def __str__(self):
-        return 'D%s' % (self._die_size)
+        return 'D{}'.format(self._die_size)
     def __repr__(self):
         return 'Die({})'.format(self.get_size())
 
@@ -97,7 +100,7 @@ class ModDie(Die):
 
     def multiply_str(self, number):
         '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
-        return '%s%s%s' % (number, str(self)[:-1], number * abs(self._mod))
+        return '{}D{}{:+}'.format(number, self._die_size, number * self._mod)
     def __str__(self):
         return 'D{0}{1:+}'.format(self._die_size, self._mod)
     def __repr__(self):
@@ -134,14 +137,14 @@ class WeightedDie(ProtoDie):
         '''returns detailed weight info, indented'''
         out = str(self) + '\n'
         for roll in range(1, self._die_size + 1):
-            out = (out +'    a roll of %s has a weight of %s\n' %
-                   (roll, self._dic.get(roll, 0)))
+            out += ('    a roll of {} has a weight of {}\n'
+                    .format(roll, self._dic.get(roll, 0)))
         return out.rstrip('\n')
     def multiply_str(self, number):
         '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
-        return '%s%s' % (number, self)
+        return '{}{}'.format(number, self)
     def __str__(self):
-        return 'D%s  W:%s' % (self._die_size, self._weight)
+        return 'D{}  W:{}'.format(self._die_size, self._weight)
     def __repr__(self):
         new_dic = {}
         for roll in range(1, self.get_size() + 1):
@@ -196,9 +199,7 @@ class DiceTable(LongIntTable):
 
     def get_list(self):
         '''return copy of dice list. a list of tuples, (die, number of dice)'''
-        out = list(self._dice_list.items())
-        out.sort()
-        return out
+        return sorted(self._dice_list.items())
     def number_of_dice(self, query_die):
         '''returns the number of that die in the dice list, or zero if not in
         the list'''
@@ -208,16 +209,16 @@ class DiceTable(LongIntTable):
         '''return detailed info of dice in the list'''
         out_str = ''
         for die, number in self.get_list():
-            out_str = (out_str +
-                       die.weight_info().replace(str(die), die.multiply_str(number))
-                       + '\n\n')
+            adjusted = die.weight_info().replace(str(die),
+                                                 die.multiply_str(number))
+            out_str += adjusted + '\n\n'
         return out_str.rstrip('\n')
 
 
     def __str__(self):
         out_str = ''
         for die, number in self.get_list():
-            out_str = out_str + '%s\n' % (die.multiply_str(number))
+            out_str += '{}\n'.format(die.multiply_str(number))
         return out_str.rstrip('\n')
 
     def add_die(self, num, die):

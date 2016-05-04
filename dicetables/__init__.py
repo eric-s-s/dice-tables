@@ -7,13 +7,15 @@ DiceTable() is a LongIntTable with a list of dice added by method add_die()
 functions for getting info from tables:
     full_table_string, graph_pts, graph_pts_overflow, stats, ascii_graph
 '''
+from __future__ import absolute_import
 
-import dicetables.dicestats
-import dicetables.longintmath
-import dicetables.tableinfo
+
+from dicetables import dicestats
+from dicetables import longintmath
+from dicetables import tableinfo
 from dicetables.longintmath import long_int_div, long_int_pow, long_int_times,\
                                         LongIntTable
 from dicetables.dicestats import Die, ModDie, WeightedDie, ModWeightedDie,\
                                     DiceTable
 from dicetables.tableinfo import full_table_string, graph_pts, \
-                                    graph_pts_overflow, stats
+                                    graph_pts_overflow, stats, scinote

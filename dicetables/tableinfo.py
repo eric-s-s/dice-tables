@@ -1,4 +1,5 @@
 '''functions for getting useful info from tables, ie. plot pts or stats'''
+from __future__ import absolute_import
 
 from dicetables.longintmath import long_int_div as li_div
 

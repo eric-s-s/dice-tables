@@ -1,5 +1,7 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''tests for the longintmath.py module'''
+from __future__ import absolute_import
+
 import unittest
 import dicetables.longintmath as lim
 
