@@ -1,4 +1,8 @@
-import Tkinter as tk
+from sys import version_info
+if version_info[0] > 2:
+    import tkinter as tk
+else:
+    import Tkinter as tk
 import dicetables.dicestats as ds
 import dicetables.tableinfo as ti
 import pylab
@@ -180,9 +184,9 @@ class App(object):
         left = int(left)
         right = int(right)
         if left < right:
-            input_lst = range(left, right + 1)
+            input_lst = list(range(left, right + 1))
         else:
-            input_lst = range(right, left + 1)
+            input_lst = list(range(right, left + 1))
         self.stats_text_box.delete(1.0, tk.END)
         lst, combos, total, chance, pct = ti.stats(self.table, input_lst)
         text = ('out of {} total combinations,\n{} occurred {} times\n'

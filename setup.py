@@ -1,11 +1,11 @@
 from setuptools import setup
 
 def readme():
-    with open('README.md') as f:
+    with open('README.rst') as f:
         return f.read()
 
 setup(name='dicetables',
-      version='0.3.2',
+      version='0.3.7',
       description='fun with dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',

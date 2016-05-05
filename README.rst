@@ -1,26 +1,29 @@
-##########
-dicetables
-##########
+############
+dicetablesv2
+############
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
 this module uses DiceTable and LongIntTable to do actions on a  
 table of (event represented by an int, frequency that event occurs)  
 since dice combinations quickly balloon, it's been designed to do float  
-math with ints over 10^309.::
+math with ints over 10^309.
+
+::
 
     In [1]: import dicetables as dt
-	
+
     In [2]: table = dt.DiceTable()
-	
+
     In [3]: table.add_die(3, dt.Die(2))
-	
+
+
 have now created a table contains all the rolls and their combinations  
 for three two-sided dice.  useful for quick demo.::
 
     In [4]: table.values()
     Out[4]: [3, 4, 5, 6]
-	
+
     In [5]: table.values_range()
     Out[5]: (3, 6)
 
@@ -93,6 +96,7 @@ The add_die and remove_die method use Die objects. the other 3 kinds of Die are 
 
     5D6+15
         No weights
+
 -------------------------------------------------------------------
 non-method functions for graphing, printing and general readability
 -------------------------------------------------------------------
