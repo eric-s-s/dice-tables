@@ -6,7 +6,7 @@ def _convert_back(num):
     '''helper function.  takes a Decimal and returns float if
     possible, else, long_int'''
     if float(num) == float('inf') or float(num) == float('-inf'):
-        return long(num)
+        return int(num)
     else:
         return float(num)
 
@@ -228,7 +228,7 @@ class LongIntTable(object):
                     the_diff = tup_val - tuples_min
                     new_dic_val = new_dic_val - (new_dic.get(value - the_diff, 0) *
                                                  tup_weight)
-                new_dic[value] = new_dic_val / tuple_list[0][1]
+                new_dic[value] = new_dic_val // tuple_list[0][1]
             except KeyError:
                 continue
         self._table = new_dic

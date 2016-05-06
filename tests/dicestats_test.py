@@ -1,7 +1,10 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''unittests for dicestats.py'''
+from __future__ import absolute_import
+
+
 import unittest
-import dicestats as ds
+import dicetables.dicestats as ds
 
 class TestDiceStats(unittest.TestCase):
     def test_die_equal(self):
@@ -27,15 +30,13 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.Die(4) >= ds.Die(4), True)
         self.assertEqual(ds.Die(4) >= ds.Die(3), True)
     def test_die_moddie_eq(self):
-        self.assertEqual(ds.Die(4) == ds.ModDie(4, 0), True)
         self.assertEqual(ds.ModDie(4, 1) == ds.Die(4), False)
         self.assertEqual(ds.Die(4) == ds.ModDie(4, -1), False)
     def test_die_moddie_lt(self):
-        self.assertEqual(ds.Die(4) < ds.ModDie(4, 0), False)
         self.assertEqual(ds.Die(4) < ds.ModDie(4, 1), True)
         self.assertEqual(ds.Die(4) < ds.ModDie(4, -1), False)
-    def test_moddie_with_zero_mod_equals_die(self):
-        self.assertEqual(ds.ModDie(10, 0), ds.Die(10))
+    def test_moddie_with_zero_mod_not_equal_die_due_to_repr(self):
+        self.assertEqual(ds.ModDie(10, 0) != ds.Die(10), True)
 
     def test_weighteddie_eq(self):
         self.assertEqual(ds.WeightedDie({1:1}) == ds.WeightedDie({1:1}), True)
@@ -48,8 +49,11 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.WeightedDie({2:2}) < ds.WeightedDie({2:3}), True)
     def test_weighteddie_lt_by_tuple_list(self):
         self.assertEqual(ds.WeightedDie({1:1, 2:2}) < ds.WeightedDie({1:2, 2:1}), True)
-    def test_modweighteddie_with_zero_mod_equals_weighteddie(self):
-        self.assertEqual(ds.WeightedDie({1:2}) == ds.ModWeightedDie({1:2}, 0), True)
+    def test_die_lt_by_repr(self):
+        self.assertEqual(ds.WeightedDie({1:1}) > ds.ModWeightedDie({1:1}, 0), True)
+
+    def test_modweighteddie_with_zero_mod_not_equal_weighteddie(self):
+        self.assertEqual(ds.WeightedDie({1:2}) == ds.ModWeightedDie({1:2}, 0), False)
 
 
     def test_die_get_size(self):
@@ -62,6 +66,8 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.Die(10000).weight_info(), 'D10000\n    No weights')
     def test_die_str(self):
         self.assertEqual(str(ds.Die(1234)), 'D1234')
+    def test_die_repr(self):
+        self.assertEqual(repr(ds.Die(123)), 'Die(123)')
     def test_die_multiply_str(self):
         self.assertEqual(ds.Die(5).multiply_str(101), '101D5')
 
@@ -71,6 +77,8 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.ModDie(2, 5).tuple_list(), [(1+5, 1), (2+5, 1)])
     def test_moddie_string(self):
         self.assertEqual(str(ds.ModDie(10, 0)), 'D10+0')
+    def test_moddie_repr(self):
+        self.assertEqual(repr(ds.ModDie(5, -1)), 'ModDie(5, -1)')
     def test_moddie_multiply_str_pos_mod(self):
         self.assertEqual(ds.ModDie(5, 3).multiply_str(2), '2D5+6')
     def test_moddie_multiply_str_neg_mod(self):
@@ -95,6 +103,16 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.WeightedDie(dic).weight_info(), weights_str)
     def test_weighteddie_str(self):
         self.assertEqual(str(ds.WeightedDie({1:1, 5:3})), 'D5  W:4')
+    def test_weighteddie_repr(self):
+        self.assertEqual(repr(ds.WeightedDie({1:1, 2:3})),
+                         'WeightedDie({1: 1, 2: 3})')
+    def test_weighteddie_repr_edge_case(self):
+        die1 = ds.WeightedDie({1:1, 3:0})
+        die2 = ds.WeightedDie({1:1, 2:0, 3:0})
+        the_repr = 'WeightedDie({1: 1, 2: 0, 3: 0})'
+        self.assertEqual(repr(die1), the_repr)
+        self.assertEqual(repr(die2), the_repr)
+        self.assertEqual(die1, die2)
     def test_weighteddie_multiply_str(self):
         self.assertEqual(ds.WeightedDie({1:1, 5:3}).multiply_str(2), '2D5  W:4')
 
@@ -107,6 +125,9 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(str(ds.ModWeightedDie({1:2}, 3)), 'D1+3  W:2')
     def test_modweighteddie_string_for_negative_mod(self):
         self.assertEqual(str(ds.ModWeightedDie({1:2}, -3)), 'D1-3  W:2')
+    def test_modweighteddie_repr(self):
+        self.assertEqual(repr(ds.ModWeightedDie({1:2}, -3)),
+                         'ModWeightedDie({1: 2}, -3)')
     def test_modweighteddie_multiply_str_for_positive_mod(self):
         self.assertEqual(ds.ModWeightedDie({1:2}, 3).multiply_str(5), '5D1+15  W:2')
     def test_modweighteddie_multiply_str_for_negative_mod(self):
@@ -190,15 +211,17 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(table.frequency_all(), [(0, 1)])
     def test_remove_die_raises_error_if_die_not_in_table(self):
         table = ds.DiceTable()
-        self.assertRaisesRegexp(ValueError,
-                                'dice not in table, or removed too many dice',
-                                table.remove_die, 1, ds.Die(4))
+        with self.assertRaises(ValueError) as cm:
+            table.remove_die(1, ds.Die(4))
+        self.assertEqual(cm.exception.args[0],
+                         'dice not in table, or removed too many dice')
     def test_remove_die_raises_error_if_too_many_dice_removed(self):
         table = ds.DiceTable()
         table.add_die(3, ds.Die(4))
-        self.assertRaisesRegexp(ValueError,
-                                'dice not in table, or removed too many dice',
-                                table.remove_die, 4, ds.Die(4))
+        with self.assertRaises(ValueError) as cm:
+            table.remove_die(4, ds.Die(4))
+        self.assertEqual(cm.exception.args[0],
+                         'dice not in table, or removed too many dice')
 
 if __name__ == '__main__':
     unittest.main()

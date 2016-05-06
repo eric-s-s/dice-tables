@@ -13,9 +13,9 @@ from kivy.properties import (NumericProperty, ListProperty, StringProperty,
 from kivy.clock import Clock
 from kivy.uix.tabbedpanel import TabbedPanel
 
-import dicestats as ds
-import graphing_and_printing as gap
-from longintmath import long_int_div as li_div
+import dicetables.dicestats as ds
+import dicetables.tableinfo as ti
+from dicetables import long_int_div as li_div
 
 from kivy.garden.graph import MeshLinePlot
 
@@ -618,15 +618,12 @@ class StatBox(BoxLayout):
         val_2 = int(self.ids['start_slider'].value)
 
         stat_list = range(min(val_1, val_2), max(val_1, val_2) + 1)
-        new_text = '\n' + main().request_stats(stat_list).replace(' possible', '')
-        text_lines = new_text.split('\n')
-        without_dice_str = []
-        for line in text_lines:
-            if not 'D' in line:
-                without_dice_str.append(line)
-        without_dice_str.insert(2, 'in this set of dice.')
-        new_text = ('\n' + 12*' ').join(without_dice_str)
-        self.ids['stat_text'].text = new_text
+        stat_info =  main().request_stats(stat_list)
+        stat_text = ('\n    {stat[0]} occurred {stat[1]} times\n'+
+                     '    out of {stat[2]} total combinations\n\n'+
+                     '    that\'s a one in {stat[3]} chance\n'+
+                     '    or {stat[4]} percent')
+        self.ids['stat_text'].text = stat_text.format(stat=stat_info)
 # kv file line NONE
 class AllRollsBox(PageBox):
     '''a pagebox that display the frequency for each roll in the table. parent
@@ -675,28 +672,22 @@ class DicePlatform(TabbedPanel):
                     'table_str': [str, (self._table,)],
                     'weights_info': [self._table.weights_info, ()],
                     'dice_list': [self._table.get_list, ()],
-                    'all_rolls': [gap.print_table_string, (self._table,)]}
+                    'all_rolls': [ti.full_table_string, (self._table,)]}
         command, args = requests[request]
         return command(*args)
     def request_stats(self, stat_list):
         '''returns stat info from a list'''
-        return gap.stats(self._table, stat_list)
+        return ti.stats(self._table, stat_list)
     def request_plot_object(self):
         '''converts the table into a PlotObject'''
         new_object = PlotObject(text=str(self._table).replace('\n', ' \\ '))
-        x_axis = []
-        y_axis = []
-        factor = li_div(self._table.total_frequency(), 100)
+        graph_pts = ti.graph_pts(self._table, axes=False)
+        y_vals = [pts[1] for pts in graph_pts]
 
-        for value, frequency in self._table.frequency_all():
-            x_axis.append(value)
-            y_axis.append(li_div(frequency, factor))
-
-        new_object.x_min = min(x_axis)
-        new_object.x_max = max(x_axis)
-        new_object.y_min = min(y_axis)
-        new_object.y_max = max(y_axis)
-        new_object.pts = [(x_axis[index], y_axis[index]) for index in range(len(x_axis))]
+        new_object.x_min, new_object.x_max = self._table.values_range()
+        new_object.y_min = min(y_vals)
+        new_object.y_max = max(y_vals)
+        new_object.pts = graph_pts
         return new_object
     def request_add(self, number, die):
         '''adds dice to table'''
@@ -718,7 +709,7 @@ class DicePlatform(TabbedPanel):
         self.updater()
 
 # kv file line NONE
-class DiceCarouselApp(App):
+class DiceTableTabbedApp(App):
     '''the app.  it's the dice platform'''
     def build(self):
         current_app = DicePlatform()
@@ -726,6 +717,6 @@ class DiceCarouselApp(App):
         return current_app
 
 if __name__ == '__main__':
-    to_run = DiceCarouselApp()
+    to_run = DiceTableTabbedApp()
     to_run.run()
 

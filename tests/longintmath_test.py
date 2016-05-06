@@ -1,7 +1,9 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 '''tests for the longintmath.py module'''
+from __future__ import absolute_import
+
 import unittest
-import longintmath as lim
+import dicetables.longintmath as lim
 
 
 FLOAT_BIG = 1e+300
@@ -147,8 +149,9 @@ class TestLongIntTable(unittest.TestCase):
         self.assertEqual(table.mean(), 0)
     def test_mean_empty_list_raises_zero_division_error(self):
         empty = lim.LongIntTable({})
-        self.assertRaisesRegexp(ZeroDivisionError,
-                                'there are no values in the table', empty.mean)
+        with self.assertRaises(ZeroDivisionError) as cm:
+            empty.mean()
+        self.assertEqual(cm.exception.args[0], 'there are no values in the table')
     def test_mean_with_non_uniform_table(self):
         table = lim.LongIntTable({1:2, 2:5})
         mean = (2 + 10) / float(2 + 5)
@@ -196,14 +199,35 @@ class TestLongIntTable(unittest.TestCase):
         table.update_value_add(1, 2)
         self.assertEqual(table.frequency_all(), [(2, 102)])
 
-    def test_add_error_raising_and_errors_do_not_mutate_table(self):
+    def test_add_empty_list_error(self):
         identity = lim.LongIntTable({0:1})
-        self.assertRaisesRegexp(ValueError, 'cannot add an empty list',
-                                identity.add, 1, [(1, 0)])
-        self.assertRaisesRegexp(ValueError, 'times must be a positive int',
-                                identity.add, -1, [(1, 1)])
-        self.assertRaisesRegexp(ValueError, 'frequencies may not be negative',
-                                identity.add, 1, [(1, -1)])
+        with self.assertRaises(ValueError) as cm:
+            identity.add(1, [(1, 0)])
+        self.assertEqual(cm.exception.args[0], 'cannot add an empty list')
+    def test_add_negative_times_error(self):
+        identity = lim.LongIntTable({0:1})
+        with self.assertRaises(ValueError) as cm:
+            identity.add(-1, [(1, 1)])
+        self.assertEqual(cm.exception.args[0], 'times must be a positive int')
+    def test_add_negative_frequencies_error(self):
+        identity = lim.LongIntTable({0:1})
+        with self.assertRaises(ValueError) as cm:
+            identity.add(1, [(1, -1)])
+        self.assertEqual(cm.exception.args[0], 'frequencies may not be negative')
+    def test_add_errors_do_not_mutate_table(self):
+        identity = lim.LongIntTable({0:1})
+        try:
+            identity.add(1, [(1, 0)])
+        except ValueError:
+            pass
+        try:
+            identity.add(-1, [(1, 1)])
+        except ValueError:
+            pass
+        try:
+            identity.add(1, [(1, -1)])
+        except ValueError:
+            pass
         self.assertEqual(identity.frequency_all(), [(0, 1)])
 #the next two tests test that add works for the two cases for _fastest()
 #_fastest() is found in the the add() method
