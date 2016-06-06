@@ -13,9 +13,14 @@ def scinote(num, dig_len=4):
     sci_power_cutoff = 7
     if num == 0:
         return '0.0'
-    #abs(numbers) less than one use the general format to dig_len precision
+    #abs(numbers) less than one use the fixed point or exp to dig_len precision
     elif 0 < abs(num) < 1:
-        return '{0:.{1}g}'.format(num, dig_len)
+        exp = int('{0:.{1}e}'.format(num, dig_len - 1).split('e')[1])
+        use_decimal = -3
+        if exp < use_decimal:
+            return '{0:.{1}e}'.format(num, dig_len - 1)
+        else:
+            return '{0:.{1}f}'.format(num, dig_len - 1 - exp)
     #1 <= abs(numbers) < sci_power_cutoff are appropriately rounded and comma-ed
     elif 1 <= abs(num) < 10**sci_power_cutoff:
         left = str(abs(num)).split('.')[0]

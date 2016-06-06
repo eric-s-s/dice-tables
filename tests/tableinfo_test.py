@@ -9,8 +9,13 @@ from dicetables import LongIntTable
 import dicetables.tableinfo as ti
 
 class TestTableInfo(unittest.TestCase):
-    def test_scinote_number_between_zero_and_one(self):
-        self.assertEqual(ti.scinote(1.23*10**-100, 6), '1.23e-100')
+    def test_scinote_returns_exp_for_val_le_ten_to_neg_four(self):
+        self.assertEqual(ti.scinote(10**-4), '1.000e-04')
+    def test_scinote_returns_fixed_pt_for_val_gt_ten_to_neg_four(self):
+        self.assertEqual(ti.scinote(10**-3), '0.001000')
+    def test_scinote_edge_case_at_ten_to_neg_four(self):
+        self.assertEqual(ti.scinote(9.99952*10**-4), '0.001000')
+        self.assertEqual(ti.scinote(9.99949*10**-4), '9.999e-04')
     def test_scinote_returns_zero(self):
         self.assertEqual(ti.scinote(2*10**-500), '0.0')
     def test_scinote_returns_commaed_int_at_less_than_ten_million(self):
