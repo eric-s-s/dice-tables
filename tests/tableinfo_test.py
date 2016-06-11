@@ -32,6 +32,8 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.scinote(123456.000, 8), '123,456.00')
     def test_scinote_commaed_float_adds_missing_zeros(self):
         self.assertEqual(ti.scinote(123456., 8), '123,456.00')
+    def test_scinote_edge_case_non_exp_float_rounds_up_and_adds_a_digit(self):
+        self.assertEqual(ti.scinote(99.999), '100.0')
     def test_scinote_doesnt_add_digits_when_dig_len_larger_than_int(self):
         self.assertEqual(ti.scinote(1234, 6), '1,234')
     def test_scinote_edge_case_at_10_to_7th_1(self):

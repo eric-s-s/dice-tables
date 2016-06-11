@@ -26,6 +26,9 @@ def scinote(num, dig_len=4):
         left = str(abs(num)).split('.')[0]
         int_digits = len(left)
         if dig_len > int_digits and isinstance(num, float):
+            tick_over_tst = str(round(num, dig_len - int_digits))
+            if tick_over_tst[0] == '1' and str(num)[0] == '9':
+                int_digits += 1
             #num = float(round(num, dig_len - int_digits))
             outpt = '{0:,.{1}f}'.format(num, dig_len - int_digits)
         else:
