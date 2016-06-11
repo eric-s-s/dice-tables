@@ -98,6 +98,19 @@ In [36]: print(table.weights_info())
 5D6+15
     No weights
 ```
+
+
+###NEW DIE TYPE ADDED
+StrongDie takes a regular die and gives it an outsized strength.  
+so StrongDie(Die(3), 2) would be one die that rolls double results  
+for a D3.  it would roll. 2, 4 or 6. the tuple_list for a weighted  
+die would compare like this.  
+
+StrongDie(ModWeightedDie({1:1, 2:2}, -3), 5)  
+original tuple list is [(-2, 1), (-1, 2)]  
+new tuple list is [(-10, 1), (-5, 2)]  
+
+
 ###non-method functions for graphing, printing and general readability
 ```
 In [15]: big_table = dt.LongIntTable({1:10 ** 1000, 3: 4 * 10**1000})
