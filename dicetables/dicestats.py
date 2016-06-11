@@ -183,6 +183,40 @@ class ModWeightedDie(WeightedDie):
         to_fix = super(ModWeightedDie, self).__repr__()[:-1]
         return 'Mod' + to_fix + ', {})'.format(self.get_modifier())
 
+class StrongDie(ProtoDie):
+    '''stores and returns info for a Die that acts like a different Die with
+    many votes.'''
+    def __init__(self, input_die, multiplier):
+        '''multiplier is a positive int.  input_die is any Die derived from
+        ProtoDie or it's descendents. StrongDie(ModDie(3, -1), 2) would make a
+        D3-1 with twice the influence of a regular die.  so it would roll
+        0, 2, 4.  die size and weight are still the same.'''
+        self._original = input_die
+        self._multiply = multiplier
+    def get_size(self):
+        '''returns the size of the die'''
+        return self._original.get_size()
+    def get_weight(self):
+        '''returns the weight of the die'''
+        return self._original.get_weight()
+    def tuple_list(self):
+        '''returns the tuple list that is the dice values'''
+        old = self._original.tuple_list()
+        return [(pair[0] * self._multiply, pair[1]) for pair in old]
+
+    def weight_info(self):
+        '''returns detailed weight info, indented'''
+        return (self._original.weight_info().replace(
+            str(self._original), str(self)))
+
+    def multiply_str(self, number):
+        '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
+        return '{}{}'.format(number, self)
+    def __str__(self):
+        return '{} *{}'.format(self._original, self._multiply)
+    def __repr__(self):
+        return 'StrongDie({!r}, {})'.format(self._original, self._multiply)
+
 class DiceTable(LongIntTable):
     '''this is a LongIntTable with a list that holds information about the dice
     added to it and removed from it.'''

@@ -4,7 +4,8 @@ from __future__ import absolute_import
 
 
 import unittest
-import dicetables.dicestats as ds
+#import dicetables.dicestats as ds
+import dicetables as ds
 
 class TestDiceStats(unittest.TestCase):
     def test_die_equal(self):
@@ -132,6 +133,44 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(ds.ModWeightedDie({1:2}, 3).multiply_str(5), '5D1+15  W:2')
     def test_modweighteddie_multiply_str_for_negative_mod(self):
         self.assertEqual(ds.ModWeightedDie({1:2}, -3).multiply_str(5), '5D1-15  W:2')
+
+    def test_strongdie_get_size(self):
+        orig = ds.ModWeightedDie({1:2}, -3)
+        self.assertEqual(ds.StrongDie(orig, 100).get_size(), orig.get_size())
+    def test_strongdie_get_weight(self):
+        orig = ds.ModWeightedDie({1:2}, -3)
+        self.assertEqual(ds.StrongDie(orig, 100).get_weight(), orig.get_weight())
+    def test_strongdie_tuple_list(self):
+        orig = ds.ModWeightedDie({1:2, 2:1}, 1)
+        self.assertEqual(ds.StrongDie(orig, 100).tuple_list(),
+                         [(200, 2), (300, 1)])
+    def test_strongdie_weight_info(self):
+        dic = dict((x, x+1) for x in range(1, 6, 2))
+        weights_str = ('D5  W:12 *10\n'+
+                       '    a roll of 1 has a weight of 2\n' +
+                       '    a roll of 2 has a weight of 0\n' +
+                       '    a roll of 3 has a weight of 4\n' +
+                       '    a roll of 4 has a weight of 0\n' +
+                       '    a roll of 5 has a weight of 6')
+        self.assertEqual(ds.StrongDie(ds.WeightedDie(dic), 10).weight_info(),
+                         weights_str)
+    def test_strongdie_multiply_str(self):
+        orig = ds.ModWeightedDie({1:2}, -3)
+        expected = '5D1-3  W:2 *100'
+        self.assertEqual(ds.StrongDie(orig, 100).multiply_str(5), expected)
+    def test_strongdie_str(self):
+        self.assertEqual(str(ds.StrongDie(ds.Die(7), 5)), 'D7 *5')
+    def test_strongdie_repr(self):
+        self.assertEqual(repr(ds.StrongDie(ds.Die(7), 5)), 'StrongDie(Die(7), 5)')
+    def test_strongdie_expected_lt_cases_positive_tuple_list(self):
+        die = ds.Die(5)
+        self.assertEqual(die < ds.StrongDie(die, 2), True)
+    def test_strongdie_expected_lt_cases_zero_tuple_list(self):
+        die = ds.ModDie(5, -1)
+        self.assertEqual(die < ds.StrongDie(die, 2), True)
+    def test_strongdie_expected_lt_cases_negative_tuple_list(self):
+        die = ds.ModDie(5, -3)
+        self.assertEqual(die < ds.StrongDie(die, 2), False)
 
     def test_dicetable_inits_empty(self):
         table = ds.DiceTable()

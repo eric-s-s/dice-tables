@@ -28,6 +28,10 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.scinote(-1.2345675e+6, 4), '-1,234,568')
     def test_scinote_rounds_commaed_float_for_dig_len_larger_than_tens_place(self):
         self.assertEqual(ti.scinote(123456.789, 8), '123,456.79')
+    def test_scinote_rounds_commaed_float_and_retains_zeros(self):
+        self.assertEqual(ti.scinote(123456.000, 8), '123,456.00')
+    def test_scinote_commaed_float_adds_missing_zeros(self):
+        self.assertEqual(ti.scinote(123456., 8), '123,456.00')
     def test_scinote_doesnt_add_digits_when_dig_len_larger_than_int(self):
         self.assertEqual(ti.scinote(1234, 6), '1,234')
     def test_scinote_edge_case_at_10_to_7th_1(self):
@@ -68,6 +72,9 @@ class TestTableInfo(unittest.TestCase):
     def test_list_to_string_returns_values_separated_by_commas(self):
         the_list = [-5, -4, -3, -1, 0, 1, 2, 3, 5]
         self.assertEqual(ti.list_to_string(the_list), '(-5)-(-3), (-1)-3, 5')
+    def test_list_to_string_returns_numbers_with_commas(self):
+        the_list = [-1234567, 1234567]
+        self.assertEqual(ti.list_to_string(the_list), '(-1,234,567), 1,234,567')
 
     def test_full_table_string_returns_empty_str_for_empty_table(self):
         self.assertEqual(ti.full_table_string(LongIntTable({})), '')
@@ -79,6 +86,9 @@ class TestTableInfo(unittest.TestCase):
         table = LongIntTable({1:1, 3:1})
         self.assertEqual(ti.full_table_string(table, zeroes=True),
                          '1: 1\n2: 0.0\n3: 1\n')
+    def test_full_table_string_edge_case(self):
+        table = LongIntTable({0:1})
+        self.assertEqual(ti.full_table_string(table), '0: 1\n')
 
     def test_graph_pts_raises_error_for_empty_table(self):
         with self.assertRaises(ValueError) as cm:
@@ -168,15 +178,15 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(result, expected)
     def test_stats_does_not_repeat_values(self):
         result = ti.stats(LongIntTable({1: 1}), [1, 1])
-        expected = ('1', '1', '1', '1.0', '100.0')
+        expected = ('1', '1', '1', '1.000', '100.0')
         self.assertEqual(result, expected)
     def test_stats_includes_values_not_in_table(self):
         result = ti.stats(LongIntTable({1: 1, 2: 1}), [0, 1])
-        expected = ('0-1', '1', '2', '2.0', '50.0')
+        expected = ('0-1', '1', '2', '2.000', '50.00')
         self.assertEqual(result, expected)
     def test_stats_works_for_large_values(self):
         result = ti.stats(LongIntTable({1: 10**1000, 2: (10**1002-10**1000)}), [1])
-        expected = ('1', '1.000e+1000', '1.000e+1002', '100.0', '1.0')
+        expected = ('1', '1.000e+1000', '1.000e+1002', '100.0', '1.000')
         self.assertEqual(result, expected)
 
 if __name__ == '__main__':

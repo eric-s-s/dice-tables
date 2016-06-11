@@ -5,8 +5,8 @@ def readme():
         return f.read()
 
 setup(name='dicetables',
-      version='0.3.10',
-      description='fun with dice',
+      version='0.4.0',
+      description='dice statistics module',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
       url='http://github.com/eric-s-s/dice-tables',
