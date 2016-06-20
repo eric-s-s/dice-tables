@@ -95,13 +95,16 @@ def full_table_string(table, zeroes=True):
     for value, frequency in the_pts:
         outstr += '{0:>{1}}: {2}\n'.format(value, max_len, scinote(frequency))
     return outstr
-def graph_pts(table, percent=True, axes=True, zeroes=True):
+def graph_pts(table, percent=True, axes=True, zeroes=True, exact=False):
     '''returns graph pts for a table.
     axes=True returns (x_axis, y_axis). axes=False returns [(x,y), (x,y)...]
     zeroes includes zero freq values from the min_val to max_val of the table
-    percent=True converts y values into percent of total y values, percent=False
-    leaves as raw long ints, which will often be too large for graphing functions
-    to handle.  for that case, graph_pts_overflow(table) is reccommended.'''
+    percent=True converts y values into percent of total y values.
+    exact=True/False only works with pct.  exact=False only good to ten decimal
+    places, but much much faster.
+    percent=False leaves as raw long ints, which will often be too large for
+    graphing functions to handle.  for that case, graph_pts_overflow(table) is
+    reccommended.'''
     if not table.values():
         raise ValueError('empty table')
 
@@ -113,16 +116,17 @@ def graph_pts(table, percent=True, axes=True, zeroes=True):
     if percent:
         temp = []
         total_freq = table.total_frequency()
-        for value, freq in the_pts:
-            temp.append((value, li_div(100 * freq, total_freq)))
+        if exact:
+            for value, freq in the_pts:
+                temp.append((value, li_div(100 * freq, total_freq)))
+        else:
+            factor = 10**50
+            for value, freq in the_pts:
+                y_val = (freq * factor) // total_freq
+                temp.append((value, (y_val*100.)/factor))
         the_pts = temp[:]
     if axes:
-        x_axis = []
-        y_axis = []
-        for val, freq in the_pts:
-            x_axis.append(val)
-            y_axis.append(freq)
-        return x_axis, y_axis
+        return [pair[0] for pair in the_pts], [pair[1] for pair in the_pts]
     else:
         return the_pts
 def graph_pts_overflow(table, axes=True, zeroes=True):

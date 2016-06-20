@@ -3,7 +3,8 @@ it's effectively the empirical proof for how LongIntTable.add() chooses
 the fastest method with it's _fastest() function.'''
 import dicetables.longintmath as lim
 import time
-import pylab
+import matplotlib.pyplot as plt
+import numpy as np
 import random
 
 def gen_one_point(val_list, loc='mid'):
@@ -104,26 +105,26 @@ def time_trial(generator, adds_per_trial):
 def plot_trial(ratios, tuples, lists, title='none', figure=1):
     '''plot x-axis = ratios.  y-axis = tuples and y-axis = lists. fit curves to
     ax + b and return the intesection of two curves'''
-    pylab.figure(figure)
-    pylab.plot(ratios, tuples, 'bo-', label='tuple add')
-    pylab.plot(ratios, lists, 'r*-', label='list add')
-    pylab.ylabel('time')
-    pylab.xlabel('num_freq over num_vals')
+    plt.figure(figure)
+    plt.plot(ratios, tuples, 'bo-', label='tuple add')
+    plt.plot(ratios, lists, 'r*-', label='list add')
+    plt.ylabel('time')
+    plt.xlabel('num_freq over num_vals')
 
-    pylab.legend()
+    plt.legend()
     intersection, tup_fit, lst_fit = polyfit_and_intersection(ratios,
                                                               tuples, lists)
     title = title + '\nintersection = %s' % (intersection)
-    pylab.title(title)
-    pylab.plot(ratios, tup_fit, 'c-')
-    pylab.plot(ratios, lst_fit, 'c-')
+    plt.title(title)
+    plt.plot(ratios, tup_fit, 'c-')
+    plt.plot(ratios, lst_fit, 'c-')
     return intersection
 
 def polyfit_and_intersection(ratios, tuples, lists):
     '''fits tuples and list linearly to ratios. returns the intersection of two
     fits and two lists of y values to plot with ratios'''
-    tup_slope, tup_const = pylab.polyfit(ratios, tuples, 1)
-    lst_slope, lst_const = pylab.polyfit(ratios, lists, 1)
+    tup_slope, tup_const = np.polyfit(ratios, tuples, 1)
+    lst_slope, lst_const = np.polyfit(ratios, lists, 1)
     intersection = (tup_const - lst_const) / (lst_slope - tup_slope)
     tuple_polyfit = [(tup_slope * x + tup_const) for x in ratios]
     lst_polyfit = [(lst_slope * x + lst_const) for x in ratios]
@@ -207,7 +208,7 @@ def quick_and_dirty_ui():
 
     while True:
         figure += 1
-        pylab.ion()
+        plt.ion()
         num_vals_question = (('how many values in your list?'+
                               '\nplease input int between %s and %s\n') %
                              (min_vals, max_vals))
@@ -237,7 +238,7 @@ def quick_and_dirty_ui():
             n_points_only = False
         intersection = random_trial(num_vals, num_adds, figure, n_points_only)
         print 'the graphs intersect at %s' % (intersection)
-        pylab.pause(0.1)
+        plt.pause(0.1)
 
 def tst_num_adds(num_vals, start_add, stop_add):
     '''shows how the intersecion varies with different numbers of adds'''
@@ -253,10 +254,10 @@ def tst_num_adds(num_vals, start_add, stop_add):
         ratios, tuples, lists = time_trial(generator, adds)
         ans = polyfit_and_intersection(ratios, tuples, lists)
         out_lst.append(ans[0])
-    pylab.figure(1)
-    pylab.plot(x_axis, out_lst, 'bo-', label=str(start_list))
-    pylab.xlabel('%s to %s' % (start_add, stop_add))
-    pylab.ylabel('intersections')
+    plt.figure(1)
+    plt.plot(x_axis, out_lst, 'bo-', label=str(start_list))
+    plt.xlabel('%s to %s' % (start_add, stop_add))
+    plt.ylabel('intersections')
     return out_lst
 
 def tst_num_vals(star_vals, stop_vals, num_adds):
@@ -274,10 +275,10 @@ def tst_num_vals(star_vals, stop_vals, num_adds):
         ratios, tuples, lists = time_trial(generator, num_adds)
         ans = polyfit_and_intersection(ratios, tuples, lists)
         out_lst.append(ans[0])
-        pylab.figure(2)
-    pylab.plot(x_axis, out_lst, 'bo-', label=str(start_list))
-    pylab.xlabel('%s to %s' % (star_vals, stop_vals))
-    pylab.ylabel('intersections')
+        plt.figure(2)
+    plt.plot(x_axis, out_lst, 'bo-', label=str(start_list))
+    plt.xlabel('%s to %s' % (star_vals, stop_vals))
+    plt.ylabel('intersections')
     return out_lst
 
 if __name__ == '__main__':

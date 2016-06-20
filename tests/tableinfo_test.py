@@ -117,6 +117,16 @@ class TestTableInfo(unittest.TestCase):
         table = LongIntTable({1: 1, 3: 3})
         self.assertEqual(ti.graph_pts(table, axes=False),
                          ([(1, 25), (2, 0), (3, 75)]))
+    def test_graph_pts_not_exact_x_vals_equals_exact_x_vals(self):
+        table = LongIntTable({1:2, 3:4, 5:6})
+        self.assertEqual(ti.graph_pts(table, exact=True)[0],
+                         ti.graph_pts(table, exact=False)[0])
+    def test_graph_pts_not_exact_equals_exact_to_ten_dec_places(self):
+        table = LongIntTable(dict([(num, num**2) for num in range(1000)]))
+        exact_y = ti.graph_pts(table, exact=True)[1]
+        inexact_y = ti.graph_pts(table, exact=False)[1]
+        for index in range(len(exact_y)):
+            self.assertAlmostEqual(exact_y[index], inexact_y[index], places=10)
     def test_graph_pts_overflow_for_small_numbers(self):
         table = LongIntTable({1: 1, 3: 1})
         self.assertEqual(ti.graph_pts_overflow(table), (([1, 2, 3], [1, 0, 1]), '1'))
