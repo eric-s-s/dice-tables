@@ -126,7 +126,8 @@ def graph_pts(table, percent=True, axes=True, zeroes=True, exact=False):
                 temp.append((value, (y_val*100.)/factor))
         the_pts = temp[:]
     if axes:
-        return [pair[0] for pair in the_pts], [pair[1] for pair in the_pts]
+        return [tuple([pair[0] for pair in the_pts]),
+                tuple([pair[1] for pair in the_pts])]
     else:
         return the_pts
 def graph_pts_overflow(table, axes=True, zeroes=True):
@@ -142,8 +143,8 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     factor_string = scinote(factor, 2)
     if axes:
         x_axis, old_y_axis = raw_pts
-        new_y_axis = [old_val // factor for old_val in old_y_axis]
-        return (x_axis, new_y_axis), factor_string
+        new_y_axis = tuple([old_val // factor for old_val in old_y_axis])
+        return [x_axis, new_y_axis], factor_string
     else:
         new_pts = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
         return new_pts, factor_string

@@ -98,25 +98,26 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(cm.exception.args[0], 'empty table')
     def test_graph_pts_adds_zeroes(self):
         table = LongIntTable({1: 1, 3: 1})
-        self.assertEqual(ti.graph_pts(table, percent=False), ([1, 2, 3], [1, 0, 1]))
+        self.assertEqual(ti.graph_pts(table, percent=False),
+                         [(1, 2, 3), (1, 0, 1)])
     def test_graph_pts_doesnot_add_zeroes_on_request(self):
         table = LongIntTable({1: 1, 3: 1})
         self.assertEqual(ti.graph_pts(table, percent=False, zeroes=False),
-                         ([1, 3], [1, 1]))
+                         [(1, 3), (1, 1)])
     def test_graph_pts_return_percent(self):
         table = LongIntTable({1: 1, 3: 3})
         self.assertEqual(ti.graph_pts(table, percent=True),
-                         ([1, 2, 3], [25, 0, 75]))
+                         [(1, 2, 3), (25, 0, 75)])
     def test_graph_pts_returns_percent_with_large_int_values(self):
         table = LongIntTable({1: 10**1000, 3: 3 * 10**1000})
-        self.assertEqual(ti.graph_pts(table), ([1, 2, 3], [25, 0, 75]))
+        self.assertEqual(ti.graph_pts(table), [(1, 2, 3), (25, 0, 75)])
     def test_graph_pts_returns_xy_axes_on_request(self):
         table = LongIntTable({1:1, 3:3})
-        self.assertEqual(ti.graph_pts(table, axes=True), ([1, 2, 3], [25, 0, 75]))
+        self.assertEqual(ti.graph_pts(table, axes=True), [(1, 2, 3), (25, 0, 75)])
     def test_graph_pts_returns_xypts_on_request(self):
         table = LongIntTable({1: 1, 3: 3})
         self.assertEqual(ti.graph_pts(table, axes=False),
-                         ([(1, 25), (2, 0), (3, 75)]))
+                         [(1, 25), (2, 0), (3, 75)])
     def test_graph_pts_not_exact_x_vals_equals_exact_x_vals(self):
         table = LongIntTable({1:2, 3:4, 5:6})
         self.assertEqual(ti.graph_pts(table, exact=True)[0],
@@ -129,15 +130,15 @@ class TestTableInfo(unittest.TestCase):
             self.assertAlmostEqual(exact_y[index], inexact_y[index], places=10)
     def test_graph_pts_overflow_for_small_numbers(self):
         table = LongIntTable({1: 1, 3: 1})
-        self.assertEqual(ti.graph_pts_overflow(table), (([1, 2, 3], [1, 0, 1]), '1'))
+        self.assertEqual(ti.graph_pts_overflow(table), ([(1, 2, 3), (1, 0, 1)], '1'))
     def test_graph_pts_overflow_for_larg_numbers(self):
         table = LongIntTable({1: 10**200, 2: 1})
         self.assertEqual(ti.graph_pts_overflow(table),
-                         (([1, 2], [10**200, 1]), '1'))
+                         ([(1, 2), (10**200, 1)], '1'))
     def test_graph_pts_overflow_for_very_large_numbers(self):
         table = LongIntTable({1:10**2000, 2:1})
         self.assertEqual(ti.graph_pts_overflow(table),
-                         (([1, 2], [10**4, 0]), '1.0e+1996'))
+                         ([(1, 2), (10**4, 0)], '1.0e+1996'))
     def test_graph_pts_overflow_raises_error_for_empty_table(self):
         with self.assertRaises(ValueError) as cm:
             ti.graph_pts_overflow(LongIntTable({}))
