@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='dicetables',
-      version='0.4.2',
+      version='0.4.3',
       description='dice statistics module',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
