@@ -114,7 +114,22 @@ die would compare like this.
 
 StrongDie(ModWeightedDie({1:1, 2:2}, -3), 5)
 original tuple list is [(-2, 1), (-1, 2)]
-new tuple list is [(-10, 1), (-5, 2)]
+new tuple list is [(-10, 1), (-5, 2)]::
+
+    In [1]: my_die = dt.StrongDie(dt.ModWeightedDie({1:1, 2:2}, -3), 5)
+    
+    In [2]: str(my_die)
+    Out[2]: '(D2-3  W:3)X5'
+
+    In [3]: my_die.multiply_str(7)
+    Out[3]: '(7D2-21  W:3)X5'
+
+    In [4]: my_die.get_multiplier()
+    Out[4]: 5
+
+    In [5]: my_die.get_original()
+    Out[5]: ModWeightedDie({1: 1, 2: 2}, -3)
+
 
 -------------------------------------------------------------------
 non-method functions for graphing, printing and general readability
