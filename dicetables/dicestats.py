@@ -195,14 +195,20 @@ class StrongDie(ProtoDie):
         self._multiply = multiplier
     def get_size(self):
         '''returns the size of the die'''
-        return self._original.get_size()
+        return self.get_original().get_size()
     def get_weight(self):
         '''returns the weight of the die'''
         return self._original.get_weight()
+    def get_multiplier(self):
+        '''retruns the multiplier for the die'''
+        return self._multiply
+    def get_original(self):
+        '''returns an instance of the original die'''
+        return self._original
     def tuple_list(self):
         '''returns the tuple list that is the dice values'''
         old = self._original.tuple_list()
-        return [(pair[0] * self._multiply, pair[1]) for pair in old]
+        return [(pair[0] * self.get_multiplier(), pair[1]) for pair in old]
 
     def weight_info(self):
         '''returns detailed weight info, indented'''
@@ -211,11 +217,13 @@ class StrongDie(ProtoDie):
 
     def multiply_str(self, number):
         '''return the str of die times a number. 5, D6+3 --> 5D6+15'''
-        return '{}{}'.format(number, self)
+        return '({})X{}'.format(self.get_original().multiply_str(number),
+                                self.get_multiplier())
     def __str__(self):
-        return '{} *{}'.format(self._original, self._multiply)
+        return '({})X{}'.format(self.get_original(), self.get_multiplier())
     def __repr__(self):
-        return 'StrongDie({!r}, {})'.format(self._original, self._multiply)
+        return 'StrongDie({!r}, {})'.format(self.get_original(),
+                                            self.get_multiplier())
 
 class DiceTable(LongIntTable):
     '''this is a LongIntTable with a list that holds information about the dice
