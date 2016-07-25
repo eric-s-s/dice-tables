@@ -5,6 +5,10 @@ table of (event represented by an int, frequency that event occurs)
 since dice combinations quickly balloon, it's been designed to do float  
 math with ints over 10^309.
 
+changed in this version - StrongDie.__str__, .multiply_str
+
+added in this version - StrongDie.get_original, .get_multiplier
+
 DiceTable is a LongIntTable that keeps a list of all the Die objects
 that have been added and removed using the add_die and remove_die methods. 
 
