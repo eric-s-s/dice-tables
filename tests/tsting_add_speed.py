@@ -1,11 +1,16 @@
 '''a module solely for finding how add_a_list and add_tuple_list compare.
 it's effectively the empirical proof for how LongIntTable.add() chooses
 the fastest method with it's _fastest() function.'''
-import dicetables.longintmath as lim
+#pylint: disable=protected-access
+from __future__ import print_function
+
 import time
+import random
+from os import getcwd
 import matplotlib.pyplot as plt
 import numpy as np
-import random
+import dicetables.longintmath as lim
+
 
 def gen_one_point(val_list, loc='mid'):
     '''a generator for a list of tuples. starts list of tuples (val, 1) for each
@@ -88,11 +93,11 @@ def time_trial(generator, adds_per_trial):
     tuple_times = []
     list_times = []
     count = 1
-    print 'please wait for the count-up/down to reach zero'
+    print('please wait for the count-up/down to reach zero')
     while count > 0:
         ratio, tup_time, lst_time = one_time_trial(generator.next(),
                                                    adds_per_trial)
-        print count
+        print(count)
         if tup_time > lst_time:
             count += 1
         else:
@@ -171,7 +176,7 @@ def random_trial(num_vals, adds_per_trial, figure=1, n_points_only=False):
     ratio, tuples, lists = time_trial(generator, adds_per_trial)
     return plot_trial(ratio, tuples, lists, title, figure)
 
-from os import getcwd
+
 
 def get_welcome():
     '''return welcom_message.txt'''
@@ -193,12 +198,12 @@ def get_int(question):
             output = int(answer)
             return output
         except ValueError:
-            print 'must be int OR "q" to quit'
+            print('must be int OR "q" to quit')
             continue
 
 def quick_and_dirty_ui():
     '''a UI to demonstrate add speeds'''
-    print get_welcome()
+    print(get_welcome())
     this_will_take_forever = 2500
     too_short_for_accuracy = 1200
     needs_many_points = 50
@@ -214,10 +219,10 @@ def quick_and_dirty_ui():
                              (min_vals, max_vals))
         num_vals = get_int(num_vals_question)
         if num_vals > max_vals:
-            print 'num_vals too big. now = %s' % (max_vals)
+            print('num_vals too big. now = %s' % (max_vals))
             num_vals = max_vals
         if num_vals < min_vals:
-            print 'num_vals too small. now = %s' % (min_vals)
+            print('num_vals too small. now = %s' % (min_vals))
             num_vals = min_vals
 
         max_adds = this_will_take_forever // num_vals
@@ -226,18 +231,16 @@ def quick_and_dirty_ui():
                              'an int between %s and %s\n' % (min_adds, max_adds))
         num_adds = get_int(num_adds_question)
         if num_adds < min_adds:
-            print 'num_adds too small. now = %s' % (min_adds)
+            print('num_adds too small. now = %s' % (min_adds))
             num_adds = min_adds
         if num_adds > max_adds:
-            print 'num_adds too big. now = %s' % (max_adds)
+            print('num_adds too big. now = %s' % (max_adds))
             num_adds = max_adds
 
-        if num_vals >= needs_many_points:
-            n_points_only = True
-        else:
-            n_points_only = False
+        n_points_only = num_vals >= needs_many_points
+
         intersection = random_trial(num_vals, num_adds, figure, n_points_only)
-        print 'the graphs intersect at %s' % (intersection)
+        print('the graphs intersect at %s' % (intersection))
         plt.pause(0.1)
 
 def tst_num_adds(num_vals, start_add, stop_add):
@@ -249,7 +252,7 @@ def tst_num_adds(num_vals, start_add, stop_add):
     out_lst = []
     x_axis = range(start_add, stop_add + 1)
     for adds in x_axis:
-        print 'countdown %s' % (x_axis[-1] - adds)
+        print('countdown %s' % (x_axis[-1] - adds))
         generator = gen_n_points(start_list, num_points)
         ratios, tuples, lists = time_trial(generator, adds)
         ans = polyfit_and_intersection(ratios, tuples, lists)
@@ -266,7 +269,7 @@ def tst_num_vals(star_vals, stop_vals, num_adds):
     x_axis = range(star_vals, stop_vals + 1)
     out_lst = []
     for num_vals in x_axis:
-        print 'countdown %s' % (x_axis[-1] - num_vals)
+        print('countdown %s' % (x_axis[-1] - num_vals))
         num_points = num_vals // 5
         start_list = random_list(num_vals)
         if num_points == 0:
