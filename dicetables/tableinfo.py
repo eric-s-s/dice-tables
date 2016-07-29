@@ -50,7 +50,10 @@ def _long_note(num, dig_len):
     num_str = str(abs(num))
     power = len(num_str) - 1
     digits = num_str[0] + '.' + num_str[1:dig_len + 10]
-    digits_float = float(digits)
+    digits_float = round(float(digits), dig_len - 1)
+    if digits_float == 10.0:
+        digits_float = 1.0
+        power += 1
     if num < 0:
         digits_float *= -1
     return '{0:.{1}f}e+{2}'.format(digits_float, dig_len - 1, power)

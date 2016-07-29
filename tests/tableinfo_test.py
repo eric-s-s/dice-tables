@@ -58,6 +58,8 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.scinote(-56*10**1000, 4), '-5.600e+1001')
     def test_scinote_large_number_rounds_like_it_should(self):
         self.assertEqual(ti.scinote(555551*10**1000, 4), '5.556e+1005')
+    def test_scinote_large_number_rounds_to_ten_re_written(self):
+        self.assertEqual(ti.scinote(99999*10**1000, 4), '1.000e+1005')
     def test_scinote_annoying_edge_case_due_to_python_rounding_errors(self):
         #the issue is python rounds the binary approximation of the float
         #so it's not rounding 5.5550000000000 it's rounding a slightly
