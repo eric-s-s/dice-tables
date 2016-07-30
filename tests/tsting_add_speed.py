@@ -95,7 +95,7 @@ def time_trial(generator, adds_per_trial):
     count = 1
     print('please wait for the count-up/down to reach zero')
     while count > 0:
-        ratio, tup_time, lst_time = one_time_trial(generator.next(),
+        ratio, tup_time, lst_time = one_time_trial(next(generator),
                                                    adds_per_trial)
         print(count)
         if tup_time > lst_time:
@@ -191,7 +191,10 @@ def get_welcome():
 def get_int(question):
     '''makes sure user input is an int. quit if "q"'''
     while True:
-        answer = raw_input(question + '>>>')
+        try:
+            answer = raw_input(question + '>>>')
+        except NameError:
+            answer = input(question + '>>>')
         if answer == 'q':
             raise SystemExit
         try:

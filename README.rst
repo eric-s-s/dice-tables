@@ -9,7 +9,8 @@ table of (event represented by an int, frequency that event occurs)
 since dice combinations quickly balloon, it's been designed to do float  
 math with ints over 10^309.
 
-changed in this version - StrongDie.__str__, .multiply_str
+changed in this version - StrongDie.__str__, .multiply_str,
+python3 support for tests/tsting_add_speed.py
 
 added in this version - StrongDie.get_original, .get_multiplier
 
