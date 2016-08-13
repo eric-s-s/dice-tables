@@ -135,10 +135,11 @@ class WeightedDie(ProtoDie):
 
     def weight_info(self):
         '''returns detailed weight info, indented'''
+        num_len = len(str(self.get_size()))
         out = str(self) + '\n'
         for roll in range(1, self._die_size + 1):
-            out += ('    a roll of {} has a weight of {}\n'
-                    .format(roll, self._dic.get(roll, 0)))
+            out += ('    a roll of {:>{}} has a weight of {}\n'
+                    .format(roll, num_len, self._dic.get(roll, 0)))
         return out.rstrip('\n')
     def multiply_str(self, number):
         '''return the str of die times a number. 5, D6+3 --> 5D6+15'''

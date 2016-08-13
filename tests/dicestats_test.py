@@ -102,6 +102,21 @@ class TestDiceStats(unittest.TestCase):
                        '    a roll of 4 has a weight of 0\n' +
                        '    a roll of 5 has a weight of 6')
         self.assertEqual(dt.WeightedDie(dic).weight_info(), weights_str)
+    def test_weighteddie_weight_info_formatting_large_num(self):
+        dic = dict((x, x+1) for x in range(1, 12, 2))
+        weights_str = ('D11  W:42\n'+
+                       '    a roll of  1 has a weight of 2\n' +
+                       '    a roll of  2 has a weight of 0\n' +
+                       '    a roll of  3 has a weight of 4\n' +
+                       '    a roll of  4 has a weight of 0\n' +
+                       '    a roll of  5 has a weight of 6\n' +
+                       '    a roll of  6 has a weight of 0\n' +
+                       '    a roll of  7 has a weight of 8\n' +
+                       '    a roll of  8 has a weight of 0\n' +
+                       '    a roll of  9 has a weight of 10\n' +
+                       '    a roll of 10 has a weight of 0\n' +
+                       '    a roll of 11 has a weight of 12')
+        self.assertEqual(dt.WeightedDie(dic).weight_info(), weights_str)
     def test_weighteddie_str(self):
         self.assertEqual(str(dt.WeightedDie({1:1, 5:3})), 'D5  W:4')
     def test_weighteddie_repr(self):
