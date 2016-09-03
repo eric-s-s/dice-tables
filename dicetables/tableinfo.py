@@ -1,62 +1,55 @@
-'''functions for getting useful info from tables, ie. plot pts or stats'''
+"""functions for getting useful info from tables, ie. plot pts or stats"""
 from __future__ import absolute_import
+from decimal import Decimal
 
 from dicetables.longintmath import long_int_div as li_div
 
 #tools for string formatting
 def scinote(num, dig_len=4):
-    '''num is int, float or long.  dig_len is int and < 18 and >= 2.
+    """num is int, float or long.  dig_len is int and < 18 and >= 2.
     returns a string of num in a nicely readable form.  rounds to dig_len.
-    note - python has a rounding bug (see tableinfo_test.py), but this
-    is a DISPLAY function. also note- dig_len over 18 works but has errors in
-    output unless the number is higher than 10**309.'''
+    note- dig_len over 18 works but has errors in output"""
     sci_power_cutoff = 7
     if num == 0:
-        outpt = '0.0'
-    #abs(numbers) less than one use the fixed point or exp to dig_len precision
+        string_output = '0.0'
     elif 0 < abs(num) < 1:
-        exp = int('{0:.{1}e}'.format(num, dig_len - 1).split('e')[1])
-        use_decimal = -3
-        if exp < use_decimal:
-            outpt = '{0:.{1}e}'.format(num, dig_len - 1)
-        else:
-            outpt = '{0:.{1}f}'.format(num, dig_len - 1 - exp)
-    #1 <= abs(numbers) < sci_power_cutoff are appropriately rounded and comma-ed
+        string_output = format_number_lt_one(dig_len, num)
     elif 1 <= abs(num) < 10**sci_power_cutoff:
-        left = str(abs(num)).split('.')[0]
-        int_digits = len(left)
-        if dig_len > int_digits and isinstance(num, float):
-            tick_over_tst = str(round(num, dig_len - int_digits))
-            if tick_over_tst[0] == '1' and str(num)[0] == '9':
-                int_digits += 1
-            #num = float(round(num, dig_len - int_digits))
-            outpt = '{0:,.{1}f}'.format(num, dig_len - int_digits)
-        else:
-            num = int(round(num, 0))
-            #edge case workaround-else scinote(9.99e+6, 2) returns '10,000,000'
-            if abs(num) == 10**sci_power_cutoff:
-                outpt = '{0:.{1}e}'.format(num, dig_len - 1)
-            else:
-                outpt = '{:,}'.format(num)
+        string_output = format_number_gt_one_lt_exponent_cutoff(dig_len, num, sci_power_cutoff)
     else:
-        try:
-            outpt = '{0:.{1}e}'.format(num, dig_len - 1)
-        except OverflowError:
-            outpt = _long_note(num, dig_len)
-    return outpt
+        string_output = format_number_gt_exponent_cutoff(dig_len, num)
+    return string_output
 
-def _long_note(num, dig_len):
-    '''converts long ints over +/-1e+308 to sci notation. helper to scinote'''
-    num_str = str(abs(num))
-    power = len(num_str) - 1
-    digits = num_str[0] + '.' + num_str[1:dig_len + 10]
-    digits_float = round(float(digits), dig_len - 1)
-    if digits_float == 10.0:
-        digits_float = 1.0
-        power += 1
-    if num < 0:
-        digits_float *= -1
-    return '{0:.{1}f}e+{2}'.format(digits_float, dig_len - 1, power)
+
+def format_number_gt_one_lt_exponent_cutoff(dig_len, num, exponent_cutoff):
+    if isinstance(num, int):
+        return '{:,}'.format(num)
+    else:
+        # rounded_number = Decimal('{:.{}e}'.format(num, dig_len - 1))
+        exponent = int('{:.{}e}'.format(num, dig_len - 1).split('e')[1])
+        output = '{:,.{}f}'.format(num, max(0, dig_len - 1 - exponent))
+        if output.split('.')[0] in ('{:,}'.format(10**exponent_cutoff), '{:,}'.format(-1*10**exponent_cutoff)):
+            return format_number_gt_exponent_cutoff(dig_len, num)
+        # if abs(rounded_number) == 10**exponent_cutoff:
+        #     return format_number_gt_exponent_cutoff(dig_len, num)
+        else:
+            return output
+
+
+def format_number_gt_exponent_cutoff(dig_len, num):
+    return '{:.{}e}'.format(Decimal(num), dig_len - 1)
+
+
+def format_number_lt_one(dig_len, num):
+    exponent = int('{0:.{1}e}'.format(num, dig_len - 1).split('e')[1])
+    fixed_point_cutoff = -3
+    if exponent < fixed_point_cutoff:
+        return '{0:.{1}e}'.format(Decimal(num), dig_len - 1)
+    return '{0:.{1}f}'.format(num, dig_len - 1 - exponent)
+
+
+
+
 
 def list_to_string(lst):
     '''outputs a list of intergers as a nice string.
@@ -129,8 +122,7 @@ def graph_pts(table, percent=True, axes=True, zeroes=True, exact=False):
                 temp.append((value, (y_val*100.)/factor))
         the_pts = temp[:]
     if axes:
-        return [tuple([pair[0] for pair in the_pts]),
-                tuple([pair[1] for pair in the_pts])]
+        return list(zip(*the_pts))
     else:
         return the_pts
 def graph_pts_overflow(table, axes=True, zeroes=True):

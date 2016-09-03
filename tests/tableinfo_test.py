@@ -10,12 +10,12 @@ import dicetables.tableinfo as ti
 
 class TestTableInfo(unittest.TestCase):
     def test_scinote_returns_exp_for_val_le_ten_to_neg_four(self):
-        self.assertEqual(ti.scinote(10**-4), '1.000e-04')
+        self.assertEqual(ti.scinote(10**-4), '1.000e-4')
     def test_scinote_returns_fixed_pt_for_val_gt_ten_to_neg_four(self):
         self.assertEqual(ti.scinote(10**-3), '0.001000')
     def test_scinote_edge_case_at_ten_to_neg_four(self):
         self.assertEqual(ti.scinote(9.99952*10**-4), '0.001000')
-        self.assertEqual(ti.scinote(9.99949*10**-4), '9.999e-04')
+        self.assertEqual(ti.scinote(9.99949*10**-4), '9.999e-4')
     def test_scinote_returns_zero(self):
         self.assertEqual(ti.scinote(2*10**-500), '0.0')
     def test_scinote_returns_commaed_int_at_less_than_ten_million(self):
@@ -39,19 +39,19 @@ class TestTableInfo(unittest.TestCase):
     def test_scinote_edge_case_at_10_to_7th_1(self):
         self.assertEqual(ti.scinote(9.999999999e+6, 10), '9,999,999.999')
     def test_scinote_edge_case_at_10_to_7th_2(self):
-        self.assertEqual(ti.scinote(9.999999999e+6, 3), '1.00e+07')
+        self.assertEqual(ti.scinote(9.999999999e+6, 3), '1.00e+7')
     def test_scinote_edge_case_at_10_to_7th_3(self):
-        self.assertEqual(ti.scinote(10000000), '1.000e+07')
+        self.assertEqual(ti.scinote(10000000), '1.000e+7')
     def test_scinote_edge_case_at_10_to_7th_negative_number_1(self):
         self.assertEqual(ti.scinote(-9.999999999e+6, 10), '-9,999,999.999')
     def test_scinote_edge_case_at_10_to_7th_negative_number_2(self):
-        self.assertEqual(ti.scinote(-9.999999999e+6, 3), '-1.00e+07')
+        self.assertEqual(ti.scinote(-9.999999999e+6, 3), '-1.00e+7')
     def test_scinote_edge_case_at_10_to_7th_negative_number_3(self):
-        self.assertEqual(ti.scinote(-10000000), '-1.000e+07')
+        self.assertEqual(ti.scinote(-10000000), '-1.000e+7')
     def test_scinote_returns_exponent_form_for_number_over_10_to_7th(self):
-        self.assertEqual(ti.scinote(1.2345678e+7, 6), '1.23457e+07')
+        self.assertEqual(ti.scinote(1.2345678e+7, 6), '1.23457e+7')
     def test_scinote_fills_zeros_to_dig_len_over_10_to_7th(self):
-        self.assertEqual(ti.scinote(1.2e+7, 6), '1.20000e+07')
+        self.assertEqual(ti.scinote(1.2e+7, 6), '1.20000e+7')
     def test_scinote_large_number(self):
         self.assertEqual(ti.scinote(5*10**1000, 4), '5.000e+1000')
     def test_scinote_large_number_negative(self):
@@ -60,12 +60,6 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.scinote(555551*10**1000, 4), '5.556e+1005')
     def test_scinote_large_number_rounds_to_ten_re_written(self):
         self.assertEqual(ti.scinote(99999*10**1000, 4), '1.000e+1005')
-    def test_scinote_annoying_edge_case_due_to_python_rounding_errors(self):
-        #the issue is python rounds the binary approximation of the float
-        #so it's not rounding 5.5550000000000 it's rounding a slightly
-        #smaller binary number.
-        self.assertEqual(ti.scinote(5555*10**1000, 3), '5.55e+1003')
-        self.assertEqual(ti.scinote(-5555*10**1000, 3), '-5.55e+1003')
 
     def test_list_to_string_returns_single_number(self):
         self.assertEqual(ti.list_to_string([1, 1, 1]), '1')
