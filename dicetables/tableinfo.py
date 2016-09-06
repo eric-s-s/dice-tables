@@ -9,43 +9,61 @@ def scinote(num, dig_len=4):
     """num is int, float or long.  dig_len is int and < 18 and >= 2.
     returns a string of num in a nicely readable form.  rounds to dig_len.
     note- dig_len over 18 works but has errors in output"""
-    sci_power_cutoff = 7
+    exponent_form_cutoff = 10**7
     if num == 0:
         string_output = '0.0'
     elif 0 < abs(num) < 1:
-        string_output = format_number_lt_one(dig_len, num)
-    elif 1 <= abs(num) < 10**sci_power_cutoff:
-        string_output = format_number_gt_one_lt_exponent_cutoff(dig_len, num, sci_power_cutoff)
+        string_output = format_number_lt_one(num, dig_len)
+    elif 1 <= abs(num) < exponent_form_cutoff:
+        string_output = format_number_gt_one_lt_exponent_cutoff(num, dig_len, exponent_form_cutoff)
     else:
-        string_output = format_number_gt_exponent_cutoff(dig_len, num)
+        try:
+            string_output = format_as_exponent(num, dig_len)
+        except OverflowError:
+            string_output = format_huge_int(num, dig_len)
     return string_output
 
 
-def format_number_gt_one_lt_exponent_cutoff(dig_len, num, exponent_cutoff):
+def format_number_lt_one(num, dig_len):
+    exponent = int('{0:.{1}e}'.format(num, dig_len - 1).split('e')[1])
+    fixed_point_cutoff = -3
+    if exponent < fixed_point_cutoff:
+        return format_as_exponent(num, dig_len)
+    return '{0:.{1}f}'.format(num, dig_len - 1 - exponent)
+
+
+def format_number_gt_one_lt_exponent_cutoff(num, dig_len, exponent_cutoff):
     if isinstance(num, int):
         return '{:,}'.format(num)
     else:
-        # rounded_number = Decimal('{:.{}e}'.format(num, dig_len - 1))
+        rounded_number = Decimal('{:.{}e}'.format(num, dig_len - 1))
         exponent = int('{:.{}e}'.format(num, dig_len - 1).split('e')[1])
         output = '{:,.{}f}'.format(num, max(0, dig_len - 1 - exponent))
-        if output.split('.')[0] in ('{:,}'.format(10**exponent_cutoff), '{:,}'.format(-1*10**exponent_cutoff)):
-            return format_number_gt_exponent_cutoff(dig_len, num)
-        # if abs(rounded_number) == 10**exponent_cutoff:
-        #     return format_number_gt_exponent_cutoff(dig_len, num)
+        if abs(rounded_number) == exponent_cutoff:
+            return format_as_exponent(num, dig_len)
         else:
             return output
 
 
-def format_number_gt_exponent_cutoff(dig_len, num):
-    return '{:.{}e}'.format(Decimal(num), dig_len - 1)
+def format_huge_int(num, dig_len):
+    number_str = str(abs(num))
+    exponent = len(number_str) - 1
+    mantissa = float(number_str[0] + '.' + number_str[1:dig_len + 10])
+    mantissa = round(mantissa, dig_len - 1)
+    if mantissa == 10.0:
+        mantissa = 1.0
+        exponent += 1
+    if num < 0:
+        mantissa *= -1
+    return '{:.{}f}e+{}'.format(mantissa, dig_len - 1, exponent)
 
 
-def format_number_lt_one(dig_len, num):
-    exponent = int('{0:.{1}e}'.format(num, dig_len - 1).split('e')[1])
-    fixed_point_cutoff = -3
-    if exponent < fixed_point_cutoff:
-        return '{0:.{1}e}'.format(Decimal(num), dig_len - 1)
-    return '{0:.{1}f}'.format(num, dig_len - 1 - exponent)
+def format_as_exponent(num, dig_len):
+    mantissa, exponent = '{:.{}e}'.format(num, dig_len - 1).split('e')
+    if len(exponent) == 3 and exponent[1] == '0':
+        exponent = exponent[::2]
+    return mantissa + 'e' + exponent
+
 
 
 

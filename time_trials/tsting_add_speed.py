@@ -281,7 +281,7 @@ def tst_num_vals(star_vals, stop_vals, num_adds):
         ratios, tuples, lists = time_trial(generator, num_adds)
         ans = polyfit_and_intersection(ratios, tuples, lists)
         out_lst.append(ans[0])
-        plt.figure(2)
+    plt.figure(0)
     plt.plot(x_axis, out_lst, 'bo-', label=str(start_list))
     plt.xlabel('%s to %s' % (star_vals, stop_vals))
     plt.ylabel('intersections')
