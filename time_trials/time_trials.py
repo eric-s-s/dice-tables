@@ -6,6 +6,7 @@ from __future__ import print_function
 from decimal import Decimal
 import time
 from collections import Counter
+from operator import mul
 import numpy as np
 from dicetables.tableinfo import format_huge_int
 import dicetables as dt
@@ -137,15 +138,39 @@ class NumpyTable(object):
         for _ in range(times):
             self.add_a_list(to_add)
 
+    def make_trans(self, tuple_list):
+        start_val = min(tuple_list)[0]
+        dlist_end = max(tuple_list)[0]
+        dlist_size = dlist_end - start_val
+        row = self.counter.array.size
+        col = row + dlist_size
+        trans = np.zeros((row, col), dtype=object)
+        for row in range(trans.shape[0]):
+            for index, val in tuple_list:
+                index -= start_val
+                trans[row][row + index] = val
+        return trans, start_val
+
+    def trans_add(self, tuple_list):
+        trans, start_val = self.make_trans(tuple_list)
+        new_array = self.counter.array.dot(trans)
+        new_start = self.counter.start_val + start_val
+        self.counter = npd.NumpyCounter(new_start, new_array)
+
+    def do_trans(self,times,  tuple_list):
+        for _ in range(times):
+            self.trans_add(tuple_list)
+
+
     def add_a_tuple_list(self, tuple_list):
         original = self.counter.start_val
         old_array = self.counter.array[:]
         val_1, freq_1 = tuple_list[0]
         self.counter.start_val = original + val_1
-        self.counter.array = old_array * np.array([freq_1], dtype=object)
+        self.counter.array = old_array * freq_1
         for val, freq in tuple_list[1:]:
             start_val = original + val
-            new_array = old_array * np.array([freq], dtype=object)
+            new_array = old_array * freq
             self.counter = self.counter.add(npd.NumpyCounter(start_val, new_array))
 
     def add_tuples(self, times, tuple_list):
@@ -240,6 +265,38 @@ class ListTable(object):
         new_count = count // factor
         return round((sqs / new_count) ** 0.5, decimal_place)
 
+
+class WrapListTable(dt.LongIntTable):
+    def __init__(self, seed={0: 1}):
+        dt.LongIntTable.__init__(self, seed)
+
+    def generate_my_counter(self):
+        start_val, array = npd.make_start_val_and_list(self._table)
+        return npd.MyCounter(start_val, array)
+
+    def add_list_to_my_counter(self, input_list, input_counter):
+        new_counter = npd.MyCounter(input_counter.start_val + input_list[0], input_counter.array[:])
+        for val in input_list[1:]:
+            start_val = input_counter.start_val + val
+            new_array = input_counter.array[:]
+            new_counter = new_counter.add(npd.MyCounter(start_val, new_array))
+        return new_counter
+
+    def add_list_to_my_counter_lots(self, times, input_list, start_counter):
+        for _ in range(times):
+            start_counter = self.add_list_to_my_counter(input_list, start_counter)
+        return start_counter
+
+    def alt_add_list(self, times, tuple_list):
+        input_list = make_list_from_tuples(tuple_list)
+        start_counter = self.generate_my_counter()
+        out_counter = self.add_list_to_my_counter_lots(times, input_list, start_counter)
+        self._table = dict(out_counter.items())
+
+
+
+
+
 print()
 x = NumpyTable()
 x.add(2, [(val, 1) for val in range(1, 7)])
@@ -266,20 +323,30 @@ dec_table = DecimalEventTable({0:1})
 c_table = CounterTable({0:1})
 np_table = NumpyTable()
 l_table = ListTable()
-add_list_args = ('add list {}*[1,2,3,4,5,6]: {} - ', add_times, [(val, 1) for val in range(1, 7)])
+wl_table = WrapListTable()
+transform = NumpyTable()
+line_302_list = [(val, 1) for val in range(-3, 3, 1)]
+# line_302_list = [(1, 1), (7, 1)]
+
+
+add_list_args = ('add list {}*[1,2,3,4,5,6]: {} - ', add_times, line_302_list)
 print()
 print_time_trial_for_add_list_funcs(add_list_args, my_table.add, 'mine')
 # print_time_trial_for_add_list_funcs(add_list_args, dec_table.add_list, 'dec')
 print_time_trial_for_add_list_funcs(add_list_args, c_table.add, 'counter')
 print_time_trial_for_add_list_funcs(add_list_args, np_table.add, 'numpy')
 print_time_trial_for_add_list_funcs(add_list_args, l_table.add, 'lists')
+print_time_trial_for_add_list_funcs(add_list_args, wl_table.alt_add_list, 'wlist')
+print_time_trial_for_add_list_funcs(add_list_args, transform.do_trans, 'trans')
 print(time_trial_output(add_times, 'stddev mine', my_table.stddev))
 print(time_trial_output(add_times, 'stddev dec', dec_table.stddev))
 print(time_trial_output(add_times, 'stddev numpy', np_table.stddev))
 print(time_trial_output(add_times, 'stddev list', l_table.stddev))
 
-print('confirmation both tables are same. stddev dec: {}, mine: {}, counter: {}, np: {}, list: {}'
-      .format(dec_table.stddev(), my_table.stddev(), c_table.stddev(), np_table.stddev(), l_table.stddev()))
+print('confirmation both tables are same. stddev wlst: {}, mine: {}, counter: {}, trans: {}, list: {}'
+      .format(wl_table.stddev(), my_table.stddev(), c_table.stddev(), transform.stddev(), l_table.stddev()))
+print('means wlst: {:.3}, mine: {:.3}, counter: {:.3}, trans: {:.3}, list: {:.3}'
+      .format(wl_table.mean(), my_table.mean(), c_table.mean(), transform.mean(), l_table.mean()))
 
 print()
 my_table = dt.LongIntTable({0: 1})
@@ -287,7 +354,11 @@ dec_table = DecimalEventTable({0:1})
 c_table = CounterTable({0:1})
 np_table = NumpyTable()
 l_table = ListTable()
-add_tuples_args = ('add tuple list {}*[(1,1), (2,2), ... (6,6)]: {} - ', add_times, [(val, val) for val in range(1, 7)])
+
+
+# line_291_list = [(1, 1), (100, 10)]
+line_291_list = [(val, val) for val in range(3, 10, 2)]
+add_tuples_args = ('add tuple list {}*[(1,1), (2,2), ... (6,6)]: {} - ', add_times, line_291_list)
 print_time_trial_for_add_list_funcs(add_tuples_args, my_table.add, 'mine')
 # print_time_trial_for_add_list_funcs(add_tuples_args, dec_table.add_tuples, 'dec')
 print_time_trial_for_add_list_funcs(add_tuples_args, c_table.add, 'counter')
@@ -295,6 +366,8 @@ print_time_trial_for_add_list_funcs(add_tuples_args, np_table.add_tuples, 'numpy
 print_time_trial_for_add_list_funcs(add_tuples_args, l_table.add_tuples, 'lists')
 print('confirmation both tables are same. stddev dec: {}, mine: {}, counter: {}, np: {}, list: {}'
       .format(dec_table.stddev(), my_table.stddev(), c_table.stddev(), np_table.stddev(), l_table.stddev()))
+print('means dec: {:.3}, mine: {:.3}, counter: {:.3}, np: {:.3}, list: {:.3}'
+      .format(dec_table.mean(), my_table.mean(), c_table.mean(), np_table.mean(), l_table.mean()))
 
 
 

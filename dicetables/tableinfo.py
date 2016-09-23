@@ -5,6 +5,12 @@ from decimal import Decimal
 from dicetables.longintmath import long_int_div as li_div
 
 #tools for string formatting
+
+
+class NumberFormatter(object):
+    pass
+
+
 def scinote(num, dig_len=4):
     """num is int, float or long.  dig_len is int and < 18 and >= 2.
     returns a string of num in a nicely readable form.  rounds to dig_len.

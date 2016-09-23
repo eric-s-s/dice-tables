@@ -1,6 +1,17 @@
 """a simulated Counter dict with numpy arrays"""
 import numpy as np
+from operator import add
 
+
+def make_start_val_and_list(input_dic):
+    tuple_list = sorted(input_dic.items())
+    start_val = tuple_list[0][0]
+    end_val = tuple_list[-1][0]
+    out_list = [0] * (end_val - start_val + 1)
+    for index, value in tuple_list:
+        list_index = index - start_val
+        out_list[list_index] = value
+    return start_val, out_list
 
 
 def convert_tuple_list_to_array_and_start_value(sorted_tuple_list):
@@ -11,7 +22,6 @@ def convert_tuple_list_to_array_and_start_value(sorted_tuple_list):
         array_index = index - start_val
         out_array[array_index] = value
     return start_val, out_array
-
 
 class NumpyCounter(object):
     def __init__(self, start_val=0, array=np.array([1], dtype=object)):
@@ -89,9 +99,9 @@ def equalize_len_lower(lower, total_size):
 def equalize_len_higher(higher, total_size, val_diff):
     left = [0] * val_diff
     right = [0] * (total_size - val_diff - len(higher))
-    return left + right + higher
+    return left + higher + right
 
-from operator import add
+
 def combine_lists(lower, higher, val_diff):
     total_size = max(len(lower), len(higher) + val_diff)
     lower = equalize_len_lower(lower, total_size)
