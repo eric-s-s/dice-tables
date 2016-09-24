@@ -1,12 +1,12 @@
-''' this module contains the class LongIntTable and longint math that the table
-needs to deal with it's BFN'''
+""" this module contains the class LongIntTable and longintmath that the table
+needs to deal with it's BFN"""
 # these functions are concerned with float-math for long ints.
 from decimal import Decimal as dec
 
 
 def _convert_back(num):
-    '''helper function.  takes a Decimal and returns float if
-    possible, else, long_int'''
+    """helper function.  takes a Decimal and returns float if
+    possible, else, long_int"""
     if float(num) == float('inf') or float(num) == float('-inf'):
         return int(num)
     else:
@@ -14,32 +14,32 @@ def _convert_back(num):
 
 
 def long_int_div(numerator, denominator):
-    '''returns a float division of numbers even if they are over 1e+308'''
+    """returns a float division of numbers even if they are over 1e+308"""
     ans = dec(numerator) / dec(denominator)
     return _convert_back(ans)
 
 
 def long_int_times(number1, number2):
-    '''returns a float times of numbers even if they are over 1e+308'''
+    """returns a float times of numbers even if they are over 1e+308"""
     ans = dec(number1) * dec(number2)
     return _convert_back(ans)
 
 
 def long_int_pow(number, exponent):
-    '''returns a float exponent of numbers even if they are over 1e+308'''
+    """returns a float exponent of numbers even if they are over 1e+308"""
     ans = dec(number) ** dec(exponent)
     return _convert_back(ans)
 
 
 class LongIntTable(object):
-    '''a table of big fucking numbers and some math function for them.
-    The table implicitly contains 0 occurences of all unassigned intergers.
+    """a table of big fucking numbers and some math function for them.
+    The table implicitly contains 0 occurrences of all unassigned integers.
     THIS TABLE SHOULD ONLY CONTAIN INT OR LONG.  it will not raise errors if you
-    put in other values, but there is not telling what problems will happen.'''
+    put in other values, but there is not telling what problems will happen."""
 
     def __init__(self, seed_dictionary):
-        '''seed_dictionary is a dictionary of ints. frequencies MUST BE POSITIVE.
-        {value1: (frequency of value1), value2: (frequency of value 2), ...}'''
+        """seed_dictionary is a dictionary of ints. frequencies MUST BE POSITIVE.
+        {value1: (frequency of value1), value2: (frequency of value 2), ...}"""
         self._table = seed_dictionary.copy()
 
     def values(self):

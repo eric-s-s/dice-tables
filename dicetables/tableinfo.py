@@ -1,5 +1,6 @@
 """functions for getting useful info from tables, ie. plot pts or stats"""
 from __future__ import absolute_import
+from math import log10
 from decimal import Decimal
 
 from dicetables.longintmath import long_int_div as li_div
@@ -8,20 +9,99 @@ from dicetables.longintmath import long_int_div as li_div
 
 
 class NumberFormatter(object):
-    pass
+    def __init__(self, show_digits=4, max_comma_exp=7, min_fixed_pt_exp=-3):
+        self._show_digits = None
+        self._max_comma_exp = None
+        self._min_fixed_pt_exp = None
+
+        self.show_digits = show_digits
+        self.max_comma_exp = max_comma_exp
+        self.min_fixed_pt_exp = min_fixed_pt_exp
+
+    @property
+    def show_digits(self):
+        return self._show_digits
+
+    @show_digits.setter
+    def show_digits(self, sig_figs):
+        self._show_digits = int(max(1, sig_figs))
+
+    @property
+    def max_comma_exp(self):
+        return self._max_comma_exp
+
+    @max_comma_exp.setter
+    def max_comma_exp(self, value):
+        overflow_safety = 250
+        self._max_comma_exp = int(min(max(0, value), overflow_safety))
+
+    @property
+    def min_fixed_pt_exp(self):
+        return self._min_fixed_pt_exp
+
+    @min_fixed_pt_exp.setter
+    def min_fixed_pt_exp(self, value):
+        self._min_fixed_pt_exp = min(0, int(value))
+
+    def get_exponent(self, number):
+        if isinstance(number, int):
+            return int(log10(number))
+        return int('{0:.{1}e}'.format(number, self.show_digits - 1).split('e')[1])
+
+    def format_fixed_point(self, number, exponent):
+        return '{0:.{1}f}'.format(number, self.show_digits - 1 - exponent)
+
+    def format_number_using_commas(self, number, exponent):
+        if isinstance(number, int):
+            return '{:,}'.format(number)
+        else:
+            return '{:,.{}f}'.format(number, max(0, self.show_digits - 1 - exponent))
+
+    def format_number_exponent(self, number, exponent):
+        try:
+            answer = '{:.{}e}'.format(number, self.show_digits - 1)
+            if -10 < exponent < 10:
+                return answer[:-2] + answer[-1:]
+            return answer
+        except OverflowError:
+            return self.format_huge_int(number, exponent)
+
+    def format_huge_int(self, number, exponent):
+        extra_digits = 10
+        mantissa = number // 10 ** (exponent - self.show_digits - extra_digits)
+        mantissa /= 10. ** (self.show_digits + extra_digits)
+        mantissa = round(mantissa, self.show_digits - 1)
+        if mantissa == 10.0 or mantissa == -10.0:
+            mantissa /= 10.0
+            exponent += 1
+        return '{:.{}f}e+{}'.format(mantissa, self.show_digits - 1, exponent)
+
+
+
+    def format_number(self, number):
+        if abs(number) == 0:
+            return '0'
+        exponent = self.get_exponent(number)
+        if 0 > exponent >= self.min_fixed_pt_exp:
+            return self.format_fixed_point(number, exponent)
+        elif 0 <= exponent < self.max_comma_exp:
+            return self.format_number_using_commas(number, exponent)
+        else:
+            return self.format_number_exponent(number, exponent)
 
 
 def scinote(num, dig_len=4):
     """num is int, float or long.  dig_len is int and < 18 and >= 2.
     returns a string of num in a nicely readable form.  rounds to dig_len.
     note- dig_len over 18 works but has errors in output"""
-    exponent_form_cutoff = 10**7
+    max_comma_exp = 7
+    min_fixed_pt_exp = -3
     if num == 0:
         string_output = '0.0'
     elif 0 < abs(num) < 1:
-        string_output = format_number_lt_one(num, dig_len)
-    elif 1 <= abs(num) < exponent_form_cutoff:
-        string_output = format_number_gt_one_lt_exponent_cutoff(num, dig_len, exponent_form_cutoff)
+        string_output = format_number_lt_one(num, dig_len, min_fixed_pt_exp)
+    elif 1 <= abs(num) < 10**max_comma_exp:
+        string_output = format_number_gt_one_lt_exponent_cutoff(num, dig_len, max_comma_exp)
     else:
         try:
             string_output = format_as_exponent(num, dig_len)
@@ -30,22 +110,22 @@ def scinote(num, dig_len=4):
     return string_output
 
 
-def format_number_lt_one(num, dig_len):
+def format_number_lt_one(num, dig_len, min_fixed_pt_exp):
     exponent = int('{0:.{1}e}'.format(num, dig_len - 1).split('e')[1])
-    fixed_point_cutoff = -3
-    if exponent < fixed_point_cutoff:
+    if exponent < min_fixed_pt_exp:
         return format_as_exponent(num, dig_len)
+
     return '{0:.{1}f}'.format(num, dig_len - 1 - exponent)
 
 
-def format_number_gt_one_lt_exponent_cutoff(num, dig_len, exponent_cutoff):
+def format_number_gt_one_lt_exponent_cutoff(num, dig_len, cutoff_exp):
     if isinstance(num, int):
         return '{:,}'.format(num)
     else:
-        rounded_number = Decimal('{:.{}e}'.format(num, dig_len - 1))
         exponent = int('{:.{}e}'.format(num, dig_len - 1).split('e')[1])
         output = '{:,.{}f}'.format(num, max(0, dig_len - 1 - exponent))
-        if abs(rounded_number) == exponent_cutoff:
+        # if output in (test_pos, test_neg):
+        if exponent >= cutoff_exp:
             return format_as_exponent(num, dig_len)
         else:
             return output
@@ -240,4 +320,28 @@ def stats(table, values):
             scinote(total_freq),
             chance,
             pct)
+import time
+if __name__ == '__main__':
 
+    x = NumberFormatter()
+    print(x.format_number(99*10**-8))
+    def tst(num):
+        tster = NumberFormatter()
+        return tster.format_number(num)
+
+    def timer(number):
+        start = time.clock()
+        for _ in range(10000):
+            x.format_number(number)
+        obj_time = time.clock() - start
+        start = time.clock()
+        for _ in range(10000):
+            tst(number)
+        fobj_time = time.clock() - start
+        start = time.clock()
+        for _ in range(10000):
+            scinote(number)
+        func_time = time.clock() - start
+        print('obj : {}\nfobj: {}\nfunc: {}'.format(obj_time, fobj_time, func_time))
+
+    timer(123*10**290)
