@@ -179,7 +179,7 @@ class NumberInput(Button):
             self.num_pad.title = ' '
     def enter_val(self, btn):
         '''when you press enter, changes the number_val to fire event. so if you
-        close the window without enter, you don't change any values'''
+        close the window without enter, you don't change any event_keys'''
         self.num_pad.dismiss()
         if self.num_pad.title != ' ':
             self.text = self.num_pad.title
@@ -798,7 +798,7 @@ class GraphBox(BoxLayout):
             plt.clf()
             plt.ion()
             plt.ylabel('pct of the total occurences')
-            plt.xlabel('values')
+            plt.xlabel('event_keys')
             pt_style = itertools_cycle(['o', '<', '>', 'v', 's', 'p', '*',
                                         'h', 'H','+', 'x', 'D', 'd'])
             colors = itertools_cycle(['b', 'g', 'y', 'r', 'c', 'm', 'y', 'k'])
@@ -866,7 +866,7 @@ class StatBox(BoxLayout):
         self.show_stats()
 
     def show_stats(self):
-        '''the main function. displays stats of current slider values.'''
+        '''the main function. displays stats of current slider event_keys.'''
         val_1 = int(self.ids['stop_slider'].value)
         val_2 = int(self.ids['start_slider'].value)
         self.ids['stop_slider_text'].text = '{:,}'.format(val_1)
@@ -904,7 +904,7 @@ class DicePlatform(BoxLayout):
         self.loop = 'true'
         self.initializer()
     def initializer(self):
-        '''initializes various values that couldn't be written before both .py
+        '''initializes various event_keys that couldn't be written before both .py
         file and .kv file were called'''
         self.ids['add_box'].initialize()
         self.ids['graph_box'].initialize()

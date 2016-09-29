@@ -3,6 +3,31 @@ needs to deal with it's BFN"""
 # these functions are concerned with float-math for long ints.
 from decimal import Decimal as dec
 
+# CONVERSIONS = {'_add_tuple_list': AdditiveEvents._add_tuple_list,
+#                '_check_cull_sort': AdditiveEvents._check_cull_sort,
+#                '_remove_tuple_list': AdditiveEvents._remove_tuple_list,
+#                'add': AdditiveEvents.add,
+#                'frequency': AdditiveEvents.frequency,
+#                'frequency_all': AdditiveEvents.frequency_all,
+#                'frequency_highest': AdditiveEvents.frequency_highest,
+#                'frequency_range': AdditiveEvents.frequency_range,
+#                'mean': AdditiveEvents.mean,
+#                'merge': AdditiveEvents.merge,
+#                'remove': AdditiveEvents.remove,
+#                'stddev': AdditiveEvents.stddev,
+#                'total_frequency': AdditiveEvents.total_frequency,
+#                'update_frequency': AdditiveEvents.update_frequency,
+#                'update_value_add': AdditiveEvents.update_value_add,
+#                'update_value_ow': AdditiveEvents.update_value_ow,
+#                'values': AdditiveEvents.event_keys,
+#                'values_max': AdditiveEvents.values_max,
+#                'values_min': AdditiveEvents.values_min,
+#                'values_range': AdditiveEvents.values_range}
+
+
+
+
+
 
 def _convert_back(num):
     """helper function.  takes a Decimal and returns float if
@@ -31,19 +56,24 @@ def long_int_pow(number, exponent):
     return _convert_back(ans)
 
 
-class LongIntTable(object):
+class AdditiveEvents(object):
     """a table of big fucking numbers and some math function for them.
     The table implicitly contains 0 occurrences of all unassigned integers.
     THIS TABLE SHOULD ONLY CONTAIN INT OR LONG.  it will not raise errors if you
-    put in other values, but there is not telling what problems will happen."""
+    put in other event_keys, but there is not telling what problems will happen."""
+
+    _max_event_to_combination_ratio_for_add_by_list = 1.35
+    _max_event_to_gap_between_events_ratio_vs_add_by_list = 3.0
+    _max_event_to_gap_between_events_ratio_vs_add_by_tuple = 2.5
 
     def __init__(self, seed_dictionary):
         """seed_dictionary is a dictionary of ints. frequencies MUST BE POSITIVE.
         {value1: (frequency of value1), value2: (frequency of value 2), ...}"""
+        check_dictionary_and_raise_errors(seed_dictionary)
         self._table = seed_dictionary.copy()
 
-    def values(self):
-        '''return the all the values, in order, that have non-zero frequency'''
+    def event_keys(self):
+        '''return the all the event_keys, in order, that have non-zero frequency'''
         the_values = []
         for value, freq in self._table.items():
             if freq != 0:
@@ -53,20 +83,20 @@ class LongIntTable(object):
 
     def values_min(self):
         '''returns the min value'''
-        if self.values() == []:
+        if self.event_keys() == []:
             return None
         else:
-            return self.values()[0]
+            return self.event_keys()[0]
 
     def values_max(self):
         '''returns the max value'''
-        if self.values() == []:
+        if self.event_keys() == []:
             return None
         else:
-            return self.values()[-1]
+            return self.event_keys()[-1]
 
     def values_range(self):
-        '''returns a tuple of min and max values'''
+        '''returns a tuple of min and max event_keys'''
         return self.values_min(), self.values_max()
 
     def frequency(self, value):
@@ -83,8 +113,8 @@ class LongIntTable(object):
 
     def frequency_all(self):
         '''Returns a list of tuples IN ORDER for all non-zero-frequency
-        values in table.'''
-        value_list = self.values()
+        event_keys in table.'''
+        value_list = self.event_keys()
         tuple_list = []
         for value in value_list:
             tuple_list.append(self.frequency(value))
@@ -101,7 +131,7 @@ class LongIntTable(object):
 
     def total_frequency(self):
         '''returns the sum all the freuencies in a table'''
-        all_freq = self._table.values()
+        all_freq = self._table.event_keys()
         return sum(all_freq)
 
     def __str__(self):
@@ -109,12 +139,12 @@ class LongIntTable(object):
                 (self.values_min(), self.values_max()))
 
     def mean(self):
-        '''i mean, don't you just sometimes look at a table of values
+        '''i mean, don't you just sometimes look at a table of event_keys
         and wonder what the mean is?'''
         numerator = sum([value * freq for value, freq in self._table.items()])
         denominator = self.total_frequency()
         if denominator == 0:
-            raise ZeroDivisionError('there are no values in the table')
+            raise ZeroDivisionError('there are no event_keys in the table')
         return long_int_div(numerator, denominator)
 
     def stddev(self, decimal_place=4):
@@ -136,9 +166,9 @@ class LongIntTable(object):
         return round((sqs / new_count) ** 0.5, decimal_place)
 
     def add(self, times, values):
-        '''times is positive int or 0. values is a list of tuples(value, frequency)
+        '''times is positive int or 0. event_keys is a list of tuples(value, frequency)
         value and frequency are ints or longs, NO NEGATIVE FREQUENCIES ALLOWED!
-        this function adds your table's values and frequency and the values's.
+        this function adds your table's event_keys and frequency and the event_keys's.
 
         here's how it works - original list event A is 3 out of 5.
         event B is 2 out of 5 or {A:3, B:5}. add {A:2, B:1} ( [A,A,B] ) this way.
@@ -174,7 +204,7 @@ class LongIntTable(object):
 
     @staticmethod
     def _check_cull_sort(tuple_list):
-        """prepares a list for add and remove.  removes zero values, raises
+        """prepares a list for add and remove.  removes zero event_keys, raises
         errors where appropriate and returns a sorted list."""
         new_list = []
         for event, freq in tuple_list:
@@ -210,7 +240,7 @@ class LongIntTable(object):
         self._table = new_dict
 
     def remove(self, times, to_remove):
-        """times is positive int or 0. values is a list of tuple(value, frequency)
+        """times is positive int or 0. event_keys is a list of tuple(value, frequency)
         value and frequency are long or int. NO NEGATIVE FREQUENCIES ALLOWED!
         this function reverses previous adds.  if you remove something you never
         added, or remove it more times than you added it, THERE IS NO RECORD OF
@@ -263,3 +293,30 @@ class LongIntTable(object):
         freq = self._table[old_val]
         self._table[old_val] = 0
         self._table[new_val] = self._table.get(new_val, 0) + freq
+
+
+def check_dictionary_and_raise_errors(dictionary):
+    must_be_int_or_long = ValueError('all keys and event_keys must be ints')
+    cannot_be_empty = ValueError('a table may not be empty. a good alternative is the identity - {0:1}.')
+    if not dictionary:
+        raise cannot_be_empty
+
+    for key in dictionary.keys():
+        if not is_int(key):
+            raise must_be_int_or_long
+
+    for value in dictionary.event_keys():
+        if not is_int(value):
+            raise must_be_int_or_long
+        if value < 0:
+            raise ValueError('dictionary event_keys may not be negative')
+
+    if sum(dictionary.event_keys()) == 0:
+        raise cannot_be_empty
+
+
+def is_int(number):
+    try:
+        return isinstance(number, (int, long))
+    except NameError:
+        return isinstance(number, int)

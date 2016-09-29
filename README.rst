@@ -4,7 +4,7 @@ dicetablesv2
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
-this module uses DiceTable and LongIntTable to do actions on a  
+this module uses DiceTable and AdditiveEvents to do actions on a
 table of (event represented by an int, frequency that event occurs)  
 since dice combinations quickly balloon, it's been designed to do float  
 math with ints over 10^309.
@@ -14,7 +14,7 @@ python3 support for tests/tsting_add_speed.py
 
 added in this version - StrongDie.get_original, .get_multiplier
 
-DiceTable is a LongIntTable that keeps a list of all the Die objects
+DiceTable is a AdditiveEvents that keeps a list of all the Die objects
 that have been added and removed using the add_die and remove_die methods.
 
 ::
@@ -29,9 +29,9 @@ that have been added and removed using the add_die and remove_die methods.
 I have now created a table contains all the rolls and their combinations  
 for three two-sided dice.  useful for quick demo.
 
-values functions tell the range of rolls or other non-zero events stored in the table.::  
+event_keys functions tell the range of rolls or other non-zero events stored in the table.::
 
-    In [4]: table.values()
+    In [4]: table.event_keys()
     Out[4]: [3, 4, 5, 6]
 
     In [5]: table.values_range()
@@ -52,7 +52,7 @@ for any roll that won't happen. ::
     In [10]: table.frequency_range(1, 5)
     Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
 
-other usefull methods. frequency_highest picks one of the values with highest
+other usefull methods. frequency_highest picks one of the event_keys with highest
 frequency and returns the tuple of (value, frequency). ::
 
     In [11]: table.frequency_highest()
@@ -67,7 +67,7 @@ frequency and returns the tuple of (value, frequency). ::
     In [14]: table.stddev()
     Out[14]: 0.866
 
-the above methods are all from base class LongIntTable. The following are specific methods to 
+the above methods are all from base class AdditiveEvents. The following are specific methods to
 DiceTable. 
 The add_die and remove_die method use Die objects. the other 3 kinds of Die are shown here.::
 
@@ -141,7 +141,7 @@ non-method functions for graphing, printing and general readability
 -------------------------------------------------------------------
 ::
 
-    In [15]: big_table = dt.LongIntTable({1:10 ** 1000, 3: 4 * 10**1000})
+    In [15]: big_table = dt.AdditiveEvents({1:10 ** 1000, 3: 4 * 10**1000})
 
     In [18]: table.get_list()
     Out[18]: [(Die(2), 3)]
@@ -208,7 +208,7 @@ dice classes
 ------------
 all dice classes are children of ProtoDie.  they all require the same methods
 as ProtoDie and use them for hash and comparison.  There are no setter methods
-for dice.  they should be treated as immutable values.  if two dice are ==, 
+for dice.  they should be treated as immutable event_keys.  if two dice are ==,
 their hash value will be ==.  so::
 
     In [2]: x = dt.Die(6)
@@ -248,12 +248,12 @@ their hash value will be ==.  so::
     Out[16]: {ModDie(6, -1): 3, Die(6): 'abc', ModDie(6, 0): 4}
 
 ------------
-LongIntTable
+AdditiveEvents
 ------------
 LongIntTables are instantiated with a dictionary of {value: frequency it occurs}.
 DiceTable instantiates as the identity table, {0:1}
 
-LongIntTable has methods add() and remove() that take an argument of a tuple list.
+AdditiveEvents has methods add() and remove() that take an argument of a tuple list.
 so you could recreate a DiceTable if you had stored it's tuple list and dice like so.::
 
     In [40]: table = dt.DiceTable()

@@ -25,8 +25,8 @@ def generate_indexed_values_from_dict(input_dict):
 
 
 class IndexedValues(object):
-    def __init__(self, start_val=0, values=None):
-        self._start_val = start_val
+    def __init__(self, start_index=0, values=None):
+        self._start_index = start_index
         if not values:
             self._values = [1]
         else:
@@ -38,7 +38,7 @@ class IndexedValues(object):
 
     @property
     def start_index(self):
-        return self._start_val
+        return self._start_index
 
     @property
     def range(self):

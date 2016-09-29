@@ -14,7 +14,7 @@ from dicetables import dicestats
 from dicetables import longintmath
 from dicetables import tableinfo
 from dicetables.longintmath import long_int_div, long_int_pow, long_int_times,\
-                                        LongIntTable
+                                        AdditiveEvents
 from dicetables.dicestats import Die, ModDie, WeightedDie, ModWeightedDie,\
                                     StrongDie, ProtoDie, DiceTable
 from dicetables.tableinfo import full_table_string, graph_pts, \

@@ -165,7 +165,7 @@ class App(object):
             figure_obj = pylab.figure(0)
         x_axis, y_axis = ti.graph_pts(self.table)
         pylab.ylabel('pct of the total occurences')
-        pylab.xlabel('values')
+        pylab.xlabel('event_keys')
         pylab.title('all the combinations for {}'.format(self.table))
         pylab.plot(x_axis, y_axis, the_style, label=str(self.table))
         if not new:

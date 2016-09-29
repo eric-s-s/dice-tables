@@ -7,7 +7,7 @@ class TestIndexedValues(unittest.TestCase):
 
     def assert_indexed_values(self, indexed_values, start_index, values):
         self.assertEqual(indexed_values.start_index, start_index)
-        self.assertEqual(indexed_values.values, values)
+        self.assertEqual(indexed_values.event_keys, values)
 
     def assert_add(self, start_index_values_1, start_index_values_2, expected_items):
         first = iv.IndexedValues(*start_index_values_1)
@@ -143,7 +143,7 @@ class TestIndexedValues(unittest.TestCase):
         self.assertNotEqual(first, third)
         first._values[0] = 5
         second._values[0] = 6
-        self.assertEqual(third.values, [2])
+        self.assertEqual(third.event_keys, [2])
         self.assertIsInstance(third, iv.IndexedValues)
 
     def test_IndexedValues_add_out_of_range_of_each_other(self):
