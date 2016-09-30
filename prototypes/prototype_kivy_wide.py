@@ -179,7 +179,7 @@ class NumberInput(Button):
             self.num_pad.title = ' '
     def enter_val(self, btn):
         '''when you press enter, changes the number_val to fire event. so if you
-        close the window without enter, you don't change any event_keys'''
+        close the window without enter, you don't change any values'''
         self.num_pad.dismiss()
         if self.num_pad.title != ' ':
             self.text = self.num_pad.title
@@ -798,7 +798,7 @@ class GraphBox(BoxLayout):
             plt.clf()
             plt.ion()
             plt.ylabel('pct of the total occurences')
-            plt.xlabel('event_keys')
+            plt.xlabel('values')
             pt_style = itertools_cycle(['o', '<', '>', 'v', 's', 'p', '*',
                                         'h', 'H','+', 'x', 'D', 'd'])
             colors = itertools_cycle(['b', 'g', 'y', 'r', 'c', 'm', 'y', 'k'])
@@ -866,7 +866,7 @@ class StatBox(BoxLayout):
         self.show_stats()
 
     def show_stats(self):
-        '''the main function. displays stats of current slider event_keys.'''
+        '''the main function. displays stats of current slider values.'''
         val_1 = int(self.ids['stop_slider'].value)
         val_2 = int(self.ids['start_slider'].value)
         self.ids['stop_slider_text'].text = '{:,}'.format(val_1)
@@ -904,7 +904,7 @@ class DicePlatform(BoxLayout):
         self.loop = 'true'
         self.initializer()
     def initializer(self):
-        '''initializes various event_keys that couldn't be written before both .py
+        '''initializes various values that couldn't be written before both .py
         file and .kv file were called'''
         self.ids['add_box'].initialize()
         self.ids['graph_box'].initialize()
@@ -921,14 +921,14 @@ class DicePlatform(BoxLayout):
 
     def request_info(self, request):
         '''returns requested info to child widget'''
-        requests = {'range': [self._table.values_range, ()],
+        requests = {'range': [self._table.event_keys_range, ()],
                     'mean': [self._table.mean, ()],
                     'stddev': [self._table.stddev, ()],
                     'table_str': [str, (self._table,)],
                     'weights_info': [self._table.weights_info, ()],
                     'dice_list': [self._table.get_list, ()],
                     'all_rolls': [dt.full_table_string, (self._table,)],
-                    'tuple_list': [self._table.frequency_all, ()]}
+                    'tuple_list': [self._table.get_event_all, ()]}
         command, args = requests[request]
         return command(*args)
     def request_stats(self, stat_list):
@@ -947,14 +947,14 @@ class DicePlatform(BoxLayout):
         #y_vals = [pts[1] for pts in graph_pts]
         graph_pts = dt.graph_pts(self._table, axes=True, exact=False)
         
-        new_object['x_min'], new_object['x_max'] = self._table.values_range()
+        new_object['x_min'], new_object['x_max'] = self._table.event_keys_range()
         #new_object['y_min'] = min(y_vals)
         #new_object['y_max'] = max(y_vals)
         new_object['y_min'] = min(graph_pts[1])
         new_object['y_max'] = max(graph_pts[1])
         
         new_object['pts'] = graph_pts
-        new_object['orig'] = self._table.frequency_all()
+        new_object['orig'] = self._table.get_event_all()
         new_object['dice'] = self._table.get_list()
         return new_object
 
@@ -963,7 +963,7 @@ class DicePlatform(BoxLayout):
         self._table = dt.DiceTable()
         for die, number in plot_obj['dice']:
             self._table.update_list(number, die)
-        self._table.add(1, plot_obj['orig'])
+        self._table.combine_with_new_events(1, plot_obj['orig'])
         self.updater()
 
     def request_add(self, number, die):

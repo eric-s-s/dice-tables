@@ -1,10 +1,16 @@
 """functions for getting useful info from tables, ie. plot pts or stats"""
 from __future__ import absolute_import
+from sys import version_info
 from math import log10
 from decimal import Decimal
 
 from dicetables.longintmath import long_int_div as li_div
 
+
+if version_info[0] < 3:
+    INT_TYPES = (int, long)
+else:
+    INT_TYPES = (int, )
 #tools for string formatting
 
 
@@ -43,7 +49,7 @@ class NumberFormatter(object):
         self._min_fixed_pt_exp = min(0, int(value))
 
     def get_exponent(self, number):
-        if isinstance(number, int):
+        if isinstance(number, INT_TYPES):
             return int(log10(abs(number)))
         return int('{:.{}e}'.format(number, self.show_digits - 1).split('e')[1])
 
@@ -51,7 +57,7 @@ class NumberFormatter(object):
         return '{:.{}f}'.format(number, self.show_digits - 1 - exponent)
 
     def format_using_commas(self, number, exponent):
-        if isinstance(number, int):
+        if isinstance(number, INT_TYPES):
             return '{:,}'.format(number)
         else:
             return '{:,.{}f}'.format(number, max(0, self.show_digits - 1 - exponent))
@@ -101,10 +107,10 @@ def scinote(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
 
 def get_pts_list(table, include_zeroes=True):
     if include_zeroes and table.event_keys():
-        min_val, max_val = table.values_range()
-        the_pts = table.frequency_range(min_val, max_val + 1)
+        min_val, max_val = table.event_keys_range()
+        the_pts = table.get_event_range(min_val, max_val + 1)
     else:
-        the_pts = table.frequency_all()
+        the_pts = table.get_event_all()
     return the_pts
 
 
@@ -112,26 +118,17 @@ def full_table_string(table, include_zeroes=True):
     formatter = NumberFormatter()
     the_pts = get_pts_list(table, include_zeroes)
     out_str = ''
-    value_right_just = len(str(table.values_max()))
+    value_right_just = len(str(table.event_keys_max()))
     for value, frequency in the_pts:
         out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format_number(frequency))
     return out_str
 
 
-def get_pts_list(table, include_zeroes=True):
-    if include_zeroes and table.event_keys():
-        min_val, max_val = table.values_range()
-        the_pts = table.frequency_range(min_val, max_val + 1)
-    else:
-        the_pts = table.frequency_all()
-    return the_pts
-
-
 def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
     """returns graph pts for a table.
     axes=True returns (x_axis, y_axis). axes=False returns [(x,y), (x,y)...]
-    zeroes includes zero freq event_keys from the min_val to max_val of the table
-    percent=True converts y event_keys into percent of total y event_keys.
+    zeroes includes zero freq values from the min_val to max_val of the table
+    percent=True converts y values into percent of total y values.
     exact=True/False only works with pct.  exact=False only good to ten decimal
     places, but much much faster.
     percent=False leaves as raw long ints, which will often be too large for
@@ -178,8 +175,8 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     overflow_point = 10**300
     exponent_adjustment = 4
 
-    if table.frequency_highest()[1] > overflow_point:
-        power = int(log10(table.frequency_highest()[1])) - exponent_adjustment
+    if table.get_event_highest()[1] > overflow_point:
+        power = int(log10(table.get_event_highest()[1])) - exponent_adjustment
         factor = 10**power
     factor_string = scinote(factor, 2)
     if axes:
@@ -194,15 +191,15 @@ def ascii_graph_helper(table):
     """table is a AdditiveEvents. makes a list of tuples which
     [(value, x's representing value), ...]"""
     output_list = []
-    max_frequency = table.frequency_highest()[1]
+    max_frequency = table.get_event_highest()[1]
     max_graph_height = 80
     divisor = 1
     add_s = ''
     if max_frequency > max_graph_height:
         divisor = li_div(max_frequency, max_graph_height)
         add_s = 's'
-    val_len = len(str(table.values_max()))
-    for value, frequency in table.frequency_all():
+    val_len = len(str(table.event_keys_max()))
+    for value, frequency in table.get_event_all():
         num_of_xs = int(round(li_div(frequency, divisor)))
         output_list.append((value,
                             '{0:>{1}}:{2}'.format(value, val_len, num_of_xs*'x')
@@ -245,14 +242,14 @@ def stats(table, values):
 
     :param table: AdditiveEvents/DiceTable
     :param values: list of ints
-    :return: tuple of strings (str of event_keys, event_keys combinations, total combinations, inverse chance, pct chance)
+    :return: tuple of strings (str of values, values combinations, total combinations, inverse chance, pct chance)
     """
     formatter = NumberFormatter()
-    total_combinations = table.total_frequency()
+    total_combinations = table.get_total_event_occurrences()
     combinations_of_values = 0
     no_copies = set(values)
     for value in no_copies:
-        combinations_of_values += table.frequency(value)[1]
+        combinations_of_values += table.get_event(value)[1]
 
     if combinations_of_values == 0:
         inverse_chance_str = 'infinity'

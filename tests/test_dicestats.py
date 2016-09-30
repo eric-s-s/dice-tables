@@ -193,7 +193,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_dicetable_inits_empty(self):
         table = dt.DiceTable()
-        self.assertEqual(table.frequency_all(), [(0, 1)])
+        self.assertEqual(table.get_event_all(), [(0, 1)])
         self.assertEqual(table.get_list(), [])
     def test_dicetable_update_list_adds_same_die_to_die_already_in_table(self):
         table = dt.DiceTable()
@@ -247,26 +247,26 @@ class TestDiceStats(unittest.TestCase):
         table = dt.DiceTable()
         table.add_die(0, dt.Die(4))
         self.assertEqual(table.get_list(), [])
-        self.assertEqual(table.frequency_all(), [(0, 1)])
+        self.assertEqual(table.get_event_all(), [(0, 1)])
     def test_add_adds_correct_dice(self):
         table = dt.DiceTable()
         table.add_die(2, dt.Die(4))
         self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
         freq_all = [(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)]
-        self.assertEqual(table.frequency_all(), freq_all)
+        self.assertEqual(table.get_event_all(), freq_all)
     def test_remove_die_removes_correct_dice(self):
         table = dt.DiceTable()
         table.add_die(5, dt.Die(4))
         table.remove_die(3, dt.Die(4))
         self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
         freq_all = [(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)]
-        self.assertEqual(table.frequency_all(), freq_all)
+        self.assertEqual(table.get_event_all(), freq_all)
     def test_remove_die_can_remove_all_the_dice(self):
         table = dt.DiceTable()
         table.add_die(2, dt.Die(4))
         table.remove_die(2, dt.Die(4))
         self.assertEqual(table.get_list(), [])
-        self.assertEqual(table.frequency_all(), [(0, 1)])
+        self.assertEqual(table.get_event_all(), [(0, 1)])
     def test_remove_die_raises_error_if_die_not_in_table(self):
         table = dt.DiceTable()
         with self.assertRaises(ValueError) as cm:

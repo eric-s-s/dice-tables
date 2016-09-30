@@ -7,12 +7,12 @@ class TestIndexedValues(unittest.TestCase):
 
     def assert_indexed_values(self, indexed_values, start_index, values):
         self.assertEqual(indexed_values.start_index, start_index)
-        self.assertEqual(indexed_values.event_keys, values)
+        self.assertEqual(indexed_values.raw_values, values)
 
     def assert_add(self, start_index_values_1, start_index_values_2, expected_items):
         first = iv.IndexedValues(*start_index_values_1)
         second = iv.IndexedValues(*start_index_values_2)
-        return self.assertEqual(first.add(second).items(), expected_items)
+        return self.assertEqual(first.add(second).get_items(), expected_items)
 
     def test_make_start_index_and_list_empty(self):
         start_index, lst = iv.make_start_index_and_list([])
@@ -68,24 +68,24 @@ class TestIndexedValues(unittest.TestCase):
 
     def test_IndexedValues_values(self):
         test = iv.IndexedValues(3, [1, 2])
-        self.assertEqual(test.values, [1, 2])
+        self.assertEqual(test.raw_values, [1, 2])
 
     def test_indexedValues_range(self):
         test = iv.IndexedValues(3, [1, 2, 3])
-        self.assertEqual(test.range, (3, 5))
+        self.assertEqual(test.index_range, (3, 5))
 
     def test_IndexedValues_items(self):
         test = iv.IndexedValues(1, [1, 0, 3])
-        self.assertEqual(test.items(), [(1, 1), (3, 3)])
+        self.assertEqual(test.get_items(), [(1, 1), (3, 3)])
 
     def test_indexedValues_get_within_range(self):
         test = iv.IndexedValues(3, [1, 2, 3])
-        self.assertEqual(test.get(4), 2)
+        self.assertEqual(test.get_value_at_key(4), 2)
 
     def test_indexedValues_get_out_of_range(self):
         test = iv.IndexedValues(3, [1, 2, 3])
-        self.assertEqual(test.get(2), 0)
-        self.assertEqual(test.get(6), 0)
+        self.assertEqual(test.get_value_at_key(2), 0)
+        self.assertEqual(test.get_value_at_key(6), 0)
 
     def test_IndexedValues_equalize_len_lower_max_size(self):
         self.assertEqual(iv.equalize_len_lower([1, 2, 3], 3), [1, 2, 3])
@@ -143,7 +143,7 @@ class TestIndexedValues(unittest.TestCase):
         self.assertNotEqual(first, third)
         first._values[0] = 5
         second._values[0] = 6
-        self.assertEqual(third.event_keys, [2])
+        self.assertEqual(third.raw_values, [2])
         self.assertIsInstance(third, iv.IndexedValues)
 
     def test_IndexedValues_add_out_of_range_of_each_other(self):
@@ -164,7 +164,7 @@ class TestIndexedValues(unittest.TestCase):
     def test_IndexedValues_add_commutative(self):
         first = iv.IndexedValues(1, [2, 3, 4])
         second = iv.IndexedValues(2, [3, 4, 5, 6])
-        self.assertEqual(first.add(second).items(), second.add(first).items())
+        self.assertEqual(first.add(second).get_items(), second.add(first).get_items())
 
 
 if __name__ == '__main__':

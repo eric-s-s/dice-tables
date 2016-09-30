@@ -165,7 +165,7 @@ class App(object):
             figure_obj = pylab.figure(0)
         x_axis, y_axis = ti.graph_pts(self.table)
         pylab.ylabel('pct of the total occurences')
-        pylab.xlabel('event_keys')
+        pylab.xlabel('values')
         pylab.title('all the combinations for {}'.format(self.table))
         pylab.plot(x_axis, y_axis, the_style, label=str(self.table))
         if not new:
@@ -205,7 +205,7 @@ class App(object):
         self.update_change_frame()
     def stats_string_maker(self, table):
         out = ('the range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
-               % (table.values_min(), table.values_max(), round(table.mean(), 4),
+               % (table.event_keys_min(), table.event_keys_max(), round(table.mean(), 4),
                   table.stddev()))
         return out
     def set_size(self, number):
@@ -279,7 +279,7 @@ class App(object):
         self.weight_text_box.insert(tk.END, ('here is full weight info\n\n' +
                                              self.table.weights_info()))
 
-        val_min, val_max = self.table.values_range()
+        val_min, val_max = self.table.event_keys_range()
         self.stats_left.config(from_=val_min, to=val_max)
         self.stats_right.config(from_=val_min, to=val_max)
 

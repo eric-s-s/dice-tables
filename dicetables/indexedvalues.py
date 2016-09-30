@@ -33,7 +33,7 @@ class IndexedValues(object):
             self._values = values[:]
 
     @property
-    def values(self):
+    def raw_values(self):
         return self._values[:]
 
     @property
@@ -41,22 +41,22 @@ class IndexedValues(object):
         return self._start_index
 
     @property
-    def range(self):
-        return self.start_index, len(self.values) + self.start_index - 1
+    def index_range(self):
+        return self.start_index, len(self.raw_values) + self.start_index - 1
 
-    def items(self):
+    def get_items(self):
         out = []
-        for index, value in enumerate(self.values):
+        for index, value in enumerate(self.raw_values):
             if value:
                 out.append((index + self.start_index, value))
         return out
 
-    def get(self, key):
+    def get_value_at_key(self, key):
         index = key - self.start_index
-        if index < 0 or index >= len(self.values):
+        if index < 0 or index >= len(self.raw_values):
             return 0
         else:
-            return self.values[index]
+            return self.raw_values[index]
 
     def add(self, other):
         start_index_diff = self.start_index - other.start_index
@@ -66,7 +66,7 @@ class IndexedValues(object):
         else:
             lower = other
             higher = self
-        new_values = combine_values(lower.values, higher.values, abs(start_index_diff))
+        new_values = combine_values(lower.raw_values, higher.raw_values, abs(start_index_diff))
         return IndexedValues(lower.start_index, new_values)
 
 

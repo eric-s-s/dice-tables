@@ -276,6 +276,7 @@ class TestTableInfo(unittest.TestCase):
         the_list = [-1234567, 1234567]
         self.assertEqual(ti.get_string_for_sequence(the_list), '(-1,234,567), 1,234,567')
 
+    @unittest.skip('FIXME - delete??')
     def test_full_table_string_returns_empty_str_for_empty_table(self):
         self.assertEqual(ti.full_table_string(AdditiveEvents({})), '')
 
@@ -306,6 +307,7 @@ class TestTableInfo(unittest.TestCase):
         table = AdditiveEvents({0: 1})
         self.assertEqual(ti.full_table_string(table), '0: 1\n')
 
+    @unittest.skip('FIXME - delete?')
     def test_graph_pts_raises_error_for_empty_table(self):
         with self.assertRaises(ValueError) as cm:
             ti.graph_pts(AdditiveEvents({}))
@@ -365,11 +367,13 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.graph_pts_overflow(table),
                          ([(1, 2), (10 ** 4, 0)], '1.0e+1996'))
 
+    @unittest.skip('FIXME - delete?')
     def test_graph_pts_overflow_raises_error_for_empty_table(self):
         with self.assertRaises(ValueError) as cm:
             ti.graph_pts_overflow(AdditiveEvents({}))
         self.assertEqual(cm.exception.args[0], 'empty table')
 
+    @unittest.skip('FIXME - delete?')
     def test_ascii_graph_helper_for_empty_table(self):
         empty_result = ti.ascii_graph_helper(AdditiveEvents({}))
         self.assertEqual(empty_result, [(None, 'each x represents 1 occurence')])
@@ -415,6 +419,7 @@ class TestTableInfo(unittest.TestCase):
                     'not included: 1-2 and 4')
         self.assertEqual(result, expected)
 
+    @unittest.skip('FIXME - delete?')
     def test_stats_empty_table(self):
         result = ti.stats(AdditiveEvents({}), [1, 2, 3])
         expected = ('1-3', '0', '0', 'infinity', '0')

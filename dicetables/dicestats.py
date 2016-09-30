@@ -59,7 +59,7 @@ class Die(ProtoDie):
     with weighted dice which have non-zero weight)'''
     def __init__(self, die_size):
         '''die size is a positive int. creates a die containing 1 to die_size
-        event_keys'''
+        values'''
         self._die_size = die_size
         self._weight = 0
     def get_size(self):
@@ -69,7 +69,7 @@ class Die(ProtoDie):
         '''returns the weight of the die'''
         return self._weight
     def tuple_list(self):
-        '''returns the tuple list that is the dice event_keys'''
+        '''returns the tuple list that is the dice values'''
         return [(value, 1) for value in range(1, self._die_size + 1)]
 
     def weight_info(self):
@@ -94,7 +94,7 @@ class ModDie(Die):
         '''returns the modifier of a modded die'''
         return self._mod
     def tuple_list(self):
-        '''returns the tuple list with the event_keys adjusted by the modifier'''
+        '''returns the tuple list with the values adjusted by the modifier'''
         return [(value + self._mod, 1)
                 for value in range(1, self._die_size + 1)]
 
@@ -109,13 +109,13 @@ class ModDie(Die):
 class WeightedDie(ProtoDie):
     '''stores and returns info for a weighted die.'''
     def __init__(self, dictionary_input):
-        '''dictionary input is a dictionary of value:weight. event_keys are positive
+        '''dictionary input is a dictionary of value:weight. values are positive
         int and weights are zero or positive ints.
         {1:3, 2:0, 3:1} creates a D3 that rolls a one 3 times more than a three
         and never rolls a two.'''
         self._dic = dictionary_input.copy()
         self._die_size = max(self._dic.keys())
-        self._weight = sum(self._dic.event_keys())
+        self._weight = sum(self._dic.values())
 
     def get_size(self):
         '''returns the size of the die'''
@@ -125,7 +125,7 @@ class WeightedDie(ProtoDie):
         return self._weight
 
     def tuple_list(self):
-        '''returns the tuple list that is the dice event_keys'''
+        '''returns the tuple list that is the dice values'''
         out = []
         for value, weight in self._dic.items():
             if weight != 0:
@@ -155,10 +155,10 @@ class WeightedDie(ProtoDie):
 
 class ModWeightedDie(WeightedDie):
     '''stores and returns info for a weighted die. and a modifier modifies the
-    event_keys'''
+    values'''
     def __init__(self, dictionary_input, modifier):
         '''dictionary input is a dictionary of positive ints, value:weight.
-        modifier is an int that modifies event_keys. {1:3, 2:1, 3:1}, -3 creates a
+        modifier is an int that modifies values. {1:3, 2:1, 3:1}, -3 creates a
         D3 that rolls a one(-3) 3 times more than a two(-3) or a three(-3).'''
         WeightedDie.__init__(self, dictionary_input)
         self._mod = modifier
@@ -166,7 +166,7 @@ class ModWeightedDie(WeightedDie):
         '''returns the modifier on the die'''
         return self._mod
     def tuple_list(self):
-        '''returns the tuple list that is the dice event_keys adjust by the mod'''
+        '''returns the tuple list that is the dice values adjust by the mod'''
         out = []
         for value, weight in self._dic.items():
             if weight != 0:
@@ -207,7 +207,7 @@ class StrongDie(ProtoDie):
         '''returns an instance of the original die'''
         return self._original
     def tuple_list(self):
-        '''returns the tuple list that is the dice event_keys'''
+        '''returns the tuple list that is the dice values'''
         old = self._original.tuple_list()
         return [(pair[0] * self.get_multiplier(), pair[1]) for pair in old]
 
@@ -267,7 +267,7 @@ class DiceTable(AdditiveEvents):
     def add_die(self, num, die):
         '''adds the die to the table num times and updates the table, list.  die
         is a  Die or WeightedDie and num is a positive int or 0.'''
-        self.add(num, die.tuple_list())
+        self.combine_with_new_events(num, die.tuple_list())
         self.update_list(num, die)
 
     def remove_die(self, num, die):

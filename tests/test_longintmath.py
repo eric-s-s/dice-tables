@@ -85,12 +85,69 @@ class TestLongIntTable(unittest.TestCase):
     def test_assert_my_regex(self):
         self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
 
+    def test_verify_times_pass(self):
+        self.assertIsNone(lim.verify_times(10))
+
+    def test_verify_times_not_int(self):
+        self.assert_my_regex(ValueError, 'times must be a positive int', lim.verify_times, 1.0)
+
+    def test_verify_times_negative(self):
+        self.assert_my_regex(ValueError, 'times must be a positive int', lim.verify_times, -1)
+
+    def test_check_tuple_list_and_raise_error_pass(self):
+        self.assertIsNone(lim.check_tuple_list_and_raise_error([(1, 1), (-1, 2)]))
+
+    def test_check_tuple_list_and_raise_error_empty(self):
+        self.assert_my_regex(ValueError, 'events may not be empty. a good alternative is the identity - [(0, 1)].',
+                             lim.check_tuple_list_and_raise_error, [])
+
+    def test_check_tuple_list_and_raise_error_zero_occurrences(self):
+        self.assert_my_regex(ValueError, 'events may not be empty. a good alternative is the identity - [(0, 1)].',
+                             lim.check_tuple_list_and_raise_error, [(1, 0), (2, 0)])
+
+    def test_check_tuple_list_and_raise_error_negative_occurrences(self):
+        self.assert_my_regex(ValueError, 'events may not occur negative times.',
+                             lim.check_tuple_list_and_raise_error, [(1, 0), (2, -1)])
+
+    def test_check_tuple_list_and_raise_error_non_int_occurrences(self):
+        self.assert_my_regex(ValueError, 'all values must be ints',
+                             lim.check_tuple_list_and_raise_error, [(1, 1.0)])
+
+    def test_check_tuple_list_and_raise_error_non_int_event(self):
+        self.assert_my_regex(ValueError, 'all values must be ints',
+                             lim.check_tuple_list_and_raise_error, [(1.0, 1)])
+
+    def test_check_dictionary_and_raise_errors_catches_error_and_formats(self):
+        self.assert_my_regex(ValueError, 'events may not be empty. a good alternative is the identity - {0: 1}.',
+                             lim.check_dictionary_and_raise_errors, {1: 0})
+        self.assert_my_regex(ValueError, 'all values must be ints',
+                             lim.check_dictionary_and_raise_errors, {1: 1.0})
+
+    def test_verify_and_prep_tuple_list_raises_error(self):
+        self.assert_my_regex(ValueError, 'all values must be ints',
+                             lim.verify_and_prep_tuple_list, [(1.0, 1)])
+        self.assert_my_regex(ValueError, 'events may not be empty. a good alternative is the identity - [(0, 1)].',
+                             lim.verify_and_prep_tuple_list, [(1, 0), (2, 0)])
+
+    def test_verify_and_prep_tuple_list_sorts(self):
+        self.assertEqual(lim.verify_and_prep_tuple_list([(3, 4), (1, 2)]), [(1, 2), (3, 4)])
+
+    def test_verify_and_prep_tuple_list_removes_zero_occurrences(self):
+        self.assertEqual(lim.verify_and_prep_tuple_list([(-1, 0), (0, 1), (1, 0), (2, 1), (3, 0)]),
+                         [(0, 1), (2, 1)])
+
+    def test_get_occurrences_to_events_ratio(self):
+        self.assertEqual(lim.get_occurrences_to_events_ratio([(1, 2), (3, 4)]), 6.0 / 2.0)
+
+    def test_get_event_range_to_events_ratio(self):
+        self.assertEqual(lim.get_event_range_to_events_ratio([(1, 2), (3, 4)]), 3.0/2.0)
+
     def test_init_empty_table_raises_error(self):
-        error_msg = 'a table may not be empty. a good alternative is the identity - {0:1}.'
+        error_msg = 'events may not be empty. a good alternative is the identity - {0: 1}.'
         self.assert_my_regex(ValueError, error_msg, lim.AdditiveEvents, {})
 
     def test_init_zero_values_dict_raises_error(self):
-        error_msg = 'a table may not be empty. a good alternative is the identity - {0:1}.'
+        error_msg = 'events may not be empty. a good alternative is the identity - {0: 1}.'
         self.assert_my_regex(ValueError, error_msg, lim.AdditiveEvents, {1: 0, 2: 0})
 
     def test_values_sorts_and_removes_zeros(self):
@@ -104,80 +161,79 @@ class TestLongIntTable(unittest.TestCase):
 
     def test_values_min_returns_min_value(self):
         min_val_neg_one = lim.AdditiveEvents({1:1, -1:1})
-        self.assertEqual(min_val_neg_one.values_min(), -1)
+        self.assertEqual(min_val_neg_one.event_keys_min(), -1)
 
     def test_values_max_returns_max_value(self):
         max_val_neg_one = lim.AdditiveEvents({-1:1, -2:1})
-        self.assertEqual(max_val_neg_one.values_max(), -1)
+        self.assertEqual(max_val_neg_one.event_keys_max(), -1)
 
     def test_values_range_returns_minmax(self):
         zero_to_two = lim.AdditiveEvents({0:2, 1:1, 2:5, 4:0})
-        self.assertEqual(zero_to_two.values_range(), (0, 2))
+        self.assertEqual(zero_to_two.event_keys_range(), (0, 2))
 
     @unittest.skip("line 113 fixme")
     def test_values_min_returns_none_for_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertIsNone(empty.values_min())
+        self.assertIsNone(empty.event_keys_min())
 
     @unittest.skip("line 117 fixme")
     def test_values_max_returns_none_for_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertIsNone(empty.values_max())
+        self.assertIsNone(empty.event_keys_max())
 
     @unittest.skip("line 122 fixme")
     def test_values_range_returns_none_none_for_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertEqual(empty.values_range(), (None, None))
+        self.assertEqual(empty.event_keys_range(), (None, None))
 
     def test_frequency_returns_value_frequency_as_tuple(self):
         zero_three = lim.AdditiveEvents({0:3})
-        self.assertEqual(zero_three.frequency(0), (0, 3))
+        self.assertEqual(zero_three.get_event(0), (0, 3))
 
-    @unittest.skip("line 131 fixme")
     def test_frequency_returns_zero_frequency_for_empty_value(self):
         zero_three = lim.AdditiveEvents({0:3})
-        self.assertEqual(zero_three.frequency(100), (100, 0))
+        self.assertEqual(zero_three.get_event(100), (100, 0))
 
     def test_frequency_range_returns_correct_tuple_list(self):
         table = lim.AdditiveEvents({1:1, 2:2})
-        self.assertEqual(table.frequency_range(0, 4),
+        self.assertEqual(table.get_event_range(0, 4),
                          [(0, 0), (1, 1), (2, 2), (3, 0)])
 
     def test_frequency_all_returns_for_normal_case(self):
         table = lim.AdditiveEvents({1:1, 2:2})
-        self.assertEqual(table.frequency_all(),
+        self.assertEqual(table.get_event_all(),
                          [(1, 1), (2, 2)])
 
     @unittest.skip("line 140 fixme")
     def test_frequency_all_return_empty_for_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertEqual(empty.frequency_all(), [])
+        self.assertEqual(empty.get_event_all(), [])
 
     def test_frequency_all_sorts_and_does_not_return_zero_frequencies(self):
         table = lim.AdditiveEvents({1:2, 2:0, -1:2})
-        self.assertEqual(table.frequency_all(), [(-1, 2), (1, 2)])
+        self.assertEqual(table.get_event_all(), [(-1, 2), (1, 2)])
 
     def test_frequency_highest_returns_either_tuple_with_highest(self):
         table = lim.AdditiveEvents({-1:5, 0:1, 2:5})
-        self.assertIn(table.frequency_highest(), [(-1, 5), (2, 5)])
+        self.assertIn(table.get_event_highest(), [(-1, 5), (2, 5)])
 
     def test_frequency_highest_returns_only_the_highest(self):
         table = lim.AdditiveEvents({-1:5, 0:1, 2:3})
-        self.assertEqual(table.frequency_highest(), (-1, 5))
+        self.assertEqual(table.get_event_highest(), (-1, 5))
 
     @unittest.skip("line 157 fixme")
     def test_frequency_highest_handles_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertEqual(empty.frequency_highest(), (None, 0))
+        self.assertEqual(empty.get_event_highest(), (None, 0))
 
     @unittest.skip("line 162 fixme")
     def test_total_frequency_is_zero_for_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertEqual(empty.total_frequency(), 0)
+        self.assertEqual(empty.get_total_event_occurrences(), 0)
 
     def test_total_frequency_returns_correct_value_table(self):
         table = lim.AdditiveEvents({1:2, 3:4})
-        self.assertEqual(table.total_frequency(), 2+4)
+        self.assertEqual(table.get_total_event_occurrences(), 2 + 4)
 
     def test_string_returns_min_to_max(self):
         table = lim.AdditiveEvents({-1:1, 2:1, 5:1})
@@ -201,7 +257,7 @@ class TestLongIntTable(unittest.TestCase):
         empty = lim.AdditiveEvents({})
         with self.assertRaises(ZeroDivisionError) as cm:
             empty.mean()
-        self.assertEqual(cm.exception.args[0], 'there are no event_keys in the table')
+        self.assertEqual(cm.exception.args[0], 'there are no values in the table')
 
     def test_mean_with_non_uniform_table(self):
         table = lim.AdditiveEvents({1:2, 2:5})
@@ -231,139 +287,133 @@ class TestLongIntTable(unittest.TestCase):
     def test_merge_adds_old_vals_and_makes_new_vals(self):
         table = lim.AdditiveEvents({1:1, 2:1, 3:1})
         table.merge({-1:1, 0:1, 1:1, 2:1}.items())
-        self.assertEqual(table.frequency_all(),
+        self.assertEqual(table.get_event_all(),
                          [(-1, 1), (0, 1), (1, 2), (2, 2), (3, 1)])
 
     def test_update_frequency(self):
         table = lim.AdditiveEvents({1:1, 2:2})
         table.update_frequency(2, 5)
-        self.assertEqual(table.frequency(2)[1], 5)
+        self.assertEqual(table.get_event(2)[1], 5)
 
     def test_update_frequency_when_update_value_not_in_table(self):
         table = lim.AdditiveEvents({1:1})
         table.update_frequency(2, 5)
-        self.assertEqual(table.frequency(2)[1], 5)
+        self.assertEqual(table.get_event(2)[1], 5)
 
     def test_update_value_ow(self):
         table = lim.AdditiveEvents({1:100, 2:2})
         table.update_value_ow(1, 2)
-        self.assertEqual(table.frequency_all(), [(2, 100)])
+        self.assertEqual(table.get_event_all(), [(2, 100)])
 
     def test_update_value_add(self):
         table = lim.AdditiveEvents({1:100, 2:2})
         table.update_value_add(1, 2)
-        self.assertEqual(table.frequency_all(), [(2, 102)])
+        self.assertEqual(table.get_event_all(), [(2, 102)])
 
-    @unittest.skip("line 246 fixme")
     def test_add_empty_list_error(self):
         identity = lim.AdditiveEvents({0:1})
-        with self.assertRaises(ValueError) as cm:
-            identity.add(1, [(1, 0)])
-        self.assertEqual(cm.exception.args[0], 'cannot add an empty list')
+        self.assert_my_regex(ValueError, 'events may not be empty. a good alternative is the identity - [(0, 1)].',
+                             identity.combine_with_new_events, 1, [(1, 0)])
 
-    @unittest.skip("line 253 fixme")
     def test_add_negative_times_error(self):
         identity = lim.AdditiveEvents({0:1})
-        with self.assertRaises(ValueError) as cm:
-            identity.add(-1, [(1, 1)])
-        self.assertEqual(cm.exception.args[0], 'times must be a positive int')
+        self.assert_my_regex(ValueError, 'times must be a positive int',
+                             identity.combine_with_new_events, -1, [(1, 1)])
 
-    @unittest.skip("line 260 fixme")
     def test_add_negative_frequencies_error(self):
         identity = lim.AdditiveEvents({0:1})
-        with self.assertRaises(ValueError) as cm:
-            identity.add(1, [(1, -1)])
-        self.assertEqual(cm.exception.args[0], 'frequencies may not be negative')
+        self.assert_my_regex(ValueError, 'events may not occur negative times.',
+                             identity.combine_with_new_events, 1, [(1, -1)])
 
     def test_add_errors_do_not_mutate_table(self):
         identity = lim.AdditiveEvents({0:1})
         try:
-            identity.add(1, [(1, 0)])
+            identity.combine_with_new_events(1, [(1, 0)])
         except ValueError:
             pass
         try:
-            identity.add(-1, [(1, 1)])
+            identity.combine_with_new_events(-1, [(1, 1)])
         except ValueError:
             pass
         try:
-            identity.add(1, [(1, -1)])
+            identity.combine_with_new_events(1, [(1, -1)])
         except ValueError:
             pass
-        self.assertEqual(identity.frequency_all(), [(0, 1)])
+        self.assertEqual(identity.get_event_all(), [(0, 1)])
 
-#the next two tests test that add works for the two cases for _fastest()
-#_fastest() is found in the the add() method
+#the next two tests test that add works for the two cases for get_fastest_combine_method()
+#get_fastest_combine_method() is found in the the add() method
 #for details of adding ints vs tuples, see testing_add_speed.py
 
     def test_add_works_with_low_total_frequency_to_number_of_vals(self):
         low_ratio_tuples = [(1, 1), (2, 1)]
-        self.identity_a.add(1, low_ratio_tuples)
-        self.assertEqual(self.identity_a.frequency_all(), low_ratio_tuples)
+        self.identity_a.combine_with_new_events(1, low_ratio_tuples)
+        self.assertEqual(self.identity_a.get_event_all(), low_ratio_tuples)
 
     def test_add_works_with_high_total_frequency_to_number_of_vals(self):
         high_ratio_tuples = [(1, 10**1000), (2, 10**1000)]
-        self.identity_a.add(1, high_ratio_tuples)
-        self.assertEqual(self.identity_a.frequency_all(), high_ratio_tuples)
+        self.identity_a.combine_with_new_events(1, high_ratio_tuples)
+        self.assertEqual(self.identity_a.get_event_all(), high_ratio_tuples)
 
     def test_one_multiple_add_is_multiple_single_adds(self):
         tuples = [(1, 2), (3, 4)]
-        self.identity_a.add(1, tuples)
-        self.identity_a.add(1, tuples)
-        self.identity_b.add(2, tuples)
-        self.assertEqual(self.identity_a.frequency_all(),
-                         self.identity_b.frequency_all())
+        self.identity_a.combine_with_new_events(1, tuples)
+        self.identity_a.combine_with_new_events(1, tuples)
+        self.identity_b.combine_with_new_events(2, tuples)
+        self.assertEqual(self.identity_a.get_event_all(),
+                         self.identity_b.get_event_all())
 
     def test_add_adds_correctly(self):
-        tuple_list = [(1, 2), (2, 2)]
-        self.identity_a.add(2, tuple_list)
-        self.assertEqual(self.identity_a.frequency_all(),
+        tuple_list = [(2, 2), (1, 2)]
+        self.identity_a.combine_with_new_events(2, tuple_list)
+        self.assertEqual(self.identity_a.get_event_all(),
                          [(2, 4), (3, 8), (4, 4)])
 
     def test_add_works_with_long_large_number_list(self):
         tuple_list = [(x, 10**1000) for x in range(-1000, 1000)]
-        self.identity_a.add(1, tuple_list)
-        self.assertEqual(self.identity_a.frequency_all(), tuple_list)
+        self.identity_a.combine_with_new_events(1, tuple_list)
+        self.assertEqual(self.identity_a.get_event_all(), tuple_list)
 
     def test_remove_removes_correctly(self):
         arbitrary_tuples = [(-5, 2), (0, 5), (3, 10)]
-        self.identity_a.add(5, arbitrary_tuples)
-        self.identity_b.add(10, arbitrary_tuples)
+        self.identity_a.combine_with_new_events(5, arbitrary_tuples)
+        self.identity_b.combine_with_new_events(10, arbitrary_tuples)
         self.identity_b.remove(5, arbitrary_tuples)
-        self.assertEqual(self.identity_a.frequency_all(),
-                         self.identity_b.frequency_all())
+        self.assertEqual(self.identity_a.get_event_all(),
+                         self.identity_b.get_event_all())
 
     def test_remove_works_for_large_numbers(self):
         arbitrary_tuples_large = [(-5, 10**500), (0, 5*10**700), (3, 2**1000)]
 
-        self.identity_a.add(1, arbitrary_tuples_large)
-        self.identity_b.add(2, arbitrary_tuples_large)
+        self.identity_a.combine_with_new_events(1, arbitrary_tuples_large)
+        self.identity_b.combine_with_new_events(2, arbitrary_tuples_large)
         self.identity_b.remove(1, arbitrary_tuples_large)
-        self.assertEqual(self.identity_a.frequency_all(),
-                         self.identity_b.frequency_all())
+        self.assertEqual(self.identity_a.get_event_all(),
+                         self.identity_b.get_event_all())
 
     def test_add_adds_same_regardless_of_order(self):
         arbitrary_a = [(1, 2), (3, 10**456)]
         arbitrary_b = [(0, 5), (-1, 2)]
-        self.identity_a.add(1, arbitrary_a)
-        self.identity_a.add(2, arbitrary_b)
-        self.identity_b.add(2, arbitrary_b)
-        self.identity_b.add(1, arbitrary_a)
-        self.assertEqual(self.identity_a.frequency_all(),
-                         self.identity_b.frequency_all())
+        self.identity_a.combine_with_new_events(1, arbitrary_a)
+        self.identity_a.combine_with_new_events(2, arbitrary_b)
+        self.identity_b.combine_with_new_events(2, arbitrary_b)
+        self.identity_b.combine_with_new_events(1, arbitrary_a)
+        self.assertEqual(self.identity_a.get_event_all(),
+                         self.identity_b.get_event_all())
 
     def test_remove_removes_same_regardless_of_order(self):
         arbitrary_a = [(-1, 2), (3, 5)]
         arbitrary_b = [(100, 4), (0, 9)]
-        self.identity_a.add(5, arbitrary_a)
-        self.identity_a.add(5, arbitrary_b)
-        self.identity_b.add(1, arbitrary_b)
-        self.identity_b.add(1, arbitrary_a)
+        self.identity_a.combine_with_new_events(5, arbitrary_a)
+        self.identity_a.combine_with_new_events(5, arbitrary_b)
+        self.identity_b.combine_with_new_events(1, arbitrary_b)
+        self.identity_b.combine_with_new_events(1, arbitrary_a)
         self.identity_a.remove(3, arbitrary_a)
         self.identity_a.remove(3, arbitrary_b)
         self.identity_a.remove(1, arbitrary_b)
         self.identity_a.remove(1, arbitrary_a)
-        self.assertEqual(self.identity_a.frequency_all(),
-                         self.identity_b.frequency_all())
+        self.assertEqual(self.identity_a.get_event_all(),
+                         self.identity_b.get_event_all())
 
 
 if __name__ == '__main__':

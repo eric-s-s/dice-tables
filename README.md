@@ -1,7 +1,7 @@
 #dicetables
 ###a module for statistics of die rolls and other events
 this module uses DiceTable and AdditiveEvents to do actions on a
-table of (event represented by an int, frequency that event occurs)  
+table of (event represented by an int, get_event that event occurs)
 since dice combinations quickly balloon, it's been designed to do float  
 math with ints over 10^309.
 
@@ -28,31 +28,31 @@ event_keys functions tell the range of rolls or other non-zero events stored in 
 In [4]: table.event_keys()
 Out[4]: [3, 4, 5, 6]
 
-In [5]: table.values_range()
+In [5]: table.event_keys_range()
 Out[5]: (3, 6)
 ```
 here are all the possible rolls and the frequencies with which they occur.  
 3 has one possible combination (1,1,1) and 4 has 3 [(1,1,2), (1,2,1), (2,1,1)]
 ```
-In [7]: table.frequency_all()
+In [7]: table.get_event_all()
 Out[7]: [(3, 1), (4, 3), (5, 3), (6, 1)]
 ```
-the frequency_range function follows range's (start, stop_before) and list zero
+the get_event_range function follows range's (start, stop_before) and list zero
 for any roll that won't happen. 
 ``` 
-In [8]: table.frequency(5)
+In [8]: table.get_event(5)
 Out[8]: (5, 3)
 
-In [10]: table.frequency_range(1, 5)
+In [10]: table.get_event_range(1, 5)
 Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
 ```
-other usefull methods. frequency_highest picks one of the event_keys with highest
-frequency and returns the tuple of (value, frequency). 
+other usefull methods. get_event_highest picks one of the event_keys with highest
+get_event and returns the tuple of (value, get_event).
 ```
-In [11]: table.frequency_highest()
+In [11]: table.get_event_highest()
 Out[11]: (4, 3)
 
-In [12]: table.total_frequency()
+In [12]: table.get_total_event_occurrences()
 Out[12]: 8
 
 In [13]: table.mean()
@@ -234,21 +234,21 @@ In [16]: dic
 Out[16]: {ModDie(6, -1): 3, Die(6): 'abc', ModDie(6, 0): 4}
 ```
 ###AdditiveEvents
-LongIntTables are instantiated with a dictionary of {value: frequency it occurs}.
+LongIntTables are instantiated with a dictionary of {value: get_event it occurs}.
 DiceTable instantiates as the identity table, {0:1}
 
-AdditiveEvents has methods add() and remove() that take an argument of a tuple list.
+AdditiveEvents has methods combine_with_new_events() and remove() that take an argument of a tuple list.
 so you could recreate a DiceTable if you had stored it's tuple list and dice like so.
 ```
 In [40]: table = dt.DiceTable()
 
 In [41]: table.add_die(1000, dt.Die(4))
 
-In [42]: tuple_list = table.frequency_all()
+In [42]: tuple_list = table.get_event_all()
 
 In [43]: new_table = dt.DiceTable()
 
-In [44]: new_table.add(1, tuple_list)
+In [44]: new_table.combine_with_new_events(1, tuple_list)
 
 In [45]: new_table.get_list()
 Out[45]: []
@@ -265,6 +265,6 @@ Out[48]: [(Die(4), 1000)]
 In [49]: new_table.get_list() == table.get_list()
 Out[49]: True
 
-In [50]: new_table.frequency_all() == table.frequency_all()
+In [50]: new_table.get_event_all() == table.get_event_all()
 Out[50]: True
 ```

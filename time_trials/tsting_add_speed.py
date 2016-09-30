@@ -55,16 +55,16 @@ def gen_random_point(val_list):
 def add_int_lists(table, num_times, lst):
     '''repeat the add_a_list function num_times times.'''
     for _ in range(num_times):
-        table._add_a_list(lst)
+        table._combine_once_by_flattened_list(lst)
 
 def add_tuple_lists(table, num_times, lst):
     '''num_times is an int.  repeat add_tuple_list that many times.'''
     for _ in range(num_times):
-        table._add_tuple_list(lst)
+        table._combine_once_by_tuple_list(lst)
 
 def one_time_trial(tuple_list, num_adds):
-    '''add t_list to identity AdditiveEvents num_adds times, using _add_a_list and
-    _add_tuple_list.  returns the ratio of sum_of_freq/num_of_values, and the
+    '''add t_list to identity AdditiveEvents num_adds times, using _combine_once_by_flattened_list and
+    _combine_once_by_tuple_list.  returns the ratio of sum_of_freq/num_of_values, and the
     time for each funtion to do the adding.'''
     tuple_list.sort()
     lst = []
@@ -127,7 +127,7 @@ def plot_trial(ratios, tuples, lists, title='none', figure=1):
 
 def polyfit_and_intersection(ratios, tuples, lists):
     '''fits tuples and list linearly to ratios. returns the intersection of two
-    fits and two lists of y event_keys to plot with ratios'''
+    fits and two lists of y values to plot with ratios'''
     tup_slope, tup_const = np.polyfit(ratios, tuples, 1)
     lst_slope, lst_const = np.polyfit(ratios, lists, 1)
     intersection = (tup_const - lst_const) / (lst_slope - tup_slope)
@@ -217,7 +217,7 @@ def quick_and_dirty_ui():
     while True:
         figure += 1
         plt.ion()
-        num_vals_question = (('how many event_keys in your list?'+
+        num_vals_question = (('how many values in your list?'+
                               '\nplease input int between %s and %s\n') %
                              (min_vals, max_vals))
         num_vals = get_int(num_vals_question)
@@ -267,7 +267,7 @@ def tst_num_adds(num_vals, start_add, stop_add):
     return out_lst
 
 def tst_num_vals(star_vals, stop_vals, num_adds):
-    '''shows how the intesection varies with different number of event_keys in a
+    '''shows how the intesection varies with different number of values in a
     list'''
     x_axis = range(star_vals, stop_vals + 1)
     out_lst = []

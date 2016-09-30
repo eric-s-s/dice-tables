@@ -237,7 +237,7 @@ def get_stats(table):
     print '\n\nhere is your table info\n'
     print table.weights_info()
     print ('\nthe range of numbers is %s-%s\nthe mean is %s\nthe stddev is %s'
-           % (table.values_min(), table.values_max(),
+           % (table.event_keys_min(), table.event_keys_max(),
               table.mean(), table.stddev()))
     usr_input = make_a_list(table)
     print gap.stats(table, usr_input)
