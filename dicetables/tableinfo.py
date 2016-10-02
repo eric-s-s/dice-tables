@@ -175,8 +175,8 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     overflow_point = 10**300
     exponent_adjustment = 4
 
-    if table.get_event_highest()[1] > overflow_point:
-        power = int(log10(table.get_event_highest()[1])) - exponent_adjustment
+    if table.get_biggest_event()[1] > overflow_point:
+        power = int(log10(table.get_biggest_event()[1])) - exponent_adjustment
         factor = 10**power
     factor_string = scinote(factor, 2)
     if axes:
@@ -191,7 +191,7 @@ def ascii_graph_helper(table):
     """table is a AdditiveEvents. makes a list of tuples which
     [(value, x's representing value), ...]"""
     output_list = []
-    max_frequency = table.get_event_highest()[1]
+    max_frequency = table.get_biggest_event()[1]
     max_graph_height = 80
     divisor = 1
     add_s = ''

@@ -12,7 +12,7 @@ class TestIndexedValues(unittest.TestCase):
     def assert_add(self, start_index_values_1, start_index_values_2, expected_items):
         first = iv.IndexedValues(*start_index_values_1)
         second = iv.IndexedValues(*start_index_values_2)
-        return self.assertEqual(first.add(second).get_items(), expected_items)
+        return self.assertEqual(first.combine(second).get_items(), expected_items)
 
     def test_make_start_index_and_list_empty(self):
         start_index, lst = iv.make_start_index_and_list([])
@@ -137,7 +137,7 @@ class TestIndexedValues(unittest.TestCase):
     def test_IndexedValues_add_return_new_IndexedValues(self):
         first = iv.IndexedValues()
         second = iv.IndexedValues()
-        third = first.add(second)
+        third = first.combine(second)
         self.assertNotEqual(first, second)
         self.assertNotEqual(third, second)
         self.assertNotEqual(first, third)
@@ -164,7 +164,7 @@ class TestIndexedValues(unittest.TestCase):
     def test_IndexedValues_add_commutative(self):
         first = iv.IndexedValues(1, [2, 3, 4])
         second = iv.IndexedValues(2, [3, 4, 5, 6])
-        self.assertEqual(first.add(second).get_items(), second.add(first).get_items())
+        self.assertEqual(first.combine(second).get_items(), second.combine(first).get_items())
 
 
 if __name__ == '__main__':

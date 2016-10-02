@@ -278,44 +278,70 @@ class WrapListTable(dt.AdditiveEvents):
         dt.AdditiveEvents.__init__(self, seed)
 
     def generate_my_counter(self):
-        start_val, array = npd.make_start_val_and_list(self._table)
-        # return npd.MyCounter(start_val, array)
-        return iv.IndexedValues(start_val, array)
+        # start_val, array = npd.make_start_val_and_list(self._table)
+        # # return npd.MyCounter(start_val, array)
+        # return iv.IndexedValues(start_val, array)
+        return iv.generate_indexed_values_from_dict(self._table)
 
-    def add_list_to_my_counter(self, tuple_list, input_counter):
-        # orig_start_val = input_counter.start_val
-        # orig_values = input_counter.array[:]
+    # def add_list_to_my_counter(self, tuple_list, input_counter):
+    #     # orig_start_val = input_counter.start_val
+    #     # orig_values = input_counter.array[:]
+    #
+    #     orig_start_val = input_counter.start_index
+    #     orig_values = input_counter.raw_values
+    #     val_1, freq_1 = tuple_list[0]
+    #     if freq_1 != 1:
+    #         new_array = [freq_1 * num for num in orig_values]
+    #     else:
+    #         new_array = orig_values[:]
+    #     # new_counter = npd.MyCounter(orig_start_val + val_1, new_array)
+    #     new_counter = iv.IndexedValues(orig_start_val + val_1, new_array)
+    #     for val, freq in tuple_list[1:]:
+    #         start_val = orig_start_val + val
+    #         if freq != 1:
+    #             new_array = [freq * num for num in orig_values]
+    #         else:
+    #             new_array = orig_values[:]
+    #         # new_counter = new_counter.add(npd.MyCounter(start_val, new_array))
+    #         new_counter = new_counter.combine(iv.IndexedValues(start_val, new_array))
+    #     return new_counter
+    #
+    # def add_list_to_my_counter_lots(self, times, input_list, start_counter):
+    #     for _ in range(times):
+    #         start_counter = self.add_list_to_my_counter(input_list, start_counter)
+    #     return start_counter
+    #
+    # def alt_add_list2(self, times, tuple_list):
+    #     # start_counter = npd.MyCounter(*npd.make_start_val_and_list(self._table))
+    #     start_counter = self.generate_my_counter()
+    #     out_counter = self.add_list_to_my_counter_lots(times, tuple_list, start_counter)
+    #     # self._table = dict(out_counter.items())
+    #     self._table = dict(out_counter.get_items())
 
-        orig_start_val = input_counter.start_index
-        orig_values = input_counter.raw_values
-        val_1, freq_1 = tuple_list[0]
-        if freq_1 != 1:
-            new_array = [freq_1 * num for num in orig_values]
-        else:
-            new_array = orig_values[:]
-        # new_counter = npd.MyCounter(orig_start_val + val_1, new_array)
-        new_counter = iv.IndexedValues(orig_start_val + val_1, new_array)
-        for val, freq in tuple_list[1:]:
-            start_val = orig_start_val + val
-            if freq != 1:
-                new_array = [freq * num for num in orig_values]
-            else:
-                new_array = orig_values[:]
-            # new_counter = new_counter.add(npd.MyCounter(start_val, new_array))
-            new_counter = new_counter.add(iv.IndexedValues(start_val, new_array))
-        return new_counter
-
-    def add_list_to_my_counter_lots(self, times, input_list, start_counter):
-        for _ in range(times):
-            start_counter = self.add_list_to_my_counter(input_list, start_counter)
-        return start_counter
+    # def test_single_add(self, tuple_list):
+    #     start_index, raw_values = iv.make_start_index_and_list(sorted(self._table.items()))
+    #     val_1, freq_1 = tuple_list[0]
+    #     if freq_1 != 1:
+    #         new_array = [freq_1 * num for num in raw_values]
+    #     else:
+    #         new_array = raw_values[:]
+    #     # new_counter = npd.MyCounter(orig_start_val + val_1, new_array)
+    #     new_counter = iv.IndexedValues(start_index + val_1, new_array)
+    #     for val, freq in tuple_list[1:]:
+    #         start_val = start_index + val
+    #         if freq != 1:
+    #             new_array = [freq * num for num in raw_values]
+    #         else:
+    #             new_array = raw_values[:]
+    #         # new_counter = new_counter.add(npd.MyCounter(start_val, new_array))
+    #         new_counter = new_counter.combine(iv.IndexedValues(start_val, new_array))
+    #     self._table = dict(new_counter.get_items())
 
     def alt_add_list(self, times, tuple_list):
-        # start_counter = npd.MyCounter(*npd.make_start_val_and_list(self._table))
-        start_counter = self.generate_my_counter()
-        out_counter = self.add_list_to_my_counter_lots(times, tuple_list, start_counter)
-        # self._table = dict(out_counter.items())
-        self._table = dict(out_counter.get_items())
+        indexed_values = iv.generate_indexed_values_from_dict(self._table)
+        for _ in range(times):
+            indexed_values = indexed_values.combine_with_events_list(tuple_list)
+        self._table = dict(indexed_values.get_items())
 
 
 
@@ -342,7 +368,7 @@ the_args = (123**456, )
 for words, func in str_func:
     print(time_trial_output(10000, words, func, *the_args))
 
-add_times = 200
+add_times = 5
 my_table = dt.AdditiveEvents({0: 1})
 dec_table = DecimalEventTable({0:1})
 c_table = CounterTable({0:1})
@@ -352,7 +378,7 @@ l_table2 = ListTable()
 
 wl_table = WrapListTable()
 transform = NumpyTable()
-line_302_list = [(val, 1) for val in range(-3, 23, 3)]
+line_302_list = [(val, 1) for val in range(1, 100, 3)]
 # line_302_list = [(1, 1), (7, 1)]
 
 #gap ratio maybe 3
@@ -363,7 +389,7 @@ print('range to vals is {}'.format(float(line_302_range)/len(line_302_list)))
 print_time_trial_for_add_list_funcs(add_list_args, my_table.combine_with_new_events, 'mine')
 # print_time_trial_for_add_list_funcs(add_list_args, dec_table.add_list, 'dec')
 # print_time_trial_for_add_list_funcs(add_list_args, c_table.add, 'counter')
-# print_time_trial_for_add_list_funcs(add_list_args, np_table.add, 'numpy')
+print_time_trial_for_add_list_funcs(add_list_args, np_table.add, 'numpy')
 print_time_trial_for_add_list_funcs(add_list_args, l_table.add, 'lists')
 print_time_trial_for_add_list_funcs(add_list_args, l_table2.add_tuples, 'lists_tuple')
 print_time_trial_for_add_list_funcs(add_list_args, wl_table.alt_add_list, 'wlist')
@@ -387,14 +413,14 @@ l_table = ListTable()
 wl_table = WrapListTable()
 #gap ratio maybe 2.5
 # line_291_list = [(1, 1), (4, 10)]
-line_291_list = [(val, val) for val in range(1, 10, 3)]
+line_291_list = [(val, 10**(1000)) for val in range(1, 100, 1)]
 line_291_range = line_291_list[-1][0] - line_291_list[0][0] + 1
 print('range to vals is {}'.format(float(line_291_range)/len(line_291_list)))
 add_tuples_args = ('add tuple list {}*[(1,1), (2,2), ... (6,6)]: {} - ', add_times, line_291_list)
 print_time_trial_for_add_list_funcs(add_tuples_args, my_table.combine_with_new_events, 'mine')
 # print_time_trial_for_add_list_funcs(add_tuples_args, dec_table.add_tuples, 'dec')
 # print_time_trial_for_add_list_funcs(add_tuples_args, c_table.add, 'counter')
-# print_time_trial_for_add_list_funcs(add_tuples_args, np_table.add_tuples, 'numpy')
+print_time_trial_for_add_list_funcs(add_tuples_args, np_table.add_tuples, 'numpy')
 print_time_trial_for_add_list_funcs(add_tuples_args, l_table.add_tuples, 'lists')
 print_time_trial_for_add_list_funcs(add_tuples_args, wl_table.alt_add_list, 'wlist')
 print('confirmation both tables are same. stddev dec: {}, mine: {}, wlist: {}, np: {}, list: {}'

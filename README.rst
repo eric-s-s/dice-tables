@@ -52,10 +52,10 @@ for any roll that won't happen. ::
     In [10]: table.get_event_range(1, 5)
     Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
 
-other usefull methods. get_event_highest picks one of the event_keys with highest
+other usefull methods. get_biggest_event picks one of the event_keys with highest
 get_event and returns the tuple of (value, get_event). ::
 
-    In [11]: table.get_event_highest()
+    In [11]: table.get_biggest_event()
     Out[11]: (4, 3)
 
     In [12]: table.get_total_event_occurrences()

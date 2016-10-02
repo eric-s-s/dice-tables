@@ -58,7 +58,7 @@ class IndexedValues(object):
         else:
             return self.raw_values[index]
 
-    def add(self, other):
+    def combine(self, other):
         start_index_diff = self.start_index - other.start_index
         if start_index_diff < 0:
             lower = self
@@ -68,6 +68,27 @@ class IndexedValues(object):
             higher = self
         new_values = combine_values(lower.raw_values, higher.raw_values, abs(start_index_diff))
         return IndexedValues(lower.start_index, new_values)
+
+    def combine_with_events_list(self, sorted_tuple_list_of_events):
+        base_list = self.raw_values
+        current_size = len(base_list)
+        current_start_index = self.start_index
+        new_start_index = current_start_index + sorted_tuple_list_of_events[0][0]
+        new_size = current_size + sorted_tuple_list_of_events[-1][0] - sorted_tuple_list_of_events[0][0]
+        big_list = []
+        for event, freq in sorted_tuple_list_of_events:
+            index_diff = current_start_index + event - new_start_index
+            if freq != 1:
+                use_list = [value * freq for value in base_list]
+            else:
+                use_list = base_list[:]
+            big_list.append(equalize_len_higher(use_list, new_size, index_diff))
+        new_raw_values = list(map(add_many, *big_list))
+        return IndexedValues(new_start_index, new_raw_values)
+
+
+def add_many(*args):
+    return sum(args)
 
 
 def equalize_len_lower(lower, total_size):

@@ -110,6 +110,7 @@ def time_trial(generator, adds_per_trial):
 def plot_trial(ratios, tuples, lists, title='none', figure=1):
     '''plot x-axis = ratios.  y-axis = tuples and y-axis = lists. fit curves to
     ax + b and return the intesection of two curves'''
+    plt.ion()
     plt.figure(figure)
     plt.plot(ratios, tuples, 'bo-', label='tuple add')
     plt.plot(ratios, lists, 'r*-', label='list add')
@@ -123,6 +124,7 @@ def plot_trial(ratios, tuples, lists, title='none', figure=1):
     plt.title(title)
     plt.plot(ratios, tup_fit, 'c-')
     plt.plot(ratios, lst_fit, 'c-')
+    plt.pause(0.01)
     return intersection
 
 def polyfit_and_intersection(ratios, tuples, lists):

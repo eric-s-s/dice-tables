@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import unittest
 import dicetables.longintmath as lim
 
-
+import time
 FLOAT_BIG = 1e+300
 FLOAT_SMALL = 1e+100
 LONG_BIG = 10**1000
@@ -215,16 +215,16 @@ class TestLongIntTable(unittest.TestCase):
 
     def test_frequency_highest_returns_either_tuple_with_highest(self):
         table = lim.AdditiveEvents({-1:5, 0:1, 2:5})
-        self.assertIn(table.get_event_highest(), [(-1, 5), (2, 5)])
+        self.assertIn(table.get_biggest_event(), [(-1, 5), (2, 5)])
 
     def test_frequency_highest_returns_only_the_highest(self):
         table = lim.AdditiveEvents({-1:5, 0:1, 2:3})
-        self.assertEqual(table.get_event_highest(), (-1, 5))
+        self.assertEqual(table.get_biggest_event(), (-1, 5))
 
     @unittest.skip("line 157 fixme")
     def test_frequency_highest_handles_empty_table(self):
         empty = lim.AdditiveEvents({})
-        self.assertEqual(empty.get_event_highest(), (None, 0))
+        self.assertEqual(empty.get_biggest_event(), (None, 0))
 
     @unittest.skip("line 162 fixme")
     def test_total_frequency_is_zero_for_empty_table(self):
@@ -370,10 +370,11 @@ class TestLongIntTable(unittest.TestCase):
                          [(2, 4), (3, 8), (4, 4)])
 
     def test_add_works_with_long_large_number_list(self):
+        start = time.clock()
         tuple_list = [(x, 10**1000) for x in range(-1000, 1000)]
         self.identity_a.combine_with_new_events(1, tuple_list)
         self.assertEqual(self.identity_a.get_event_all(), tuple_list)
-
+        print(time.clock() - start)
     def test_remove_removes_correctly(self):
         arbitrary_tuples = [(-5, 2), (0, 5), (3, 10)]
         self.identity_a.combine_with_new_events(5, arbitrary_tuples)

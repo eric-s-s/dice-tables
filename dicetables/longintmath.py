@@ -5,6 +5,8 @@ from sys import version_info
 from decimal import Decimal
 from math import log10
 
+from dicetables.indexedvalues import IndexedValues, generate_indexed_values, make_start_index_and_list
+
 if version_info[0] < 3:
     INT_TYPES = (int, long)
 else:
@@ -16,7 +18,7 @@ CONVERSIONS = {'_add_tuple_list': 'AdditiveEvents._combine_once_by_tuple_list',
                'add': 'AdditiveEvents.combine_with_new_events',
                'frequency': 'AdditiveEvents.get_event',
                'frequency_all': 'AdditiveEvents.get_event_all',
-               'frequency_highest': 'AdditiveEvents.get_event_highest',
+               'frequency_highest': 'AdditiveEvents.get_biggest_event',
                'frequency_range': 'AdditiveEvents.get_event_range',
                'mean': 'AdditiveEvents.mean',
                'merge': 'AdditiveEvents.merge',
@@ -110,12 +112,12 @@ def get_fastest_combine_method(verified_and_prepped_tuple_list):
 
     if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_add_by_list:
         method = 'tuple_list'
-        if event_range_to_events_ratio < max_event_range_to_events_ratio_vs_add_by_tuple:
-            method = 'tuple_list'  # TODO 'indexed_values'
+        # if event_range_to_events_ratio < max_event_range_to_events_ratio_vs_add_by_tuple:
+        #     method = 'indexed_values'  # TODO 'indexed_values'
     else:
         method = 'flattened_list'
-        if event_range_to_events_ratio < max_event_range_to_events_ratio_vs_add_by_list:
-            method = 'flattened_list'  # TODO 'indexed_values'
+        # if event_range_to_events_ratio < max_event_range_to_events_ratio_vs_add_by_list:
+        #     method = 'indexed_values'  # TODO 'indexed_values'
     return method
 
 
@@ -134,13 +136,14 @@ def get_event_range_to_events_ratio(verified_and_prepped_tuple_list):
 
 
 class AdditiveEvents(object):
-    """a table of big fucking numbers and some math function for them.
-    The table implicitly contains 0 occurrences of all unassigned integers.
-    THIS TABLE SHOULD ONLY CONTAIN INT OR LONG."""
+    """manages (event, number of occurrences) for events that can be added to, like dice rolls."""
 
     def __init__(self, seed_dictionary):
-        """seed_dictionary is a dictionary of ints. frequencies MUST BE POSITIVE.
-        {value1: (get_event of value1), value2: (get_event of value 2), ...}"""
+        """
+
+        :param seed_dictionary: {event: occurrences}\n
+            event = int. occurrences = int >=0
+        """
         check_dictionary_and_raise_errors(seed_dictionary)
         self._table = seed_dictionary.copy()
 
@@ -149,39 +152,38 @@ class AdditiveEvents(object):
         return sorted([key for key in self._table.keys() if self._table[key]])
 
     def event_keys_min(self):
-        """returns the min value"""
         return self.event_keys()[0]
 
     def event_keys_max(self):
-        """returns the max value"""
         return self.event_keys()[-1]
 
     def event_keys_range(self):
-        """returns a tuple of min and max values"""
         return self.event_keys_min(), self.event_keys_max()
 
-    def get_event(self, value):
-        """Returns a tuple of the value and it's get_event."""
-        return value, self._table.get(value, 0)
+    def get_event(self, event):
+        """:return: (event, occurrences)"""
+        return event, self._table.get(event, 0)
 
     def get_event_range(self, start, stop_before):
-        """Returns a list of tuples (value,get_event).
-        Like regular range function, it stops before endvalue."""
+        """:return: dict.items()-like tuple_list [(event, occurrences), ..]"""
         tuple_list = []
         for value in range(start, stop_before):
             tuple_list.append(self.get_event(value))
         return tuple_list
 
     def get_event_all(self):
-        """Returns a list of tuples IN ORDER for all non-zero-get_event
-        values in table."""
+        """
+
+        :return: dict.items()-like tuple_list [(event, occurrences), ..]\n
+            sorted and only non-zero events.
+        """
         value_list = self.event_keys()
         tuple_list = []
         for value in value_list:
             tuple_list.append(self.get_event(value))
         return tuple_list
 
-    def get_event_highest(self):
+    def get_biggest_event(self):
         """
 
         :return: (event, occurrences) for first event with highest occurrences
@@ -192,29 +194,21 @@ class AdditiveEvents(object):
                 return event, highest_occurrences
 
     def get_total_event_occurrences(self):
-        """returns the sum all the freuencies in a table"""
         all_occurrences = self._table.values()
         return sum(all_occurrences)
 
     def __str__(self):
-        return ('table from %s to %s' %
-                (self.event_keys_min(), self.event_keys_max()))
+        return 'table from {} to {}'.format(*self.event_keys_range())
 
     def mean(self):
-        """i mean, don't you just sometimes look at a table of values
-        and wonder what the mean is?"""
         numerator = sum([value * freq for value, freq in self._table.items()])
         denominator = self.get_total_event_occurrences()
-        if denominator == 0:
-            raise ZeroDivisionError('there are no values in the table')
         return long_int_div(numerator, denominator)
 
     def stddev(self, decimal_place=4):
-        """returns the standdard deviation of the table, with special measures
-        to deal with long ints."""
         avg = self.mean()
         extra_digits = 5
-        largest_exponent = int(log10(self.get_event_highest()[1]))
+        largest_exponent = int(log10(self.get_biggest_event()[1]))
         required_exp_for_accuracy = 2 * (extra_digits + decimal_place)
         if largest_exponent < required_exp_for_accuracy:
             factor_to_truncate_digits = 1
@@ -248,6 +242,8 @@ class AdditiveEvents(object):
             self.combine_by_tuple_list(times, prepped_tuple_list, list_is_verified_and_prepped=True)
         if method_string == 'flattened_list':
             self.combine_by_flattened_list(times, prepped_tuple_list, list_is_verified_and_prepped=True)
+        if method_string == 'indexed_values':
+            self.combine_by_indexed_values(times, prepped_tuple_list, list_is_verified_and_prepped=True)
 
     def combine_by_flattened_list(self, times, tuple_list_of_events, list_is_verified_and_prepped=False):
         verify_times(times)
@@ -286,6 +282,21 @@ class AdditiveEvents(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) +
                                                frequency * current_frequency)
         self._table = new_dict
+
+    def combine_by_indexed_values(self, times, tuple_list_of_events, list_is_verified_and_prepped=False):
+        verify_times(times)
+        if not list_is_verified_and_prepped:
+            tuple_list_of_events = verify_and_prep_tuple_list(tuple_list_of_events)
+        indexed_values_to_update = generate_indexed_values(self.get_event_all())
+        for _ in range(times):
+            indexed_values_to_update = indexed_values_to_update.combine_with_events_list(tuple_list_of_events)
+
+        # final_indexed_values = self._combine_with_events_as_an_indexed_values(times, tuple_list_of_events)
+        self._table = dict(indexed_values_to_update.get_items())
+
+    # def _combine_with_events_as_an_indexed_values(self, times, tuple_list_of_events):
+    #
+    #     return indexed_values_to_update
 
     def remove(self, times, to_remove):
         """times is positive int or 0. values is a list of tuple(value, get_event)
