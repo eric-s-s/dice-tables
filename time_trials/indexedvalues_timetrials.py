@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import dicetables.longintmath as lim
 
-
+WELCOME_TXT = 'hi'
 def generate_tuple_list_with_increasing_number_of_events(first_event, start_length, event_occurrences,
                                                          len_increase_step=1):
     """
@@ -257,7 +257,9 @@ def plot_trial(variable_values, variable_name, control_times, iv_times, title='n
     :return:
     """
     plt.ion()
-    plt.figure(figure)
+
+    use_figure = plt.figure(figure)
+    use_figure.clf()
     plt.plot(variable_values, control_times, 'bo-', label='control')
     plt.plot(variable_values, iv_times, 'r*-', label='IndexedValues')
     plt.ylabel('time')
@@ -302,9 +304,9 @@ def get_int(question):
     """makes sure user input is an int. quit if "q" """
     while True:
         try:
-            answer = raw_input(question + '>>>')
+            answer = raw_input(question + '\n>>>')
         except NameError:
-            answer = input(question + '>>>')
+            answer = input(question + '\n>>>')
         if answer == 'q':
             raise SystemExit
         try:
@@ -321,11 +323,13 @@ def get_answer(question, min_val, max_val):
     return min(max_val, (max(min_val, raw_val)))
 
 
-def do_trials_vary_start_dict(add_list_len=10, occurrences_are_many=False, adds_list=(1, 2, 5)):
+def do_trials_vary_start_dict(add_list_len=10, occurrences_are_many=False, use_exponential_occurrences=False,
+                              adds_list=(1, 2, 5)):
     """
 
     :param add_list_len: =10
     :param occurrences_are_many: =False
+    :param use_exponential_occurrences: =False
     :param adds_list: =(1, 2, 5)
     :return:
     """
@@ -340,7 +344,8 @@ def do_trials_vary_start_dict(add_list_len=10, occurrences_are_many=False, adds_
         title = 'vary size of start dict. number of adds = {}\n'.format(add_variable)
         title += 'input occurrences = {}.  input list length = {}'.format(occurrences, add_list_len)
         results = time_trial_vary_start_dict_first_add(tuple_list_for_time_trial, input_dict_start_size=3000,
-                                                       input_dict_downward_step=50, number_of_adds=add_variable)
+                                                       input_dict_downward_step=50, number_of_adds=add_variable,
+                                                       use_exponential_occurrences=use_exponential_occurrences)
         plot_trial(*results, figure=add_variable, title=title)
 
 
@@ -353,15 +358,22 @@ def do_trials_vary_event_occurrences(add_list_len=10, start_dict_size=1, adds_li
     :return:
     """
     for add_variable in adds_list:
-        event_occurrences_generator = get_generator('event_occurrences', 0, add_list_len, exponent_increment=0.25)
+        event_occurrences_generator = get_generator('event_occurrences', 0, add_list_len, exponent_increment=0.1)
         results = time_trial(event_occurrences_generator, 'event_occurrences', adds_per_trial=add_variable,
                              input_dict_size=start_dict_size, number_of_data_pts=100)
         title = 'increasing event occurrences. number of adds={}\n'.format(add_variable)
         title += 'starting dict size={}. input list length = {}'.format(start_dict_size, add_list_len)
-        plot_trial(*results, figure=10 + add_variable, title=title)
+        plot_trial(*results, figure=add_variable, title=title)
 
 
 def do_trials_vary_list_length(start_dict_size=1, occurrences_are_many=False, adds_list=(1, 2, 5)):
+    """
+
+    :param start_dict_size: =1
+    :param occurrences_are_many: =False
+    :param adds_list: =(1, 2, 4)
+    :return:
+    """
     if occurrences_are_many:
         occurrences = 10
     else:
@@ -372,7 +384,7 @@ def do_trials_vary_list_length(start_dict_size=1, occurrences_are_many=False, ad
                              input_dict_size=start_dict_size, number_of_data_pts=100)
         title = 'increasing list length. number of adds={}\n'.format(add_variable)
         title += 'starting dict size={}. input list occurrences = {}'.format(start_dict_size, occurrences)
-        plot_trial(*results, figure=20 + add_variable, title=title)
+        plot_trial(*results, figure=add_variable, title=title)
 
 
 def do_trials_vary_gaps_in_list(add_list_len=100, start_dict_size=1, occurrences_are_many=False, randomize_gaps=True,
@@ -401,45 +413,115 @@ def do_trials_vary_gaps_in_list(add_list_len=100, start_dict_size=1, occurrences
         title += 'starting dict size={}. input list length: {}, occurrences: {}'.format(start_dict_size,
                                                                                         add_list_len,
                                                                                         occurrences)
-        plot_trial(*results, figure=30 + add_variable, title=title)
+        plot_trial(*results, figure=add_variable, title=title)
 
 # TODO broken
 def quick_and_dirty_ui():
     """a UI to demonstrate add speeds"""
-    print(get_welcome())
+    print(WELCOME_TXT)
 
-    figure = 0
+    """
+    'list_length', 'event_occurrences', 'increasing_gaps', 'dict_size'
+    """
 
     while True:
-        figure += 1
         plt.ion()
-        variable_choice = get_int('enter "1" for varying list_length\nand "2" for varying # of occurrences\n')
+        variable_choice = get_answer('enter "1" for varying input events\' length\n' +
+                                     'enter "2" for varying input events\' # of occurrences\n' +
+                                     'enter "3" for varying input events\' gaps in values\n' +
+                                     'enter "4" for varying the size of the start dictionary',
+                                     1, 4)
 
-        if variable_choice == 1:
-            print('chose list length')
-            variable = 'list_length'
-        else:
-            print('chose event occurrences')
-            variable = 'event_occurrences'
+        variable_dict = {1: 'list_length',
+                         2: 'event_occurrences',
+                         3: 'increasing_gaps',
+                         4: 'dict_size'}
+        action_dict = {1: do_trials_vary_list_length,
+                       2: do_trials_vary_event_occurrences,
+                       3: do_trials_vary_gaps_in_list,
+                       4: do_trials_vary_start_dict}
+        variable = variable_dict[variable_choice]
+        action = action_dict[variable_choice]
+        print('chose {}'.format(variable))
+        input_variables = get_kwargs(variable)
+        action(**input_variables)
+        # if variable_choice == 1:
+        #     print('chose event length')
+        #     variable = 'list_length'
+        #     input_variables = get_kwargs(variable)
+        #     do_trials_vary_list_length(**input_variables)
+        # elif variable_choice == 2:
+        #     print('chose event occurrences')
+        #     variable = 'event_occurrences'
+        #     input_variables = get_kwargs(variable)
+        #     do_trials_vary_event_occurrences(**input_variables)
+        # elif variable_choice == 3:
+        #     print('chose event gaps')
+        #     variable = 'increasing_gaps'
+        #     input_variables = get_kwargs(variable)
+        #     do_trials_vary_gaps_in_list(**input_variables)
+        # else:
+        #     print('chose varying size of start dictionary')
+        #     variable = 'dict_size'
+        #     input_variables = get_kwargs(variable)
+        #     do_trials_vary_start_dict(**input_variables)
 
-        start_val = get_answer('pick a starting index for list', -100, 100)
-        if variable == 'list_length':
-            exp = get_answer('choose number of occurrences based on 10 ** exponent\nenter exponent', 0, 1000)
-            occurrences_or_exp_step = 10 ** exp
+        plt.waitforbuttonpress()
+        # plt.pause(0.1)
 
-        else:
-            occurrences_or_exp_step = get_answer('choose exponent step for event occurrences', 1, 100)
-        start_length = get_answer('choose the initial length of list', 1, 1000)
+def get_kwargs(request):
+    keys = ['start_dict_size', 'add_list_len', 'occurrences_are_many', 'use_exponential_occurrences']
+    questions = ['what size for starting dictionary?',
+                 'how large a list to add?',
+                 'should the list have many occurrences? 1=True, 0=False',
+                 'should the starting dictionary have number populate exponentially? (10^x instead of x)\n' +
+                 '1= True, 0=False']
+    min_max = [(1, 2000), (2, 500), (0, 1), (0, 1)]
+    if request == 'dict_size':
+        min_max[1] = (2, 100)
 
-        intersection = get_and_plot_one_trial(variable, start_val, occurrences_or_exp_step, start_length)
+    request_and_indices = {'list_length': (0, 2),
+                           'event_occurrences': (0, 1),
+                           'increasing_gaps': (0, 1, 2),
+                           'dict_size': (1, 2, 3)}
+    output_kwargs = {}
+    for index in request_and_indices[request]:
+        output_kwargs[keys[index]] = get_answer(questions[index], *min_max[index])
+        if min_max[index] == (0, 1):
+            output_kwargs[keys[index]] = bool(output_kwargs[keys[index]])
+    if request in ('event_occurrences', 'increasing_gaps'):
+        adds_list = get_adds_list(output_kwargs)
+        output_kwargs['adds_list'] = adds_list
+    return output_kwargs
 
-        print('the graphs intersect at %s' % intersection)
-        plt.pause(0.1)
+
+def get_adds_list(dictionary):
+    start_size = dictionary['start_dict_size']
+    add_list_size = dictionary['add_list_len']
+    complete_add_list = [1, 2, 5, 10, 50, 100, 500]
+    if start_size <= 100:
+        max_list_size_for_add = [(4, 500), (9, 50), (20, 10), (10000, 5)]
+        for pair in max_list_size_for_add:
+            if add_list_size <= pair[0]:
+                max_adds = pair[1]
+                break
+
+    else:
+        max_list_size_for_add = [(4, 50), (9, 10), (10000, 5)]
+        for pair in max_list_size_for_add:
+            if add_list_size <= pair[0]:
+                max_adds = pair[1]
+                break
+    adds_list_end = complete_add_list.index(max_adds)
+    return complete_add_list[: adds_list_end + 1]
 
 
 if __name__ == '__main__':
-    # do_trials_vary_event_occurrences(start_dict_size=1, add_list_len=100)
-    do_trials_vary_gaps_in_list(start_dict_size=100, add_list_len=100, randomize_gaps=True, occurrences_are_many=True)
-    # do_trials_vary_list_length()
-    # do_trials_vary_start_dict()
-    plt.waitforbuttonpress()
+    # do_trials_vary_event_occurrences(start_dict_size=1, add_list_len=3, adds_list=(1, 2, 3, 5, 10, 100, 200))
+    # do_trials_vary_gaps_in_list(start_dict_size=1000, add_list_len=50, randomize_gaps=True, occurrences_are_many=False,
+    #                             adds_list=(1, 2, 3, 5, 10, 20))
+    # do_trials_vary_list_length(start_dict_size=1, occurrences_are_many=False)
+    # do_trials_vary_start_dict(add_list_len=10, occurrences_are_many=True, use_exponential_occurrences=False)
+    # plt.waitforbuttonpress()
+    quick_and_dirty_ui()
+
