@@ -1,7 +1,14 @@
-'''a module solely for finding how add_a_list and add_tuple_list compare.
-it's effectively the empirical proof for how LongIntTable.add() chooses
-the fastest method with it's _fastest() function.'''
-#pylint: disable=protected-access
+"""
+THIS MODULE REQUIRES numpy AND matplotlib TO RUN CORRECTLY
+
+this hastily cobbled together module demonstrates the conditions each of the following methods is fastest
+AdditiveEvents.combine_by_tuple_list and AdditiveEvents.combine_by_flattened_list
+the main determining factor seems to the ratio of (total event occurrences) to (total number of events).
+the quick_and_dirty_ui is set up to demonstrate this.
+
+THIS MODULE REQUIRES numpy AND matplotlib TO RUN CORRECTLY
+"""
+# pylint: disable=protected-access
 from __future__ import print_function
 
 import time
@@ -13,8 +20,8 @@ import dicetables.longintmath as lim
 
 
 def gen_one_point(val_list, loc='mid'):
-    '''a generator for a list of tuples. starts list of tuples (val, 1) for each
-    val in list. add one to loc = "start", "mid" or "end"'''
+    """a generator for a list of tuples. starts list of tuples (val, 1) for each
+    val in list. add one to loc = "start", "mid" or "end" """
     lst = [(val, 1) for val in val_list]
     if loc == 'start':
         index = 0
@@ -28,10 +35,11 @@ def gen_one_point(val_list, loc='mid'):
         current_freq = lst[index][1]
         lst[index] = (index_val, current_freq + 1)
 
+
 def gen_n_points(val_list, num_points):
-    '''input is a list and the number of points getting added.  start with tuple
+    """input is a list and the number of points getting added.  start with tuple
     list of (val, 1) for val in list.  adds one to the frequency of number of
-    pts.'''
+    pts."""
     lst = [(val, 1) for val in val_list]
     factor = len(val_list) / float(num_points + 1)
     indexes = [int(factor * multiplier) for multiplier in range(1, num_points + 1)]
@@ -41,9 +49,10 @@ def gen_n_points(val_list, num_points):
             val, freq = lst[index]
             lst[index] = (val, freq + 1)
 
+
 def gen_random_point(val_list):
-    '''input is a list of vals.  generates list of (val, 1). then each iteration
-    add one to a random freq'''
+    """input is a list of vals.  generates list of (val, 1). then each iteration
+    add one to a random freq"""
     lst = [(val, 1) for val in val_list]
     length = len(lst)
     while True:
@@ -52,51 +61,43 @@ def gen_random_point(val_list):
         val, freq = lst[index]
         lst[index] = (val, freq + 1)
 
-def add_int_lists(table, num_times, lst):
-    '''repeat the add_a_list function num_times times.'''
-    for _ in range(num_times):
-        table._combine_once_by_flattened_list(lst)
 
-def add_tuple_lists(table, num_times, lst):
-    '''num_times is an int.  repeat add_tuple_list that many times.'''
-    for _ in range(num_times):
-        table._combine_once_by_tuple_list(lst)
-
-def one_time_trial(tuple_list, num_adds):
-    '''add t_list to identity AdditiveEvents num_adds times, using _combine_once_by_flattened_list and
+def one_time_trial(events, num_adds, start_dict_size=1):
+    """add t_list to identity AdditiveEvents num_adds times, using _combine_once_by_flattened_list and
     _combine_once_by_tuple_list.  returns the ratio of sum_of_freq/num_of_values, and the
-    time for each funtion to do the adding.'''
-    tuple_list.sort()
-    lst = []
-    for val, freq in tuple_list:
-        lst = lst + [val] * freq
+    time for each function to do the adding."""
+    events_total_occurrences = sum([pair[1] for pair in events])
 
-    freq_val_ratio = len(lst)/float(len(tuple_list))
+    occurrences_to_events_ratio = events_total_occurrences/float(len(events))
 
-    id_table_a = lim.AdditiveEvents({0:1})
+    start_dict = dict([(event, 1 + event % 100) for event in range(start_dict_size)])
+
+    id_table_a = lim.AdditiveEvents(start_dict)
     start_a = time.clock()
-    add_int_lists(id_table_a, num_adds, lst)
-    list_time = time.clock() - start_a
+    id_table_a.combine_with_new_events(num_adds, events, method='flattened_list')
+    flattened_list_time = time.clock() - start_a
 
-    id_table_b = lim.AdditiveEvents({0:1})
+    id_table_b = lim.AdditiveEvents(start_dict)
     start_b = time.clock()
-    add_tuple_lists(id_table_b, num_adds, tuple_list)
+    id_table_b.combine_with_new_events(num_adds, events, method='tuple_list')
     tuple_time = time.clock() - start_b
 
-    return freq_val_ratio, tuple_time, list_time
+    return occurrences_to_events_ratio, tuple_time, flattened_list_time
 
-def time_trial(generator, adds_per_trial):
-    '''run one time trial, then run again while advancing the generator. test
+
+def time_trial(generator, adds_per_trial, start_dict_size=1):
+    """run one time trial, then run again while advancing the generator. test
     runs about 1.8 times length from start to equal times. outputs x-axis and
-    two y-axes.'''
+    two y-axes."""
     ratios = []
     tuple_times = []
     list_times = []
-    count = 1
+    count = 5
     print('please wait for the count-up/down to reach zero')
     while count > 0:
         ratio, tup_time, lst_time = one_time_trial(next(generator),
-                                                   adds_per_trial)
+                                                   adds_per_trial,
+                                                   start_dict_size=start_dict_size)
         print(count)
         if tup_time > lst_time:
             count += 1
@@ -107,29 +108,31 @@ def time_trial(generator, adds_per_trial):
         list_times.append(lst_time)
     return ratios, tuple_times, list_times
 
+
 def plot_trial(ratios, tuples, lists, title='none', figure=1):
-    '''plot x-axis = ratios.  y-axis = tuples and y-axis = lists. fit curves to
-    ax + b and return the intesection of two curves'''
+    """plot x-axis = ratios.  y-axis = tuples and y-axis = lists. fit curves to
+    ax + b and return the intersection of two curves"""
     plt.ion()
     plt.figure(figure)
     plt.plot(ratios, tuples, 'bo-', label='tuple add')
     plt.plot(ratios, lists, 'r*-', label='list add')
     plt.ylabel('time')
-    plt.xlabel('num_freq over num_vals')
+    plt.xlabel('event occurrences over number of events')
 
     plt.legend()
     intersection, tup_fit, lst_fit = polyfit_and_intersection(ratios,
                                                               tuples, lists)
-    title = title + '\nintersection = %s' % (intersection)
+    title += '\nintersection = %s' % intersection
     plt.title(title)
     plt.plot(ratios, tup_fit, 'c-')
     plt.plot(ratios, lst_fit, 'c-')
     plt.pause(0.01)
     return intersection
 
+
 def polyfit_and_intersection(ratios, tuples, lists):
-    '''fits tuples and list linearly to ratios. returns the intersection of two
-    fits and two lists of y values to plot with ratios'''
+    """fits tuples and list linearly to ratios. returns the intersection of two
+    fits and two lists of y values to plot with ratios"""
     tup_slope, tup_const = np.polyfit(ratios, tuples, 1)
     lst_slope, lst_const = np.polyfit(ratios, lists, 1)
     intersection = (tup_const - lst_const) / (lst_slope - tup_slope)
@@ -137,15 +140,17 @@ def polyfit_and_intersection(ratios, tuples, lists):
     lst_polyfit = [(lst_slope * x + lst_const) for x in ratios]
     return intersection, tuple_polyfit, lst_polyfit
 
+
 def random_list(num_vals):
-    '''num_vals is how many elements in your list.  generates list start at
-    -10 to 10 with a step of 1 - 5'''
+    """num_vals is how many elements in your list.  generates list start at
+    -10 to 10 with a step of 1 - 5"""
     start = random.randrange(-10, 11)
     step = random.randrange(1, 6)
     return range(start, step*num_vals + start, step)
 
+
 def random_generator(num_vals, n_points_only=False):
-    '''outputs a random generator of len(lst) = num_vals'''
+    """outputs a random generator of len(lst) = num_vals"""
     start_list = random_list(num_vals)
     if n_points_only:
         gen_str = 'n_points'
@@ -170,18 +175,18 @@ def random_generator(num_vals, n_points_only=False):
         out_str = '%s\n%s n=%s' % (start_list, gen_str, num_points)
     return generator, out_str
 
-def random_trial(num_vals, adds_per_trial, figure=1, n_points_only=False):
-    '''make a random generator of a random list with num_vals elements. add that
-    list num_adds times per trial and plot results and return intesection'''
+
+def random_trial(num_vals, adds_per_trial, figure=1, n_points_only=False, start_dict_size=1):
+    """make a random generator of a random list with num_vals elements. add that
+    list num_adds times per trial and plot results and return intesection"""
     generator, title = random_generator(num_vals, n_points_only)
-    title = title + '  adds=%s  vals=%s' % (adds_per_trial, num_vals)
-    ratio, tuples, lists = time_trial(generator, adds_per_trial)
+    title += '  adds={}  vals={}  start dictionary size={}'.format(adds_per_trial, num_vals, start_dict_size)
+    ratio, tuples, lists = time_trial(generator, adds_per_trial, start_dict_size)
     return plot_trial(ratio, tuples, lists, title, figure)
 
 
-
 def get_welcome():
-    '''return welcom_message.txt'''
+    """return welcome_message.txt"""
     try:
         welcome_file_name = getcwd() + '\\' + 'welcome_message.txt'
         welcome_file = open(welcome_file_name, 'r')
@@ -190,8 +195,10 @@ def get_welcome():
         welcome_message = 'took a guess where "welcome_' \
                           'message.txt" was, and I was wrong.'
     return welcome_message
+
+
 def get_int(question):
-    '''makes sure user input is an int. quit if "q"'''
+    """makes sure user input is an int. quit if "q" """
     while True:
         try:
             answer = raw_input(question + '>>>')
@@ -206,50 +213,64 @@ def get_int(question):
             print('must be int OR "q" to quit')
             continue
 
+
 def quick_and_dirty_ui():
-    '''a UI to demonstrate add speeds'''
+    """a UI to demonstrate add speeds"""
     print(get_welcome())
     this_will_take_forever = 2500
-    too_short_for_accuracy = 1200
+    # too_short_for_accuracy = 1200
     needs_many_points = 50
     max_vals = 300
     min_vals = 3
+    min_start_size = 1
+    max_start_size = 1000
     figure = 0
 
     while True:
         figure += 1
         plt.ion()
-        num_vals_question = (('how many values in your list?'+
+        num_vals_question = (('how many values in your list?' +
                               '\nplease input int between %s and %s\n') %
                              (min_vals, max_vals))
         num_vals = get_int(num_vals_question)
         if num_vals > max_vals:
-            print('num_vals too big. now = %s' % (max_vals))
+            print('num_vals too big. now = %s' % max_vals)
             num_vals = max_vals
         if num_vals < min_vals:
-            print('num_vals too small. now = %s' % (min_vals))
+            print('num_vals too small. now = %s' % min_vals)
             num_vals = min_vals
 
         max_adds = this_will_take_forever // num_vals
-        min_adds = 1 + too_short_for_accuracy // num_vals
+        min_adds = 1  # + too_short_for_accuracy // num_vals
         num_adds_question = ('please input the number of adds per trial\n' +
                              'an int between %s and %s\n' % (min_adds, max_adds))
         num_adds = get_int(num_adds_question)
         if num_adds < min_adds:
-            print('num_adds too small. now = %s' % (min_adds))
+            print('num_adds too small. now = %s' % min_adds)
             num_adds = min_adds
         if num_adds > max_adds:
-            print('num_adds too big. now = %s' % (max_adds))
+            print('num_adds too big. now = %s' % max_adds)
             num_adds = max_adds
+
+        start_dict_question = ('please input the size of the starting dictionary\n' +
+                               'an int between %s and %s\n' % (min_start_size, max_start_size))
+        start_dict_size = get_int(start_dict_question)
+        if num_adds < min_start_size:
+            print('num_adds too small. now = %s' % min_start_size)
+            start_dict_size = min_start_size
+        if num_adds > max_adds:
+            print('num_adds too big. now = %s' % max_start_size)
+            start_dict_size = max_start_size
 
         n_points_only = num_vals >= needs_many_points
 
-        intersection = random_trial(num_vals, num_adds, figure, n_points_only)
-        print('the graphs intersect at %s' % (intersection))
+        intersection = random_trial(num_vals, num_adds, figure, n_points_only, start_dict_size)
+        print('the graphs intersect at %s' % intersection)
         plt.pause(0.1)
 
+
 def tst_num_adds(num_vals, start_add, stop_add):
-    '''shows how the intersecion varies with different numbers of adds'''
+    """shows how the intersection varies with different numbers of adds"""
     start_list = random_list(num_vals)
     num_points = num_vals // 5
     if num_points == 0:
@@ -268,11 +289,13 @@ def tst_num_adds(num_vals, start_add, stop_add):
     plt.ylabel('intersections')
     return out_lst
 
+
 def tst_num_vals(star_vals, stop_vals, num_adds):
-    '''shows how the intesection varies with different number of values in a
-    list'''
+    """shows how the intersection varies with different number of values in a
+    list"""
     x_axis = range(star_vals, stop_vals + 1)
     out_lst = []
+    start_list = []
     for num_vals in x_axis:
         print('countdown %s' % (x_axis[-1] - num_vals))
         num_points = num_vals // 5

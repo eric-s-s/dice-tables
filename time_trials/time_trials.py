@@ -6,13 +6,13 @@ from __future__ import print_function
 from decimal import Decimal
 import time
 from collections import Counter
-from operator import mul
 import numpy as np
 from dicetables.tableinfo import NumberFormatter
 import dicetables as dt
+from dicetables import longintmath as lim
 
 import numpydict as npd
-import dicetables.indexedvalues as iv
+
 
 def time_trial(times, func, *args):
     start = time.clock()
@@ -20,12 +20,26 @@ def time_trial(times, func, *args):
         func(*args)
     return time.clock() - start
 
+
 def time_trial_output(times, text, func, *args):
     return 'call using {} {} times: {:.5}'.format(text, times, time_trial(times, func, *args))
 
-def print_time_trial_for_add_list_funcs(arg_list, object_dot_method, label_for_object):
-    """arg_list = (text, times, object_to_add)"""
-    print(time_trial_output(1, arg_list[0].format(arg_list[1], label_for_object), object_dot_method, *arg_list[1:]))
+
+def print_time_trial_for_add_list_funcs(num_adds, to_add, object_dot_method, label_for_object):
+    """
+
+    :param num_adds:
+    :param to_add:
+    :param object_dot_method:
+    :param label_for_object:
+    :return:
+    """
+    elapsed_time = time_trial(1, object_dot_method, num_adds, to_add)
+    print('added [{} ... {}]  {} times to {}.  time: {:.3e}'.format(to_add[0],
+                                                                    to_add[-1],
+                                                                    num_adds,
+                                                                    label_for_object,
+                                                                    elapsed_time))
 
 
 def format_huge_int_using_decimal(huge_int, dig_len=4):
@@ -35,14 +49,18 @@ def format_huge_int_using_decimal(huge_int, dig_len=4):
 def convert_num(number):
     return Decimal(number)
 
+
 def prep_tuple_list_as_tuple_list(tuple_list):
     return [(convert_num(pair[0]),  convert_num(pair[1])) for pair in tuple_list]
+
 
 def prep_tuple_list_as_list(tuple_list):
     new_list = []
     for val, freq in tuple_list:
         new_list = new_list + [convert_num(val)] * freq
     return new_list
+
+
 class DecimalEventTable(object):
     def __init__(self, seed_dictionary):
         self._dictionary = {}
@@ -61,10 +79,12 @@ class DecimalEventTable(object):
             for val in lst:
                 newdic[value+val] = (newdic.get(value+val, 0)+current_frequency)
         self._dictionary = newdic
+
     def add_tuples(self, times, lst):
         to_add = prep_tuple_list_as_tuple_list(lst)
         for _ in range(times):
             self._add_tuple_list(to_add)
+
     def _add_tuple_list(self, lst):
         """copy of _combine_once_by_tuple_list from original"""
         newdic = {}
@@ -73,7 +93,6 @@ class DecimalEventTable(object):
                 newdic[value + val] = (newdic.get(value + val, 0) +
                                        freq * current_frequency)
         self._dictionary = newdic
-
 
     def mean(self):
         numerator = 0
@@ -93,25 +112,26 @@ class DecimalEventTable(object):
 
         return round((sqs/count)**Decimal(0.5), 4)
 
+
 class CounterTable(dt.AdditiveEvents):
     def __init__(self, seed):
         dt.AdditiveEvents.__init__(self, seed)
         self._table = Counter(self._table)
+
     def _add_a_list(self, lst):
         newdic = Counter()
         for event in lst:
             event_dic = Counter({event + value: frequency for value, frequency in self._table.items()})
             newdic.update(event_dic)
-        # for value, current_frequency in self._table.items():
-        #     for val in lst:
-        #         newdic[value + val] += current_frequency
         self._table = newdic
+
     def _add_tuple_list(self, lst):
         newdic = Counter()
         for value, current_frequency in self._table.items():
             for val, freq in lst:
                 newdic[value + val] += freq * current_frequency
         self._table = newdic
+
 
 def make_list_from_tuples(tuple_list):
     out = []
@@ -121,7 +141,7 @@ def make_list_from_tuples(tuple_list):
 
 
 class NumpyTable(object):
-    def __init__(self, seed_dict={0:1}):
+    def __init__(self, seed_dict):
         start_val, array = npd.convert_tuple_list_to_array_and_start_value(sorted(seed_dict.items()))
         self.counter = npd.NumpyCounter(start_val, array)
 
@@ -139,7 +159,7 @@ class NumpyTable(object):
         for _ in range(times):
             self.add_a_list(to_add)
 
-    def make_trans(self, tuple_list):
+    def make_transformation_matrix(self, tuple_list):
         start_val = min(tuple_list)[0]
         dlist_end = max(tuple_list)[0]
         dlist_size = dlist_end - start_val
@@ -152,16 +172,15 @@ class NumpyTable(object):
                 trans[row][row + index] = val
         return trans, start_val
 
-    def trans_add(self, tuple_list):
-        trans, start_val = self.make_trans(tuple_list)
+    def single_transform_add(self, tuple_list):
+        trans, start_val = self.make_transformation_matrix(tuple_list)
         new_array = self.counter.array.dot(trans)
         new_start = self.counter.start_val + start_val
         self.counter = npd.NumpyCounter(new_start, new_array)
 
-    def do_trans(self,times,  tuple_list):
+    def combine_by_matrix_transfor(self, times, tuple_list):
         for _ in range(times):
-            self.trans_add(tuple_list)
-
+            self.single_transform_add(tuple_list)
 
     def add_a_tuple_list(self, tuple_list):
         original = self.counter.start_val
@@ -174,13 +193,13 @@ class NumpyTable(object):
             new_array = old_array * freq
             self.counter = self.counter.add(npd.NumpyCounter(start_val, new_array))
 
-    def add_tuples(self, times, tuple_list):
+    def combine_by_tuple_list(self, times, tuple_list):
         for _ in range(times):
             self.add_a_tuple_list(tuple_list)
 
     def mean(self):
-        '''i mean, don't you just sometimes look at a table of values
-        and wonder what the mean is?'''
+        """i mean, don't you just sometimes look at a table of values
+        and wonder what the mean is?"""
         numerator = sum([value * freq for value, freq in self.counter.items()])
         denominator = sum(self.counter.array)
         if denominator == 0:
@@ -188,75 +207,8 @@ class NumpyTable(object):
         return dt.long_int_div(numerator, denominator)
 
     def stddev(self, decimal_place=4):
-        '''returns the standdard deviation of the table, with special measures
-        to deal with long ints.'''
-        avg = self.mean()
-        extra_digits = 5
-        power = len(str(max(self.counter.array))) - 1
-        if power < 2 * (decimal_place + extra_digits):
-            factor = 1
-        else:
-            factor = 10 ** (power - (decimal_place + extra_digits))
-        sqs = 0
-        count = 0
-        for event, frequency in self.counter.items():
-            sqs += (frequency // factor) * (avg - event) ** 2
-            count += frequency
-        new_count = count // factor
-        return round((sqs / new_count) ** 0.5, decimal_place)
-
-class ListTable(object):
-    def __init__(self, seed_dict={0:1}):
-        start_val, array = npd.convert_tuple_list_to_array_and_start_value(sorted(seed_dict.items()))
-        self.counter = npd.MyCounter(start_val, array.tolist())
-
-    def add_a_list(self, input_list):
-        original = self.counter.start_val
-        old_array = self.counter.array[:]
-        self.counter.start_val = original + input_list[0]
-        for val in input_list[1:]:
-            start_val = original + val
-            new_array = old_array[:]
-            self.counter = self.counter.add(npd.MyCounter(start_val, new_array))
-
-    def add(self, times, tuple_list):
-        to_add = make_list_from_tuples(tuple_list)
-        for _ in range(times):
-            self.add_a_list(to_add)
-
-    def add_a_tuple_list(self, tuple_list):
-        original = self.counter.start_val
-        old_array = self.counter.array[:]
-        val_1, freq_1 = tuple_list[0]
-        self.counter.start_val = original + val_1
-        if freq_1 != 1:
-            self.counter.array = [freq_1 * num for num in old_array]
-        else:
-            self.counter.array = old_array[:]
-        for val, freq in tuple_list[1:]:
-            start_val = original + val
-            if freq != 1:
-                new_array = [freq * num for num in old_array]
-            else:
-                new_array = old_array[:]
-            self.counter = self.counter.add(npd.MyCounter(start_val, new_array))
-
-    def add_tuples(self, times, tuple_list):
-        for _ in range(times):
-            self.add_a_tuple_list(tuple_list)
-
-    def mean(self):
-        '''i mean, don't you just sometimes look at a table of values
-        and wonder what the mean is?'''
-        numerator = sum([value * freq for value, freq in self.counter.items()])
-        denominator = sum(self.counter.array)
-        if denominator == 0:
-            raise ZeroDivisionError('there are no values in the table')
-        return dt.long_int_div(numerator, denominator)
-
-    def stddev(self, decimal_place=4):
-        '''returns the standdard deviation of the table, with special measures
-        to deal with long ints.'''
+        """returns the standdard deviation of the table, with special measures
+        to deal with long ints."""
         avg = self.mean()
         extra_digits = 5
         power = len(str(max(self.counter.array))) - 1
@@ -273,161 +225,199 @@ class ListTable(object):
         return round((sqs / new_count) ** 0.5, decimal_place)
 
 
-class WrapListTable(dt.AdditiveEvents):
-    def __init__(self, seed={0: 1}):
-        dt.AdditiveEvents.__init__(self, seed)
-
-    def generate_my_counter(self):
-        # start_val, array = npd.make_start_val_and_list(self._table)
-        # # return npd.MyCounter(start_val, array)
-        # return iv.IndexedValues(start_val, array)
-        return iv.generate_indexed_values_from_dict(self._table)
-
-    # def add_list_to_my_counter(self, tuple_list, input_counter):
-    #     # orig_start_val = input_counter.start_val
-    #     # orig_values = input_counter.array[:]
-    #
-    #     orig_start_val = input_counter.start_index
-    #     orig_values = input_counter.raw_values
-    #     val_1, freq_1 = tuple_list[0]
-    #     if freq_1 != 1:
-    #         new_array = [freq_1 * num for num in orig_values]
-    #     else:
-    #         new_array = orig_values[:]
-    #     # new_counter = npd.MyCounter(orig_start_val + val_1, new_array)
-    #     new_counter = iv.IndexedValues(orig_start_val + val_1, new_array)
-    #     for val, freq in tuple_list[1:]:
-    #         start_val = orig_start_val + val
-    #         if freq != 1:
-    #             new_array = [freq * num for num in orig_values]
-    #         else:
-    #             new_array = orig_values[:]
-    #         # new_counter = new_counter.add(npd.MyCounter(start_val, new_array))
-    #         new_counter = new_counter.combine(iv.IndexedValues(start_val, new_array))
-    #     return new_counter
-    #
-    # def add_list_to_my_counter_lots(self, times, input_list, start_counter):
-    #     for _ in range(times):
-    #         start_counter = self.add_list_to_my_counter(input_list, start_counter)
-    #     return start_counter
-    #
-    # def alt_add_list2(self, times, tuple_list):
-    #     # start_counter = npd.MyCounter(*npd.make_start_val_and_list(self._table))
-    #     start_counter = self.generate_my_counter()
-    #     out_counter = self.add_list_to_my_counter_lots(times, tuple_list, start_counter)
-    #     # self._table = dict(out_counter.items())
-    #     self._table = dict(out_counter.get_items())
-
-    # def test_single_add(self, tuple_list):
-    #     start_index, raw_values = iv.make_start_index_and_list(sorted(self._table.items()))
-    #     val_1, freq_1 = tuple_list[0]
-    #     if freq_1 != 1:
-    #         new_array = [freq_1 * num for num in raw_values]
-    #     else:
-    #         new_array = raw_values[:]
-    #     # new_counter = npd.MyCounter(orig_start_val + val_1, new_array)
-    #     new_counter = iv.IndexedValues(start_index + val_1, new_array)
-    #     for val, freq in tuple_list[1:]:
-    #         start_val = start_index + val
-    #         if freq != 1:
-    #             new_array = [freq * num for num in raw_values]
-    #         else:
-    #             new_array = raw_values[:]
-    #         # new_counter = new_counter.add(npd.MyCounter(start_val, new_array))
-    #         new_counter = new_counter.combine(iv.IndexedValues(start_val, new_array))
-    #     self._table = dict(new_counter.get_items())
-
-    def alt_add_list(self, times, tuple_list):
-        indexed_values = iv.generate_indexed_values_from_dict(self._table)
-        for _ in range(times):
-            indexed_values = indexed_values.combine_with_events_list(tuple_list)
-        self._table = dict(indexed_values.get_items())
+def get_int(question):
+    """makes sure user input is an int. quit if "q" """
+    while True:
+        try:
+            answer = raw_input(question + '\n>>>')
+        except NameError:
+            answer = input(question + '\n>>>')
+        if answer == 'q':
+            raise SystemExit
+        try:
+            output = int(answer)
+            return output
+        except ValueError:
+            print('must be int OR "q" to quit')
+            continue
 
 
+def get_answer(question, min_val, max_val):
+    if max_val > 1000:
+        to_format = '{} between {} and {:.2e}'
+    else:
+        to_format = '{} between {} and {}'
+    question = to_format.format(question, min_val, max_val)
+    raw_val = get_int(question)
+    return min(max_val, (max(min_val, raw_val)))
 
 
+def super_poopy_ui():
 
-print()
-x = NumpyTable()
-x.add(2, [(val, 1) for val in range(1, 7)])
-print(x.counter.items())
-x.add_a_tuple_list([(val, 1) for val in range(1, 7)])
-print(x.counter.items())
-print(x.stddev())
-y = dt.DiceTable()
-y.add_die(3, dt.Die(6))
-print(y.stddev())
+    introduction = """
+    this is a hastily cobbled together UI.  If you pick values that are too high, you'll have to restart your kernel.
+    This is just to show how different combine methods compare to the two main methods in AdditiveEvents:
+    combine_by_flattened_list and combine_by_tuple_list.
+    It will compute for each kind compared to the chosen new method and then print the times.
+    It will also confirm equality by showing
+    "q" will quit at any question prompt.
+    """
 
-print()
-formatter = NumberFormatter()
-str_func = [('scinote: my method, huge int', formatter.format_number),
-            ('scinote: decimal  huge int', format_huge_int_using_decimal)]
-the_args = (123**456, )
+    print(introduction)
+    while True:
+        method_choices = {1: 'indexed values',
+                          2: 'counter table (currently not working)',
+                          3: 'numpy table',
+                          4: 'numpy matrix'}
+        method_question = '\npick a a table and method\n{}\n'.format(str(method_choices).replace(',', '\n'))
+        method_choice = get_answer(method_question, 1, 4)
+        method_choice_str = method_choices[method_choice]
 
+        start_dict_size = get_answer('pick a start size for AdditiveEvents', 1, 1000)
+        start_dict = dict([(event, 10**(event % 100)) for event in range(start_dict_size)])
 
-for words, func in str_func:
-    print(time_trial_output(10000, words, func, *the_args))
+        flattened_list_control = dt.AdditiveEvents(start_dict)
+        tuple_list_control = dt.AdditiveEvents(start_dict)
 
-add_times = 5
-my_table = dt.AdditiveEvents({0: 1})
-dec_table = DecimalEventTable({0:1})
-c_table = CounterTable({0:1})
-np_table = NumpyTable()
-l_table = ListTable()
-l_table2 = ListTable()
+        added_events_size = get_answer('how big is the list to add', 2, 1000)
+        added_event_occurrences = get_answer('how many occurrences for tuple add', 2, 10**300)
+        gaps = get_answer('how many spaces between value', 0, 2)
+        flat_events = [(event, 1) for event in range(0, added_events_size, gaps + 1)]
+        tuple_events = [(event, added_event_occurrences) for event in range(0, added_events_size, gaps + 1)]
 
-wl_table = WrapListTable()
-transform = NumpyTable()
-line_302_list = [(val, 1) for val in range(1, 100, 3)]
-# line_302_list = [(1, 1), (7, 1)]
+        number_of_adds = get_answer('how many add to do?', 1, 2000)
 
-#gap ratio maybe 3
-add_list_args = ('add list {}*[1,2,3,4,5,6]: {} - ', add_times, line_302_list)
-print()
-line_302_range = line_302_list[-1][0] - line_302_list[0][0] + 1
-print('range to vals is {}'.format(float(line_302_range)/len(line_302_list)))
-print_time_trial_for_add_list_funcs(add_list_args, my_table.combine_with_new_events, 'mine')
-# print_time_trial_for_add_list_funcs(add_list_args, dec_table.add_list, 'dec')
-# print_time_trial_for_add_list_funcs(add_list_args, c_table.add, 'counter')
-print_time_trial_for_add_list_funcs(add_list_args, np_table.add, 'numpy')
-print_time_trial_for_add_list_funcs(add_list_args, l_table.add, 'lists')
-print_time_trial_for_add_list_funcs(add_list_args, l_table2.add_tuples, 'lists_tuple')
-print_time_trial_for_add_list_funcs(add_list_args, wl_table.alt_add_list, 'wlist')
-# print_time_trial_for_add_list_funcs(add_list_args, transform.do_trans, 'trans')
-# print(time_trial_output(add_times, 'stddev mine', my_table.stddev))
-# print(time_trial_output(add_times, 'stddev dec', dec_table.stddev))
-# print(time_trial_output(add_times, 'stddev numpy', np_table.stddev))
-# print(time_trial_output(add_times, 'stddev list', l_table.stddev))
+        print('\n\nRESULTS - VS COMBINE FLATTENED')
+        vs_flattened_obj, vs_flattened_method = get_obj_and_method(method_choice, start_dict)
+        trial_vs_control(flattened_list_control._combine_by_flattened_list,
+                         vs_flattened_method,
+                         number_of_adds,
+                         flat_events,
+                         method_choice_str)
+        print()
+        confirm_equality(flattened_list_control, vs_flattened_obj, method_choice_str)
 
-print('confirmation both tables are same. stddev wlst: {}, mine: {}, counter: {}, trans: {}, list: {}'
-      .format(wl_table.stddev(), my_table.stddev(), c_table.stddev(), l_table2.stddev(), l_table.stddev()))
-print('means wlst: {:.3}, mine: {:.3}, counter: {:.3}, trans: {:.3}, list: {:.3}'
-      .format(wl_table.mean(), my_table.mean(), c_table.mean(), transform.mean(), l_table.mean()))
-
-print()
-my_table = dt.AdditiveEvents({0: 1})
-dec_table = DecimalEventTable({0:1})
-c_table = CounterTable({0:1})
-np_table = NumpyTable()
-l_table = ListTable()
-wl_table = WrapListTable()
-#gap ratio maybe 2.5
-# line_291_list = [(1, 1), (4, 10)]
-line_291_list = [(val, 10**(1000)) for val in range(1, 100, 1)]
-line_291_range = line_291_list[-1][0] - line_291_list[0][0] + 1
-print('range to vals is {}'.format(float(line_291_range)/len(line_291_list)))
-add_tuples_args = ('add tuple list {}*[(1,1), (2,2), ... (6,6)]: {} - ', add_times, line_291_list)
-print_time_trial_for_add_list_funcs(add_tuples_args, my_table.combine_with_new_events, 'mine')
-# print_time_trial_for_add_list_funcs(add_tuples_args, dec_table.add_tuples, 'dec')
-# print_time_trial_for_add_list_funcs(add_tuples_args, c_table.add, 'counter')
-print_time_trial_for_add_list_funcs(add_tuples_args, np_table.add_tuples, 'numpy')
-print_time_trial_for_add_list_funcs(add_tuples_args, l_table.add_tuples, 'lists')
-print_time_trial_for_add_list_funcs(add_tuples_args, wl_table.alt_add_list, 'wlist')
-print('confirmation both tables are same. stddev dec: {}, mine: {}, wlist: {}, np: {}, list: {}'
-      .format(dec_table.stddev(), my_table.stddev(), wl_table.stddev(), np_table.stddev(), l_table.stddev()))
-print('means dec: {:.3}, mine: {:.3}, wlist: {:.3}, np: {:.3}, list: {:.3}'
-      .format(dec_table.mean(), my_table.mean(), wl_table.mean(), np_table.mean(), l_table.mean()))
+        print('\n\nRESULTS - VS COMBINE TUPLE')
+        vs_tuple_obj, vs_tuple_method = get_obj_and_method(method_choice, start_dict)
+        trial_vs_control(tuple_list_control._combine_by_tuple_list,
+                         vs_tuple_method,
+                         number_of_adds,
+                         tuple_events,
+                         method_choice_str)
+        print()
+        confirm_equality(tuple_list_control, vs_tuple_obj, method_choice_str)
 
 
+def get_obj_and_method(number_choice, start_dict):
+    indexed_values = dt.AdditiveEvents(start_dict)
+    counter = CounterTable(start_dict)
+    numpy_table = NumpyTable(start_dict)
+    choices = {1: (indexed_values, indexed_values._combine_by_indexed_values),
+               2: (counter, counter.combine_with_new_events),
+               3: (numpy_table, numpy_table.combine_by_tuple_list),
+               4: (numpy_table, numpy_table.combine_by_matrix_transfor)}
+    return choices[number_choice]
 
 
+def trial_vs_control(control_method, trial_method, number_of_adds, events, method_choice_str):
+    print_time_trial_for_add_list_funcs(number_of_adds,
+                                        events,
+                                        control_method,
+                                        'control')
+    print_time_trial_for_add_list_funcs(number_of_adds,
+                                        events,
+                                        trial_method,
+                                        method_choice_str)
+
+
+def confirm_equality(control, other, method_choice_str):
+    print('confirmation all tables are same.')
+    print('stddev control: {}, stddev {}: {}'
+          .format(control.stddev(), method_choice_str, other.stddev()))
+    print('mean control: {:.3}, mean {}: {:.3}'
+          .format(control.mean(), method_choice_str, other.mean()))
+
+if __name__ == '__main__':
+    super_poopy_ui()
+
+
+# print()
+# x = NumpyTable()
+# x.add(2, [(val, 1) for val in range(1, 7)])
+# print(x.counter.items())
+# x.add_a_tuple_list([(val, 1) for val in range(1, 7)])
+# print(x.counter.items())
+# print(x.stddev())
+# y = dt.DiceTable()
+# y.add_die(3, dt.Die(6))
+# print(y.stddev())
+#
+# print()
+# formatter = NumberFormatter()
+# str_func = [('scinote: my method, huge int', formatter.format_number),
+#             ('scinote: decimal  huge int', format_huge_int_using_decimal)]
+# the_args = (123**456, )
+#
+#
+# for words, func in str_func:
+#     print(time_trial_output(10000, words, func, *the_args))
+
+# add_times = 1000
+# start_dict = dict([(val, 10**val) for val in range(1000)])
+# # start_dict = {0: 1}
+#
+# tuple_list_range = range(1, 7, 1)
+#
+# flat_list = [(val, 1) for val in tuple_list_range]
+# flat_list = lim.verify_and_prep_tuple_list(flat_list)
+#
+# many_occurrences = [(val, 5) for val in tuple_list_range]
+# many_occurrences = lim.verify_and_prep_tuple_list(many_occurrences)
+#
+# my_table = dt.AdditiveEvents(start_dict)
+# my_table_iv = dt.AdditiveEvents(start_dict)
+# dec_table = DecimalEventTable(start_dict)
+# c_table = CounterTable(start_dict)
+# np_table = NumpyTable(start_dict)
+# transform = NumpyTable(start_dict)
+#
+# # gap ratio maybe 3
+# print()
+# flat_list_range = flat_list[-1][0] - flat_list[0][0] + 1
+# print('range to vals is {}'.format(float(flat_list_range) / len(flat_list)))
+# print_time_trial_for_add_list_funcs(add_times, flat_list, my_table.combine_by_flattened_list, 'mine')
+# print_time_trial_for_add_list_funcs(add_times, flat_list, my_table_iv.combine_by_indexed_values, 'indexed')
+# # print_time_trial_for_add_list_funcs(add_times, flat_list, dec_table.add_list, 'dec')
+# # print_time_trial_for_add_list_funcs(add_times, flat_list, c_table.add, 'counter')
+# # print_time_trial_for_add_list_funcs(add_times, flat_list, np_table.add, 'numpy')
+# # print_time_trial_for_add_list_funcs(add_times, flat_list, transform.combine_by_matrix_transfor, 'trans')
+#
+#
+# print('confirmation all tables are same.')
+# print('stddevs mine: {}, indexed: {}, dec: {}, counter: {}, numpy: {}, tansform: {}'
+#       .format(my_table.stddev(), my_table_iv.stddev(), dec_table.stddev(), c_table.stddev(), np_table.stddev(),
+#               transform.stddev()))
+# print('means mine: {:.3}, indexed: {:.3}, dec: {:.3}, counter: {:.3}, numpy: {:.3}, tansform: {:.3}'
+#       .format(my_table.mean(), my_table_iv.mean(), dec_table.mean(), c_table.mean(), np_table.mean(),
+#               transform.mean()))
+#
+# print()
+# my_table = dt.AdditiveEvents(start_dict)
+# my_table_iv = dt.AdditiveEvents(start_dict)
+# dec_table = DecimalEventTable(start_dict)
+# c_table = CounterTable(start_dict)
+# np_table = NumpyTable(start_dict)
+# # gap ratio maybe 2.5
+#
+# many_occurrences_range = many_occurrences[-1][0] - many_occurrences[0][0] + 1
+# print('range to vals is {}'.format(float(many_occurrences_range) / len(many_occurrences)))
+# print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table.combine_by_tuple_list, 'mine')
+# print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table_iv.combine_by_indexed_values, 'indexed')
+# # print_time_trial_for_add_list_funcs(add_times, many_occurrences, dec_table.add_tuples, 'dec')
+# # print_time_trial_for_add_list_funcs(add_times, many_occurrences, c_table.add, 'counter')
+# # print_time_trial_for_add_list_funcs(add_times, many_occurrences, np_table.add_tuples, 'numpy')
+# print('confirmation all tables are same.')
+# print('stddevs mine: {}, indexed: {}, dec: {}, counter: {}, numpy: {}'
+#       .format(my_table.stddev(), my_table_iv.stddev(), dec_table.stddev(), c_table.stddev(), np_table.stddev()))
+# print('means mine: {:.3}, indexed: {:.3}, dec: {:.3}, counter: {:.3}, numpy: {:.3}'
+#       .format(my_table.mean(), my_table_iv.mean(), dec_table.mean(), c_table.mean(), np_table.mean()))

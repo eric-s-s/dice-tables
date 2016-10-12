@@ -12,7 +12,7 @@ import dicetables.tableinfo as ti
 class TestTableInfo(unittest.TestCase):
 
     def assert_format_number(self, number, number_str):
-        self.assertEqual(ti.NumberFormatter().format_number(number), number_str)
+        self.assertEqual(ti.NumberFormatter().format(number), number_str)
 
     def test_NumberFormatter_init_defaults(self):
         test = ti.NumberFormatter()
@@ -74,7 +74,7 @@ class TestTableInfo(unittest.TestCase):
         test = ti.NumberFormatter()
         test.max_comma_exp = 1000
         num = int('9'*999)
-        self.assertEqual(test.format_number(num), '{:,}'.format(num))
+        self.assertEqual(test.format(num), '{:,}'.format(num))
 
     def test_NumberFormatter_get_exponent_below_one_big_small_pos_neg_no_rounding(self):
         formatter = ti.NumberFormatter()
@@ -210,27 +210,27 @@ class TestTableInfo(unittest.TestCase):
     def test_NumberFormatter_format_number_min_fixed_pt_exp_at_zero(self):
         test = ti.NumberFormatter()
         test.min_fixed_pt_exp = 0
-        self.assertEqual(test.format_number(0.1), '1.000e-1')
+        self.assertEqual(test.format(0.1), '1.000e-1')
 
     def test_NumberFormatter_format_number_min_fixed_pt_exp_at_zero_max_comma_exp_at_zero(self):
         test = ti.NumberFormatter()
         test.min_fixed_pt_exp = 0
         test.max_comma_exp = 0
-        self.assertEqual(test.format_number(0.1), '1.000e-1')
+        self.assertEqual(test.format(0.1), '1.000e-1')
 
-        self.assertEqual(test.format_number(1.0), '1.000')
-        self.assertEqual(test.format_number(1), '1')
+        self.assertEqual(test.format(1.0), '1.000')
+        self.assertEqual(test.format(1), '1')
 
-        self.assertEqual(test.format_number(10.0), '1.000e+1')
-        self.assertEqual(test.format_number(10), '1.000e+1')
+        self.assertEqual(test.format(10.0), '1.000e+1')
+        self.assertEqual(test.format(10), '1.000e+1')
 
     def test_NumberFormatter_format_number_max_comma_exp_at_neg_one(self):
         test = ti.NumberFormatter()
         test.max_comma_exp = -1
-        self.assertEqual(test.format_number(0.1), '0.1000')
-        self.assertEqual(test.format_number(1.0), '1.000e+0')
-        self.assertEqual(test.format_number(1), '1.000e+0')
-        self.assertEqual(test.format_number(10.0), '1.000e+1')
+        self.assertEqual(test.format(0.1), '0.1000')
+        self.assertEqual(test.format(1.0), '1.000e+0')
+        self.assertEqual(test.format(1), '1.000e+0')
+        self.assertEqual(test.format(10.0), '1.000e+1')
 
     def test_NumberFormatter_format_number_zero(self):
         self.assert_format_number(0, '0')
@@ -255,9 +255,9 @@ class TestTableInfo(unittest.TestCase):
         formatter = ti.NumberFormatter()
         formatter.show_digits = 10
         nine_digits = 9999999.99
-        self.assertEqual(formatter.format_number(nine_digits), '9,999,999.990')
+        self.assertEqual(formatter.format(nine_digits), '9,999,999.990')
         formatter.show_digits = 8
-        self.assertEqual(formatter.format_number(nine_digits), '1.0000000e+7')
+        self.assertEqual(formatter.format(nine_digits), '1.0000000e+7')
 
     def test_list_to_string_returns_single_number(self):
         self.assertEqual(ti.get_string_for_sequence([1, 1, 1]), '1')

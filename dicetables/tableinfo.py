@@ -11,7 +11,7 @@ if version_info[0] < 3:
     INT_TYPES = (int, long)
 else:
     INT_TYPES = (int, )
-#tools for string formatting
+# tools for string formatting
 
 
 class NumberFormatter(object):
@@ -81,7 +81,7 @@ class NumberFormatter(object):
             exponent += 1
         return '{:.{}f}e+{}'.format(mantissa, self.show_digits - 1, exponent)
 
-    def format_number(self, number):
+    def format(self, number):
         if abs(number) == 0:
             return '0'
         exponent = self.get_exponent(number)
@@ -102,7 +102,7 @@ def scinote(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
     returns a string of num in a nicely readable form.  rounds to dig_len.
     note- dig_len over 18 works but has errors in output"""
     formatter = NumberFormatter(dig_len, max_comma_exp, min_fixed_pt_exp)
-    return formatter.format_number(num)
+    return formatter.format(num)
 
 
 def get_pts_list(table, include_zeroes=True):
@@ -120,7 +120,7 @@ def full_table_string(table, include_zeroes=True):
     out_str = ''
     value_right_just = len(str(table.event_keys_max()))
     for value, frequency in the_pts:
-        out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format_number(frequency))
+        out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format(frequency))
     return out_str
 
 
@@ -253,15 +253,15 @@ def stats(table, values):
 
     if combinations_of_values == 0:
         inverse_chance_str = 'infinity'
-        pct_str = formatter.format_number(0)
+        pct_str = formatter.format(0)
     else:
         inverse_chance = Decimal(total_combinations) / Decimal(combinations_of_values)
         pct = Decimal(100.0) / inverse_chance
-        inverse_chance_str = formatter.format_number(inverse_chance)
-        pct_str = formatter.format_number(pct)
+        inverse_chance_str = formatter.format(inverse_chance)
+        pct_str = formatter.format(pct)
     return (get_string_for_sequence(values),
-            formatter.format_number(combinations_of_values),
-            formatter.format_number(total_combinations),
+            formatter.format(combinations_of_values),
+            formatter.format(total_combinations),
             inverse_chance_str,
             pct_str)
 

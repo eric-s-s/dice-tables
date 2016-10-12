@@ -21,7 +21,7 @@ def generate_indexed_values(tuple_list):
 
 
 def generate_indexed_values_from_dict(input_dict):
-    return generate_indexed_values(sorted(input_dict.items()))
+    return generate_indexed_values(list(input_dict.items()))
 
 
 class IndexedValues(object):
@@ -59,31 +59,35 @@ class IndexedValues(object):
             return self.raw_values[index]
 
     def combine(self, other):
-        start_index_diff = self.start_index - other.start_index
-        if start_index_diff < 0:
+        offset_for_higher = self.start_index - other.start_index
+        if offset_for_higher < 0:
             lower = self
             higher = other
         else:
             lower = other
             higher = self
-        new_values = combine_values(lower.raw_values, higher.raw_values, abs(start_index_diff))
+        new_values = combine_values(lower.raw_values, higher.raw_values, abs(offset_for_higher))
         return IndexedValues(lower.start_index, new_values)
 
     def combine_with_events_list(self, sorted_tuple_list_of_events):
+        """
+        :param sorted_tuple_list_of_events: MAY NOT BE EMPTY
+        """
         base_list = self.raw_values
-        current_size = len(base_list)
-        current_start_index = self.start_index
-        new_start_index = current_start_index + sorted_tuple_list_of_events[0][0]
-        new_size = current_size + sorted_tuple_list_of_events[-1][0] - sorted_tuple_list_of_events[0][0]
-        big_list = []
-        for event, freq in sorted_tuple_list_of_events:
-            index_diff = current_start_index + event - new_start_index
-            if freq != 1:
-                use_list = [value * freq for value in base_list]
-            else:
-                use_list = base_list[:]
-            big_list.append(equalize_len_higher(use_list, new_size, index_diff))
-        new_raw_values = list(map(add_many, *big_list))
+
+        first_event = sorted_tuple_list_of_events[0][0]
+        last_event = sorted_tuple_list_of_events[-1][0]
+
+        new_start_index = self.start_index + first_event
+        new_size = len(base_list) + last_event - first_event
+
+        container_for_lists_to_combine = []
+
+        for event, occurrences in sorted_tuple_list_of_events:
+            index_offset = event - first_event
+            new_group_of_events = get_events_list(base_list, occurrences, new_size, index_offset)
+            container_for_lists_to_combine.append(new_group_of_events)
+        new_raw_values = list(map(add_many, *container_for_lists_to_combine))
         return IndexedValues(new_start_index, new_raw_values)
 
 
@@ -91,20 +95,22 @@ def add_many(*args):
     return sum(args)
 
 
-def equalize_len_lower(lower, total_size):
-    zeros = [0] * (total_size - len(lower))
-    return lower + zeros
+def get_events_list(base_list, occurrences, new_size, index_offset):
+    if occurrences != 1:
+        adjusted_events = [value * occurrences for value in base_list]
+    else:
+        adjusted_events = base_list[:]
+    return change_list_len_with_zeroes(adjusted_events, new_size, index_offset)
 
 
-def equalize_len_higher(higher, total_size, start_index_diff):
-    left = [0] * start_index_diff
-    right = [0] * (total_size - start_index_diff - len(higher))
-    return left + higher + right
+def change_list_len_with_zeroes(input_list, new_size, index_offset):
+    left = [0] * index_offset
+    right = [0] * (new_size - index_offset - len(input_list))
+    return left + input_list + right
 
 
-def combine_values(lower, higher, start_index_diff):
-    total_size = max(len(lower), len(higher) + start_index_diff)
-    lower = equalize_len_lower(lower, total_size)
-    higher = equalize_len_higher(higher, total_size, start_index_diff)
-    new = list(map(add, lower, higher))
-    return new
+def combine_values(lower, higher, offset_for_higher):
+    new_size = max(len(lower), len(higher) + offset_for_higher)
+    lower = change_list_len_with_zeroes(lower, new_size, 0)
+    higher = change_list_len_with_zeroes(higher, new_size, offset_for_higher)
+    return list(map(add, lower, higher))
