@@ -140,15 +140,15 @@ def one_time_trial(combine_times, events, input_dict_size=1, use_exponential_occ
     input_dict = get_input_dict(input_dict_size, use_exponential_occurrences)
     control_method = get_control_method(events)
     control_events = lim.AdditiveEvents(input_dict)
+    events_for_indexed_values = lim.AdditiveEvents(input_dict)
+
+    indexed_values_start = time.clock()
+    events_for_indexed_values.combine(combine_times, events, method='indexed_values')
+    indexed_values_time = time.clock() - indexed_values_start
 
     control_start = time.clock()
-    control_events.combine_with_new_events(combine_times, events, method=control_method)
+    control_events.combine(combine_times, events, method=control_method)
     control_time = time.clock() - control_start
-
-    events_for_indexed_values = lim.AdditiveEvents(input_dict)
-    indexed_values_start = time.clock()
-    events_for_indexed_values.combine_with_new_events(combine_times, events, method='indexed_values')
-    indexed_values_time = time.clock() - indexed_values_start
 
     list_length = float(len(events))
     event_occurrences = float(events[0][1])
@@ -510,7 +510,7 @@ def do_trials_vary_gaps_in_list(add_list_len=100, start_dict_size=1, occurrences
                               style=next(style_generator), base_line=do_base_line)
 
 
-def quick_and_dirty_ui():
+def graphing_ui():
     """a UI to demonstrate add speeds"""
     print(WELCOME_TXT)
 
@@ -614,15 +614,15 @@ def get_indexed_advantage_ratio(start_dict_size, adds, tuple_list_sizes, many_oc
     input_dict = get_input_dict(start_dict_size, True)
     control_method = get_control_method(events)
     control_events = lim.AdditiveEvents(input_dict)
+    events_for_indexed_values = lim.AdditiveEvents(input_dict)
+
+    indexed_values_start = time.clock()
+    events_for_indexed_values.combine(adds, events, method='indexed_values')
+    indexed_values_time = time.clock() - indexed_values_start
 
     control_start = time.clock()
-    control_events.combine_with_new_events(adds, events, method=control_method)
+    control_events.combine(adds, events, method=control_method)
     control_time = time.clock() - control_start
-
-    events_for_indexed_values = lim.AdditiveEvents(input_dict)
-    indexed_values_start = time.clock()
-    events_for_indexed_values.combine_with_new_events(adds, events, method='indexed_values')
-    indexed_values_time = time.clock() - indexed_values_start
 
     return control_time / indexed_values_time
 
@@ -735,7 +735,7 @@ def get_saved_data():
     return data_points_flat, data_points_bumpy
 
 
-def goofy_ui():
+def data_points_ui():
     try:
         get_new_data = input_py_2_and_3('generate new data pts (will take some minutes)? type "y" for yes.\n>>> ')
         if get_new_data == 'y':
@@ -804,6 +804,6 @@ def get_side_by_side_data(left_answer, right_answer):
 
 if __name__ == '__main__':
 
-    quick_and_dirty_ui()
+    graphing_ui()
 
-    # goofy_ui()
+    # data_points_ui()

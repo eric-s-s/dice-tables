@@ -921,14 +921,14 @@ class DicePlatform(BoxLayout):
 
     def request_info(self, request):
         '''returns requested info to child widget'''
-        requests = {'range': [self._table.event_keys_range, ()],
+        requests = {'range': [self._table.event_range, ()],
                     'mean': [self._table.mean, ()],
                     'stddev': [self._table.stddev, ()],
                     'table_str': [str, (self._table,)],
                     'weights_info': [self._table.weights_info, ()],
                     'dice_list': [self._table.get_list, ()],
                     'all_rolls': [dt.full_table_string, (self._table,)],
-                    'tuple_list': [self._table.get_event_all, ()]}
+                    'tuple_list': [self._table.all_events, ()]}
         command, args = requests[request]
         return command(*args)
     def request_stats(self, stat_list):
@@ -947,14 +947,14 @@ class DicePlatform(BoxLayout):
         #y_vals = [pts[1] for pts in graph_pts]
         graph_pts = dt.graph_pts(self._table, axes=True, exact=False)
         
-        new_object['x_min'], new_object['x_max'] = self._table.event_keys_range()
+        new_object['x_min'], new_object['x_max'] = self._table.event_range
         #new_object['y_min'] = min(y_vals)
         #new_object['y_max'] = max(y_vals)
         new_object['y_min'] = min(graph_pts[1])
         new_object['y_max'] = max(graph_pts[1])
         
         new_object['pts'] = graph_pts
-        new_object['orig'] = self._table.get_event_all()
+        new_object['orig'] = self._table.all_events
         new_object['dice'] = self._table.get_list()
         return new_object
 
@@ -963,7 +963,7 @@ class DicePlatform(BoxLayout):
         self._table = dt.DiceTable()
         for die, number in plot_obj['dice']:
             self._table.update_list(number, die)
-        self._table.combine_with_new_events(1, plot_obj['orig'])
+        self._table.combine(1, plot_obj['orig'])
         self.updater()
 
     def request_add(self, number, die):

@@ -23,6 +23,7 @@ def convert_tuple_list_to_array_and_start_value(sorted_tuple_list):
         out_array[array_index] = value
     return start_val, out_array
 
+
 class NumpyCounter(object):
     def __init__(self, start_val=0, array=np.array([1], dtype=object)):
         self.start_val = start_val

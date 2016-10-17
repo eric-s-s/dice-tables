@@ -52,13 +52,13 @@ for any roll that won't happen. ::
     In [10]: table.get_event_range(1, 5)
     Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
 
-other usefull methods. get_biggest_event picks one of the event_keys with highest
+other usefull methods. biggest_event picks one of the event_keys with highest
 get_event and returns the tuple of (value, get_event). ::
 
-    In [11]: table.get_biggest_event()
+    In [11]: table.biggest_event()
     Out[11]: (4, 3)
 
-    In [12]: table.get_total_event_occurrences()
+    In [12]: table.total_occurrences()
     Out[12]: 8
 
     In [13]: table.mean()
@@ -192,11 +192,11 @@ nice string for humans.::
 non-method math functions.
 --------------------------
 
-long_int_div, long_int_times, long_int_pow are wrapper functions for Decimal class.
+safe_true_div, long_int_times, long_int_pow are wrapper functions for Decimal class.
 they take floats or ints as arguments and return floats if possible, else ints.
 they are for dealing with float math on the very large ints these tables generate.::
 
-    In [25]: dt.long_int_div(10**1000, 57*10**1005)
+    In [25]: dt.safe_true_div(10**1000, 57*10**1005)
     Out[25]: 1.7543859649122808e-07
 
 

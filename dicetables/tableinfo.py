@@ -4,33 +4,34 @@ from sys import version_info
 from math import log10
 from decimal import Decimal
 
-from dicetables.longintmath import long_int_div as li_div
+from dicetables.longintmath import safe_true_div
 
 
-if version_info[0] < 3:
-    INT_TYPES = (int, long)
-else:
-    INT_TYPES = (int, )
-# tools for string formatting
+def is_int(number):
+    if version_info[0] < 3:
+        int_types = (int, long)
+    else:
+        int_types = (int,)
+    return isinstance(number, int_types)
 
 
 class NumberFormatter(object):
-    def __init__(self, show_digits=4, max_comma_exp=6, min_fixed_pt_exp=-3):
-        self._show_digits = None
+    def __init__(self, shown_digits=4, max_comma_exp=6, min_fixed_pt_exp=-3):
+        self._shown_digits = None
         self._max_comma_exp = None
         self._min_fixed_pt_exp = None
 
-        self.show_digits = show_digits
+        self.shown_digits = shown_digits
         self.max_comma_exp = max_comma_exp
         self.min_fixed_pt_exp = min_fixed_pt_exp
 
     @property
-    def show_digits(self):
-        return self._show_digits
+    def shown_digits(self):
+        return self._shown_digits
 
-    @show_digits.setter
-    def show_digits(self, sig_figs):
-        self._show_digits = int(max(1, sig_figs))
+    @shown_digits.setter
+    def shown_digits(self, sig_figs):
+        self._shown_digits = int(max(1, sig_figs))
 
     @property
     def max_comma_exp(self):
@@ -49,22 +50,22 @@ class NumberFormatter(object):
         self._min_fixed_pt_exp = min(0, int(value))
 
     def get_exponent(self, number):
-        if isinstance(number, INT_TYPES):
+        if is_int(number):
             return int(log10(abs(number)))
-        return int('{:.{}e}'.format(number, self.show_digits - 1).split('e')[1])
+        return int('{:.{}e}'.format(number, self.shown_digits - 1).split('e')[1])
 
     def format_as_fixed_point(self, number, exponent):
-        return '{:.{}f}'.format(number, self.show_digits - 1 - exponent)
+        return '{:.{}f}'.format(number, self.shown_digits - 1 - exponent)
 
     def format_using_commas(self, number, exponent):
-        if isinstance(number, INT_TYPES):
+        if is_int(number):
             return '{:,}'.format(number)
         else:
-            return '{:,.{}f}'.format(number, max(0, self.show_digits - 1 - exponent))
+            return '{:,.{}f}'.format(number, max(0, self.shown_digits - 1 - exponent))
 
     def format_as_exponent(self, number, exponent):
         try:
-            answer = '{:.{}e}'.format(number, self.show_digits - 1)
+            answer = '{:.{}e}'.format(number, self.shown_digits - 1)
             if -10 < exponent < 10:
                 return remove_extra_zero_from_exponent(answer)
             return answer
@@ -73,13 +74,13 @@ class NumberFormatter(object):
 
     def format_huge_int(self, number, exponent):
         extra_digits = 10
-        mantissa = number // 10 ** (exponent - self.show_digits - extra_digits)
-        mantissa /= 10. ** (self.show_digits + extra_digits)
-        mantissa = round(mantissa, self.show_digits - 1)
+        mantissa = number // 10 ** (exponent - self.shown_digits - extra_digits)
+        mantissa /= 10. ** (self.shown_digits + extra_digits)
+        mantissa = round(mantissa, self.shown_digits - 1)
         if mantissa == 10.0 or mantissa == -10.0:
             mantissa /= 10.0
             exponent += 1
-        return '{:.{}f}e+{}'.format(mantissa, self.show_digits - 1, exponent)
+        return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
 
     def format(self, number):
         if abs(number) == 0:
@@ -94,7 +95,9 @@ class NumberFormatter(object):
 
 
 def remove_extra_zero_from_exponent(answer):
-    return answer[:-2] + answer[-1:]
+    if answer[-2] == '0':
+        return answer[:-2] + answer[-1:]
+    return answer
 
 
 def scinote(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
@@ -105,39 +108,43 @@ def scinote(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
     return formatter.format(num)
 
 
-def get_pts_list(table, include_zeroes=True):
-    if include_zeroes and table.event_keys():
-        min_val, max_val = table.event_keys_range()
-        the_pts = table.get_event_range(min_val, max_val + 1)
+def get_raw_graph_points(table, include_zeroes=True):
+    if include_zeroes and table.event_keys:
+        min_val, max_val = table.event_range
+        the_pts = table.get_range_of_events(min_val, max_val + 1)
     else:
-        the_pts = table.get_event_all()
+        the_pts = table.all_events
     return the_pts
 
 
 def full_table_string(table, include_zeroes=True):
+    """
+
+    :param table: AdditiveEvents or child.  is never empty
+    :param include_zeroes: =True, include zero occurrences within table.event_range
+    :return:
+    """
     formatter = NumberFormatter()
-    the_pts = get_pts_list(table, include_zeroes)
+    the_pts = get_raw_graph_points(table, include_zeroes)
     out_str = ''
-    value_right_just = len(str(table.event_keys_max()))
+    value_right_just = len(str(table.event_range[1]))
     for value, frequency in the_pts:
         out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format(frequency))
     return out_str
 
 
 def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
-    """returns graph pts for a table.
-    axes=True returns (x_axis, y_axis). axes=False returns [(x,y), (x,y)...]
-    zeroes includes zero freq values from the min_val to max_val of the table
-    percent=True converts y values into percent of total y values.
-    exact=True/False only works with pct.  exact=False only good to ten decimal
-    places, but much much faster.
-    percent=False leaves as raw long ints, which will often be too large for
-    graphing functions to handle.  for that case, graph_pts_overflow(table) is
-    reccommended."""
-    if not table.event_keys():
-        raise ValueError('empty table')
+    """
 
-    the_pts = get_pts_list(table, include_zeroes)
+    :param table: AdditiveEvents or child. is never empty
+    :param percent: y-values are percentages=True
+    :param axes: True: [(x-axis), (y-axis)], False:[(xy-point), (xy-point), ...]
+    :param include_zeroes: =True, include zero occurrences within table.event_range
+    :param exact: =False, points only good to ten decimal places.
+    :return:
+    """
+
+    the_pts = get_raw_graph_points(table, include_zeroes)
     if percent:
         if exact:
             the_pts = get_pct_exactly(the_pts)
@@ -163,7 +170,7 @@ def get_pct_exactly(the_pts):
     total_y_value = sum([pair[1] for pair in the_pts])
     output = []
     for value, freq in the_pts:
-        output.append((value, li_div(100 * freq, total_y_value)))
+        output.append((value, safe_true_div(100 * freq, total_y_value)))
     return output
 
 
@@ -172,12 +179,12 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     overflow problems by long ints."""
     raw_pts = graph_pts(table, percent=False, axes=axes, include_zeroes=zeroes)
     factor = 1
-    overflow_point = 10**300
+    overflow_point = 10 ** 300
     exponent_adjustment = 4
 
-    if table.get_biggest_event()[1] > overflow_point:
-        power = int(log10(table.get_biggest_event()[1])) - exponent_adjustment
-        factor = 10**power
+    if table.biggest_event[1] > overflow_point:
+        power = int(log10(table.biggest_event[1])) - exponent_adjustment
+        factor = 10 ** power
     factor_string = scinote(factor, 2)
     if axes:
         x_axis, old_y_axis = raw_pts
@@ -187,36 +194,33 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
         new_pts = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
         return new_pts, factor_string
 
+
 def ascii_graph_helper(table):
     """table is a AdditiveEvents. makes a list of tuples which
     [(value, x's representing value), ...]"""
     output_list = []
-    max_frequency = table.get_biggest_event()[1]
+    max_frequency = table.biggest_event[1]
     max_graph_height = 80
     divisor = 1
     add_s = ''
     if max_frequency > max_graph_height:
-        divisor = li_div(max_frequency, max_graph_height)
+        divisor = safe_true_div(max_frequency, max_graph_height)
         add_s = 's'
-    val_len = len(str(table.event_keys_max()))
-    for value, frequency in table.get_event_all():
-        num_of_xs = int(round(li_div(frequency, divisor)))
+    val_len = len(str(table.event_range[1]))
+    for value, frequency in table.all_events:
+        num_of_xs = int(round(safe_true_div(frequency, divisor)))
         output_list.append((value,
-                            '{0:>{1}}:{2}'.format(value, val_len, num_of_xs*'x')
-                           ))
-    output_list.append((None,
-                        'each x represents {} occurence{}'.format(
-                            scinote(divisor), add_s
-                            )
-                       ))
+                            '{0:>{1}}:{2}'.format(value, val_len, num_of_xs * 'x')
+                            ))
+    output_list.append((None, 'each x represents {} occurrence{}'.format(scinote(divisor), add_s)))
     return output_list
 
 
 def ascii_graph(table):
     """table is a AdditiveEvents. returns a graph of x's."""
-    #for output in graph_list(table):
+    # for output in graph_list(table):
     #    print output[1]
-    temp = [pair[1] for pair in  ascii_graph_helper(table)]
+    temp = [pair[1] for pair in ascii_graph_helper(table)]
     return '\n'.join(temp)
 
 
@@ -233,7 +237,7 @@ def ascii_graph_truncated(table):
     if excluded:
         output.append('not included: {}'.format(
             get_string_for_sequence(excluded).replace(',', ' and')
-            ))
+        ))
     return '\n'.join(output)
 
 
@@ -245,7 +249,7 @@ def stats(table, values):
     :return: tuple of strings (str of values, values combinations, total combinations, inverse chance, pct chance)
     """
     formatter = NumberFormatter()
-    total_combinations = table.get_total_event_occurrences()
+    total_combinations = table.total_occurrences
     combinations_of_values = 0
     no_copies = set(values)
     for value in no_copies:
@@ -308,6 +312,7 @@ def format_one_sequence(sequence):
 
 def format_for_sequence_str(num):
     return '({:,})'.format(num) if num < 0 else '{:,}'.format(num)
+
 # import time
 # if __name__ == '__main__':
 #
@@ -352,11 +357,11 @@ def format_for_sequence_str(num):
 #
 #     start = time.clock()
 #     for _ in range(100):
-#         get_pts_list(tabel, True)
+#         get_raw_graph_points(tabel, True)
 #     pts_time = time.clock() - start
 #     print(pts_time)
 #
-#     this_pts_list = get_pts_list(tabel, True)
+#     this_pts_list = get_raw_graph_points(tabel, True)
 #
 #     start = time.clock()
 #     for _ in range(100):
@@ -367,6 +372,3 @@ def format_for_sequence_str(num):
 #
 #     format_time = time.clock() - start
 #     print(format_time)
-
-
-

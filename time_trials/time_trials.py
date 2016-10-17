@@ -9,8 +9,7 @@ from collections import Counter
 import numpy as np
 from dicetables.tableinfo import NumberFormatter
 import dicetables as dt
-from dicetables import longintmath as lim
-
+import dicetables.longintmath as lim
 import numpydict as npd
 
 
@@ -21,20 +20,40 @@ def time_trial(times, func, *args):
     return time.clock() - start
 
 
+def combine_trial(times, new_events, method, the_object):
+    start = time.clock()
+    the_object.combine(times, new_events, method)
+    result = time.clock() - start
+    return result
+
+
+def print_combine_trial(times, new_events, method, the_object):
+    result = combine_trial(times, new_events, method, the_object)
+    print('added [{} ... {}]  {} times using {}.  time: {:.3e}'.format(new_events[0],
+                                                                       new_events[-1],
+                                                                       times,
+                                                                       method,
+                                                                       result))
+
+
 def time_trial_output(times, text, func, *args):
     return 'call using {} {} times: {:.5}'.format(text, times, time_trial(times, func, *args))
 
 
-def print_time_trial_for_add_list_funcs(num_adds, to_add, object_dot_method, label_for_object):
+def print_time_trial_for_add_list_funcs(num_adds, to_add, object_dot_method, label_for_object, method='none'):
     """
 
     :param num_adds:
     :param to_add:
     :param object_dot_method:
     :param label_for_object:
+    :param method: 'none', 'indexed_values', 'tuple_list', 'flattened_list'
     :return:
     """
-    elapsed_time = time_trial(1, object_dot_method, num_adds, to_add)
+    if method == 'none':
+        elapsed_time = time_trial(1, object_dot_method, num_adds, to_add)
+    else:
+        elapsed_time = time_trial(1, object_dot_method, num_adds, to_add, method)
     print('added [{} ... {}]  {} times to {}.  time: {:.3e}'.format(to_add[0],
                                                                     to_add[-1],
                                                                     num_adds,
@@ -113,9 +132,9 @@ class DecimalEventTable(object):
         return round((sqs/count)**Decimal(0.5), 4)
 
 
-class CounterTable(dt.AdditiveEvents):
+class CounterTable(lim.AdditiveEvents):
     def __init__(self, seed):
-        dt.AdditiveEvents.__init__(self, seed)
+        lim.AdditiveEvents.__init__(self, seed)
         self._table = Counter(self._table)
 
     def _add_a_list(self, lst):
@@ -204,7 +223,7 @@ class NumpyTable(object):
         denominator = sum(self.counter.array)
         if denominator == 0:
             raise ZeroDivisionError('there are no values in the table')
-        return dt.long_int_div(numerator, denominator)
+        return dt.safe_true_div(numerator, denominator)
 
     def stddev(self, decimal_place=4):
         """returns the standdard deviation of the table, with special measures
@@ -276,8 +295,8 @@ def super_poopy_ui():
         start_dict_size = get_answer('pick a start size for AdditiveEvents', 1, 1000)
         start_dict = dict([(event, 10**(event % 100)) for event in range(start_dict_size)])
 
-        flattened_list_control = dt.AdditiveEvents(start_dict)
-        tuple_list_control = dt.AdditiveEvents(start_dict)
+        flattened_list_control = lim.AdditiveEvents(start_dict)
+        tuple_list_control = lim.AdditiveEvents(start_dict)
 
         added_events_size = get_answer('how big is the list to add', 2, 1000)
         added_event_occurrences = get_answer('how many occurrences for tuple add', 2, 10**300)
@@ -289,7 +308,7 @@ def super_poopy_ui():
 
         print('\n\nRESULTS - VS COMBINE FLATTENED')
         vs_flattened_obj, vs_flattened_method = get_obj_and_method(method_choice, start_dict)
-        trial_vs_control(flattened_list_control._combine_by_flattened_list,
+        trial_vs_control(flattened_list_control.combine, 'flattened_list',
                          vs_flattened_method,
                          number_of_adds,
                          flat_events,
@@ -299,7 +318,7 @@ def super_poopy_ui():
 
         print('\n\nRESULTS - VS COMBINE TUPLE')
         vs_tuple_obj, vs_tuple_method = get_obj_and_method(method_choice, start_dict)
-        trial_vs_control(tuple_list_control._combine_by_tuple_list,
+        trial_vs_control(tuple_list_control.combine, 'tuple_list',
                          vs_tuple_method,
                          number_of_adds,
                          tuple_events,
@@ -309,21 +328,22 @@ def super_poopy_ui():
 
 
 def get_obj_and_method(number_choice, start_dict):
-    indexed_values = dt.AdditiveEvents(start_dict)
+    indexed_values = lim.AdditiveEvents(start_dict)
     counter = CounterTable(start_dict)
     numpy_table = NumpyTable(start_dict)
     choices = {1: (indexed_values, indexed_values._combine_by_indexed_values),
-               2: (counter, counter.combine_with_new_events),
+               2: (counter, counter.combine),
                3: (numpy_table, numpy_table.combine_by_tuple_list),
                4: (numpy_table, numpy_table.combine_by_matrix_transfor)}
     return choices[number_choice]
 
 
-def trial_vs_control(control_method, trial_method, number_of_adds, events, method_choice_str):
+def trial_vs_control(control_method, control_method_str, trial_method, number_of_adds, events, method_choice_str):
     print_time_trial_for_add_list_funcs(number_of_adds,
                                         events,
                                         control_method,
-                                        'control')
+                                        'control',
+                                        control_method_str)
     print_time_trial_for_add_list_funcs(number_of_adds,
                                         events,
                                         trial_method,
@@ -337,31 +357,79 @@ def confirm_equality(control, other, method_choice_str):
     print('mean control: {:.3}, mean {}: {:.3}'
           .format(control.mean(), method_choice_str, other.mean()))
 
+
+def fastest_vs_tuple_indexed_ui():
+    introduction = """
+        this is a hastily cobbled together UI.  If you pick values that are too high, you'll have to restart your kernel.
+        this shows that fastest is picking the fastest method.
+        "q" will quit at any question prompt.
+        """
+
+    print(introduction)
+    while True:
+        print('\n\n')
+        start_dict_size = get_answer('pick a start size for AdditiveEvents', 1, 1000)
+        start_dict = dict([(event, 2 ** (event % 100)) for event in range(start_dict_size)])
+
+        flattened_list_control = lim.AdditiveEvents(start_dict)
+        flattened_list_fastest = lim.AdditiveEvents(start_dict)
+        tuple_list_control = lim.AdditiveEvents(start_dict)
+        tuple_list_fastest = lim.AdditiveEvents(start_dict)
+
+        added_events_size = get_answer('how long is new events to combine', 2, 1000)
+        added_event_occurrences = get_answer('how many occurrences per event', 2, 10 ** 300)
+        gaps = get_answer('how many spaces between value', 0, 2)
+        flat_events = [(event, 1) for event in range(0, added_events_size, gaps + 1)]
+        tuple_events = [(event, added_event_occurrences) for event in range(0, added_events_size, gaps + 1)]
+
+        number_of_adds = get_answer('how many times to combine?', 1, 2000)
+
+        print('\n get_fastest_method')
+        print(time_trial_output(1, 'get_fastest', flattened_list_fastest.get_fastest_combine_method, 1, flat_events))
+        print('\nFASTEST with one occurrence')
+        print_combine_trial(number_of_adds, flat_events, 'fastest', flattened_list_fastest)
+        print(flattened_list_fastest.event_range)
+
+        print('\nFLATTENED_LIST with one occurrence')
+        print_combine_trial(number_of_adds, flat_events, 'flattened_list', flattened_list_control)
+        print(flattened_list_control.event_range)
+
+        print('\n\nFASTEST with many occurrence')
+        print_combine_trial(number_of_adds, tuple_events, 'fastest', tuple_list_fastest)
+        print(tuple_list_fastest.event_range)
+
+        print('\nTUPLE_LIST with many occurrence')
+        print_combine_trial(number_of_adds, tuple_events, 'tuple_list', tuple_list_control)
+        print(tuple_list_control.event_range)
+
+
 if __name__ == '__main__':
-    super_poopy_ui()
+    # super_poopy_ui()
+    fastest_vs_tuple_indexed_ui()
+    # x = lim.AdditiveEvents({0:1})
+    # events = [(event, 1) for event in range(100)]
 
-
-# print()
-# x = NumpyTable()
-# x.add(2, [(val, 1) for val in range(1, 7)])
-# print(x.counter.items())
-# x.add_a_tuple_list([(val, 1) for val in range(1, 7)])
-# print(x.counter.items())
-# print(x.stddev())
-# y = dt.DiceTable()
-# y.add_die(3, dt.Die(6))
-# print(y.stddev())
+# # print()
+# # x = NumpyTable()
+# # x.add(2, [(val, 1) for val in range(1, 7)])
+# # print(x.counter.items())
+# # x.add_a_tuple_list([(val, 1) for val in range(1, 7)])
+# # print(x.counter.items())
+# # print(x.stddev())
+# # y = dt.DiceTable()
+# # y.add_die(3, dt.Die(6))
+# # print(y.stddev())
 #
 # print()
-# formatter = NumberFormatter()
-# str_func = [('scinote: my method, huge int', formatter.format_number),
-#             ('scinote: decimal  huge int', format_huge_int_using_decimal)]
-# the_args = (123**456, )
+# # formatter = NumberFormatter()
+# # str_func = [('scinote: my method, huge int', formatter.format_number),
+# #             ('scinote: decimal  huge int', format_huge_int_using_decimal)]
+# # the_args = (123**456, )
+# #
+# #
+# # for words, format_func in str_func:
+# #     print(time_trial_output(10000, words, format_func, *the_args))
 #
-#
-# for words, func in str_func:
-#     print(time_trial_output(10000, words, func, *the_args))
-
 # add_times = 1000
 # start_dict = dict([(val, 10**val) for val in range(1000)])
 # # start_dict = {0: 1}
@@ -369,13 +437,11 @@ if __name__ == '__main__':
 # tuple_list_range = range(1, 7, 1)
 #
 # flat_list = [(val, 1) for val in tuple_list_range]
-# flat_list = lim.verify_and_prep_tuple_list(flat_list)
 #
 # many_occurrences = [(val, 5) for val in tuple_list_range]
-# many_occurrences = lim.verify_and_prep_tuple_list(many_occurrences)
 #
-# my_table = dt.AdditiveEvents(start_dict)
-# my_table_iv = dt.AdditiveEvents(start_dict)
+# my_table = lim.AdditiveEvents(start_dict)
+# my_table_iv = lim.AdditiveEvents(start_dict)
 # dec_table = DecimalEventTable(start_dict)
 # c_table = CounterTable(start_dict)
 # np_table = NumpyTable(start_dict)
@@ -385,8 +451,10 @@ if __name__ == '__main__':
 # print()
 # flat_list_range = flat_list[-1][0] - flat_list[0][0] + 1
 # print('range to vals is {}'.format(float(flat_list_range) / len(flat_list)))
-# print_time_trial_for_add_list_funcs(add_times, flat_list, my_table.combine_by_flattened_list, 'mine')
-# print_time_trial_for_add_list_funcs(add_times, flat_list, my_table_iv.combine_by_indexed_values, 'indexed')
+# print_time_trial_for_add_list_funcs(add_times, flat_list, my_table.combine, 'mine',
+#                                     method='flattened_list')
+# print_time_trial_for_add_list_funcs(add_times, flat_list, my_table_iv.combine, 'indexed',
+#                                     method='indexed_values')
 # # print_time_trial_for_add_list_funcs(add_times, flat_list, dec_table.add_list, 'dec')
 # # print_time_trial_for_add_list_funcs(add_times, flat_list, c_table.add, 'counter')
 # # print_time_trial_for_add_list_funcs(add_times, flat_list, np_table.add, 'numpy')
@@ -402,8 +470,8 @@ if __name__ == '__main__':
 #               transform.mean()))
 #
 # print()
-# my_table = dt.AdditiveEvents(start_dict)
-# my_table_iv = dt.AdditiveEvents(start_dict)
+# my_table = lim.AdditiveEvents(start_dict)
+# my_table_iv = lim.AdditiveEvents(start_dict)
 # dec_table = DecimalEventTable(start_dict)
 # c_table = CounterTable(start_dict)
 # np_table = NumpyTable(start_dict)
@@ -411,8 +479,10 @@ if __name__ == '__main__':
 #
 # many_occurrences_range = many_occurrences[-1][0] - many_occurrences[0][0] + 1
 # print('range to vals is {}'.format(float(many_occurrences_range) / len(many_occurrences)))
-# print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table.combine_by_tuple_list, 'mine')
-# print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table_iv.combine_by_indexed_values, 'indexed')
+# print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table.combine, 'mine',
+#                                     method='tuple_list')
+# print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table_iv.combine, 'indexed',
+#                                     method='indexed_values')
 # # print_time_trial_for_add_list_funcs(add_times, many_occurrences, dec_table.add_tuples, 'dec')
 # # print_time_trial_for_add_list_funcs(add_times, many_occurrences, c_table.add, 'counter')
 # # print_time_trial_for_add_list_funcs(add_times, many_occurrences, np_table.add_tuples, 'numpy')

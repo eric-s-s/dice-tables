@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='dicetables',
-      version='0.4.6',
+      version='1.0.0',
       description='dice statistics module',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
@@ -22,7 +22,7 @@ setup(name='dicetables',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-	'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3',
       ],
       packages=['dicetables', 'tests'],
       test_suite='nose.collector',

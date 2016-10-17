@@ -17,15 +17,15 @@ class TestTableInfo(unittest.TestCase):
     def test_NumberFormatter_init_defaults(self):
         test = ti.NumberFormatter()
         self.assertEqual(test.min_fixed_pt_exp, -3)
-        self.assertEqual(test.show_digits, 4)
+        self.assertEqual(test.shown_digits, 4)
         self.assertEqual(test.max_comma_exp, 6)
 
     def test_NumberFormatter_show_digits(self):
         test = ti.NumberFormatter()
-        test.show_digits = 2.5
-        self.assertEqual(test.show_digits, 2)
-        test.show_digits = -5
-        self.assertEqual(test.show_digits, 1)
+        test.shown_digits = 2.5
+        self.assertEqual(test.shown_digits, 2)
+        test.shown_digits = -5
+        self.assertEqual(test.shown_digits, 1)
 
     def test_NumberFormatter_comma_cutoff(self):
         test = ti.NumberFormatter()
@@ -45,20 +45,20 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_init_out_of_range(self):
         test = ti.NumberFormatter(-1, -2, 1)
-        self.assertEqual(test.show_digits, 1)
+        self.assertEqual(test.shown_digits, 1)
         self.assertEqual(test.max_comma_exp, -1)
         self.assertEqual(test.min_fixed_pt_exp, 0)
 
     def test_NumberFormatter_init_in_range(self):
         test = ti.NumberFormatter(5, 4, -5)
         self.assertEqual(test.min_fixed_pt_exp, -5)
-        self.assertEqual(test.show_digits, 5)
+        self.assertEqual(test.shown_digits, 5)
         self.assertEqual(test.max_comma_exp, 4)
 
     def test_NumberFormatter_show_digits_setter_getter(self):
         test = ti.NumberFormatter()
-        test.show_digits = 100
-        self.assertEqual(test.show_digits, 100)
+        test.shown_digits = 100
+        self.assertEqual(test.shown_digits, 100)
 
     def test_NumberFormatter_min_fixed_pt_exp_setter_getter(self):
         test = ti.NumberFormatter()
@@ -100,7 +100,7 @@ class TestTableInfo(unittest.TestCase):
     def test_NumberFormatter_get_exponent_rounding(self):
         formatter = ti.NumberFormatter()
         self.assertEqual(formatter.get_exponent(99.95), 1)
-        formatter.show_digits = 3
+        formatter.shown_digits = 3
         self.assertEqual(formatter.get_exponent(99.95), 2)
 
     def test_NumberFormatter_format_as_fixed_point_no_round(self):
@@ -119,7 +119,7 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_format_using_commas_no_round(self):
         formatter = ti.NumberFormatter()
-        formatter.show_digits = 10
+        formatter.shown_digits = 10
         exp = formatter.get_exponent(9999.99)
         self.assertEqual(formatter.format_using_commas(9999.99, exp), '9,999.990000')
 
@@ -132,7 +132,7 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_format_using_commas_shows_number_as_int_if_too_long(self):
         formatter = ti.NumberFormatter()
-        formatter.show_digits = 5
+        formatter.shown_digits = 5
         exp = formatter.get_exponent(123456.789)
         self.assertEqual(formatter.format_using_commas(123456.789, exp), '123,457')
 
@@ -148,9 +148,24 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_format_using_commas_shows_whole_int(self):
         formatter = ti.NumberFormatter()
-        formatter.show_digits = 5
+        formatter.shown_digits = 5
         exp = formatter.get_exponent(123456789)
         self.assertEqual(formatter.format_using_commas(123456789, exp), '123,456,789')
+
+    def test_remove_extra_zero_Decimal_regression_test(self):
+        """
+        why does formatting a number stick in that damn extra zero???  Decimal has figured this out.
+        it's not that hard. arrrrrggggghhhhhhhh!
+        """
+        float_format = '{:.2e}'.format(123)
+        dec_format = '{:.2e}'.format(Decimal(123))
+        dec_zero_exponent = '{:.2e}'.format(Decimal(1))
+        self.assertEqual(float_format, '1.23e+02')
+        self.assertEqual(dec_format, '1.23e+2')
+
+        self.assertEqual(ti.remove_extra_zero_from_exponent(float_format), '1.23e+2')
+        self.assertEqual(ti.remove_extra_zero_from_exponent(dec_format), '1.23e+2')
+        self.assertEqual(ti.remove_extra_zero_from_exponent(dec_zero_exponent), '1.00e+0')
 
     def test_remove_extra_zero_from_exponent(self):
         self.assertEqual(ti.remove_extra_zero_from_exponent(str(1.23e-5)), '1.23e-5')
@@ -253,10 +268,10 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_format_number_at_edge_of_max_commas_exp_with_large_show_digits(self):
         formatter = ti.NumberFormatter()
-        formatter.show_digits = 10
+        formatter.shown_digits = 10
         nine_digits = 9999999.99
         self.assertEqual(formatter.format(nine_digits), '9,999,999.990')
-        formatter.show_digits = 8
+        formatter.shown_digits = 8
         self.assertEqual(formatter.format(nine_digits), '1.0000000e+7')
 
     def test_list_to_string_returns_single_number(self):
@@ -276,17 +291,13 @@ class TestTableInfo(unittest.TestCase):
         the_list = [-1234567, 1234567]
         self.assertEqual(ti.get_string_for_sequence(the_list), '(-1,234,567), 1,234,567')
 
-    @unittest.skip('FIXME - delete??')
-    def test_full_table_string_returns_empty_str_for_empty_table(self):
-        self.assertEqual(ti.full_table_string(AdditiveEvents({})), '')
-
     def test_get_pts_list_false(self):
         table = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.get_pts_list(table, False), [(1, 1), (3, 1)])
+        self.assertEqual(ti.get_raw_graph_points(table, False), [(1, 1), (3, 1)])
 
     def test_get_pts_list_True(self):
         table = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.get_pts_list(table, True), [(1, 1), (2, 0), (3, 1)])
+        self.assertEqual(ti.get_raw_graph_points(table, True), [(1, 1), (2, 0), (3, 1)])
 
     def test_full_table_string_include_zeroes_true(self):
         table = AdditiveEvents({1: 1, 3: 1})
@@ -306,12 +317,6 @@ class TestTableInfo(unittest.TestCase):
     def test_full_table_string_edge_case(self):
         table = AdditiveEvents({0: 1})
         self.assertEqual(ti.full_table_string(table), '0: 1\n')
-
-    @unittest.skip('FIXME - delete?')
-    def test_graph_pts_raises_error_for_empty_table(self):
-        with self.assertRaises(ValueError) as cm:
-            ti.graph_pts(AdditiveEvents({}))
-        self.assertEqual(cm.exception.args[0], 'empty table')
 
     def test_graph_pts_adds_zeroes(self):
         table = AdditiveEvents({1: 1, 3: 1})
@@ -367,62 +372,45 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.graph_pts_overflow(table),
                          ([(1, 2), (10 ** 4, 0)], '1.0e+1996'))
 
-    @unittest.skip('FIXME - delete?')
-    def test_graph_pts_overflow_raises_error_for_empty_table(self):
-        with self.assertRaises(ValueError) as cm:
-            ti.graph_pts_overflow(AdditiveEvents({}))
-        self.assertEqual(cm.exception.args[0], 'empty table')
-
-    @unittest.skip('FIXME - delete?')
-    def test_ascii_graph_helper_for_empty_table(self):
-        empty_result = ti.ascii_graph_helper(AdditiveEvents({}))
-        self.assertEqual(empty_result, [(None, 'each x represents 1 occurence')])
-
     def test_ascii_graph_helper_for_table_under_80(self):
         result = ti.ascii_graph_helper(AdditiveEvents({1: 5, 2: 80}))
         expected = [(1, '1:{}'.format(5 * 'x')), (2, '2:{}'.format(80 * 'x')),
-                    (None, 'each x represents 1 occurence')]
+                    (None, 'each x represents 1 occurrence')]
         self.assertEqual(result, expected)
 
     def test_ascii_graph_helper_for_table_over_80(self):
         result = ti.ascii_graph_helper(AdditiveEvents({1: 5, 2: 8000}))
         expected = [(1, '1:'), (2, '2:{}'.format(80 * 'x')),
-                    (None, 'each x represents 100.0 occurences')]
+                    (None, 'each x represents 100.0 occurrences')]
         self.assertEqual(result, expected)
 
     def tets_ascii_graph_justifies_right_for_values(self):
         result = ti.ascii_graph_helper(AdditiveEvents({1: 1, 2000: 1}))
         expected = [(1, '   1:x'), (2, '2000:x'),
-                    (None, 'each x represents 1 occurence')]
+                    (None, 'each x represents 1 occurrence')]
         self.assertEqual(result, expected)
 
     def test_ascii_graph_works(self):
         result = ti.ascii_graph(AdditiveEvents({1: 1, 2: 1}))
-        expected = '1:x\n2:x\neach x represents 1 occurence'
+        expected = '1:x\n2:x\neach x represents 1 occurrence'
         self.assertEqual(result, expected)
 
     def test_ascii_graph_truncated_when_no_truncating(self):
         result = ti.ascii_graph_truncated(AdditiveEvents({1: 1, 2: 1}))
-        expected = '1:x\n2:x\neach x represents 1 occurence'
+        expected = '1:x\n2:x\neach x represents 1 occurrence'
         self.assertEqual(result, expected)
 
     def test_ascii_graph_truncated_when_truncating_one_side(self):
         result = ti.ascii_graph_truncated(AdditiveEvents({1: 1, 2: 1, 3: 8000}))
-        expected = ('3:{}\neach x represents 100.0 occurences\nnot included: 1-2'
+        expected = ('3:{}\neach x represents 100.0 occurrences\nnot included: 1-2'
                     .format(80 * 'x'))
         self.assertEqual(result, expected)
 
     def test_ascii_graph_truncated_when_truncating_two_sides(self):
         result = ti.ascii_graph_truncated(AdditiveEvents({1: 1, 2: 1, 3: 8000, 4: 1}))
         expected = ('3:{}\n'.format(80 * 'x') +
-                    'each x represents 100.0 occurences\n' +
+                    'each x represents 100.0 occurrences\n' +
                     'not included: 1-2 and 4')
-        self.assertEqual(result, expected)
-
-    @unittest.skip('FIXME - delete?')
-    def test_stats_empty_table(self):
-        result = ti.stats(AdditiveEvents({}), [1, 2, 3])
-        expected = ('1-3', '0', '0', 'infinity', '0')
         self.assertEqual(result, expected)
 
     def test_stats_not_in_table(self):

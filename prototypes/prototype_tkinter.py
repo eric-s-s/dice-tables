@@ -279,7 +279,7 @@ class App(object):
         self.weight_text_box.insert(tk.END, ('here is full weight info\n\n' +
                                              self.table.weights_info()))
 
-        val_min, val_max = self.table.event_keys_range()
+        val_min, val_max = self.table.event_range
         self.stats_left.config(from_=val_min, to=val_max)
         self.stats_right.config(from_=val_min, to=val_max)
 

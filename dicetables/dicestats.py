@@ -8,6 +8,7 @@ class ProtoDie(object):
     """a blanket object for any kind of die so that different types of Die can
     be compared.  all Die objects need these five methods. str and repr"""
 
+    @property
     def get_size(self):
         """return the size of the die"""
         raise NotImplementedError
@@ -110,7 +111,7 @@ class ModDie(Die):
 
     def __init__(self, die_size, modifier):
         """as Die init, die_size is a positive int.  modifier is an int"""
-        Die.__init__(self, die_size)
+        super(ModDie, self).__init__(die_size)
         self._mod = modifier
 
     def get_modifier(self):
@@ -188,7 +189,7 @@ class ModWeightedDie(WeightedDie):
         """dictionary input is a dictionary of positive ints, value:weight.
         modifier is an int that modifies values. {1:3, 2:1, 3:1}, -3 creates a
         D3 that rolls a one(-3) 3 times more than a two(-3) or a three(-3)."""
-        WeightedDie.__init__(self, dictionary_input)
+        super(ModWeightedDie, self).__init__(dictionary_input)
         self._mod = modifier
 
     def get_modifier(self):
@@ -268,7 +269,7 @@ class DiceTable(AdditiveEvents):
     added to it and removed from it."""
 
     def __init__(self):
-        AdditiveEvents.__init__(self, {0: 1})
+        super(DiceTable, self).__init__({0: 1})
         self._dice_list = {}
 
     def update_list(self, add_number, new_die):
@@ -305,7 +306,7 @@ class DiceTable(AdditiveEvents):
     def add_die(self, num, die):
         """adds the die to the table num times and updates the table, list.  die
         is a  Die or WeightedDie and num is a positive int or 0."""
-        self.combine_with_new_events(num, die.tuple_list())
+        self.combine(num, die.tuple_list())
         self.update_list(num, die)
 
     def remove_die(self, num, die):
