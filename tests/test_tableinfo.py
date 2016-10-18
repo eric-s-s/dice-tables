@@ -1,5 +1,5 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-'''tests for the tableinfo.py module'''
+"""tests for the tableinfo.py module"""
 
 from __future__ import absolute_import
 
@@ -274,22 +274,12 @@ class TestTableInfo(unittest.TestCase):
         formatter.shown_digits = 8
         self.assertEqual(formatter.format(nine_digits), '1.0000000e+7')
 
-    def test_list_to_string_returns_single_number(self):
-        self.assertEqual(ti.get_string_for_sequence([1, 1, 1]), '1')
-
-    def test_list_to_string_puts_parentheses_around_negative_numbers(self):
-        self.assertEqual(ti.get_string_for_sequence([-1]), '(-1)')
-
-    def test_list_to_string_returns_proper_output_for_a_run_of_numbers(self):
-        self.assertEqual(ti.get_string_for_sequence([1, 1, 2, 3, 4, 5]), '1-5')
-
-    def test_list_to_string_returns_values_separated_by_commas(self):
-        the_list = [-5, -4, -3, -1, 0, 1, 2, 3, 5]
-        self.assertEqual(ti.get_string_for_sequence(the_list), '(-5)-(-3), (-1)-3, 5')
-
-    def test_list_to_string_returns_numbers_with_commas(self):
-        the_list = [-1234567, 1234567]
-        self.assertEqual(ti.get_string_for_sequence(the_list), '(-1,234,567), 1,234,567')
+# todo start graphdataarea
+    def test_GraphDataGenerator_init_default(self):
+        test = ti.GraphDataGenerator()
+        self.assertTrue(test.include_zeroes)
+        self.assertTrue(test.percent)
+        self.assertFalse(test.exact)
 
     def test_get_pts_list_false(self):
         table = AdditiveEvents({1: 1, 3: 1})
@@ -298,25 +288,6 @@ class TestTableInfo(unittest.TestCase):
     def test_get_pts_list_True(self):
         table = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.get_raw_graph_points(table, True), [(1, 1), (2, 0), (3, 1)])
-
-    def test_full_table_string_include_zeroes_true(self):
-        table = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.full_table_string(table, include_zeroes=True),
-                         '1: 1\n2: 0\n3: 1\n')
-
-    def test_full_table_string_include_zeroes_False(self):
-        table = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.full_table_string(table, include_zeroes=False),
-                         '1: 1\n3: 1\n')
-
-    def test_full_table_string_right_justifies_all_values(self):
-        table = AdditiveEvents({1: 10, 10: 200, 1000: 3000})
-        self.assertEqual(ti.full_table_string(table, include_zeroes=False),
-                         '   1: 10\n  10: 200\n1000: 3,000\n')
-
-    def test_full_table_string_edge_case(self):
-        table = AdditiveEvents({0: 1})
-        self.assertEqual(ti.full_table_string(table), '0: 1\n')
 
     def test_graph_pts_adds_zeroes(self):
         table = AdditiveEvents({1: 1, 3: 1})
@@ -372,6 +343,27 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.graph_pts_overflow(table),
                          ([(1, 2), (10 ** 4, 0)], '1.0e+1996'))
 
+# TODO end graphdataarea
+
+    def test_full_table_string_include_zeroes_true(self):
+        table = AdditiveEvents({1: 1, 3: 1})
+        self.assertEqual(ti.full_table_string(table, include_zeroes=True),
+                         '1: 1\n2: 0\n3: 1\n')
+
+    def test_full_table_string_include_zeroes_False(self):
+        table = AdditiveEvents({1: 1, 3: 1})
+        self.assertEqual(ti.full_table_string(table, include_zeroes=False),
+                         '1: 1\n3: 1\n')
+
+    def test_full_table_string_right_justifies_all_values(self):
+        table = AdditiveEvents({1: 10, 10: 200, 1000: 3000})
+        self.assertEqual(ti.full_table_string(table, include_zeroes=False),
+                         '   1: 10\n  10: 200\n1000: 3,000\n')
+
+    def test_full_table_string_edge_case(self):
+        table = AdditiveEvents({0: 1})
+        self.assertEqual(ti.full_table_string(table), '0: 1\n')
+
     def test_ascii_graph_helper_for_table_under_80(self):
         result = ti.ascii_graph_helper(AdditiveEvents({1: 5, 2: 80}))
         expected = [(1, '1:{}'.format(5 * 'x')), (2, '2:{}'.format(80 * 'x')),
@@ -384,9 +376,9 @@ class TestTableInfo(unittest.TestCase):
                     (None, 'each x represents 100.0 occurrences')]
         self.assertEqual(result, expected)
 
-    def tets_ascii_graph_justifies_right_for_values(self):
+    def test_ascii_graph_justifies_right_for_values(self):
         result = ti.ascii_graph_helper(AdditiveEvents({1: 1, 2000: 1}))
-        expected = [(1, '   1:x'), (2, '2000:x'),
+        expected = [(1, '   1:x'), (2000, '2000:x'),
                     (None, 'each x represents 1 occurrence')]
         self.assertEqual(result, expected)
 
@@ -412,6 +404,23 @@ class TestTableInfo(unittest.TestCase):
                     'each x represents 100.0 occurrences\n' +
                     'not included: 1-2 and 4')
         self.assertEqual(result, expected)
+
+    def test_list_to_string_returns_single_number(self):
+        self.assertEqual(ti.get_string_for_sequence([1, 1, 1]), '1')
+
+    def test_list_to_string_puts_parentheses_around_negative_numbers(self):
+        self.assertEqual(ti.get_string_for_sequence([-1]), '(-1)')
+
+    def test_list_to_string_returns_proper_output_for_a_run_of_numbers(self):
+        self.assertEqual(ti.get_string_for_sequence([1, 1, 2, 3, 4, 5]), '1-5')
+
+    def test_list_to_string_returns_values_separated_by_commas(self):
+        the_list = [-5, -4, -3, -1, 0, 1, 2, 3, 5]
+        self.assertEqual(ti.get_string_for_sequence(the_list), '(-5)-(-3), (-1)-3, 5')
+
+    def test_list_to_string_returns_numbers_with_commas(self):
+        the_list = [-1234567, 1234567]
+        self.assertEqual(ti.get_string_for_sequence(the_list), '(-1,234,567), 1,234,567')
 
     def test_stats_not_in_table(self):
         result = ti.stats(AdditiveEvents({1: 1}), [2])

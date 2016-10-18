@@ -109,12 +109,28 @@ def scinote(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
 
 
 def get_raw_graph_points(table, include_zeroes=True):
-    if include_zeroes and table.event_keys:
+    if include_zeroes:
         min_val, max_val = table.event_range
         the_pts = table.get_range_of_events(min_val, max_val + 1)
     else:
         the_pts = table.all_events
     return the_pts
+
+
+# def full_table_string(table, include_zeroes=True):
+#     """
+#
+#     :param table: AdditiveEvents or child.  is never empty
+#     :param include_zeroes: =True, include zero occurrences within table.event_range
+#     :return:
+#     """
+#     formatter = NumberFormatter()
+#     the_pts = get_raw_graph_points(table, include_zeroes)
+#     out_str = ''
+#     value_right_just = len(str(table.event_range[1]))
+#     for value, frequency in the_pts:
+#         out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format(frequency))
+#     return out_str
 
 
 def full_table_string(table, include_zeroes=True):
@@ -125,12 +141,86 @@ def full_table_string(table, include_zeroes=True):
     :return:
     """
     formatter = NumberFormatter()
-    the_pts = get_raw_graph_points(table, include_zeroes)
+    graph_data = GraphDataGenerator(include_zeroes=include_zeroes)
+    the_pts = graph_data.get_raw_points(table)
     out_str = ''
     value_right_just = len(str(table.event_range[1]))
     for value, frequency in the_pts:
         out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format(frequency))
     return out_str
+
+#  TODO delete
+# from dicetables import AdditiveEvents
+
+
+class GraphDataGenerator(object):
+    def __init__(self, percent=True, include_zeroes=True, exact=False):
+        self._percent = None
+        self._include_zeroes = None
+        self._exact = None
+
+        self.percent = percent
+        self.include_zeroes = include_zeroes
+        self.exact = exact
+
+    @property
+    def percent(self):
+        return self._percent
+
+    @percent.setter
+    def percent(self, boolean):
+        self._percent = bool(boolean)
+
+    @property
+    def include_zeroes(self):
+        return self._include_zeroes
+
+    @include_zeroes.setter
+    def include_zeroes(self, boolean):
+        self._include_zeroes = bool(boolean)
+
+    @property
+    def exact(self):
+        return self._exact
+
+    @exact.setter
+    def exact(self, boolean):
+        self._exact = bool(boolean)
+
+    def get_raw_points(self, events_table):
+        if self.include_zeroes:
+            start, end = events_table.event_range
+            return events_table.get_range_of_events(start, end + 1)
+        else:
+            return events_table.all_events
+
+    def get_percent_points(self, events_table):
+        if self.exact:
+            method = get_exact_pct_number
+        else:
+            method = get_fast_pct_number
+        raw_points = self.get_raw_points(events_table)
+        total_values = events_table.total_occurrences
+        return [(event, method(occurrence, total_values)) for event, occurrence in raw_points]
+
+    def get_points(self, events_table):
+        if self.percent:
+            return self.get_percent_points(events_table)
+        else:
+            return self.get_raw_points(events_table)
+
+    def get_axes(self, events_table):
+        return list(zip(*self.get_points(events_table)))
+
+
+def get_fast_pct_number(number, total_values):
+    factor = 10 ** 50
+    will_not_overflow = (number * factor) // total_values
+    return will_not_overflow * 100. / float(factor)
+
+
+def get_exact_pct_number(number, total_values):
+    return safe_true_div(100 * number, total_values)
 
 
 def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
@@ -143,41 +233,18 @@ def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
     :param exact: =False, points only good to ten decimal places.
     :return:
     """
-
-    the_pts = get_raw_graph_points(table, include_zeroes)
-    if percent:
-        if exact:
-            the_pts = get_pct_exactly(the_pts)
-        else:
-            the_pts = get_pct_quickly(the_pts)
+    data_generator = GraphDataGenerator(percent, include_zeroes, exact)
     if axes:
-        return list(zip(*the_pts))
+        return data_generator.get_axes(table)
     else:
-        return the_pts
-
-
-def get_pct_quickly(the_pts):
-    total_y_value = sum([pair[1] for pair in the_pts])
-    output = []
-    factor = 10 ** 50
-    for value, freq in the_pts:
-        y_val = (freq * factor) // total_y_value
-        output.append((value, (y_val * 100.) / factor))
-    return output
-
-
-def get_pct_exactly(the_pts):
-    total_y_value = sum([pair[1] for pair in the_pts])
-    output = []
-    for value, freq in the_pts:
-        output.append((value, safe_true_div(100 * freq, total_y_value)))
-    return output
+        return data_generator.get_points(table)
 
 
 def graph_pts_overflow(table, axes=True, zeroes=True):
     """return graph points and the factor they are modified by to control for
     overflow problems by long ints."""
-    raw_pts = graph_pts(table, percent=False, axes=axes, include_zeroes=zeroes)
+    raw_pts = GraphDataGenerator(include_zeroes=zeroes).get_raw_points(table)
+
     factor = 1
     overflow_point = 10 ** 300
     exponent_adjustment = 4
@@ -186,13 +253,10 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
         power = int(log10(table.biggest_event[1])) - exponent_adjustment
         factor = 10 ** power
     factor_string = scinote(factor, 2)
+    new_points = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
     if axes:
-        x_axis, old_y_axis = raw_pts
-        new_y_axis = tuple([old_val // factor for old_val in old_y_axis])
-        return [x_axis, new_y_axis], factor_string
-    else:
-        new_pts = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
-        return new_pts, factor_string
+        new_points = list(zip(*new_points))
+    return new_points, factor_string
 
 
 def ascii_graph_helper(table):
@@ -218,8 +282,6 @@ def ascii_graph_helper(table):
 
 def ascii_graph(table):
     """table is a AdditiveEvents. returns a graph of x's."""
-    # for output in graph_list(table):
-    #    print output[1]
     temp = [pair[1] for pair in ascii_graph_helper(table)]
     return '\n'.join(temp)
 
@@ -312,63 +374,3 @@ def format_one_sequence(sequence):
 
 def format_for_sequence_str(num):
     return '({:,})'.format(num) if num < 0 else '{:,}'.format(num)
-
-# import time
-# if __name__ == '__main__':
-#
-#     x = NumberFormatter()
-#     print(x.format_number(99*10**-8))
-#     def tst(num):
-#         tster = NumberFormatter()
-#         return tster.format_number(num)
-#
-#     def timer(number):
-#         start = time.clock()
-#         for _ in range(10000):
-#             x.format_number(number)
-#         obj_time = time.clock() - start
-#         start = time.clock()
-#         for _ in range(10000):
-#             tst(number)
-#         fobj_time = time.clock() - start
-#         start = time.clock()
-#         for _ in range(10000):
-#             scinote(number)
-#         func_time = time.clock() - start
-#         print('obj : {}\nfobj: {}\nfunc: {}'.format(obj_time, fobj_time, func_time))
-#
-#     timer(123*10**-290)
-#
-#     import dicetables.dicestats as dt
-#     tabel = dt.DiceTable()
-#     tabel.add_die(500, dt.Die(6))
-#
-#     start = time.clock()
-#     for _ in range(100):
-#         full_table_string(tabel)
-#     orig_time = time.clock() - start
-#
-#     start = time.clock()
-#     for _ in range(100):
-#         full_table_string_2(tabel)
-#     new_time = time.clock() - start
-#
-#     print('orig: {}\nnew : {}'.format(orig_time, new_time))
-#
-#     start = time.clock()
-#     for _ in range(100):
-#         get_raw_graph_points(tabel, True)
-#     pts_time = time.clock() - start
-#     print(pts_time)
-#
-#     this_pts_list = get_raw_graph_points(tabel, True)
-#
-#     start = time.clock()
-#     for _ in range(100):
-#         outstr = ''
-#         for value, frequency in this_pts_list:
-#             outstr += '{0:>{1}}: {2}\n'.format(value, 5, x.format_number(frequency))
-#             # outstr += '{0:>{1}}: '.format(value, max_len) + formatter.format_number(frequency) + '\n'
-#
-#     format_time = time.clock() - start
-#     print(format_time)
