@@ -247,9 +247,9 @@ their hash value will be ==.  so::
     In [16]: dic
     Out[16]: {ModDie(6, -1): 3, Die(6): 'abc', ModDie(6, 0): 4}
 
-------------
+--------------
 AdditiveEvents
-------------
+--------------
 LongIntTables are instantiated with a dictionary of {value: get_event it occurs}.
 DiceTable instantiates as the identity table, {0:1}
 

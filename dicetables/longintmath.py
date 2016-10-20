@@ -1,11 +1,10 @@
 """ this module contains the class LongIntTable and longintmath that the table
 needs to deal with it's BFN"""
-from sys import version_info
 from decimal import Decimal
 from math import log10
+from sys import version_info
 
-from dicetables.indexedvalues import generate_indexed_values
-
+from tools.indexedvalues import generate_indexed_values
 
 CONVERSIONS = {'add': 'AdditiveEvents.combines',
                'frequency': 'AdditiveEvents.get_event',
@@ -61,7 +60,6 @@ class EventsVerifier(object):
             
     def verify_times(self, times):
         """
-
         :raises: InvalidEventsError with specific error message
         """
         if times < 0 or not self.is_int(times):
@@ -122,7 +120,7 @@ class AdditiveEvents(object):
 
     @property
     def event_keys(self):
-        """return the all the values, in order, that have non-zero get_event"""
+        """return the all the values, in order, that have non-zero occurrences"""
         return sorted([key for key in self._table.keys() if self._table[key]])
 
     @property
@@ -198,14 +196,15 @@ class AdditiveEvents(object):
         combine_with_new_events {A: 2, B:5}: A+A = 3*2, B+A = 2*2, A+B = 5*3, B+B = 5*2
         combined events = {A+A: 6, A+B: 19, B+B: 10}
 
-        :param times: positive int
+        :param times: >=0
+        :type times: int
         :param new_events_group: [(event, occurrences_of_event), ..]\n
             events may not be empty or zero\n
             all values are ints.\n
             occurrences >= 0.
         :param method: 'fastest', 'tuple_list', 'flattened_list', 'indexed_values'\n
-            WARNING: len(flattened_list) = total occurrences. can throw MemoryError and OverflowError
-            if too many occurrences
+            WARNING: len(flattened_list) = total occurrences.\n
+            Can throw MemoryError and OverflowError if too many occurrences.
         :raises: InvalidEventsError
         :return: None
         """
@@ -333,19 +332,6 @@ class AdditiveEvents(object):
     def update_frequency(self, event, new_freq):
         """looks up a event, and changes its get_event to the new one"""
         self._table[event] = new_freq
-
-    def update_value_ow(self, old_val, new_val):
-        """takes the get_event at old_val and moves it to new_val"""
-        freq = self._table[old_val]
-        self._table[old_val] = 0
-        self._table[new_val] = freq
-
-    def update_value_add(self, old_val, new_val):
-        """takes the get_event at old_vall and moves it to new_val where it adds
-        to the get_event already at new_val"""
-        freq = self._table[old_val]
-        self._table[old_val] = 0
-        self._table[new_val] = self._table.get(new_val, 0) + freq
 
 
 def flatten_events_tuple(events_tuple):

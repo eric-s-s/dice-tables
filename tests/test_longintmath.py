@@ -259,16 +259,6 @@ class TestLongIntMath(unittest.TestCase):
         table.update_frequency(2, 5)
         self.assertEqual(table.get_event(2)[1], 5)
 
-    def test_AdditiveEvents_update_value_ow(self):
-        table = lim.AdditiveEvents({1: 100, 2: 2})
-        table.update_value_ow(1, 2)
-        self.assertEqual(table.all_events, [(2, 100)])
-
-    def test_AdditiveEvents_update_value_add(self):
-        table = lim.AdditiveEvents({1: 100, 2: 2})
-        table.update_value_add(1, 2)
-        self.assertEqual(table.all_events, [(2, 102)])
-
     def test_AdditiveEvents_verify_inputs_for_combine_and_remove_raises_error_for_bad_times(self):
         self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, -1, [(1, 1)])
         self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, 1.0, [(1, 1)])
@@ -408,6 +398,7 @@ class TestLongIntMath(unittest.TestCase):
         }
     data_dict = {new_event size: {times: (current_events_size_choices), ...}, ...}
     (current_events_size_choices)  is minimum size of AdditiveEvents to use with 'indexed_values'
+    by ('flattened_list', 'tuple_list') methods.
     """
 
     def test_AdditiveEvents_get_fastest_method_one_current_events_and_one_times_never_picks_indexed_values(self):

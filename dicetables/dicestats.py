@@ -8,13 +8,10 @@ class ProtoDie(object):
     """a blanket object for any kind of die so that different types of Die can
     be compared.  all Die objects need these five methods. str and repr"""
 
-    @property
     def get_size(self):
-        """return the size of the die"""
         raise NotImplementedError
 
     def get_weight(self):
-        """return the total weight of the die, if weighted"""
         raise NotImplementedError
 
     def tuple_list(self):
@@ -70,33 +67,34 @@ class ProtoDie(object):
 
 
 class Die(ProtoDie):
-    """makes instance of a die.  it has a size and a weight of 0 (for comparing
-    with weighted dice which have non-zero weight)"""
+    """
+    stores and returns info for
+    a basic Die, like a normal 6 sided die.
+    """
 
     def __init__(self, die_size):
-        """die size is a positive int. creates a die containing 1 to die_size
-        values"""
+        """
+
+        :param die_size: int > 0
+        """
         self._die_size = die_size
         self._weight = 0
 
     def get_size(self):
-        """returns the size of the die"""
         return self._die_size
 
     def get_weight(self):
-        """returns the weight of the die"""
+        """all Die have weight=0"""
         return self._weight
 
     def tuple_list(self):
-        """returns the tuple list that is the dice values"""
         return [(value, 1) for value in range(1, self._die_size + 1)]
 
     def weight_info(self):
-        """returns detailed weight info, indented"""
         return str(self) + '\n    No weights'
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D6+3 --> 5D6+15"""
+        """return the str of die times a number. 5, D6 --> 5D6"""
         return '{}{}'.format(number, self)
 
     def __str__(self):
@@ -107,19 +105,25 @@ class Die(ProtoDie):
 
 
 class ModDie(Die):
-    """a Die with a modifier.  i.e. D6-3."""
+    """
+    stores and returns info for
+    a Die with a modifier.  i.e. D6-3.
+    """
 
     def __init__(self, die_size, modifier):
-        """as Die init, die_size is a positive int.  modifier is an int"""
+        """
+
+        :param die_size: int >0
+        :param modifier: int
+        """
         super(ModDie, self).__init__(die_size)
         self._mod = modifier
 
     def get_modifier(self):
-        """returns the modifier of a modded die"""
         return self._mod
 
     def tuple_list(self):
-        """returns the tuple list with the values adjusted by the modifier"""
+        """D3 + 2 = [(3, 1, (4, 1), (5, 1)]"""
         return [(value + self._mod, 1)
                 for value in range(1, self._die_size + 1)]
 
@@ -135,7 +139,11 @@ class ModDie(Die):
 
 
 class WeightedDie(ProtoDie):
-    """stores and returns info for a weighted die."""
+    """
+    stores and returns info for
+    a die with different chances for different rolls.
+    ex: D2 {1:5, 2:1} rolls a one 5 times more often than a five
+    """
 
     def __init__(self, dictionary_input):
         """dictionary input is a dictionary of value:weight. values are positive
@@ -147,19 +155,15 @@ class WeightedDie(ProtoDie):
         self._weight = sum(self._dic.values())
 
     def get_size(self):
-        """returns the size of the die"""
         return self._die_size
 
     def get_weight(self):
-        """returns the weight of the die"""
         return self._weight
 
     def tuple_list(self):
-        """returns the tuple list that is the dice values"""
         return sorted([pair for pair in self._dic.items() if pair[1]])
 
     def weight_info(self):
-        """returns detailed weight info, indented"""
         num_len = len(str(self.get_size()))
         out = str(self) + '\n'
         for roll in range(1, self._die_size + 1):
@@ -168,7 +172,7 @@ class WeightedDie(ProtoDie):
         return out.rstrip('\n')
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D6+3 --> 5D6+15"""
+        """return the str of die times a number. 5, D({1:3, 2:1}) --> 5D2  W:4"""
         return '{}{}'.format(number, self)
 
     def __str__(self):
@@ -201,7 +205,7 @@ class ModWeightedDie(WeightedDie):
         return sorted([(roll + self._mod, weight) for roll, weight in self._dic.items() if weight])
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D6+3 --> 5D6+15"""
+        """return the str of die times a number. 5, D({1:2. 2:1})+3 --> 5D2+15  W:3"""
         return '{0}D{1}{2:+}  W:{3}'.format(number, self._die_size,
                                             number * self._mod, self._weight)
 
@@ -219,22 +223,19 @@ class StrongDie(ProtoDie):
 
     def __init__(self, input_die, multiplier):
         """multiplier is a positive int.  input_die is any Die derived from
-        ProtoDie or it's descendents. StrongDie(ModDie(3, -1), 2) would make a
+        ProtoDie or it's descendants. StrongDie(ModDie(3, -1), 2) would make a
         D3-1 with twice the influence of a regular die.  so it would roll
         0, 2, 4.  die size and weight are still the same."""
         self._original = input_die
         self._multiply = multiplier
 
     def get_size(self):
-        """returns the size of the die"""
         return self.get_original().get_size()
 
     def get_weight(self):
-        """returns the weight of the die"""
         return self._original.get_weight()
 
     def get_multiplier(self):
-        """retruns the multiplier for the die"""
         return self._multiply
 
     def get_original(self):
@@ -242,17 +243,15 @@ class StrongDie(ProtoDie):
         return self._original
 
     def tuple_list(self):
-        """returns the tuple list that is the dice values"""
         old = self._original.tuple_list()
         return [(pair[0] * self.get_multiplier(), pair[1]) for pair in old]
 
     def weight_info(self):
-        """returns detailed weight info, indented"""
         return (self._original.weight_info().replace(
             str(self._original), str(self)))
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D6+3 --> 5D6+15"""
+        """return the str of die times a number. 5, (D6+3)X3 --> (5D6+15)X3"""
         return '({})X{}'.format(self.get_original().multiply_str(number),
                                 self.get_multiplier())
 
@@ -265,7 +264,7 @@ class StrongDie(ProtoDie):
 
 
 class DiceTable(AdditiveEvents):
-    """this is a AdditiveEvents with a list that holds information about the dice
+    """this is an AdditiveEvents with a list that holds information about the dice
     added to it and removed from it."""
 
     def __init__(self):
@@ -273,8 +272,14 @@ class DiceTable(AdditiveEvents):
         self._dice_list = {}
 
     def update_list(self, add_number, new_die):
-        """adds die and number of dice to the list. if die is already in list,
-        adds old and new number together."""
+        """
+
+        :param add_number: can be negative but should not reduce Die count below zero
+        :type add_number: int
+        :param new_die: any Die type
+        :type new_die: ProtoDie
+        :return:
+        """
         self._dice_list[new_die] = self._dice_list.get(new_die, 0) + add_number
         if self._dice_list[new_die] == 0:
             del self._dice_list[new_die]
@@ -304,15 +309,28 @@ class DiceTable(AdditiveEvents):
         return out_str.rstrip('\n')
 
     def add_die(self, num, die):
-        """adds the die to the table num times and updates the table, list.  die
-        is a  Die or WeightedDie and num is a positive int or 0."""
+        """
+
+        :param num: >= 0
+        :type num: int
+        :param die: any die type derived from ProtoDie
+        :type die: ProtoDie
+        :raises: dicetables.InvalidEventsError
+        :return:
+        """
         self.combine(num, die.tuple_list())
         self.update_list(num, die)
 
     def remove_die(self, num, die):
-        """die is a  Die or WeightedDie and num is a positive int or 0.first
-        makes sure the dice to be removed are in the list. then removes those
-        dice from the list and the table."""
+        """
+
+        :param num: >=0, must be at least that many dice of that kind in table
+        :type num: int
+        :param die: any kind of die present in table
+        :type die: ProtoDie
+        :raises: ValueError, dicetables.InvalidEventsError
+        :return:
+        """
         if self.number_of_dice(die) - num < 0:
             raise ValueError('dice not in table, or removed too many dice')
         else:
