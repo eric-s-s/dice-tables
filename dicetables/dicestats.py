@@ -146,10 +146,12 @@ class WeightedDie(ProtoDie):
     """
 
     def __init__(self, dictionary_input):
-        """dictionary input is a dictionary of value:weight. values are positive
-        int and weights are zero or positive ints.
+        """
         {1:3, 2:0, 3:1} creates a D3 that rolls a one 3 times more than a three
-        and never rolls a two."""
+        and never rolls a two.
+
+        :param dictionary_input: {roll: weight} roll: int, weight: int>=0
+        :type dictionary_input: dict"""
         self._dic = dictionary_input.copy()
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
@@ -190,9 +192,15 @@ class ModWeightedDie(WeightedDie):
     values"""
 
     def __init__(self, dictionary_input, modifier):
-        """dictionary input is a dictionary of positive ints, value:weight.
-        modifier is an int that modifies values. {1:3, 2:1, 3:1}, -3 creates a
-        D3 that rolls a one(-3) 3 times more than a two(-3) or a three(-3)."""
+        """
+        ModWeightedDei({1:3, 2:1, 3:1}, -3) creates a
+        D3 that rolls a (1-3=-2)neg two 3 times more than a (2-3=-1)neg one or a (3-3=0)zero.
+
+        :param dictionary_input: {roll: weight} roll: int, weight: int>=0
+        :type dictionary_input: dict
+        :param modifier:
+        :type modifier: int
+        """
         super(ModWeightedDie, self).__init__(dictionary_input)
         self._mod = modifier
 
@@ -222,10 +230,16 @@ class StrongDie(ProtoDie):
     many votes."""
 
     def __init__(self, input_die, multiplier):
-        """multiplier is a positive int.  input_die is any Die derived from
-        ProtoDie or it's descendants. StrongDie(ModDie(3, -1), 2) would make a
+        """
+        StrongDie(ModDie(3, -1), 2) would make a
         D3-1 with twice the influence of a regular die.  so it would roll
-        0, 2, 4.  die size and weight are still the same."""
+        0, 2, 4.  die_size=input_die.get_size(), weight=input_die.get_weight().
+
+        :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or sub
+        :type input_die: ProtoDie
+        :param multiplier: int >=1
+        :type multiplier: int
+        """
         self._original = input_die
         self._multiply = multiplier
 
@@ -276,7 +290,7 @@ class DiceTable(AdditiveEvents):
 
         :param add_number: can be negative but should not reduce Die count below zero
         :type add_number: int
-        :param new_die: any Die type
+        :param new_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         :type new_die: ProtoDie
         :return:
         """
@@ -313,7 +327,7 @@ class DiceTable(AdditiveEvents):
 
         :param num: >= 0
         :type num: int
-        :param die: any die type derived from ProtoDie
+        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         :type die: ProtoDie
         :raises: dicetables.InvalidEventsError
         :return:
@@ -326,13 +340,12 @@ class DiceTable(AdditiveEvents):
 
         :param num: >=0, must be at least that many dice of that kind in table
         :type num: int
-        :param die: any kind of die present in table
+        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         :type die: ProtoDie
         :raises: ValueError, dicetables.InvalidEventsError
         :return:
         """
         if self.number_of_dice(die) - num < 0:
             raise ValueError('dice not in table, or removed too many dice')
-        else:
-            self.remove(num, die.tuple_list())
-            self.update_list(-num, die)
+        self.remove(num, die.tuple_list())
+        self.update_list(-num, die)

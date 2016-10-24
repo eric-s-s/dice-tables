@@ -16,7 +16,7 @@ class TestLongIntMath(unittest.TestCase):
     def setUp(self):
         self.identity_a = lim.AdditiveEvents({0: 1})
         self.identity_b = lim.AdditiveEvents({0: 1})
-        self.checker = lim.EventsVerifier()
+        self.checker = lim.InputVerifier()
         self.types_error = 'all values must be ints'
         if version_info[0] < 3:
             self.types_error += ' or longs'
@@ -62,7 +62,7 @@ class TestLongIntMath(unittest.TestCase):
         result = lim.safe_true_div(LONG_BIG, LONG_BIG * 10 ** 200)
         self.assertAlmostEqual(result, 10 ** -200, delta=10 ** -210)
 
-    #  EventsVerifier tests
+    #  InputVerifier tests
     def test_InvalidEventsError_empty(self):
         error = lim.InvalidEventsError()
         self.assertEqual(str(error), '')
@@ -77,11 +77,11 @@ class TestLongIntMath(unittest.TestCase):
         self.assertIsNone(self.checker.verify_times(10))
 
     def test_EventsVerifier_verify_times_not_int(self):
-        self.assert_my_regex(lim.InvalidEventsError, 'events may only be combined (int >= 0) times',
+        self.assert_my_regex(TypeError, 'AdditiveEvents.combine/remove: times variable must be int',
                              self.checker.verify_times, 1.0)
 
     def test_EventsVerifier_verify_times_negative(self):
-        self.assert_my_regex(lim.InvalidEventsError, 'events may only be combined (int >= 0) times',
+        self.assert_my_regex(ValueError, 'AdditiveEvents.combine/remove times must be >=0',
                              self.checker.verify_times, -1)
 
     def test_EventsVerifier_verify_events_tuple_pass(self):
@@ -243,37 +243,21 @@ class TestLongIntMath(unittest.TestCase):
         high_freq = lim.AdditiveEvents({2: 10 ** 500, -2: 10 ** 500, 1: 10 ** 500, -1: 10 ** 500})
         self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5 ** 0.5, 10))
 
-    def test_AdditiveEvents_merge_adds_old_vals_and_makes_new_vals(self):
-        table = lim.AdditiveEvents({1: 1, 2: 1, 3: 1})
-        table.merge({-1: 1, 0: 1, 1: 1, 2: 1}.items())
-        self.assertEqual(table.all_events,
-                         [(-1, 1), (0, 1), (1, 2), (2, 2), (3, 1)])
-
-    def test_AdditiveEvents_update_frequency(self):
-        table = lim.AdditiveEvents({1: 1, 2: 2})
-        table.update_frequency(2, 5)
-        self.assertEqual(table.get_event(2)[1], 5)
-
-    def test_AdditiveEvents_update_frequency_when_update_value_not_in_table(self):
-        table = lim.AdditiveEvents({1: 1})
-        table.update_frequency(2, 5)
-        self.assertEqual(table.get_event(2)[1], 5)
-
     def test_AdditiveEvents_verify_inputs_for_combine_and_remove_raises_error_for_bad_times(self):
-        self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, -1, [(1, 1)])
-        self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, 1.0, [(1, 1)])
+        self.assertRaises(ValueError, self.identity_a.raise_error_for_bad_input, -1, [(1, 1)])
+        self.assertRaises(TypeError, self.identity_a.raise_error_for_bad_input, 1.0, [(1, 1)])
 
     def test_AdditiveEvents_verify_inputs_for_combine_and_remove_raises_error_for_bad_events(self):
-        self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, 1, [(1, 0)])
-        self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, 1, [(1, 1.0)])
-        self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, 1, [(1.0, 1)])
-        self.assertRaises(lim.InvalidEventsError, self.identity_a.verify_inputs_for_combine_and_remove, 1, [(1, -1)])
+        self.assertRaises(lim.InvalidEventsError, self.identity_a.raise_error_for_bad_input, 1, [(1, 0)])
+        self.assertRaises(lim.InvalidEventsError, self.identity_a.raise_error_for_bad_input, 1, [(1, 1.0)])
+        self.assertRaises(lim.InvalidEventsError, self.identity_a.raise_error_for_bad_input, 1, [(1.0, 1)])
+        self.assertRaises(lim.InvalidEventsError, self.identity_a.raise_error_for_bad_input, 1, [(1, -1)])
 
     def test_AdditiveEvents_prep_new_events_removes_zeros(self):
-        self.assertEqual(self.identity_a.prep_new_events([(1, 1), (2, 0)]), [(1, 1)])
+        self.assertEqual(lim.prepare_events([(1, 1), (2, 0)]), [(1, 1)])
 
     def test_AdditiveEvents_prep_new_events_sorts(self):
-        self.assertEqual(self.identity_a.prep_new_events([(1, 1), (-1, 1)]), [(-1, 1), (1, 1)])
+        self.assertEqual(lim.prepare_events([(1, 1), (-1, 1)]), [(-1, 1), (1, 1)])
 
     def test_AdditiveEvents_combine_errors_do_not_mutate_table(self):
         identity = lim.AdditiveEvents({0: 1})
@@ -283,7 +267,7 @@ class TestLongIntMath(unittest.TestCase):
             pass
         try:
             identity.combine(-1, [(1, 1)])
-        except lim.InvalidEventsError:
+        except ValueError:
             pass
         try:
             identity.combine(1, [(1, -1)])

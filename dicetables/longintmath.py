@@ -44,7 +44,7 @@ class InvalidEventsError(ValueError):
         super(InvalidEventsError, self).__init__(message, *args, **kwargs)
         
 
-class EventsVerifier(object):
+class InputVerifier(object):
     def __init__(self):
         if version_info[0] < 3:
             self._int_tuple = (int, long)
@@ -60,10 +60,12 @@ class EventsVerifier(object):
             
     def verify_times(self, times):
         """
-        :raises: InvalidEventsError with specific error message
+        :raises: TypeError, ValueError
         """
-        if times < 0 or not self.is_int(times):
-            raise InvalidEventsError('events may only be combined (int >= 0) times')
+        if not self.is_int(times):
+            raise TypeError('AdditiveEvents.combine/remove: times variable must be int')
+        if times < 0:
+            raise ValueError('AdditiveEvents.combine/remove times must be >=0')
 
     def verify_events_tuple(self, event_tuple):
         """
@@ -83,8 +85,8 @@ class EventsVerifier(object):
         identity_str = '{0: 1}'
         self._verify_events(dictionary.items(), identity_str)
 
-    def _verify_events(self, events_as_tuple_list, identity_str):
-        cannot_be_empty = self.empty_message.format(identity_str)
+    def _verify_events(self, events_as_tuple_list, error_form_completion_str):
+        cannot_be_empty = self.empty_message.format(error_form_completion_str)
         no_negative_occurrences = 'events may not occur negative times.'
         bad_types = self.types_message
 
@@ -114,7 +116,7 @@ class AdditiveEvents(object):
             total occurrences > 0
         :raises: InvalidEventsError
         """
-        self._verifier = EventsVerifier()
+        self._verifier = InputVerifier()
         self._verifier.verify_events_dictionary(seed_dictionary)
         self._table = seed_dictionary.copy()
 
@@ -205,11 +207,11 @@ class AdditiveEvents(object):
         :param method: 'fastest', 'tuple_list', 'flattened_list', 'indexed_values'\n
             WARNING: len(flattened_list) = total occurrences.\n
             Can throw MemoryError and OverflowError if too many occurrences.
-        :raises: InvalidEventsError
+        :raises: InvalidEventsError, TypeError, ValueError
         :return: None
         """
-        self.verify_inputs_for_combine_and_remove(times, new_events_group)
-        prepped_events = self.prep_new_events(new_events_group)
+        self.raise_error_for_bad_input(times, new_events_group)
+        prepped_events = prepare_events(new_events_group)
         method_dict = {'tuple_list': self._combine_by_tuple_list,
                        'flattened_list': self._combine_by_flattened_list,
                        'indexed_values': self._combine_by_indexed_values}
@@ -224,7 +226,6 @@ class AdditiveEvents(object):
             self._combine_once_by_flattened_list(flattened_list)
 
     def _combine_once_by_flattened_list(self, flattened_list):
-        """the flattened list of [(1, 2), (2, 3)] = [1, 1, 2, 2, 2]"""
         new_dict = {}
         for event, current_frequency in self._table.items():
             for new_event in flattened_list:
@@ -249,20 +250,13 @@ class AdditiveEvents(object):
             indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events)
         self._table = dict(indexed_values_to_update.get_items())
 
-    def verify_inputs_for_combine_and_remove(self, times, events):
+    def raise_error_for_bad_input(self, times, events):
         """
 
-        :param times: int >= 0
-        :param events: [(event, occurrences) ..]\n
-            all values ints. must have total occurrences>0 and each occurrences>=0
-        :raises: InvalidEventsError
+        :raises: InvalidEventsError, TypeError, ValueError
         """
         self._verifier.verify_times(times)
         self._verifier.verify_events_tuple(events)
-
-    @staticmethod
-    def prep_new_events(events_tuple):
-        return sorted([pair for pair in events_tuple if pair[1]])
 
     def get_fastest_combine_method(self, times, prepped_events):
         first_comparison = self._compare_tuple_list_with_flattened_list(prepped_events)
@@ -299,8 +293,8 @@ class AdditiveEvents(object):
         :param times: int > 0
         :param to_remove: [(event, occurrences) ..]\n
             event: int, occurrences: int>=0 total occurrences >0"""
-        self.verify_inputs_for_combine_and_remove(times, to_remove)
-        processed_list = self.prep_new_events(to_remove)
+        self.raise_error_for_bad_input(times, to_remove)
+        processed_list = prepare_events(to_remove)
         for _ in range(times):
             self._remove_tuple_list(processed_list)
 
@@ -323,15 +317,9 @@ class AdditiveEvents(object):
                 continue
         self._table = new_dict
 
-    def merge(self, other):
-        """other is list of int tuples [(event, freq)].  adds all those event,
-        freq to self"""
-        for event, freq in other:
-            self._table[event] = self._table.get(event, 0) + freq
 
-    def update_frequency(self, event, new_freq):
-        """looks up a event, and changes its get_event to the new one"""
-        self._table[event] = new_freq
+def prepare_events(events_tuple):
+    return sorted([pair for pair in events_tuple if pair[1]])
 
 
 def flatten_events_tuple(events_tuple):

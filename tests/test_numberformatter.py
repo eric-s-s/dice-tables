@@ -102,17 +102,17 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_format_as_fixed_point_no_round(self):
         formatter = nf.NumberFormatter()
-        self.assertEqual(formatter.format_as_fixed_point(1.2e-5, -5), '0.00001200')
+        self.assertEqual(formatter._format_number_and_exponent_fixed_point(1.2e-5, -5), '0.00001200')
 
     def test_NumberFormatter_format_as_fixed_point_round(self):
         formatter = nf.NumberFormatter()
         exp = formatter.get_exponent(9.9999e-5)
-        self.assertEqual(formatter.format_as_fixed_point(9.9999e-5, exp), '0.0001000')
+        self.assertEqual(formatter._format_number_and_exponent_fixed_point(9.9999e-5, exp), '0.0001000')
 
     def test_NumberFormatter_format_as_fixed_point_neg(self):
         formatter = nf.NumberFormatter()
         exp = formatter.get_exponent(-9.9999e-5)
-        self.assertEqual(formatter.format_as_fixed_point(-9.9999e-5, exp), '-0.0001000')
+        self.assertEqual(formatter._format_number_and_exponent_fixed_point(-9.9999e-5, exp), '-0.0001000')
 
     def test_NumberFormatter_format_using_commas_no_round(self):
         formatter = nf.NumberFormatter()

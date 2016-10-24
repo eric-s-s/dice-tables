@@ -59,12 +59,12 @@ class GraphDataGenerator(object):
 
     def get_percent_points(self, events_table):
         if self.exact:
-            method = get_exact_pct_number
+            pct_method = get_exact_pct_number
         else:
-            method = get_fast_pct_number
+            pct_method = get_fast_pct_number
         raw_points = self.get_raw_points(events_table)
         total_values = events_table.total_occurrences
-        return [(event, method(occurrence, total_values)) for event, occurrence in raw_points]
+        return [(event, pct_method(occurrence, total_values)) for event, occurrence in raw_points]
 
     def get_points(self, events_table):
         if self.percent:

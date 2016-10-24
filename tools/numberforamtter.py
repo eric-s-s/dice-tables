@@ -46,12 +46,14 @@ class NumberFormatter(object):
     def min_fixed_pt_exp(self, value):
         self._min_fixed_pt_exp = min(0, int(value))
 
+    # TODO make all the format_using func private and make a public method for each with exponent
+
     def get_exponent(self, number):
         if is_int(number):
             return int(log10(abs(number)))
         return int('{:.{}e}'.format(number, self.shown_digits - 1).split('e')[1])
 
-    def format_as_fixed_point(self, number, exponent):
+    def _format_number_and_exponent_fixed_point(self, number, exponent):
         return '{:.{}f}'.format(number, self.shown_digits - 1 - exponent)
 
     def format_using_commas(self, number, exponent):
@@ -79,12 +81,16 @@ class NumberFormatter(object):
             exponent += 1
         return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
 
+    def format_fixed_point(self, number):
+        exponent = self.get_exponent(number)
+        return self._format_number_and_exponent_fixed_point(number, exponent)
+
     def format(self, number):
         if abs(number) == 0:
             return '0'
         exponent = self.get_exponent(number)
         if 0 > exponent >= self.min_fixed_pt_exp:
-            return self.format_as_fixed_point(number, exponent)
+            return self._format_number_and_exponent_fixed_point(number, exponent)
         elif 0 <= exponent <= self.max_comma_exp:
             return self.format_using_commas(number, exponent)
         else:

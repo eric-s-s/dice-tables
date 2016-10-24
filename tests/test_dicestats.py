@@ -252,6 +252,43 @@ class TestDiceStats(unittest.TestCase):
         die = dt.ModDie(5, -3)
         self.assertEqual(die < dt.StrongDie(die, 2), False)
 
+    def test_StrongDie_edge_StrongDie_of_StrongDie_size(self):
+        die = dt.StrongDie(dt.Die(5), 2)
+        self.assertEqual(dt.StrongDie(die, 3).get_size(), 5)
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_weight(self):
+        die = dt.StrongDie(dt.WeightedDie({1: 5}), 2)
+        self.assertEqual(dt.StrongDie(die, 3).get_weight(), 5)
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_tuple_list(self):
+        die = dt.StrongDie(dt.ModDie(3, 1), 2)
+        expected_tuple = [(roll * 6, 1) for roll in [2, 3, 4]]
+        self.assertEqual(dt.StrongDie(die, 3).tuple_list(), expected_tuple)
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_get_multiplier(self):
+        die = dt.StrongDie(dt.ModDie(3, 1), 2)
+        self.assertEqual(dt.StrongDie(die, 3).get_multiplier(), 3)
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_get_original(self):
+        die = dt.StrongDie(dt.ModDie(3, 1), 2)
+        self.assertEqual(dt.StrongDie(die, 3).get_original(), die)
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_str(self):
+        die = dt.StrongDie(dt.ModDie(3, 1), 2)
+        self.assertEqual(dt.StrongDie(die, 3).__str__(), '((D3+1)X2)X3')
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_repr(self):
+        die = dt.StrongDie(dt.ModDie(3, 1), 2)
+        self.assertEqual(dt.StrongDie(die, 3).__repr__(), 'StrongDie(StrongDie(ModDie(3, 1), 2), 3)')
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_multiply_str(self):
+        die = dt.StrongDie(dt.ModDie(3, 1), 2)
+        self.assertEqual(dt.StrongDie(die, 3).multiply_str(5), '((5D3+5)X2)X3')
+
+    def test_StrongDie_edge_StrongDie_of_StrongDie_weight_info(self):
+        die = dt.StrongDie(dt.ModWeightedDie({1: 4}, 1), 2)
+        self.assertEqual(dt.StrongDie(die, 3).weight_info(), '((D1+1  W:4)X2)X3\n    a roll of 1 has a weight of 4')
+
     #  ProtoDie __hash__
 
     def test_ProtoDie_hash_with_Die(self):
