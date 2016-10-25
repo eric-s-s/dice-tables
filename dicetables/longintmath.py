@@ -130,6 +130,7 @@ class AdditiveEvents(IntegerEvents):
         # self._verifier = InputVerifier()
         # self._verifier.verify_events_dictionary(seed_dictionary)
         self._table = seed_dictionary.copy()
+        self.dict_combiner = DictCombiner(self._table)
         super(AdditiveEvents, self).__init__()
 
     @property
@@ -243,19 +244,8 @@ class AdditiveEvents(IntegerEvents):
         return self._combine_by_indexed_values(times, prepped_tuples)
 
     def _combine_by_flattened_list(self, times, tuple_list):
-        new_events = self.all_events
         flattened_list = flatten_events_tuple(tuple_list)
-        for _ in range(times):
-            new_events = self._combine_once_by_flattened_list(new_events, flattened_list)
-        return AdditiveEvents(dict(new_events))
-
-    @staticmethod
-    def _combine_once_by_flattened_list(all_events, flattened_list):
-        new_dict = {}
-        for event, current_frequency in all_events:
-            for new_event in flattened_list:
-                new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
-        return new_dict.items()
+        return AdditiveEvents(self.dict_combiner.combine_dict_and_flattened_list(flattened_list, times))
 
     def _combine_by_tuple_list(self, times, tuple_list):
         new_events = self.all_events
@@ -347,6 +337,27 @@ class AdditiveEvents(IntegerEvents):
             except KeyError:
                 continue
         return new_dict
+
+
+class DictCombiner(object):
+    def __init__(self, dictionary):
+        self._dict = dictionary
+
+    def get_dict(self):
+        return self._dict.copy()
+
+    def combine_dict_and_flattened_list(self, flattened_list, times):
+        events_dict = DictCombiner(self.get_dict())
+        for _ in range(times):
+            events_dict = events_dict.combine_once_dict_and_flattened_list(flattened_list)
+        return events_dict.get_dict()
+
+    def combine_once_dict_and_flattened_list(self, flattened_list):
+        new_dict = {}
+        for event, current_frequency in self._dict.items():
+            for new_event in flattened_list:
+                new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
+        return DictCombiner(new_dict)
 
 
 def prepare_events(events_tuple):
