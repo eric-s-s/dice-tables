@@ -382,11 +382,11 @@ class TestLongIntMath(unittest.TestCase):
         }
     data_dict = {new_event size: {times: (current_events_size_choices), ...}, ...}
     (current_events_size_choices)  is minimum size of AdditiveEvents to use with 'indexed_values'
-    by ('flattened_list', 'all_events') methods.
+    by ('flattened_list', 'tuple_list') methods.
     """
 
     def test_AdditiveEvents_get_fastest_method_one_current_events_and_one_times_never_picks_indexed_values(self):
-        accepted_choices = ('all_events', 'flattened_list')
+        accepted_choices = ('tuple_list', 'flattened_list')
         current_events_one = self.identity.get_fastest_combine_method
         for power_of_two in range(20):
             """
@@ -418,7 +418,7 @@ class TestLongIntMath(unittest.TestCase):
         this cutoff is not for speed but for safety.  as the next test will demonstrate
         """
         events = [(event, 1) for event in range(10000)]
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'all_events')
+        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'tuple_list')
 
     def test_AdditiveEvents_demonstrate_why_there_is_cutoff_for_flattened_list(self):
         ok_events = [(1, 10 ** 4)]
@@ -444,7 +444,7 @@ class TestLongIntMath(unittest.TestCase):
         events += [(100, 32)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.31)
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'all_events')
+        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'tuple_list')
 
     def test_AdditiveEvents_get_fastest_method_part_get_best_key_below_min(self):
         test_dict = {1: 1, 3: 1, 5: 1}
@@ -469,7 +469,7 @@ class TestLongIntMath(unittest.TestCase):
         {4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
         """
         self.assertEqual(lim.get_current_size_cutoff('flattened_list', 20, 4), 1)
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 4), 50)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
 
     def test_AdditiveEvents_get_fastest_method_part_get_current_size_cutoff_uses_get_best_key(self):
         """
@@ -477,11 +477,11 @@ class TestLongIntMath(unittest.TestCase):
         4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
         6: ...
         """
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 4), 50)
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 39, 4), 50)
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 5), 50)
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 1, 1), 500)
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 10000, 100000), 1)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 39, 4), 50)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 5), 50)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 1, 1), 500)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 10000, 100000), 1)
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_indexed(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
@@ -492,28 +492,28 @@ class TestLongIntMath(unittest.TestCase):
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_other(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 4), 50)
-        self.assertEqual(self.identity.get_fastest_combine_method(4, sized_four), 'all_events')
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(self.identity.get_fastest_combine_method(4, sized_four), 'tuple_list')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_below_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_five = lim.AdditiveEvents(dict.fromkeys(range(5), 1))
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 4), 50)
-        self.assertEqual(current_size_five.get_fastest_combine_method(20, sized_four), 'all_events')
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(current_size_five.get_fastest_combine_method(20, sized_four), 'tuple_list')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_at_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_fifty = lim.AdditiveEvents(dict.fromkeys(range(50), 1))
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 4), 50)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_fifty.get_fastest_combine_method(20, sized_four), 'indexed_values')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_above_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_fifty_one = lim.AdditiveEvents(dict.fromkeys(range(51), 1))
-        self.assertEqual(lim.get_current_size_cutoff('all_events', 20, 4), 50)
+        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_fifty_one.get_fastest_combine_method(20, sized_four), 'indexed_values')
 
     def test_REGRESSION_AdditiveEvents_combine_one_event_all_methods(self):

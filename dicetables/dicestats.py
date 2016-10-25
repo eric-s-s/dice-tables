@@ -354,9 +354,9 @@ class DiceTable(AdditiveEvents):
         :raises: dicetables.InvalidEventsError
         :return:
         """
-        additive_events = self.combine(num, die)
+        new_dict = self._combine(num, die)
         dice_items = self._get_updated_list(num, die)
-        return DiceTable(additive_events.get_dict(), dice_items)
+        return DiceTable(new_dict, dice_items)
 
     def raise_error_for_too_many_removes(self, num, die):
         if self.number_of_dice(die) < num:
@@ -373,6 +373,6 @@ class DiceTable(AdditiveEvents):
         :return:
         """
         self.raise_error_for_too_many_removes(num, die)
-        additive_events = self.remove(num, die)
+        new_dict = self._remove(num, die)
         new_dice_items = self._get_updated_list(-num, die)
-        return DiceTable(additive_events.get_dict(), new_dice_items)
+        return DiceTable(new_dict, new_dice_items)

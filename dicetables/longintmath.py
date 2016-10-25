@@ -207,7 +207,7 @@ class AdditiveEvents(IntegerEvents):
         truncated_total_occurrences = total_occurrences // factor_to_truncate_digits
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
     
-    def combine(self, times, other_integer_events):
+    def _combine(self, times, other_integer_events):
         """
         combines the current events with a new set of events "times" times.
         ex: current events are A occurs 3 times, B occurs 2 times {A: 3, B: 2}. if
@@ -224,49 +224,53 @@ class AdditiveEvents(IntegerEvents):
         :return: None
         """
         prepped_tuples = prepare_events(other_integer_events.all_events)
-        method_dict = {'all_events': self._combine_by_tuple_list,
+        method_dict = {'tuple_list': self._combine_by_tuple_list,
                        'flattened_list': self._combine_by_flattened_list,
                        'indexed_values': self._combine_by_indexed_values}
         method = self.get_fastest_combine_method(times, prepped_tuples)
 
         return method_dict[method](times, prepped_tuples)
 
+    def combine(self, times, other_integer_events):
+        dictionary = self._combine(times, other_integer_events)
+        return AdditiveEvents(dictionary)
+
     def combine_by_flattened_list(self, times, events):
         prepped_tuples = prepare_events(events.all_events)
-        return self._combine_by_flattened_list(times, prepped_tuples)
+        return AdditiveEvents(self._combine_by_flattened_list(times, prepped_tuples))
 
     def combine_by_tuple_list(self, times, events):
         prepped_tuples = prepare_events(events.all_events)
-        return self._combine_by_tuple_list(times, prepped_tuples)
+        return AdditiveEvents(self._combine_by_tuple_list(times, prepped_tuples))
 
     def combine_by_indexed_values(self, times, events):
         prepped_tuples = prepare_events(events.all_events)
-        return self._combine_by_indexed_values(times, prepped_tuples)
+        return AdditiveEvents(self._combine_by_indexed_values(times, prepped_tuples))
 
     def _combine_by_flattened_list(self, times, tuple_list):
         flattened_list = flatten_events_tuple(tuple_list)
-        return AdditiveEvents(self.dict_combiner.combine_dict_and_flattened_list(flattened_list, times))
+        return self.dict_combiner.combine_dict_with_flattened_list(flattened_list, times).get_dict()
 
     def _combine_by_tuple_list(self, times, tuple_list):
-        new_events = self.all_events
+        new_events = self.get_dict()
         for _ in range(times):
             new_events = self._combine_once_by_tuple_list(new_events, tuple_list)
-        return AdditiveEvents(dict(new_events))
+        return new_events
 
     @staticmethod
     def _combine_once_by_tuple_list(all_events, tuple_list):
         new_dict = {}
-        for event, current_frequency in all_events:
+        for event, current_frequency in all_events.items():
             for new_event, frequency in tuple_list:
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) +
                                                frequency * current_frequency)
-        return new_dict.items()
+        return new_dict
 
     def _combine_by_indexed_values(self, times, tuple_list):
         indexed_values_to_update = generate_indexed_values(self.all_events)
         for _ in range(times):
             indexed_values_to_update = indexed_values_to_update.combine_with_events_list(tuple_list)
-        return AdditiveEvents(dict(indexed_values_to_update.get_items()))
+        return dict(indexed_values_to_update.get_items())
 
     def raise_error_for_bad_input(self, times, events):
         """
@@ -288,11 +292,11 @@ class AdditiveEvents(IntegerEvents):
         total_occurrences = sum([pair[1] for pair in prepped_events])
 
         if total_occurrences >= safe_limit_flattened_list_len:
-            return 'all_events'
+            return 'tuple_list'
 
         occurrences_to_events_ratio = float(total_occurrences) / len(prepped_events)
         if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_add_by_list:
-            return 'all_events'
+            return 'tuple_list'
         return 'flattened_list'
 
     def _compare_with_indexed_values(self, first_method, times, prepped_events):
@@ -304,7 +308,7 @@ class AdditiveEvents(IntegerEvents):
         else:
             return 'indexed_values'
 
-    def remove(self, times, to_remove):
+    def _remove(self, times, to_remove):
         """IF YOU REMOVE WHAT YOU HAVEN'T ADDED, NO ERROR WILL BE RAISED BUT YOU WILL HAVE BUGS.
         There is no record of what you added to an AdditiveEvents.  Please use with caution.
 
@@ -315,7 +319,10 @@ class AdditiveEvents(IntegerEvents):
         new_dict = self.get_dict()
         for _ in range(times):
             new_dict = self._remove_tuple_list(new_dict, processed_list)
-        return AdditiveEvents(new_dict)
+        return new_dict
+
+    def remove(self, times, to_remove):
+        return AdditiveEvents(self._remove(times, to_remove))
 
     @staticmethod
     def _remove_tuple_list(dict_of_original, events_to_remove):
@@ -346,11 +353,11 @@ class DictCombiner(object):
     def get_dict(self):
         return self._dict.copy()
 
-    def combine_dict_and_flattened_list(self, flattened_list, times):
+    def combine_dict_with_flattened_list(self, events_tuple, times):
         events_dict = DictCombiner(self.get_dict())
         for _ in range(times):
-            events_dict = events_dict.combine_once_dict_and_flattened_list(flattened_list)
-        return events_dict.get_dict()
+            events_dict = events_dict.combine_once_dict_and_flattened_list(events_tuple)
+        return events_dict
 
     def combine_once_dict_and_flattened_list(self, flattened_list):
         new_dict = {}
@@ -375,7 +382,7 @@ def get_current_size_cutoff(first_method, times, new_events_size):
     """
     data_dict = {new_event_size: {times: (current_events_size_choices), ...}, ...}
 
-    :param first_method: 'flattened_list', 'all_events'
+    :param first_method: 'flattened_list', 'tuple_list'
     :param times:
     :param new_events_size:
     :return: current events cutoff size
@@ -393,7 +400,7 @@ def get_current_size_cutoff(first_method, times, new_events_size):
     keys_are_times = keys_are_new_event_size[closest_new_size]
     closest_times = get_best_key(times, keys_are_times)
     current_size_choices = keys_are_times[closest_times]
-    current_size_index = {'flattened_list': 0, 'all_events': 1}[first_method]
+    current_size_index = {'flattened_list': 0, 'tuple_list': 1}[first_method]
     current_size_cutoff = current_size_choices[current_size_index]
     return current_size_cutoff
 
