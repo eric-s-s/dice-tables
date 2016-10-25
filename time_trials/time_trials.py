@@ -92,7 +92,7 @@ class DecimalEventTable(object):
             self._add_a_list(to_add)
 
     def _add_a_list(self, lst):
-        """copy of combine_once_dict_and_flattened_list from original."""
+        """copy of combine_once_with_flattened_list from original."""
         newdic = {}
         for value, current_frequency in self._dictionary.items():
             for val in lst:
@@ -105,7 +105,7 @@ class DecimalEventTable(object):
             self._add_tuple_list(to_add)
 
     def _add_tuple_list(self, lst):
-        """copy of _combine_once_by_tuple_list from original"""
+        """copy of combine_once_with_tuple_list from original"""
         newdic = {}
         for value, current_frequency in self._dictionary.items():
             for val, freq in lst:

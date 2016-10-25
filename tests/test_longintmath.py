@@ -4,8 +4,7 @@ from __future__ import absolute_import
 from sys import version_info
 import unittest
 import dicetables.longintmath as lim
-
-import time
+from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff
 
 FLOAT_BIG = 1e+300
 FLOAT_SMALL = 1e+100
@@ -73,57 +72,30 @@ class TestLongIntMath(unittest.TestCase):
         self.assertEqual(str(error), 'message')
         self.assertEqual(error.args[0], 'message')
 
-    def test_EventsVerifier_verify_times_pass(self):
-        self.assertIsNone(self.checker.verify_times(10))
+    def test_EventsVerifier_verify_all_events_pass(self):
+        self.assertIsNone(self.checker.verify_all_events([(1, 1), (2, 2)]))
 
-    def test_EventsVerifier_verify_times_not_int(self):
-        self.assert_my_regex(TypeError, 'AdditiveEvents.combine/remove: times variable must be int',
-                             self.checker.verify_times, 1.0)
-
-    def test_EventsVerifier_verify_times_negative(self):
-        self.assert_my_regex(ValueError, 'AdditiveEvents.combine/remove times must be >=0',
-                             self.checker.verify_times, -1)
-
-    def test_EventsVerifier_verify_events_tuple_pass(self):
-        self.assertIsNone(self.checker.verify_events_tuple([(1, 1), (-1, 2)]))
-
-    def test_EventsVerifier_verify_events_tuple_empty(self):
+    def test_EventsVerifier_verify_all_events_empty(self):
         self.assert_my_regex(lim.InvalidEventsError,
                              'events may not be empty. a good alternative is the identity - [(0, 1)].',
-                             self.checker.verify_events_tuple, [])
+                             self.checker.verify_all_events, [])
 
-    def test_EventsVerifier_verify_events_tuple_zero_occurrences(self):
+    def test_EventsVerifier_verify_all_events_zero_occurrences(self):
         self.assert_my_regex(lim.InvalidEventsError,
-                             'events may not be empty. a good alternative is the identity - [(0, 1)].',
-                             self.checker.verify_events_tuple, [(1, 0), (2, 0)])
+                             'no negative or zero occurrences in all_events',
+                             self.checker.verify_all_events, [(1, 0), (2, 0)])
 
     def test_EventsVerifier_verify_events_by_tuple_negative_occurrences(self):
-        self.assert_my_regex(lim.InvalidEventsError, 'events may not occur negative times.',
-                             self.checker.verify_events_tuple, [(1, 0), (2, -1)])
+        self.assert_my_regex(lim.InvalidEventsError, 'no negative or zero occurrences in all_events',
+                             self.checker.verify_all_events, [(1, 0), (2, -1)])
 
-    def test_EventsVerifier_verify_events_tuple_non_int_occurrences(self):
+    def test_EventsVerifier_verify_all_events_non_int_occurrences(self):
         self.assert_my_regex(lim.InvalidEventsError, self.types_error,
-                             self.checker.verify_events_tuple, [(1, 1.0)])
+                             self.checker.verify_all_events, [(1, 1.0)])
 
     def test_EventsVerifier_verify_events_by_tuple_non_int_event(self):
         self.assert_my_regex(lim.InvalidEventsError, self.types_error,
-                             self.checker.verify_events_tuple, [(1.0, 1)])
-
-    def test_EventsVerifier_verify_events_dictionary_empty_error_message(self):
-        self.assert_my_regex(lim.InvalidEventsError,
-                             'events may not be empty. a good alternative is the identity - {0: 1}.',
-                             self.checker.verify_events_dictionary, {1: 0})
-
-    def test_EventsVerifier_verify_events_dictionary_empty_dictionary(self):
-        self.assert_my_regex(lim.InvalidEventsError,
-                             'events may not be empty. a good alternative is the identity - {0: 1}.',
-                             self.checker.verify_events_dictionary, {})
-
-    def test_EventsVerifier_verify_events_dictionary_other_errors(self):
-        self.assert_my_regex(lim.InvalidEventsError, self.types_error,
-                             self.checker.verify_events_dictionary, {1: 1.0})
-        self.assert_my_regex(lim.InvalidEventsError, 'events may not occur negative times.',
-                             self.checker.verify_events_dictionary, {1: -1})
+                             self.checker.verify_all_events, [(1.0, 1)])
 
     def test_EventsVerifier_is_all_ints_pass(self):
         self.assertTrue(self.checker.is_all_ints([10 ** value for value in range(500)]))
@@ -132,10 +104,10 @@ class TestLongIntMath(unittest.TestCase):
         self.assertFalse(self.checker.is_all_ints([1.0, 1, 1, 1, 1, 1]))
 
     def test_EventsVerifier_does_not_work_if_does_not_follow_minimum_requirements(self):
-        self.assertRaises((TypeError, ValueError, IndexError), self.checker.verify_events_tuple, 'a')
-        self.assertRaises((TypeError, ValueError, IndexError), self.checker.verify_events_tuple, [1, 2, 3])
-        self.assertRaises((TypeError, ValueError, IndexError), self.checker.verify_events_tuple, [(1, 2, 3), (4, 5, 6)])
-        self.assertRaises(lim.InvalidEventsError, self.checker.verify_events_tuple, [('a', 'b')])
+        self.assertRaises((TypeError, ValueError, IndexError), self.checker.verify_all_events, 'a')
+        self.assertRaises((TypeError, ValueError, IndexError), self.checker.verify_all_events, [1, 2, 3])
+        self.assertRaises((TypeError, ValueError, IndexError), self.checker.verify_all_events, [(1, 2, 3), (4, 5, 6)])
+        self.assertRaises(lim.InvalidEventsError, self.checker.verify_all_events, [('a', 'b')])
 
     #  AdditiveEvents tests
     def test_AdditiveEvents_init_zero_occurrences_dict_raises_error(self):
@@ -242,22 +214,6 @@ class TestLongIntMath(unittest.TestCase):
     def test_AdditiveEvents_stddev_very_high_occurrences_change_decimal_place_value(self):
         high_freq = lim.AdditiveEvents({2: 10 ** 500, -2: 10 ** 500, 1: 10 ** 500, -1: 10 ** 500})
         self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5 ** 0.5, 10))
-
-    def test_AdditiveEvents_verify_inputs_for_combine_and_remove_raises_error_for_bad_times(self):
-        self.assertRaises(ValueError, self.identity.raise_error_for_bad_input, -1, [(1, 1)])
-        self.assertRaises(TypeError, self.identity.raise_error_for_bad_input, 1.0, [(1, 1)])
-
-    def test_AdditiveEvents_verify_inputs_for_combine_and_remove_raises_error_for_bad_events(self):
-        self.assertRaises(lim.InvalidEventsError, self.identity.raise_error_for_bad_input, 1, [(1, 0)])
-        self.assertRaises(lim.InvalidEventsError, self.identity.raise_error_for_bad_input, 1, [(1, 1.0)])
-        self.assertRaises(lim.InvalidEventsError, self.identity.raise_error_for_bad_input, 1, [(1.0, 1)])
-        self.assertRaises(lim.InvalidEventsError, self.identity.raise_error_for_bad_input, 1, [(1, -1)])
-
-    def test_AdditiveEvents_prep_new_events_removes_zeros(self):
-        self.assertEqual(lim.prepare_events([(1, 1), (2, 0)]), [(1, 1)])
-
-    def test_AdditiveEvents_prep_new_events_sorts(self):
-        self.assertEqual(lim.prepare_events([(1, 1), (-1, 1)]), [(-1, 1), (1, 1)])
 
     def test_AdditiveEvents_combine_errors_do_not_mutate_table(self):
         identity = lim.AdditiveEvents({0: 1})
@@ -387,7 +343,7 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_AdditiveEvents_get_fastest_method_one_current_events_and_one_times_never_picks_indexed_values(self):
         accepted_choices = ('tuple_list', 'flattened_list')
-        current_events_one = self.identity.get_fastest_combine_method
+        current_events_one = self.identity.dict_combiner.get_fastest_combine_method
         for power_of_two in range(20):
             """
             events are:
@@ -403,64 +359,64 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_min(self):
         events = [(1, 1)]
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_mid(self):
         events = [(event, 1) for event in range(100)]
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_edge(self):
         events = [(event, 1) for event in range(9999)]
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_over_edge(self):
         """
         this cutoff is not for speed but for safety.  as the next test will demonstrate
         """
         events = [(event, 1) for event in range(10000)]
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'tuple_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'tuple_list')
 
     def test_AdditiveEvents_demonstrate_why_there_is_cutoff_for_flattened_list(self):
         ok_events = [(1, 10 ** 4)]
-        self.assertEqual(lim.flatten_events_tuple(ok_events), [1] * 10 ** 4)
+        self.assertEqual(flatten_events_tuples(ok_events), [1] * 10 ** 4)
         bad_events = [(1, 10 ** 20)]
-        self.assertRaises((OverflowError, MemoryError), lim.flatten_events_tuple, bad_events)
+        self.assertRaises((OverflowError, MemoryError), flatten_events_tuples, bad_events)
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_ratio_under(self):
         events = [(1, 1), (2, 1), (3, 2), (4, 1)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.25)
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_ratio_edge(self):
         events = [(event, 1) for event in range(9)]
         events += [(10, 4)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.3)
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_ratio_over_edge(self):
         events = [(event, 1) for event in range(99)]
         events += [(100, 32)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.31)
-        self.assertEqual(self.identity.get_fastest_combine_method(1, events), 'tuple_list')
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'tuple_list')
 
     def test_AdditiveEvents_get_fastest_method_part_get_best_key_below_min(self):
         test_dict = {1: 1, 3: 1, 5: 1}
-        self.assertEqual(lim.get_best_key(-1, test_dict), 1)
+        self.assertEqual(get_best_key(-1, test_dict), 1)
 
     def test_AdditiveEvents_get_fastest_method_part_get_best_key_above_max(self):
         test_dict = {1: 1, 3: 1, 5: 1}
-        self.assertEqual(lim.get_best_key(1001, test_dict), 5)
+        self.assertEqual(get_best_key(1001, test_dict), 5)
 
     def test_AdditiveEvents_get_fastest_method_part_get_best_key_at_value(self):
         test_dict = {1: 1, 3: 1, 5: 1}
-        self.assertEqual(lim.get_best_key(3, test_dict), 3)
+        self.assertEqual(get_best_key(3, test_dict), 3)
 
     def test_AdditiveEvents_get_fastest_method_part_get_best_key_between_values(self):
         test_dict = {1: 1, 3: 1, 5: 1}
-        self.assertEqual(lim.get_best_key(4, test_dict), 3)
+        self.assertEqual(get_best_key(4, test_dict), 3)
 
     def test_AdditiveEvents_get_fastest_method_part_get_current_size_cutoff_method_variable(self):
         """
@@ -468,8 +424,8 @@ class TestLongIntMath(unittest.TestCase):
         {new_event_size: {times: (current_events_size_choices), ...}, ...}
         {4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
         """
-        self.assertEqual(lim.get_current_size_cutoff('flattened_list', 20, 4), 1)
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_current_size_cutoff('flattened_list', 20, 4), 1)
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
 
     def test_AdditiveEvents_get_fastest_method_part_get_current_size_cutoff_uses_get_best_key(self):
         """
@@ -477,44 +433,44 @@ class TestLongIntMath(unittest.TestCase):
         4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
         6: ...
         """
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 39, 4), 50)
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 5), 50)
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 1, 1), 500)
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 10000, 100000), 1)
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_current_size_cutoff('tuple_list', 39, 4), 50)
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 5), 50)
+        self.assertEqual(get_current_size_cutoff('tuple_list', 1, 1), 500)
+        self.assertEqual(get_current_size_cutoff('tuple_list', 10000, 100000), 1)
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_indexed(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_twenty = [(event, 1) for event in range(20)]
-        self.assertEqual(lim.get_current_size_cutoff('flattened_list', 20, 4), 1)
-        self.assertEqual(self.identity.get_fastest_combine_method(4, sized_twenty), 'indexed_values')
+        self.assertEqual(get_current_size_cutoff('flattened_list', 20, 4), 1)
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(4, sized_twenty), 'indexed_values')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_other(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(self.identity.get_fastest_combine_method(4, sized_four), 'tuple_list')
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(4, sized_four), 'tuple_list')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_below_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_five = lim.AdditiveEvents(dict.fromkeys(range(5), 1))
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(current_size_five.get_fastest_combine_method(20, sized_four), 'tuple_list')
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(current_size_five.dict_combiner.get_fastest_combine_method(20, sized_four), 'tuple_list')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_at_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_fifty = lim.AdditiveEvents(dict.fromkeys(range(50), 1))
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(current_size_fifty.get_fastest_combine_method(20, sized_four), 'indexed_values')
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(current_size_fifty.dict_combiner.get_fastest_combine_method(20, sized_four), 'indexed_values')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_above_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_fifty_one = lim.AdditiveEvents(dict.fromkeys(range(51), 1))
-        self.assertEqual(lim.get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(current_size_fifty_one.get_fastest_combine_method(20, sized_four), 'indexed_values')
+        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(current_size_fifty_one.dict_combiner.get_fastest_combine_method(20, sized_four), 'indexed_values')
 
     def test_REGRESSION_AdditiveEvents_combine_one_event_all_methods(self):
         flattened = lim.AdditiveEvents({0: 1})

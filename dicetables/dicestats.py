@@ -1,4 +1,4 @@
-"""for all things dicey.  this contains DiceInfo and DiceTable and add_dice."""
+"""for all things dicey."""
 from __future__ import absolute_import
 
 from dicetables.longintmath import AdditiveEvents, IntegerEvents
@@ -18,8 +18,6 @@ class ProtoDie(IntegerEvents):
 
     @property
     def all_events(self):
-        """return an ordered tuple list of [(die, weight) ... ] with zero weights
-        removed"""
         raise NotImplementedError
 
     def weight_info(self):
@@ -159,12 +157,13 @@ class WeightedDie(ProtoDie):
         :param dictionary_input: {roll: weight} roll: int, weight: int>=0
         :type dictionary_input: dict"""
         self._dic = dictionary_input.copy()
+        super(WeightedDie, self).__init__()
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
-        super(WeightedDie, self).__init__()
 
     def get_size(self):
         return self._die_size
+        # return self.all_events[-1][0]
 
     def get_weight(self):
         return self._weight
@@ -300,7 +299,7 @@ class DiceTable(AdditiveEvents):
     def get_identity(cls):
         return cls({0: 1}, [])
 
-    def _get_updated_list(self, add_number, die_added):
+    def get_updated_list(self, add_number, die_added):
         new_list = dict(self.get_list())
         new_list[die_added] = new_list.get(die_added, 0) + add_number
         if new_list[die_added] == 0:
@@ -354,8 +353,8 @@ class DiceTable(AdditiveEvents):
         :raises: dicetables.InvalidEventsError
         :return:
         """
-        new_dict = self._combine(num, die)
-        dice_items = self._get_updated_list(num, die)
+        new_dict = self.dict_combiner.combine_by_fastest(num, die.all_events).get_dict()
+        dice_items = self.get_updated_list(num, die)
         return DiceTable(new_dict, dice_items)
 
     def raise_error_for_too_many_removes(self, num, die):
@@ -373,6 +372,7 @@ class DiceTable(AdditiveEvents):
         :return:
         """
         self.raise_error_for_too_many_removes(num, die)
-        new_dict = self._remove(num, die)
-        new_dice_items = self._get_updated_list(-num, die)
+        new_dict = self.dict_combiner.remove_by_tuple_list(num, die.all_events).get_dict()
+        new_dice_items = self.get_updated_list(-num, die)
         return DiceTable(new_dict, new_dice_items)
+

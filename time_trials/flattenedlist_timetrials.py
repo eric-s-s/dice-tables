@@ -63,8 +63,8 @@ def gen_random_point(val_list):
 
 
 def one_time_trial(events, num_adds, start_dict_size=1):
-    """add t_list to identity AdditiveEvents num_adds times, using combine_once_dict_and_flattened_list and
-    _combine_once_by_tuple_list.  returns the ratio of sum_of_freq/num_of_values, and the
+    """add t_list to identity AdditiveEvents num_adds times, using combine_once_with_flattened_list and
+    combine_once_with_tuple_list.  returns the ratio of sum_of_freq/num_of_values, and the
     time for each function to do the adding."""
     events_total_occurrences = sum([pair[1] for pair in events])
 
