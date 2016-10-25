@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from decimal import Decimal
 from math import log10
 
-from dicetables.longintmath import safe_true_div
+from dicetables.baseevents import safe_true_div
 from tools.numberforamtter import NumberFormatter
 
 

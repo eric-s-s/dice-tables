@@ -11,7 +11,7 @@ from os import getcwd
 from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
-import dicetables.longintmath as lim
+import dicetables.baseevents as lim
 
 
 WELCOME_TXT = 'hi'

@@ -1,9 +1,9 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the longintmath.py module"""
+"""tests for the baseevents.py module"""
 from __future__ import absolute_import
 from sys import version_info
 import unittest
-import dicetables.longintmath as lim
+import dicetables.baseevents as lim
 from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff
 
 FLOAT_BIG = 1e+300

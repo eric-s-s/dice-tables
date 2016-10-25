@@ -1,7 +1,7 @@
 """for all things dicey."""
 from __future__ import absolute_import
 
-from dicetables.longintmath import AdditiveEvents, IntegerEvents
+from dicetables.baseevents import AdditiveEvents, IntegerEvents
 
 
 class ProtoDie(IntegerEvents):
@@ -163,7 +163,6 @@ class WeightedDie(ProtoDie):
 
     def get_size(self):
         return self._die_size
-        # return self.all_events[-1][0]
 
     def get_weight(self):
         return self._weight

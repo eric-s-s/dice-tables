@@ -9,7 +9,7 @@ from collections import Counter
 import numpy as np
 from dicetables.tableinfo import NumberFormatter
 import dicetables as dt
-import dicetables.longintmath as lim
+import dicetables.baseevents as lim
 import numpydict as npd
 
 

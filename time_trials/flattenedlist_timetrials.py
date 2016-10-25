@@ -16,7 +16,7 @@ import random
 from os import getcwd
 import matplotlib.pyplot as plt
 import numpy as np
-import dicetables.longintmath as lim
+import dicetables.baseevents as lim
 
 
 def gen_one_point(val_list, loc='mid'):
