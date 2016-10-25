@@ -47,7 +47,7 @@ def print_time_trial_for_add_list_funcs(num_adds, to_add, object_dot_method, lab
     :param to_add:
     :param object_dot_method:
     :param label_for_object:
-    :param method: 'none', 'indexed_values', 'tuple_list', 'flattened_list'
+    :param method: 'none', 'indexed_values', 'all_events', 'flattened_list'
     :return:
     """
     if method == 'none':
@@ -318,7 +318,7 @@ def super_poopy_ui():
 
         print('\n\nRESULTS - VS COMBINE TUPLE')
         vs_tuple_obj, vs_tuple_method = get_obj_and_method(method_choice, start_dict)
-        trial_vs_control(tuple_list_control.combine, 'tuple_list',
+        trial_vs_control(tuple_list_control.combine, 'all_events',
                          vs_tuple_method,
                          number_of_adds,
                          tuple_events,
@@ -399,7 +399,7 @@ def fastest_vs_tuple_indexed_ui():
         print(tuple_list_fastest.event_range)
 
         print('\nTUPLE_LIST with many occurrence')
-        print_combine_trial(number_of_adds, tuple_events, 'tuple_list', tuple_list_control)
+        print_combine_trial(number_of_adds, tuple_events, 'all_events', tuple_list_control)
         print(tuple_list_control.event_range)
 
 
@@ -480,7 +480,7 @@ if __name__ == '__main__':
 # many_occurrences_range = many_occurrences[-1][0] - many_occurrences[0][0] + 1
 # print('range to vals is {}'.format(float(many_occurrences_range) / len(many_occurrences)))
 # print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table.combine, 'mine',
-#                                     method='tuple_list')
+#                                     method='all_events')
 # print_time_trial_for_add_list_funcs(add_times, many_occurrences, my_table_iv.combine, 'indexed',
 #                                     method='indexed_values')
 # # print_time_trial_for_add_list_funcs(add_times, many_occurrences, dec_table.add_tuples, 'dec')

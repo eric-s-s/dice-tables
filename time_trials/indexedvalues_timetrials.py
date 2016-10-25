@@ -173,7 +173,7 @@ def get_control_method(prepped_list):
     if prepped_list[0][1] == 1:
         return 'flattened_list'
     else:
-        return 'tuple_list'
+        return 'all_events'
 
 
 def time_trial_vary_start_dict(events_tuple_list, input_dict_start_size=1000, input_dict_downward_step=5,

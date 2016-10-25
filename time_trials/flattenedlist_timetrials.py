@@ -79,7 +79,7 @@ def one_time_trial(events, num_adds, start_dict_size=1):
 
     id_table_b = lim.AdditiveEvents(start_dict)
     start_b = time.clock()
-    id_table_b.combine(num_adds, events, method='tuple_list')
+    id_table_b.combine(num_adds, events, method='all_events')
     tuple_time = time.clock() - start_b
 
     return occurrences_to_events_ratio, tuple_time, flattened_list_time

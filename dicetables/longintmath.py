@@ -105,7 +105,18 @@ class InputVerifier(object):
         return all(self.is_int(value) for value in iterable)
 
 
-class AdditiveEvents(object):
+class IntegerEvents(object):
+    def __init__(self):
+        self.verifier = InputVerifier()
+        self.verifier.verify_events_tuple(self.all_events)
+
+    @property
+    def all_events(self):
+        message = 'all_events must return a tuple list of [(event, occurrences),  ...] event=int, occurrence=int>=0.'
+        raise NotImplementedError(message)
+
+
+class AdditiveEvents(IntegerEvents):
     """manages (event, number of occurrences) for events that can be added to, like dice rolls."""
 
     def __init__(self, seed_dictionary):
@@ -116,9 +127,10 @@ class AdditiveEvents(object):
             total occurrences > 0
         :raises: InvalidEventsError
         """
-        self._verifier = InputVerifier()
-        self._verifier.verify_events_dictionary(seed_dictionary)
+        # self._verifier = InputVerifier()
+        # self._verifier.verify_events_dictionary(seed_dictionary)
         self._table = seed_dictionary.copy()
+        super(AdditiveEvents, self).__init__()
 
     @property
     def event_keys(self):
@@ -134,7 +146,7 @@ class AdditiveEvents(object):
     def all_events(self):
         """
 
-        :return: dict.items()-like tuple_list [(event, occurrences), ..]\n
+        :return: dict.items()-like all_events [(event, occurrences), ..]\n
             sorted and only non-zero events.
         """
         return [(key, self._table[key]) for key in self.event_keys]
@@ -155,12 +167,15 @@ class AdditiveEvents(object):
         all_occurrences = self._table.values()
         return sum(all_occurrences)
 
+    def get_dict(self):
+        return self._table.copy()
+
     def get_event(self, event):
         """:return: (event, occurrences)"""
         return event, self._table.get(event, 0)
 
     def get_range_of_events(self, start, stop_before):
-        """:return: dict.items()-like tuple_list [(event, occurrences), ..]"""
+        """:return: dict.items()-like all_events [(event, occurrences), ..]"""
         tuple_list = []
         for value in range(start, stop_before):
             tuple_list.append(self.get_event(value))
@@ -191,7 +206,7 @@ class AdditiveEvents(object):
         truncated_total_occurrences = total_occurrences // factor_to_truncate_digits
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
     
-    def combine(self, times, new_events_group, method='fastest'):
+    def combine(self, times, other_integer_events):
         """
         combines the current events with a new set of events "times" times.
         ex: current events are A occurs 3 times, B occurs 2 times {A: 3, B: 2}. if
@@ -200,63 +215,76 @@ class AdditiveEvents(object):
 
         :param times: >=0
         :type times: int
-        :param new_events_group: [(event, occurrences_of_event), ..]\n
+        :param other_integer_events: [(event, occurrences_of_event), ..]\n
             events may not be empty or zero\n
             all values are ints.\n
             occurrences >= 0.
-        :param method: 'fastest', 'tuple_list', 'flattened_list', 'indexed_values'\n
-            WARNING: len(flattened_list) = total occurrences.\n
-            Can throw MemoryError and OverflowError if too many occurrences.
         :raises: InvalidEventsError, TypeError, ValueError
         :return: None
         """
-        self.raise_error_for_bad_input(times, new_events_group)
-        prepped_events = prepare_events(new_events_group)
-        method_dict = {'tuple_list': self._combine_by_tuple_list,
+        prepped_tuples = prepare_events(other_integer_events.all_events)
+        method_dict = {'all_events': self._combine_by_tuple_list,
                        'flattened_list': self._combine_by_flattened_list,
                        'indexed_values': self._combine_by_indexed_values}
-        if method == 'fastest':
-            method = self.get_fastest_combine_method(times, prepped_events)
+        method = self.get_fastest_combine_method(times, prepped_tuples)
 
-        method_dict[method](times, prepped_events)
+        return method_dict[method](times, prepped_tuples)
 
-    def _combine_by_flattened_list(self, times, events):
-        flattened_list = flatten_events_tuple(events)
+    def combine_by_flattened_list(self, times, events):
+        prepped_tuples = prepare_events(events.all_events)
+        return self._combine_by_flattened_list(times, prepped_tuples)
+
+    def combine_by_tuple_list(self, times, events):
+        prepped_tuples = prepare_events(events.all_events)
+        return self._combine_by_tuple_list(times, prepped_tuples)
+
+    def combine_by_indexed_values(self, times, events):
+        prepped_tuples = prepare_events(events.all_events)
+        return self._combine_by_indexed_values(times, prepped_tuples)
+
+    def _combine_by_flattened_list(self, times, tuple_list):
+        new_events = self.all_events
+        flattened_list = flatten_events_tuple(tuple_list)
         for _ in range(times):
-            self._combine_once_by_flattened_list(flattened_list)
+            new_events = self._combine_once_by_flattened_list(new_events, flattened_list)
+        return AdditiveEvents(dict(new_events))
 
-    def _combine_once_by_flattened_list(self, flattened_list):
+    @staticmethod
+    def _combine_once_by_flattened_list(all_events, flattened_list):
         new_dict = {}
-        for event, current_frequency in self._table.items():
+        for event, current_frequency in all_events:
             for new_event in flattened_list:
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
-        self._table = new_dict
+        return new_dict.items()
 
-    def _combine_by_tuple_list(self, times, events):
+    def _combine_by_tuple_list(self, times, tuple_list):
+        new_events = self.all_events
         for _ in range(times):
-            self._combine_once_by_tuple_list(events)
+            new_events = self._combine_once_by_tuple_list(new_events, tuple_list)
+        return AdditiveEvents(dict(new_events))
 
-    def _combine_once_by_tuple_list(self, tuple_list):
+    @staticmethod
+    def _combine_once_by_tuple_list(all_events, tuple_list):
         new_dict = {}
-        for event, current_frequency in self._table.items():
+        for event, current_frequency in all_events:
             for new_event, frequency in tuple_list:
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) +
                                                frequency * current_frequency)
-        self._table = new_dict
+        return new_dict.items()
 
-    def _combine_by_indexed_values(self, times, events):
+    def _combine_by_indexed_values(self, times, tuple_list):
         indexed_values_to_update = generate_indexed_values(self.all_events)
         for _ in range(times):
-            indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events)
-        self._table = dict(indexed_values_to_update.get_items())
+            indexed_values_to_update = indexed_values_to_update.combine_with_events_list(tuple_list)
+        return AdditiveEvents(dict(indexed_values_to_update.get_items()))
 
     def raise_error_for_bad_input(self, times, events):
         """
 
         :raises: InvalidEventsError, TypeError, ValueError
         """
-        self._verifier.verify_times(times)
-        self._verifier.verify_events_tuple(events)
+        self.verifier.verify_times(times)
+        self.verifier.verify_events_tuple(events)
 
     def get_fastest_combine_method(self, times, prepped_events):
         first_comparison = self._compare_tuple_list_with_flattened_list(prepped_events)
@@ -270,11 +298,11 @@ class AdditiveEvents(object):
         total_occurrences = sum([pair[1] for pair in prepped_events])
 
         if total_occurrences >= safe_limit_flattened_list_len:
-            return 'tuple_list'
+            return 'all_events'
 
         occurrences_to_events_ratio = float(total_occurrences) / len(prepped_events)
         if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_add_by_list:
-            return 'tuple_list'
+            return 'all_events'
         return 'flattened_list'
 
     def _compare_with_indexed_values(self, first_method, times, prepped_events):
@@ -293,29 +321,32 @@ class AdditiveEvents(object):
         :param times: int > 0
         :param to_remove: [(event, occurrences) ..]\n
             event: int, occurrences: int>=0 total occurrences >0"""
-        self.raise_error_for_bad_input(times, to_remove)
-        processed_list = prepare_events(to_remove)
+        processed_list = prepare_events(to_remove.all_events)
+        new_dict = self.get_dict()
         for _ in range(times):
-            self._remove_tuple_list(processed_list)
+            new_dict = self._remove_tuple_list(new_dict, processed_list)
+        return AdditiveEvents(new_dict)
 
-    def _remove_tuple_list(self, events_to_remove):
+    @staticmethod
+    def _remove_tuple_list(dict_of_original, events_to_remove):
         min_event_being_removed = events_to_remove[0][0]
         max_event_being_removed = events_to_remove[-1][0]
 
-        current_min_event, current_max_event = self.event_range
+        current_min_event = min(dict_of_original.keys())
+        current_max_event = max(dict_of_original.keys())
         new_dict_min = current_min_event - min_event_being_removed
         new_dict_max = current_max_event - max_event_being_removed
         new_dict = {}
         for target_event in range(new_dict_min, new_dict_max + 1):
             try:
-                freq_at_new_event = self._table[target_event + min_event_being_removed]
+                freq_at_new_event = dict_of_original[target_event + min_event_being_removed]
                 for event_being_removed, event_weight in events_to_remove[1:]:
                     removal_value_offset = event_being_removed - min_event_being_removed
                     freq_at_new_event -= new_dict.get(target_event - removal_value_offset, 0) * event_weight
                 new_dict[target_event] = freq_at_new_event // events_to_remove[0][1]
             except KeyError:
                 continue
-        self._table = new_dict
+        return new_dict
 
 
 def prepare_events(events_tuple):
@@ -333,7 +364,7 @@ def get_current_size_cutoff(first_method, times, new_events_size):
     """
     data_dict = {new_event_size: {times: (current_events_size_choices), ...}, ...}
 
-    :param first_method: 'flattened_list', 'tuple_list'
+    :param first_method: 'flattened_list', 'all_events'
     :param times:
     :param new_events_size:
     :return: current events cutoff size
@@ -351,7 +382,7 @@ def get_current_size_cutoff(first_method, times, new_events_size):
     keys_are_times = keys_are_new_event_size[closest_new_size]
     closest_times = get_best_key(times, keys_are_times)
     current_size_choices = keys_are_times[closest_times]
-    current_size_index = {'flattened_list': 0, 'tuple_list': 1}[first_method]
+    current_size_index = {'flattened_list': 0, 'all_events': 1}[first_method]
     current_size_cutoff = current_size_choices[current_size_index]
     return current_size_cutoff
 

@@ -768,7 +768,7 @@ class GraphBox(BoxLayout):
         
         if (self.ids['graph_space'].children[0].active and 
             self.plot_current['text']):
-            orig = main().request_info('tuple_list')
+            orig = main().request_info('all_events')
             text = self.plot_current['text']
 
             new_plot_obj = {}
@@ -928,7 +928,7 @@ class DicePlatform(BoxLayout):
                     'weights_info': [self._table.weights_info, ()],
                     'dice_list': [self._table.get_list, ()],
                     'all_rolls': [dt.full_table_string, (self._table,)],
-                    'tuple_list': [self._table.all_events, ()]}
+                    'all_events': [self._table.all_events, ()]}
         command, args = requests[request]
         return command(*args)
     def request_stats(self, stat_list):

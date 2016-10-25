@@ -1,12 +1,14 @@
 """for all things dicey.  this contains DiceInfo and DiceTable and add_dice."""
 from __future__ import absolute_import
 
-from dicetables.longintmath import AdditiveEvents
+from dicetables.longintmath import AdditiveEvents, IntegerEvents
 
 
-class ProtoDie(object):
+class ProtoDie(IntegerEvents):
     """a blanket object for any kind of die so that different types of Die can
     be compared.  all Die objects need these five methods. str and repr"""
+    def __init__(self):
+        super(ProtoDie, self).__init__()
 
     def get_size(self):
         raise NotImplementedError
@@ -14,7 +16,8 @@ class ProtoDie(object):
     def get_weight(self):
         raise NotImplementedError
 
-    def tuple_list(self):
+    @property
+    def all_events(self):
         """return an ordered tuple list of [(die, weight) ... ] with zero weights
         removed"""
         raise NotImplementedError
@@ -37,20 +40,20 @@ class ProtoDie(object):
     def __hash__(self):
         return hash('hash of {!r}, {}, {}, {}'.format(self, self.get_size(),
                                                       self.get_weight(),
-                                                      self.tuple_list()))
+                                                      self.all_events))
 
     def __lt__(self, other):
-        """Dice are compared by size, then weight, then tuple_list, and finally
+        """Dice are compared by size, then weight, then all_events, and finally
         repr"""
         return (
-            (self.get_size(), self.get_weight(), self.tuple_list(), repr(self)) <
-            (other.get_size(), other.get_weight(), other.tuple_list(), repr(other))
+            (self.get_size(), self.get_weight(), self.all_events, repr(self)) <
+            (other.get_size(), other.get_weight(), other.all_events, repr(other))
         )
 
     def __eq__(self, other):
         return (
-            (self.get_size(), self.get_weight(), self.tuple_list(), repr(self)) ==
-            (other.get_size(), other.get_weight(), other.tuple_list(), repr(other))
+            (self.get_size(), self.get_weight(), self.all_events, repr(self)) ==
+            (other.get_size(), other.get_weight(), other.all_events, repr(other))
         )
 
     def __ne__(self, other):
@@ -79,6 +82,7 @@ class Die(ProtoDie):
         """
         self._die_size = die_size
         self._weight = 0
+        super(Die, self).__init__()
 
     def get_size(self):
         return self._die_size
@@ -87,7 +91,8 @@ class Die(ProtoDie):
         """all Die have weight=0"""
         return self._weight
 
-    def tuple_list(self):
+    @property
+    def all_events(self):
         return [(value, 1) for value in range(1, self._die_size + 1)]
 
     def weight_info(self):
@@ -116,13 +121,14 @@ class ModDie(Die):
         :param die_size: int >0
         :param modifier: int
         """
-        super(ModDie, self).__init__(die_size)
         self._mod = modifier
+        super(ModDie, self).__init__(die_size)
 
     def get_modifier(self):
         return self._mod
 
-    def tuple_list(self):
+    @property
+    def all_events(self):
         """D3 + 2 = [(3, 1, (4, 1), (5, 1)]"""
         return [(value + self._mod, 1)
                 for value in range(1, self._die_size + 1)]
@@ -155,6 +161,7 @@ class WeightedDie(ProtoDie):
         self._dic = dictionary_input.copy()
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
+        super(WeightedDie, self).__init__()
 
     def get_size(self):
         return self._die_size
@@ -162,7 +169,8 @@ class WeightedDie(ProtoDie):
     def get_weight(self):
         return self._weight
 
-    def tuple_list(self):
+    @property
+    def all_events(self):
         return sorted([pair for pair in self._dic.items() if pair[1]])
 
     def weight_info(self):
@@ -201,14 +209,15 @@ class ModWeightedDie(WeightedDie):
         :param modifier:
         :type modifier: int
         """
-        super(ModWeightedDie, self).__init__(dictionary_input)
         self._mod = modifier
+        super(ModWeightedDie, self).__init__(dictionary_input)
 
     def get_modifier(self):
         """returns the modifier on the die"""
         return self._mod
 
-    def tuple_list(self):
+    @property
+    def all_events(self):
         """returns the tuple list that is the dice values adjust by the mod"""
         return sorted([(roll + self._mod, weight) for roll, weight in self._dic.items() if weight])
 
@@ -242,6 +251,7 @@ class StrongDie(ProtoDie):
         """
         self._original = input_die
         self._multiply = multiplier
+        super(StrongDie, self).__init__()
 
     def get_size(self):
         return self.get_original().get_size()
@@ -256,8 +266,9 @@ class StrongDie(ProtoDie):
         """returns an instance of the original die"""
         return self._original
 
-    def tuple_list(self):
-        old = self._original.tuple_list()
+    @property
+    def all_events(self):
+        old = self._original.all_events
         return [(pair[0] * self.get_multiplier(), pair[1]) for pair in old]
 
     def weight_info(self):
@@ -281,9 +292,20 @@ class DiceTable(AdditiveEvents):
     """this is an AdditiveEvents with a list that holds information about the dice
     added to it and removed from it."""
 
-    def __init__(self):
-        super(DiceTable, self).__init__({0: 1})
-        self._dice_list = {}
+    def __init__(self, current_events, dice_list):
+        super(DiceTable, self).__init__(current_events)
+        self._dice_list = dict(dice_list)
+
+    @classmethod
+    def get_identity(cls):
+        return cls({0: 1}, [])
+
+    def _get_updated_list(self, add_number, die_added):
+        new_list = dict(self.get_list())
+        new_list[die_added] = new_list.get(die_added, 0) + add_number
+        if new_list[die_added] == 0:
+            del new_list[die_added]
+        return new_list.items()
 
     def update_list(self, add_number, new_die):
         """
@@ -332,8 +354,13 @@ class DiceTable(AdditiveEvents):
         :raises: dicetables.InvalidEventsError
         :return:
         """
-        self.combine(num, die.tuple_list())
-        self.update_list(num, die)
+        additive_events = self.combine(num, die)
+        dice_items = self._get_updated_list(num, die)
+        return DiceTable(additive_events.get_dict(), dice_items)
+
+    def raise_error_for_too_many_removes(self, num, die):
+        if self.number_of_dice(die) < num:
+            raise ValueError('dice not in table, or removed too many dice')
 
     def remove_die(self, num, die):
         """
@@ -345,7 +372,7 @@ class DiceTable(AdditiveEvents):
         :raises: ValueError, dicetables.InvalidEventsError
         :return:
         """
-        if self.number_of_dice(die) - num < 0:
-            raise ValueError('dice not in table, or removed too many dice')
-        self.remove(num, die.tuple_list())
-        self.update_list(-num, die)
+        self.raise_error_for_too_many_removes(num, die)
+        additive_events = self.remove(num, die)
+        new_dice_items = self._get_updated_list(-num, die)
+        return DiceTable(additive_events.get_dict(), new_dice_items)

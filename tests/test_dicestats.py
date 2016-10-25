@@ -7,10 +7,15 @@ import dicetables as dt
 
 
 class TestDiceStats(unittest.TestCase):
+
+    def __init__(self, *args, **kwargs):
+        self.identity = dt.DiceTable.get_identity()
+        super(TestDiceStats, self).__init__(*args, **kwargs)
+
     # rich comparison testing
     def test_Die_equal(self):
         self.assertEqual(dt.Die(3) == dt.Die(3), True)
-        self.assertEqual(dt.Die(0) == dt.Die(5), False)
+        self.assertEqual(dt.Die(1) == dt.Die(5), False)
 
     def test_Die_not_equal(self):
         self.assertEqual(dt.Die(3) != dt.Die(10), True)
@@ -28,7 +33,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_Die_gt(self):
         self.assertEqual(dt.Die(7) > dt.Die(7), False)
-        self.assertEqual(dt.Die(7) > dt.Die(0), True)
+        self.assertEqual(dt.Die(7) > dt.Die(1), True)
         self.assertEqual(dt.Die(8) > dt.Die(7), True)
 
     def test_Die_ge(self):
@@ -84,7 +89,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.Die(10).get_weight(), 0)
 
     def test_Die_tuple_list(self):
-        self.assertEqual(dt.Die(3).tuple_list(), [(1, 1), (2, 1), (3, 1)])
+        self.assertEqual(dt.Die(3).all_events, [(1, 1), (2, 1), (3, 1)])
 
     def test_Die_weight_info(self):
         self.assertEqual(dt.Die(10000).weight_info(), 'D10000\n    No weights')
@@ -103,7 +108,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.ModDie(7, 33).get_modifier(), 33)
 
     def test_ModDie_tuple_list(self):
-        self.assertEqual(dt.ModDie(2, 5).tuple_list(), [(1 + 5, 1), (2 + 5, 1)])
+        self.assertEqual(dt.ModDie(2, 5).all_events, [(1 + 5, 1), (2 + 5, 1)])
 
     def test_ModDie_string(self):
         self.assertEqual(str(dt.ModDie(10, 0)), 'D10+0')
@@ -125,10 +130,10 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.WeightedDie({1: 2, 3: 5}).get_weight(), 7)
 
     def test_WeightedDie_tuple_list(self):
-        self.assertEqual(dt.WeightedDie({1: 2, 3: 4}).tuple_list(), [(1, 2), (3, 4)])
+        self.assertEqual(dt.WeightedDie({1: 2, 3: 4}).all_events, [(1, 2), (3, 4)])
 
     def test_WeightedDie_tuple_list_doesnt_return_zero_frequencies(self):
-        self.assertEqual(dt.WeightedDie({1: 2, 3: 0}).tuple_list(), [(1, 2)])
+        self.assertEqual(dt.WeightedDie({1: 2, 3: 0}).all_events, [(1, 2)])
 
     def test_WeightedDie_weight_info(self):
         dic = dict((x, x + 1) for x in range(1, 6, 2))
@@ -179,7 +184,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.ModWeightedDie({1: 2}, 3).get_modifier(), 3)
 
     def test_ModWeightedDie_tuple_list(self):
-        self.assertEqual(dt.ModWeightedDie({1: 2, 3: 4}, -2).tuple_list(),
+        self.assertEqual(dt.ModWeightedDie({1: 2, 3: 4}, -2).all_events,
                          [(1 - 2, 2), (3 - 2, 4)])
 
     def test_ModWeightedDie_string_for_positive_mod(self):
@@ -215,7 +220,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_tuple_list(self):
         orig = dt.ModWeightedDie({1: 2, 2: 1}, 1)
-        self.assertEqual(dt.StrongDie(orig, 100).tuple_list(),
+        self.assertEqual(dt.StrongDie(orig, 100).all_events,
                          [(200, 2), (300, 1)])
 
     def test_StrongDie_weight_info(self):
@@ -263,7 +268,7 @@ class TestDiceStats(unittest.TestCase):
     def test_StrongDie_edge_StrongDie_of_StrongDie_tuple_list(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         expected_tuple = [(roll * 6, 1) for roll in [2, 3, 4]]
-        self.assertEqual(dt.StrongDie(die, 3).tuple_list(), expected_tuple)
+        self.assertEqual(dt.StrongDie(die, 3).all_events, expected_tuple)
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_get_multiplier(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
@@ -310,45 +315,45 @@ class TestDiceStats(unittest.TestCase):
 
     #  DiceTable tests
     def test_DiceTable_inits_empty(self):
-        table = dt.DiceTable()
+        table = self.identity
         self.assertEqual(table.all_events, [(0, 1)])
         self.assertEqual(table.get_list(), [])
 
     def test_DiceTable_update_list_adds_same_Die_to_Die_already_in_table(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         table.update_list(3, dt.Die(4))
         table.update_list(2, dt.Die(4))
         self.assertIn((dt.Die(4), 5), table.get_list())
 
     def test_DiceTable_update_list_doesnt_combine_similar_dice(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         table.update_list(3, dt.Die(3))
         table.update_list(2, dt.WeightedDie({1: 1, 2: 1, 3: 1}))
         self.assertIn((dt.WeightedDie({1: 1, 2: 1, 3: 1}), 2), table.get_list())
         self.assertIn((dt.Die(3), 3), table.get_list())
 
     def test_DiceTable_updates_list_removes_Die_with_zero_amount(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         table.update_list(2, dt.Die(4))
         self.assertIn((dt.Die(4), 2), table.get_list())
         table.update_list(-2, dt.Die(4))
         self.assertEqual([], table.get_list())
 
     def test_DiceTable_number_of_dice_reports_correctly(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         table.update_list(5, dt.Die(4))
         self.assertEqual(table.number_of_dice(dt.Die(4)), 5)
 
     def test_DiceTable_number_of_dice_reports_zero_when_dice_not_there(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         self.assertEqual(table.number_of_dice(dt.Die(4)), 0)
 
     def test_DiceTable_weights_info_returns_empty_str_for_empty_table(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         self.assertEqual(table.weights_info(), '')
 
     def test_DiceTable_weights_info_returns_appropriate_string(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         table.update_list(2, dt.Die(4))
         table.update_list(5, dt.ModWeightedDie({1: 10, 4: 0}, 2))
         w_info = ('2D4\n    No weights\n\n5D4+10  W:10\n' +
@@ -359,11 +364,11 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(table.weights_info(), w_info)
 
     def test_DiceTable_str_is_empty_for_empty_table(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         self.assertEqual(str(table), '')
 
     def test_DiceTable_str_returns_appropriate_value(self):
-        table = dt.DiceTable()
+        table = dt.DiceTable.get_identity()
         table.update_list(2, dt.ModDie(4, -2))
         table.update_list(3, dt.Die(10))
         table.update_list(5, dt.ModWeightedDie({4: 10}, 2))
@@ -371,45 +376,40 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(str(table), table_str)
 
     def test_DiceTable_add_die_doesnt_add_zero_dice(self):
-        table = dt.DiceTable()
-        table.add_die(0, dt.Die(4))
-        self.assertEqual(table.get_list(), [])
-        self.assertEqual(table.all_events, [(0, 1)])
+        new = self.identity.add_die(0, dt.Die(4))
+        self.assertEqual(new.get_list(), [])
+        self.assertEqual(new.all_events, [(0, 1)])
 
     def test_DiceTable_add_die_adds_correct_dice(self):
-        table = dt.DiceTable()
-        table.add_die(2, dt.Die(4))
-        self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
+        new = self.identity.add_die(2, dt.Die(4))
+        self.assertEqual(new.get_list(), [(dt.Die(4), 2)])
         freq_all = [(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)]
-        self.assertEqual(table.all_events, freq_all)
+        self.assertEqual(new.all_events, freq_all)
 
     def test_DiceTable_remove_die_removes_correct_dice(self):
-        table = dt.DiceTable()
-        table.add_die(5, dt.Die(4))
-        table.remove_die(3, dt.Die(4))
-        self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
+        five_d_four = self.identity.add_die(5, dt.Die(4))
+        two_d_four = five_d_four.remove_die(3, dt.Die(4))
+        self.assertEqual(two_d_four.get_list(), [(dt.Die(4), 2)])
         freq_all = [(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)]
-        self.assertEqual(table.all_events, freq_all)
+        self.assertEqual(two_d_four.all_events, freq_all)
 
     def test_DiceTable_remove_die_can_remove_all_the_dice(self):
-        table = dt.DiceTable()
-        table.add_die(2, dt.Die(4))
-        table.remove_die(2, dt.Die(4))
-        self.assertEqual(table.get_list(), [])
-        self.assertEqual(table.all_events, [(0, 1)])
+
+        two_d_four = self.identity.add_die(2, dt.Die(4))
+        zero_d_four = two_d_four.remove_die(2, dt.Die(4))
+        self.assertEqual(zero_d_four.get_list(), [])
+        self.assertEqual(zero_d_four.all_events, [(0, 1)])
 
     def test_DiceTable_remove_die_raises_error_if_Die_not_in_table(self):
-        table = dt.DiceTable()
         with self.assertRaises(ValueError) as cm:
-            table.remove_die(1, dt.Die(4))
+            self.identity.remove_die(1, dt.Die(4))
         self.assertEqual(cm.exception.args[0],
                          'dice not in table, or removed too many dice')
 
     def test_DiceTable_remove_die_raises_error_if_too_many_dice_removed(self):
-        table = dt.DiceTable()
-        table.add_die(3, dt.Die(4))
+        three_d_four = self.identity.add_die(3, dt.Die(4))
         with self.assertRaises(ValueError) as cm:
-            table.remove_die(4, dt.Die(4))
+            three_d_four.remove_die(4, dt.Die(4))
         self.assertEqual(cm.exception.args[0],
                          'dice not in table, or removed too many dice')
 

@@ -114,7 +114,7 @@ NEW DIE TYPE ADDED
 ------------------
 StrongDie takes a regular die and gives it an outsized strength.
 so StrongDie(Die(3), 2) would be one die that rolls double results 
-for a D3.  it would roll. 2, 4 or 6. the tuple_list for a weighted
+for a D3.  it would roll. 2, 4 or 6. the all_events for a weighted
 die would compare like this. 
 
 StrongDie(ModWeightedDie({1:1, 2:2}, -3), 5)
@@ -260,11 +260,11 @@ so you could recreate a DiceTable if you had stored it's tuple list and dice lik
 
     In [41]: table.add_die(1000, dt.Die(4))
 
-    In [42]: tuple_list = table.get_event_all()
+    In [42]: all_events = table.get_event_all()
 
     In [43]: new_table = dt.DiceTable()
 
-    In [44]: new_table.add(1, tuple_list)
+    In [44]: new_table.add(1, all_events)
 
     In [45]: new_table.get_list()
     Out[45]: []
