@@ -290,20 +290,9 @@ class DiceTable(AdditiveEvents):
     """this is an AdditiveEvents with a list that holds information about the dice
     added to it and removed from it."""
 
-    def __init__(self, current_events, dice_list):
-        super(DiceTable, self).__init__(current_events)
-        self._dice_list = dict(dice_list)
-
-    @classmethod
-    def get_identity(cls):
-        return cls({0: 1}, [])
-
-    def get_updated_list(self, add_number, die_added):
-        new_list = dict(self.get_list())
-        new_list[die_added] = new_list.get(die_added, 0) + add_number
-        if new_list[die_added] == 0:
-            del new_list[die_added]
-        return new_list.items()
+    def __init__(self):
+        super(DiceTable, self).__init__({0: 1})
+        self._dice_list = {}
 
     def update_list(self, add_number, new_die):
         """
@@ -352,9 +341,8 @@ class DiceTable(AdditiveEvents):
         :raises: dicetables.InvalidEventsError
         :return:
         """
-        new_dict = self.dict_combiner.combine_by_fastest(num, die.all_events).get_dict()
-        dice_items = self.get_updated_list(num, die)
-        return DiceTable(new_dict, dice_items)
+        self.combine(num, die)
+        self.update_list(num, die)
 
     def raise_error_for_too_many_removes(self, num, die):
         if self.number_of_dice(die) < num:
@@ -371,7 +359,6 @@ class DiceTable(AdditiveEvents):
         :return:
         """
         self.raise_error_for_too_many_removes(num, die)
-        new_dict = self.dict_combiner.remove_by_tuple_list(num, die.all_events).get_dict()
-        new_dice_items = self.get_updated_list(-num, die)
-        return DiceTable(new_dict, new_dice_items)
+        self.remove(num, die)
+        self.update_list(-1 * num, die)
 

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from sys import version_info
 import unittest
 import dicetables.baseevents as lim
-from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff
+from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff, DictCombiner
 
 FLOAT_BIG = 1e+300
 FLOAT_SMALL = 1e+100
@@ -82,11 +82,11 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_EventsVerifier_verify_all_events_zero_occurrences(self):
         self.assert_my_regex(lim.InvalidEventsError,
-                             'no negative or zero occurrences in all_events',
+                             'no negative or zero occurrences in Events.all_events',
                              self.checker.verify_all_events, [(1, 0), (2, 0)])
 
     def test_EventsVerifier_verify_events_by_tuple_negative_occurrences(self):
-        self.assert_my_regex(lim.InvalidEventsError, 'no negative or zero occurrences in all_events',
+        self.assert_my_regex(lim.InvalidEventsError, 'no negative or zero occurrences in Events.all_events',
                              self.checker.verify_all_events, [(1, 0), (2, -1)])
 
     def test_EventsVerifier_verify_all_events_non_int_occurrences(self):
@@ -233,12 +233,12 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_AdditiveEvents_combine_method_is_tuple_list_identity(self):
         to_combine = lim.AdditiveEvents({1: 2, 2: 2})
-        to_test = self.identity.combine_by_tuple_list(1, to_combine)
-        self.assertEqual(to_test.all_events, to_combine.all_events)
+        self.identity.combine_by_tuple_list(1, to_combine)
+        self.assertEqual(self.identity.all_events, to_combine.all_events)
 
     def test_AdditiveEvents_combine_method_is_tuple_list_complex(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
-        new = self.identity.combine_by_tuple_list(3, to_combine)
+        self.identity.combine_by_tuple_list(3, to_combine)
         """
         {1: 1, 2: 2}
 
@@ -247,28 +247,28 @@ class TestLongIntMath(unittest.TestCase):
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         expected = [(3, 1), (4, 6), (5, 12), (6, 8)]
-        self.assertEqual(new.all_events, expected)
+        self.assertEqual(self.identity.all_events, expected)
 
     def test_AdditiveEvents_combine_method_is_tuple_list_complex_AdditiveEvents(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
         complex_events = lim.AdditiveEvents({2: 1, 3: 4, 4: 4})
-        new = complex_events.combine_by_tuple_list(1, to_combine)
+        complex_events.combine_by_tuple_list(1, to_combine)
         """
         {2: 1, 3: 4, 4: 4}
 
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         expected = [(3, 1), (4, 6), (5, 12), (6, 8)]
-        self.assertEqual(new.all_events, expected)
+        self.assertEqual(complex_events.all_events, expected)
 
     def test_AdditiveEvents_combine_method_is_flattened_list_identity(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
-        new = self.identity.combine_by_flattened_list(1, to_combine)
-        self.assertEqual(new.all_events, to_combine.all_events)
+        self.identity.combine_by_flattened_list(1, to_combine)
+        self.assertEqual(self.identity.all_events, to_combine.all_events)
 
     def test_AdditiveEvents_combine_method_is_flattened_list_complex(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
-        new = self.identity.combine_by_flattened_list(3, to_combine)
+        self.identity.combine_by_flattened_list(3, to_combine)
         """
         {1: 1, 2: 2}
 
@@ -277,28 +277,28 @@ class TestLongIntMath(unittest.TestCase):
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         expected = [(3, 1), (4, 6), (5, 12), (6, 8)]
-        self.assertEqual(new.all_events, expected)
+        self.assertEqual(self.identity.all_events, expected)
 
     def test_AdditiveEvents_combine_method_is_flattened_list_complex_AdditiveEvents(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
         complex_events = lim.AdditiveEvents({2: 1, 3: 4, 4: 4})
-        new = complex_events.combine_by_flattened_list(1, to_combine)
+        complex_events.combine_by_flattened_list(1, to_combine)
         """
         {2: 1, 3: 4, 4: 4}
 
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         expected = [(3, 1), (4, 6), (5, 12), (6, 8)]
-        self.assertEqual(new.all_events, expected)
+        self.assertEqual(complex_events.all_events, expected)
 
     def test_AdditiveEvents_combine_method_is_indexed_values_identity(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
-        new = self.identity.combine_by_indexed_values(1, to_combine)
-        self.assertEqual(new.all_events, to_combine.all_events)
+        self.identity.combine_by_indexed_values(1, to_combine)
+        self.assertEqual(self.identity.all_events, to_combine.all_events)
 
     def test_AdditiveEvents_combine_method_is_indexed_values_complex(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
-        new = self.identity.combine_by_indexed_values(3, to_combine)
+        self.identity.combine_by_indexed_values(3, to_combine)
         """
         {1: 1, 2: 2}
 
@@ -307,19 +307,19 @@ class TestLongIntMath(unittest.TestCase):
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         expected = [(3, 1), (4, 6), (5, 12), (6, 8)]
-        self.assertEqual(new.all_events, expected)
+        self.assertEqual(self.identity.all_events, expected)
 
     def test_AdditiveEvents_combine_method_is_indexed_values_complex_AdditiveEvents(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
         complex_events = lim.AdditiveEvents({2: 1, 3: 4, 4: 4})
-        new = complex_events.combine_by_indexed_values(1, to_combine)
+        complex_events.combine_by_indexed_values(1, to_combine)
         """
         {2: 1, 3: 4, 4: 4}
 
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         expected = [(3, 1), (4, 6), (5, 12), (6, 8)]
-        self.assertEqual(new.all_events, expected)
+        self.assertEqual(complex_events.all_events, expected)
 
     """
     the next several tests show how AdditiveEvents.get_fastest_method works.  The edge cases to choose between
@@ -343,7 +343,7 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_AdditiveEvents_get_fastest_method_one_current_events_and_one_times_never_picks_indexed_values(self):
         accepted_choices = ('tuple_list', 'flattened_list')
-        current_events_one = self.identity.dict_combiner.get_fastest_combine_method
+        current_events_one = DictCombiner(self.identity.get_dict()).get_fastest_combine_method
         for power_of_two in range(20):
             """
             events are:
@@ -359,22 +359,22 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_min(self):
         events = [(1, 1)]
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_mid(self):
         events = [(event, 1) for event in range(100)]
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_edge(self):
         events = [(event, 1) for event in range(9999)]
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_total_occurrences_over_edge(self):
         """
         this cutoff is not for speed but for safety.  as the next test will demonstrate
         """
         events = [(event, 1) for event in range(10000)]
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'tuple_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'tuple_list')
 
     def test_AdditiveEvents_demonstrate_why_there_is_cutoff_for_flattened_list(self):
         ok_events = [(1, 10 ** 4)]
@@ -386,21 +386,21 @@ class TestLongIntMath(unittest.TestCase):
         events = [(1, 1), (2, 1), (3, 2), (4, 1)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.25)
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_ratio_edge(self):
         events = [(event, 1) for event in range(9)]
         events += [(10, 4)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.3)
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'flattened_list')
 
     def test_AdditiveEvents_get_fastest_method_tuple_vs_flattened_by_ratio_over_edge(self):
         events = [(event, 1) for event in range(99)]
         events += [(100, 32)]
         ratio = sum([pair[1] for pair in events]) / float(len(events))
         self.assertEqual(ratio, 1.31)
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(1, events), 'tuple_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(1, events), 'tuple_list')
 
     def test_AdditiveEvents_get_fastest_method_part_get_best_key_below_min(self):
         test_dict = {1: 1, 3: 1, 5: 1}
@@ -443,34 +443,38 @@ class TestLongIntMath(unittest.TestCase):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_twenty = [(event, 1) for event in range(20)]
         self.assertEqual(get_current_size_cutoff('flattened_list', 20, 4), 1)
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(4, sized_twenty), 'indexed_values')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(4, sized_twenty),
+                         'indexed_values')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_other(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(self.identity.dict_combiner.get_fastest_combine_method(4, sized_four), 'tuple_list')
+        self.assertEqual(DictCombiner(self.identity.get_dict()).get_fastest_combine_method(4, sized_four), 'tuple_list')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_below_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_five = lim.AdditiveEvents(dict.fromkeys(range(5), 1))
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(current_size_five.dict_combiner.get_fastest_combine_method(20, sized_four), 'tuple_list')
+        self.assertEqual(DictCombiner(current_size_five.get_dict()).get_fastest_combine_method(20, sized_four),
+                         'tuple_list')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_at_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_fifty = lim.AdditiveEvents(dict.fromkeys(range(50), 1))
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(current_size_fifty.dict_combiner.get_fastest_combine_method(20, sized_four), 'indexed_values')
+        self.assertEqual(DictCombiner(current_size_fifty.get_dict()).get_fastest_combine_method(20, sized_four),
+                         'indexed_values')
 
     def test_Additive_events_get_fastest_method_uses_size_cutoff_to_choose_above_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = [(event, 2) for event in range(4)]
         current_size_fifty_one = lim.AdditiveEvents(dict.fromkeys(range(51), 1))
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(current_size_fifty_one.dict_combiner.get_fastest_combine_method(20, sized_four), 'indexed_values')
+        self.assertEqual(DictCombiner(current_size_fifty_one.get_dict()).get_fastest_combine_method(20, sized_four),
+                         'indexed_values')
 
     def test_REGRESSION_AdditiveEvents_combine_one_event_all_methods(self):
         flattened = lim.AdditiveEvents({0: 1})
@@ -478,98 +482,100 @@ class TestLongIntMath(unittest.TestCase):
         indexed = lim.AdditiveEvents({0: 1})
         fastest = lim.AdditiveEvents({0: 1})
         events = lim.AdditiveEvents({1: 1})
-        new_flattened = flattened.combine_by_flattened_list(1, events)
-        new_tuple = tuple_list.combine_by_tuple_list(1, events)
-        new_indexed = indexed.combine_by_indexed_values(1, events)
-        new_fastest = fastest.combine(1, events)
-        self.assertEqual(new_flattened.all_events, events.all_events)
-        self.assertEqual(new_tuple.all_events, events.all_events)
-        self.assertEqual(new_indexed.all_events, events.all_events)
-        self.assertEqual(new_fastest.all_events, events.all_events)
+        flattened.combine_by_flattened_list(1, events)
+        tuple_list.combine_by_tuple_list(1, events)
+        indexed.combine_by_indexed_values(1, events)
+        fastest.combine(1, events)
+        self.assertEqual(flattened.all_events, events.all_events)
+        self.assertEqual(tuple_list.all_events, events.all_events)
+        self.assertEqual(indexed.all_events, events.all_events)
+        self.assertEqual(fastest.all_events, events.all_events)
 
     #  TODO check
     #  AdditiveEvents basic combine and remove tests
     def test_AdditiveEvents_combine_works_with_low_total_occurrences_events(self):
         low_ratio_events = lim.AdditiveEvents({1: 1, 2: 1})
-        new = self.identity.combine(1, low_ratio_events)
-        self.assertEqual(self.identity.all_events, [(0, 1)])
-        self.assertEqual(new.all_events, low_ratio_events.all_events)
+        self.identity.combine(1, low_ratio_events)
+        self.assertEqual(self.identity.all_events, low_ratio_events.all_events)
 
     def test_AdditiveEvents_combine_works_with_high_total_occurrences_events(self):
         high_ratio_tuples = [(1, 10 ** 1000), (2, 10 ** 1000)]
-        new = self.identity.combine(1, lim.AdditiveEvents(dict(high_ratio_tuples)))
-        self.assertEqual(new.all_events, high_ratio_tuples)
+        self.identity.combine(1, lim.AdditiveEvents(dict(high_ratio_tuples)))
+        self.assertEqual(self.identity.all_events, high_ratio_tuples)
 
     def test_AdditiveEvents_one_multiple_combine_is_multiple_single_combines(self):
         to_add = lim.AdditiveEvents({1: 2, 3: 4})
-        first = self.identity.combine(1, to_add)
-        second = first.combine(1, to_add)
-        two_times = self.identity.combine(2, to_add)
-        self.assertEqual(second.all_events, two_times.all_events)
+        self.identity.combine(1, to_add)
+        self.identity.combine(1, to_add)
+        self.identity_b.combine(2, to_add)
+        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
 
     def test_AdditiveEvents_combine_combines_correctly(self):
         to_add = lim.AdditiveEvents({1: 2, 2: 2})
-        new = self.identity.combine(2, to_add)
-        self.assertEqual(new.all_events,
+        self.identity.combine(2, to_add)
+        self.assertEqual(self.identity.all_events,
                          [(2, 4), (3, 8), (4, 4)])
 
     def test_AdditiveEvents_combine_works_with_long_large_number_list(self):
         tuple_list = [(x, 10 ** 1000) for x in range(-1000, 1000)]
         to_add = lim.AdditiveEvents(dict(tuple_list))
-        new = self.identity.combine(1, to_add)
-        self.assertEqual(new.all_events, tuple_list)
+        self.identity.combine(1, to_add)
+        self.assertEqual(self.identity.all_events, tuple_list)
 
     def test_AdditiveEvents_remove_demonstration(self):
         a_coin_toss = lim.AdditiveEvents({0: 1, 1: 1})
         arbitrary_events = lim.AdditiveEvents({-1: 3, 10: 8})
         three_coin_tosses = [(0, 1), (1, 3), (2, 3), (3, 1)]
-        new = self.identity.combine(3, a_coin_toss)
-        self.assertEqual(new.all_events, three_coin_tosses)
+        self.identity.combine(3, a_coin_toss)
+        self.assertEqual(self.identity.all_events, three_coin_tosses)
 
-        new = new.combine(3, arbitrary_events)
-        self.assertNotEqual(new.all_events, three_coin_tosses)
-        self.assertEqual(new.event_range, (-3, 33))
+        self.identity.combine(3, arbitrary_events)
+        self.assertNotEqual(self.identity.all_events, three_coin_tosses)
+        self.assertEqual(self.identity.event_range, (-3, 33))
 
-        new = new.remove(3, arbitrary_events)
-        self.assertEqual(new.all_events, three_coin_tosses)
+        self.identity.remove(3, arbitrary_events)
+        self.assertEqual(self.identity.all_events, three_coin_tosses)
 
-        new = new.remove(2, a_coin_toss)
-        self.assertEqual(new.all_events, a_coin_toss.all_events)
+        self.identity.remove(2, a_coin_toss)
+        self.assertEqual(self.identity.all_events, a_coin_toss.all_events)
 
     def test_AdditiveEvents_remove_removes_correctly(self):
         arbitrary_events = lim.AdditiveEvents({-5: 3, 4: 10, 7:1})
-        has_five = self.identity.combine(5, arbitrary_events)
-        has_ten = self.identity.combine(10, arbitrary_events)
-        self.assertEqual(has_ten.remove(5, arbitrary_events).all_events, has_five.all_events)
+        self.identity.combine(5, arbitrary_events)
+        self.identity_b.combine(10, arbitrary_events)
+        self.identity_b.remove(5, arbitrary_events)
+        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
 
     def test_AdditiveEvents_remove_works_for_large_numbers(self):
         arbitrary_large_events = lim.AdditiveEvents({-5: 10 ** 500, 0: 5 * 10 ** 700, 3: 2 ** 1000})
-        has_one = self.identity.combine(1, arbitrary_large_events)
-        has_two = self.identity.combine(2, arbitrary_large_events)
-        self.assertEqual(has_two.remove(1, arbitrary_large_events).all_events, has_one.all_events)
+        self.identity.combine(1, arbitrary_large_events)
+        self.identity_b.combine(2, arbitrary_large_events)
+        self.identity_b.remove(1, arbitrary_large_events)
+        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
 
     def test_AdditiveEvents_combine_works_regardless_of_order(self):
         arbitrary_a = lim.AdditiveEvents({1: 2, 3: 10 ** 456})
         arbitrary_b = lim.AdditiveEvents({-1: 2, 0: 5})
-        one_a = self.identity.combine(1, arbitrary_a)
-        one_a_two_b = one_a.combine(2, arbitrary_b)
-        two_b = self.identity.combine(2, arbitrary_b)
-        two_b_one_a = two_b.combine(1, arbitrary_a)
-        self.assertEqual(one_a_two_b.all_events,
-                         two_b_one_a.all_events)
+        self.identity.combine(1, arbitrary_a)
+        self.identity.combine(2, arbitrary_b)
+        self.identity_b.combine(2, arbitrary_b)
+        self.identity_b.combine(1, arbitrary_a)
+        self.assertEqual(self.identity.all_events,
+                         self.identity_b.all_events)
 
     def test_AdditiveEvents_remove_removes_same_regardless_of_order(self):
         arbitrary_a = lim.AdditiveEvents({-1: 2, 3: 5})
         arbitrary_b = lim.AdditiveEvents({0: 9, 100: 4})
-        five_a = self.identity.combine(5, arbitrary_a)
-        five_a_five_b = five_a.combine(5, arbitrary_b)
-        two_a_five_b = five_a_five_b.remove(3, arbitrary_a)
-        two_a_two_b = two_a_five_b.remove(3, arbitrary_b)
-        two_a_one_b = two_a_two_b.remove(1, arbitrary_b)
+        self.identity.combine(5, arbitrary_a)
+        self.identity.combine(5, arbitrary_b)
+        self.identity.remove(3, arbitrary_a)
+        self.identity.remove(3, arbitrary_b)
+        self.identity.remove(1, arbitrary_b)
+        self.identity.remove(1, arbitrary_a)
 
-        one_b = self.identity.combine(1, arbitrary_b)
-        one_b_one_a = one_b.combine(1, arbitrary_a)
-        self.assertEqual(two_a_one_b.remove(1, arbitrary_a).all_events, one_b_one_a.all_events)
+        self.identity_b.combine(1, arbitrary_b)
+        self.identity_b.combine(1, arbitrary_a)
+        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
 
 
 def events_generator():

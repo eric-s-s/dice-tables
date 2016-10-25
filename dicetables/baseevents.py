@@ -58,8 +58,13 @@ class InputVerifier(object):
         return isinstance(number, self._int_tuple)
 
     def verify_all_events(self, all_events):
+        """
+
+        :param all_events: IntegerEvents.all_events
+        :raises: InvalidEventsError
+        """
         cannot_be_empty = 'events may not be empty. a good alternative is the identity - [(0, 1)].'
-        only_pos_occurrences = 'no negative or zero occurrences in all_events'
+        only_pos_occurrences = 'no negative or zero occurrences in Events.all_events'
         bad_types = self.types_message
 
         if not all_events:
@@ -67,7 +72,7 @@ class InputVerifier(object):
 
         events, occurrences = zip(*all_events)
         if not self.is_sorted(events):
-            raise InvalidEventsError('all_events must be sorted')
+            raise InvalidEventsError('Events.all_events must be sorted')
         if not self.is_all_ints(events) or not self.is_all_ints(occurrences):
             raise InvalidEventsError(bad_types)
         if any(occurrence <= 0 for occurrence in occurrences):
@@ -109,7 +114,6 @@ class AdditiveEvents(IntegerEvents):
         :raises: InvalidEventsError
         """
         self._table = seed_dictionary.copy()
-        self.dict_combiner = DictCombiner(dict(self.all_events))
         super(AdditiveEvents, self).__init__()
 
     @property
@@ -182,20 +186,24 @@ class AdditiveEvents(IntegerEvents):
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
 
     def combine(self, times, events):
-        dictionary = self.dict_combiner.combine_by_fastest(times, events.all_events).get_dict()
-        return AdditiveEvents(dictionary)
+        combiner = DictCombiner(dict(self.all_events))
+        dictionary = combiner.combine_by_fastest(times, events.all_events).get_dict()
+        self._table = dictionary
 
     def combine_by_flattened_list(self, times, events):
-        dictionary = self.dict_combiner.combine_by_flattened_list(times, events.all_events).get_dict()
-        return AdditiveEvents(dictionary)
+        combiner = DictCombiner(dict(self.all_events))
+        dictionary = combiner.combine_by_flattened_list(times, events.all_events).get_dict()
+        self._table = dictionary
 
     def combine_by_tuple_list(self, times, events):
-        dictionary = self.dict_combiner.combine_by_tuple_list(times, events.all_events).get_dict()
-        return AdditiveEvents(dictionary)
+        combiner = DictCombiner(dict(self.all_events))
+        dictionary = combiner.combine_by_tuple_list(times, events.all_events).get_dict()
+        self._table = dictionary
 
     def combine_by_indexed_values(self, times, events):
-        dictionary = self.dict_combiner.combine_by_indexed_values(times, events.all_events).get_dict()
-        return AdditiveEvents(dictionary)
+        combiner = DictCombiner(dict(self.all_events))
+        dictionary = combiner.combine_by_indexed_values(times, events.all_events).get_dict()
+        self._table = dictionary
 
     def remove(self, times, events):
         """IF YOU REMOVE WHAT YOU HAVEN'T ADDED, NO ERROR WILL BE RAISED BUT YOU WILL HAVE BUGS.
@@ -204,5 +212,6 @@ class AdditiveEvents(IntegerEvents):
         :param times: int > 0
         :param events: [(event, occurrences) ..]\n
             event: int, occurrences: int>=0 total occurrences >0"""
-        dictionary = self.dict_combiner.remove_by_tuple_list(times, events.all_events).get_dict()
-        return AdditiveEvents(dictionary)
+        combiner = DictCombiner(dict(self.all_events))
+        dictionary = combiner.remove_by_tuple_list(times, events.all_events).get_dict()
+        self._table = dictionary

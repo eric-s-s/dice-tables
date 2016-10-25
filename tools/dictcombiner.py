@@ -43,13 +43,13 @@ class DictCombiner(object):
             indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events_tuples)
         return DictCombiner(dict(indexed_values_to_update.get_items()))
 
-    def combine_by_fastest(self, times, events_tupless):
+    def combine_by_fastest(self, times, events_tuples):
         method_dict = {'tuple_list': self.combine_by_tuple_list,
                        'flattened_list': self.combine_by_flattened_list,
                        'indexed_values': self.combine_by_indexed_values}
-        method = self.get_fastest_combine_method(times, events_tupless)
+        method = self.get_fastest_combine_method(times, events_tuples)
 
-        return method_dict[method](times, events_tupless)
+        return method_dict[method](times, events_tuples)
 
     def get_fastest_combine_method(self, times, events_tuples):
         first_comparison = self._compare_tuple_list_with_flattened_list(events_tuples)

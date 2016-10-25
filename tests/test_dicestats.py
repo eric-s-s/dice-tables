@@ -8,10 +8,6 @@ import dicetables as dt
 
 class TestDiceStats(unittest.TestCase):
 
-    def __init__(self, *args, **kwargs):
-        self.identity = dt.DiceTable.get_identity()
-        super(TestDiceStats, self).__init__(*args, **kwargs)
-
     # rich comparison testing
     def test_Die_equal(self):
         self.assertEqual(dt.Die(3) == dt.Die(3), True)
@@ -315,45 +311,45 @@ class TestDiceStats(unittest.TestCase):
 
     #  DiceTable tests
     def test_DiceTable_inits_empty(self):
-        table = self.identity
+        table = dt.DiceTable()
         self.assertEqual(table.all_events, [(0, 1)])
         self.assertEqual(table.get_list(), [])
 
     def test_DiceTable_update_list_adds_same_Die_to_Die_already_in_table(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         table.update_list(3, dt.Die(4))
         table.update_list(2, dt.Die(4))
         self.assertIn((dt.Die(4), 5), table.get_list())
 
     def test_DiceTable_update_list_doesnt_combine_similar_dice(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         table.update_list(3, dt.Die(3))
         table.update_list(2, dt.WeightedDie({1: 1, 2: 1, 3: 1}))
         self.assertIn((dt.WeightedDie({1: 1, 2: 1, 3: 1}), 2), table.get_list())
         self.assertIn((dt.Die(3), 3), table.get_list())
 
     def test_DiceTable_updates_list_removes_Die_with_zero_amount(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         table.update_list(2, dt.Die(4))
         self.assertIn((dt.Die(4), 2), table.get_list())
         table.update_list(-2, dt.Die(4))
         self.assertEqual([], table.get_list())
 
     def test_DiceTable_number_of_dice_reports_correctly(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         table.update_list(5, dt.Die(4))
         self.assertEqual(table.number_of_dice(dt.Die(4)), 5)
 
     def test_DiceTable_number_of_dice_reports_zero_when_dice_not_there(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         self.assertEqual(table.number_of_dice(dt.Die(4)), 0)
 
     def test_DiceTable_weights_info_returns_empty_str_for_empty_table(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         self.assertEqual(table.weights_info(), '')
 
     def test_DiceTable_weights_info_returns_appropriate_string(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         table.update_list(2, dt.Die(4))
         table.update_list(5, dt.ModWeightedDie({1: 10, 4: 0}, 2))
         w_info = ('2D4\n    No weights\n\n5D4+10  W:10\n' +
@@ -364,11 +360,11 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(table.weights_info(), w_info)
 
     def test_DiceTable_str_is_empty_for_empty_table(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         self.assertEqual(str(table), '')
 
     def test_DiceTable_str_returns_appropriate_value(self):
-        table = dt.DiceTable.get_identity()
+        table = dt.DiceTable()
         table.update_list(2, dt.ModDie(4, -2))
         table.update_list(3, dt.Die(10))
         table.update_list(5, dt.ModWeightedDie({4: 10}, 2))
@@ -376,40 +372,44 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(str(table), table_str)
 
     def test_DiceTable_add_die_doesnt_add_zero_dice(self):
-        new = self.identity.add_die(0, dt.Die(4))
-        self.assertEqual(new.get_list(), [])
-        self.assertEqual(new.all_events, [(0, 1)])
+        table = dt.DiceTable()
+        table.add_die(0, dt.Die(4))
+        self.assertEqual(table.get_list(), [])
+        self.assertEqual(table.all_events, [(0, 1)])
 
     def test_DiceTable_add_die_adds_correct_dice(self):
-        new = self.identity.add_die(2, dt.Die(4))
-        self.assertEqual(new.get_list(), [(dt.Die(4), 2)])
+        table = dt.DiceTable()
+        table.add_die(2, dt.Die(4))
+        self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
         freq_all = [(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)]
-        self.assertEqual(new.all_events, freq_all)
+        self.assertEqual(table.all_events, freq_all)
 
     def test_DiceTable_remove_die_removes_correct_dice(self):
-        five_d_four = self.identity.add_die(5, dt.Die(4))
-        two_d_four = five_d_four.remove_die(3, dt.Die(4))
-        self.assertEqual(two_d_four.get_list(), [(dt.Die(4), 2)])
+        table = dt.DiceTable()
+        table.add_die(5, dt.Die(4))
+        table.remove_die(3, dt.Die(4))
+        self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
         freq_all = [(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)]
-        self.assertEqual(two_d_four.all_events, freq_all)
+        self.assertEqual(table.all_events, freq_all)
 
     def test_DiceTable_remove_die_can_remove_all_the_dice(self):
-
-        two_d_four = self.identity.add_die(2, dt.Die(4))
-        zero_d_four = two_d_four.remove_die(2, dt.Die(4))
-        self.assertEqual(zero_d_four.get_list(), [])
-        self.assertEqual(zero_d_four.all_events, [(0, 1)])
+        table = dt.DiceTable()
+        table.add_die(2, dt.Die(4))
+        table.remove_die(2, dt.Die(4))
+        self.assertEqual(table.get_list(), [])
+        self.assertEqual(table.all_events, [(0, 1)])
 
     def test_DiceTable_remove_die_raises_error_if_Die_not_in_table(self):
         with self.assertRaises(ValueError) as cm:
-            self.identity.remove_die(1, dt.Die(4))
+            dt.DiceTable().remove_die(1, dt.Die(4))
         self.assertEqual(cm.exception.args[0],
                          'dice not in table, or removed too many dice')
 
     def test_DiceTable_remove_die_raises_error_if_too_many_dice_removed(self):
-        three_d_four = self.identity.add_die(3, dt.Die(4))
+        table = dt.DiceTable()
+        table.add_die(3, dt.Die(4))
         with self.assertRaises(ValueError) as cm:
-            three_d_four.remove_die(4, dt.Die(4))
+            table.remove_die(4, dt.Die(4))
         self.assertEqual(cm.exception.args[0],
                          'dice not in table, or removed too many dice')
 
