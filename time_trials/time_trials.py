@@ -422,8 +422,8 @@ if __name__ == '__main__':
 #
 # print()
 # # formatter = NumberFormatter()
-# # str_func = [('scinote: my method, huge int', formatter.format_number),
-# #             ('scinote: decimal  huge int', format_huge_int_using_decimal)]
+# # str_func = [('format_number: my method, huge int', formatter.format_number),
+# #             ('format_number: decimal  huge int', format_huge_int_using_decimal)]
 # # the_args = (123**456, )
 # #
 # #

@@ -8,7 +8,7 @@ from dicetables.baseevents import safe_true_div
 from tools.numberforamtter import NumberFormatter
 
 
-def scinote(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
+def format_number(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
     """num is int, float or long.  dig_len is int and < 18 and >= 2.
     returns a string of num in a nicely readable form.  rounds to dig_len.
     note- dig_len over 18 works but has errors in output"""
@@ -109,6 +109,7 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     """return graph points and the factor they are modified by to control for
     overflow problems by long ints."""
     raw_pts = GraphDataGenerator(include_zeroes=zeroes).get_raw_points(table)
+    formatter = NumberFormatter(shown_digits=2)
 
     factor = 1
     overflow_point = 10 ** 300
@@ -117,7 +118,7 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     if table.biggest_event[1] > overflow_point:
         power = int(log10(table.biggest_event[1])) - exponent_adjustment
         factor = 10 ** power
-    factor_string = scinote(factor, 2)
+    factor_string = formatter.format(factor)
     new_points = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
     if axes:
         new_points = list(zip(*new_points))
@@ -216,4 +217,3 @@ def format_one_sequence(sequence):
 
 def format_for_sequence_str(num):
     return '({:,})'.format(num) if num < 0 else '{:,}'.format(num)
-

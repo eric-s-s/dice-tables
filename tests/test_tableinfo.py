@@ -15,15 +15,15 @@ class TestTableInfo(unittest.TestCase):
             self.assertAlmostEqual(element, second[index], places=places, delta=delta)
 
     """
-    note: scinote is simply a wrapper for NumberFormatter.  for full tests, see test_numberformatter.py
+    note: format_number is simply a wrapper for NumberFormatter.  for full tests, see test_numberformatter.py
     """
     def test_scinote_works_as_expected(self):
-        self.assertEqual(ti.scinote(123456.78), '123,457')
-        self.assertEqual(ti.scinote(123456.78, dig_len=7), '123,456.8')
-        self.assertEqual(ti.scinote(123456.78, dig_len=7, max_comma_exp=4), '1.234568e+5')
-        self.assertEqual(ti.scinote(0.0000123), '1.230e-5')
-        self.assertEqual(ti.scinote(0.0000123, min_fixed_pt_exp=-6), '0.00001230')
-        self.assertEqual(ti.scinote(123456*10**1000), '1.235e+1005')
+        self.assertEqual(ti.format_number(123456.78), '123,457')
+        self.assertEqual(ti.format_number(123456.78, dig_len=7), '123,456.8')
+        self.assertEqual(ti.format_number(123456.78, dig_len=7, max_comma_exp=4), '1.234568e+5')
+        self.assertEqual(ti.format_number(0.0000123), '1.230e-5')
+        self.assertEqual(ti.format_number(0.0000123, min_fixed_pt_exp=-6), '0.00001230')
+        self.assertEqual(ti.format_number(123456 * 10 ** 1000), '1.235e+1005')
 
     def test_get_fast_pct_number_zero(self):
         self.assertEqual(ti.get_fast_pct_number(0, 100), 0)

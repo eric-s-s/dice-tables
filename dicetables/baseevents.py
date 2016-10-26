@@ -6,23 +6,25 @@ from sys import version_info
 
 from tools.dictcombiner import DictCombiner
 
-CONVERSIONS = {'add': 'AdditiveEvents.combines',
-               'frequency': 'AdditiveEvents.get_event',
-               'frequency_all': 'AdditiveEvents.all_events',
-               'frequency_highest': 'AdditiveEvents.biggest_event',
-               'frequency_range': 'AdditiveEvents.get_range_of_events',
-               'mean': 'AdditiveEvents.mean',
-               'merge': 'AdditiveEvents.merge',
-               'remove': 'AdditiveEvents.remove',
-               'stddev': 'AdditiveEvents.stddev',
-               'total_frequency': 'AdditiveEvents.total_occurrences',
-               'update_frequency': 'AdditiveEvents.update_frequency',
-               'update_value_add': 'AdditiveEvents.update_value_add',
-               'update_value_ow': 'AdditiveEvents.update_value_ow',
-               'values': 'AdditiveEvents.event_keys',
-               'values_max': 'AdditiveEvents.event_range[0]',
-               'values_min': 'AdditiveEvents.event_range[1]',
-               'values_range': 'AdditiveEvents.event_range'}
+CONVERSIONS = {'LongIntTable.add()': 'AdditiveEvents.combine()',
+               'LongIntTable.frequency()': 'AdditiveEvents.get_event()',
+               'LongIntTable.frequency_all()': 'AdditiveEvents.all_events',
+               'LongIntTable.frequency_highest()': 'AdditiveEvents.biggest_event',
+               'LongIntTable.frequency_range()': 'AdditiveEvents.get_range_of_events()',
+               'LongIntTable.mean()': 'AdditiveEvents.mean()',
+               'LongIntTable.merge()': 'GONE',
+               'LongIntTable.remove()': 'AdditiveEvents.remove()',
+               'LongIntTable.stddev()': 'AdditiveEvents.stddev()',
+               'LongIntTable.total_frequency()': 'AdditiveEvents.total_occurrences',
+               'LongIntTable.update_frequency()': 'GONE',
+               'LongIntTable.update_value_add()': 'GONE',
+               'LongIntTable.update_value_ow()': 'GONE',
+               'LongIntTable.values()': 'AdditiveEvents.event_keys',
+               'LongIntTable.values_max()': 'AdditiveEvents.event_range[0]',
+               'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
+               'LongIntTable.values_range()': 'AdditiveEvents.event_range',
+               'scinote()': ('format_number()', 'NumberFormatter.format()'),
+               }
 
 
 def _convert_decimal_to_float_or_int(num):
@@ -146,9 +148,6 @@ class AdditiveEvents(IntegerEvents):
         all_occurrences = self._table.values()
         return sum(all_occurrences)
 
-    def get_dict(self):
-        return self._table.copy()
-
     def get_event(self, event):
         """:return: (event, occurrences)"""
         return event, self._table.get(event, 0)
@@ -206,12 +205,10 @@ class AdditiveEvents(IntegerEvents):
         self._table = dictionary
 
     def remove(self, times, events):
-        """IF YOU REMOVE WHAT YOU HAVEN'T ADDED, NO ERROR WILL BE RAISED BUT YOU WILL HAVE BUGS.
+        """
+        IF YOU REMOVE WHAT YOU HAVEN'T ADDED, NO ERROR WILL BE RAISED BUT YOU WILL HAVE BUGS.
         There is no record of what you added to an AdditiveEvents.  Please use with caution.
-
-        :param times: int > 0
-        :param events: [(event, occurrences) ..]\n
-            event: int, occurrences: int>=0 total occurrences >0"""
+        """
         combiner = DictCombiner(dict(self.all_events))
         dictionary = combiner.remove_by_tuple_list(times, events).get_dict()
         self._table = dictionary

@@ -102,52 +102,43 @@ class TestTableInfo(unittest.TestCase):
 
     def test_NumberFormatter_format_as_fixed_point_no_round(self):
         formatter = nf.NumberFormatter()
-        self.assertEqual(formatter._format_number_and_exponent_fixed_point(1.2e-5, -5), '0.00001200')
+        self.assertEqual(formatter.format_fixed_point(1.2e-5), '0.00001200')
 
     def test_NumberFormatter_format_as_fixed_point_round(self):
         formatter = nf.NumberFormatter()
-        exp = formatter.get_exponent(9.9999e-5)
-        self.assertEqual(formatter._format_number_and_exponent_fixed_point(9.9999e-5, exp), '0.0001000')
+        self.assertEqual(formatter.format_fixed_point(9.9999e-5), '0.0001000')
 
     def test_NumberFormatter_format_as_fixed_point_neg(self):
         formatter = nf.NumberFormatter()
-        exp = formatter.get_exponent(-9.9999e-5)
-        self.assertEqual(formatter._format_number_and_exponent_fixed_point(-9.9999e-5, exp), '-0.0001000')
+        self.assertEqual(formatter.format_fixed_point(-9.9999e-5), '-0.0001000')
 
     def test_NumberFormatter_format_using_commas_no_round(self):
         formatter = nf.NumberFormatter()
         formatter.shown_digits = 10
-        exp = formatter.get_exponent(9999.99)
-        self.assertEqual(formatter.format_using_commas(9999.99, exp), '9,999.990000')
+        self.assertEqual(formatter.format_commaed(9999.99), '9,999.990000')
 
     def test_NumberFormatter_format_using_commas_round(self):
         formatter = nf.NumberFormatter()
-        exp = formatter.get_exponent(9999.99)
-        self.assertEqual(formatter.format_using_commas(9999.99, exp), '10,000')
-        exp = formatter.get_exponent(99.999)
-        self.assertEqual(formatter.format_using_commas(99.999, exp), '100.0')
+        self.assertEqual(formatter.format_commaed(9999.99), '10,000')
+        self.assertEqual(formatter.format_commaed(99.999), '100.0')
 
     def test_NumberFormatter_format_using_commas_shows_number_as_int_if_too_long(self):
         formatter = nf.NumberFormatter()
         formatter.shown_digits = 5
-        exp = formatter.get_exponent(123456.789)
-        self.assertEqual(formatter.format_using_commas(123456.789, exp), '123,457')
+        self.assertEqual(formatter.format_commaed(123456.789), '123,457')
 
     def test_NumberFormatter_format_using_commas_negative_number(self):
         formatter = nf.NumberFormatter()
-        exp = formatter.get_exponent(-123456.789)
-        self.assertEqual(formatter.format_using_commas(-123456.789, exp), '-123,457')
+        self.assertEqual(formatter.format_commaed(-123456.789), '-123,457')
 
     def test_NumberFormatter_format_using_commas_small_int(self):
         formatter = nf.NumberFormatter()
-        exp = formatter.get_exponent(12)
-        self.assertEqual(formatter.format_using_commas(12, exp), '12')
+        self.assertEqual(formatter.format_commaed(12), '12')
 
     def test_NumberFormatter_format_using_commas_shows_whole_int(self):
         formatter = nf.NumberFormatter()
         formatter.shown_digits = 5
-        exp = formatter.get_exponent(123456789)
-        self.assertEqual(formatter.format_using_commas(123456789, exp), '123,456,789')
+        self.assertEqual(formatter.format_commaed(123456789), '123,456,789')
 
     def test_remove_extra_zero_Decimal_regression_test(self):
         """
@@ -174,50 +165,43 @@ class TestTableInfo(unittest.TestCase):
     def test_NumberFormatter_format_as_exponent_not_remove_extra_zero(self):
         formatter = nf.NumberFormatter()
         test = 1.23456789 * 10 ** 12
-        exp = formatter.get_exponent(test)
-        self.assertEqual(formatter.format_as_exponent(test, exp), '1.235e+12')
+        self.assertEqual(formatter.format_exponent(test), '1.235e+12')
 
     def test_NumberFormatter_format_as_exponent_remove_extra_zero(self):
         formatter = nf.NumberFormatter()
         test = 1.23456789*10**5
-        exp = formatter.get_exponent(test)
         self.assertEqual('{:.3e}'.format(test), '1.235e+05')
-        self.assertEqual(formatter.format_as_exponent(test, exp), '1.235e+5')
+        self.assertEqual(formatter.format_exponent(test), '1.235e+5')
 
     def test_NumberFormatter_format_as_exponent_negative_number(self):
         formatter = nf.NumberFormatter()
         test = -1.23456789*10**5
-        exp = formatter.get_exponent(test)
-        self.assertEqual(formatter.format_as_exponent(test, exp), '-1.235e+5')
+        self.assertEqual(formatter.format_exponent(test), '-1.235e+5')
 
     def test_NumberFormatter_OverflowError_calls_new_func_does_not_raise_error(self):
         formatter = nf.NumberFormatter()
         test = 10 ** 5000
-        exp = formatter.get_exponent(test)
         self.assertRaises(OverflowError, '{:e}'.format, test)
-        self.assertEqual(formatter.format_as_exponent(test, exp), '1.000e+5000')
+        self.assertEqual(formatter.format_exponent(test), '1.000e+5000')
 
     def test_NumberFormatter_format_huge_int_pos_rounds(self):
         formatter = nf.NumberFormatter()
         test_1 = 123449*10**500
         test_2 = 123451*10**500
-        exp = formatter.get_exponent(test_1)
-        self.assertEqual(formatter.format_huge_int(test_1, exp), '1.234e+505')
-        self.assertEqual(formatter.format_huge_int(test_2, exp), '1.235e+505')
+        self.assertEqual(formatter.format_exponent(test_1), '1.234e+505')
+        self.assertEqual(formatter.format_exponent(test_2), '1.235e+505')
 
     def test_NumberFormatter_format_huge_int_neg_rounds(self):
         formatter = nf.NumberFormatter()
         test_1 = -123449*10**500
         test_2 = -123451*10**500
-        exp = formatter.get_exponent(test_1)
-        self.assertEqual(formatter.format_huge_int(test_1, exp), '-1.234e+505')
-        self.assertEqual(formatter.format_huge_int(test_2, exp), '-1.235e+505')
+        self.assertEqual(formatter.format_exponent(test_1), '-1.234e+505')
+        self.assertEqual(formatter.format_exponent(test_2), '-1.235e+505')
 
     def test_NumberFormatter_format_huge_int_round_to_next_power(self):
         formatter = nf.NumberFormatter()
         test = 999951*10**500
-        exp = formatter.get_exponent(test)
-        self.assertEqual(formatter.format_huge_int(test, exp), '1.000e+506')
+        self.assertEqual(formatter.format_exponent(test), '1.000e+506')
 
     def test_NumberFormatter_format_number_min_fixed_pt_exp_at_zero(self):
         test = nf.NumberFormatter()

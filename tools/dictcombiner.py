@@ -1,4 +1,4 @@
-"""a class that combines a dictionary with valid IntegerEvent.all_events"""
+"""a class that combines a dictionary with valid IntegerEvents"""
 from tools.indexedvalues import generate_indexed_values_from_dict
 
 

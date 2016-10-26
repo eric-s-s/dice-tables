@@ -1,4 +1,4 @@
-"""fancy number fomattering"""
+"""fancy number formatting"""
 
 from math import log10
 from sys import version_info
@@ -46,32 +46,30 @@ class NumberFormatter(object):
     def min_fixed_pt_exp(self, value):
         self._min_fixed_pt_exp = min(0, int(value))
 
-    # TODO make all the format_using func private and make a public method for each with exponent
-
     def get_exponent(self, number):
         if is_int(number):
             return int(log10(abs(number)))
         return int('{:.{}e}'.format(number, self.shown_digits - 1).split('e')[1])
 
-    def _format_number_and_exponent_fixed_point(self, number, exponent):
+    def _format_number_and_exponent_to_fixed_point(self, number, exponent):
         return '{:.{}f}'.format(number, self.shown_digits - 1 - exponent)
 
-    def format_using_commas(self, number, exponent):
+    def _format_number_and_exponent_to_commas(self, number, exponent):
         if is_int(number):
             return '{:,}'.format(number)
         else:
             return '{:,.{}f}'.format(number, max(0, self.shown_digits - 1 - exponent))
 
-    def format_as_exponent(self, number, exponent):
+    def _format_number_and_exponent_to_exponent(self, number, exponent):
         try:
             answer = '{:.{}e}'.format(number, self.shown_digits - 1)
             if -10 < exponent < 10:
                 return remove_extra_zero_from_exponent(answer)
             return answer
         except OverflowError:
-            return self.format_huge_int(number, exponent)
+            return self._format_huge_int_and_exponent_to_exponent(number, exponent)
 
-    def format_huge_int(self, number, exponent):
+    def _format_huge_int_and_exponent_to_exponent(self, number, exponent):
         extra_digits = 10
         mantissa = number // 10 ** (exponent - self.shown_digits - extra_digits)
         mantissa /= 10. ** (self.shown_digits + extra_digits)
@@ -83,18 +81,26 @@ class NumberFormatter(object):
 
     def format_fixed_point(self, number):
         exponent = self.get_exponent(number)
-        return self._format_number_and_exponent_fixed_point(number, exponent)
+        return self._format_number_and_exponent_to_fixed_point(number, exponent)
+
+    def format_commaed(self, number):
+        exponent = self.get_exponent(number)
+        return self._format_number_and_exponent_to_commas(number, exponent)
+
+    def format_exponent(self, number):
+        exponent = self.get_exponent(number)
+        return self._format_number_and_exponent_to_exponent(number, exponent)
 
     def format(self, number):
         if abs(number) == 0:
             return '0'
         exponent = self.get_exponent(number)
         if 0 > exponent >= self.min_fixed_pt_exp:
-            return self._format_number_and_exponent_fixed_point(number, exponent)
+            return self._format_number_and_exponent_to_fixed_point(number, exponent)
         elif 0 <= exponent <= self.max_comma_exp:
-            return self.format_using_commas(number, exponent)
+            return self._format_number_and_exponent_to_commas(number, exponent)
         else:
-            return self.format_as_exponent(number, exponent)
+            return self._format_number_and_exponent_to_exponent(number, exponent)
 
 
 def remove_extra_zero_from_exponent(answer):

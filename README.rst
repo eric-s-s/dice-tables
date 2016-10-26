@@ -167,7 +167,7 @@ divides everything by a factor and returns a string of that factor::
     In [22]: dt.graph_pts_overflow(big_table)
     Out[22]: ([(1, 2, 3), (10000L, 0L, 40000L)], '1.0e+996')
 
-full_table_string uses dt.scinote() to make a readable output of the table::
+full_table_string uses dt.format_number() to make a readable output of the table::
 
     In [23]: print(dt.full_table_string(big_table))
     1: 1.000e+1000
@@ -182,10 +182,10 @@ stats returns the odds of a list occuring in the table::
 on the table of 3 2-sided dice, 2-4 occured 4 times out of 8 total combinations.  
 that's a one in 2.0 chance or 50.0 percent
 
-also of note is dt.scinote().  this functions takes any number and returns a
+also of note is dt.format_number().  this functions takes any number and returns a
 nice string for humans.::
 
-    In [22]: dt.scinote(123**1234, dig_len=10)
+    In [22]: dt.format_number(123**1234, dig_len=10)
     Out[22]: '8.768140821e+2578'
 
 --------------------------
