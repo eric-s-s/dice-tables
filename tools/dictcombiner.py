@@ -9,9 +9,9 @@ class DictCombiner(object):
     def get_dict(self):
         return self._dict.copy()
 
-    def combine_by_flattened_list(self, times, events_tuples):
+    def combine_by_flattened_list(self, times, integer_events):
         events_dict = DictCombiner(self.get_dict())
-        flattened_list = flatten_events_tuples(events_tuples)
+        flattened_list = flatten_events_tuples(integer_events.all_events)
         for _ in range(times):
             events_dict = events_dict.combine_once_with_flattened_list(flattened_list)
         return events_dict
@@ -23,7 +23,8 @@ class DictCombiner(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_tuple_list(self, times, events_tuples):
+    def combine_by_tuple_list(self, times, integer_events):
+        events_tuples = integer_events.all_events
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
             new_events = new_events.combine_once_with_tuple_list(events_tuples)
@@ -37,7 +38,8 @@ class DictCombiner(object):
                                                frequency * current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_indexed_values(self, times, events_tuples):
+    def combine_by_indexed_values(self, times, integer_events):
+        events_tuples = integer_events.all_events
         indexed_values_to_update = generate_indexed_values_from_dict(self._dict)
         for _ in range(times):
             indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events_tuples)
@@ -51,7 +53,8 @@ class DictCombiner(object):
 
         return method_dict[method](times, events_tuples)
 
-    def get_fastest_combine_method(self, times, events_tuples):
+    def get_fastest_combine_method(self, times, integer_events):
+        events_tuples = integer_events.all_events
         first_comparison = self._compare_tuple_list_with_flattened_list(events_tuples)
         second_comparison = self._compare_with_indexed_values(first_comparison, times, events_tuples)
         return second_comparison
@@ -79,7 +82,8 @@ class DictCombiner(object):
         else:
             return 'indexed_values'
 
-    def remove_by_tuple_list(self, times, events_tuples):
+    def remove_by_tuple_list(self, times, integer_events):
+        events_tuples = integer_events.all_events
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
             new_events = new_events.remove_once_by_tuple_list(events_tuples)

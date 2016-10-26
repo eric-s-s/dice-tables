@@ -187,22 +187,22 @@ class AdditiveEvents(IntegerEvents):
 
     def combine(self, times, events):
         combiner = DictCombiner(dict(self.all_events))
-        dictionary = combiner.combine_by_fastest(times, events.all_events).get_dict()
+        dictionary = combiner.combine_by_fastest(times, events).get_dict()
         self._table = dictionary
 
     def combine_by_flattened_list(self, times, events):
         combiner = DictCombiner(dict(self.all_events))
-        dictionary = combiner.combine_by_flattened_list(times, events.all_events).get_dict()
+        dictionary = combiner.combine_by_flattened_list(times, events).get_dict()
         self._table = dictionary
 
     def combine_by_tuple_list(self, times, events):
         combiner = DictCombiner(dict(self.all_events))
-        dictionary = combiner.combine_by_tuple_list(times, events.all_events).get_dict()
+        dictionary = combiner.combine_by_tuple_list(times, events).get_dict()
         self._table = dictionary
 
     def combine_by_indexed_values(self, times, events):
         combiner = DictCombiner(dict(self.all_events))
-        dictionary = combiner.combine_by_indexed_values(times, events.all_events).get_dict()
+        dictionary = combiner.combine_by_indexed_values(times, events).get_dict()
         self._table = dictionary
 
     def remove(self, times, events):
@@ -213,5 +213,5 @@ class AdditiveEvents(IntegerEvents):
         :param events: [(event, occurrences) ..]\n
             event: int, occurrences: int>=0 total occurrences >0"""
         combiner = DictCombiner(dict(self.all_events))
-        dictionary = combiner.remove_by_tuple_list(times, events.all_events).get_dict()
+        dictionary = combiner.remove_by_tuple_list(times, events).get_dict()
         self._table = dictionary
