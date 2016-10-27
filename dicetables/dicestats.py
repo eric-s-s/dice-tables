@@ -5,8 +5,14 @@ from dicetables.baseevents import AdditiveEvents, IntegerEvents
 
 
 class ProtoDie(IntegerEvents):
-    """a blanket object for any kind of die so that different types of Die can
-    be compared.  all Die objects need these five methods. str and repr"""
+    """
+    base object for any kind of die.
+
+
+    :all Die objects need: get_size(), get_weight(), weight_info(), multiply_str(), all_events
+    :all_events: must be sorted and have no zero occurrences.
+
+    """
     def __init__(self):
         super(ProtoDie, self).__init__()
 
@@ -26,7 +32,7 @@ class ProtoDie(IntegerEvents):
 
     def multiply_str(self, number):
         """return a string that is the die string multiplied by a number. i.e.,
-        D6+1 times 3 is 3D6+3"""
+        D6+1 times 3 is '3D6+3' """
         raise NotImplementedError
 
     def __str__(self):
@@ -36,13 +42,12 @@ class ProtoDie(IntegerEvents):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash('hash of {!r}, {}, {}, {}'.format(self, self.get_size(),
+        return hash('hash of {!r}, {}, {}, {}'.format(self,
+                                                      self.get_size(),
                                                       self.get_weight(),
                                                       self.all_events))
 
     def __lt__(self, other):
-        """Dice are compared by size, then weight, then all_events, and finally
-        repr"""
         return (
             (self.get_size(), self.get_weight(), self.all_events, repr(self)) <
             (other.get_size(), other.get_weight(), other.all_events, repr(other))
@@ -69,10 +74,9 @@ class ProtoDie(IntegerEvents):
 
 class Die(ProtoDie):
     """
-    stores and returns info for
-    a basic Die, like a normal 6 sided die.
+    stores and returns info for a basic Die.
+    Die(4) rolls 1, 2, 3, 4 with equal weight
     """
-
     def __init__(self, die_size):
         """
 
@@ -86,7 +90,6 @@ class Die(ProtoDie):
         return self._die_size
 
     def get_weight(self):
-        """all Die have weight=0"""
         return self._weight
 
     @property
@@ -97,7 +100,6 @@ class Die(ProtoDie):
         return str(self) + '\n    No weights'
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D6 --> 5D6"""
         return '{}{}'.format(number, self)
 
     def __str__(self):
@@ -109,10 +111,10 @@ class Die(ProtoDie):
 
 class ModDie(Die):
     """
-    stores and returns info for
-    a Die with a modifier.  i.e. D6-3.
+    stores and returns info for a Die with a modifier
+    that changes the values of the rolls.
+    ModDie(4, -1) rolls 0, 1, 2, 3 with equal weight
     """
-
     def __init__(self, die_size, modifier):
         """
 
@@ -127,12 +129,10 @@ class ModDie(Die):
 
     @property
     def all_events(self):
-        """D3 + 2 = [(3, 1, (4, 1), (5, 1)]"""
         return [(value + self._mod, 1)
                 for value in range(1, self._die_size + 1)]
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D6+3 --> 5D6+15"""
         return '{}D{}{:+}'.format(number, self._die_size, number * self._mod)
 
     def __str__(self):
@@ -143,23 +143,19 @@ class ModDie(Die):
 
 
 class WeightedDie(ProtoDie):
-    """
-    stores and returns info for
-    a die with different chances for different rolls.
-    ex: D2 {1:5, 2:1} rolls a one 5 times more often than a five
-    """
-
     def __init__(self, dictionary_input):
         """
-        {1:3, 2:0, 3:1} creates a D3 that rolls a one 3 times more than a three
-        and never rolls a two.
+        stores and returns info for die with different chances for different rolls.
+        WeightedDie(1:1, 2:5} rolls 1 once for every five times that 2 is rolled.
 
-        :param dictionary_input: {roll: weight} roll: int, weight: int>=0
-        :type dictionary_input: dict"""
+        :param dictionary_input: {roll: weight} roll: int, weight: int>=0\n
+            the sum of all weights >0
+        """
         self._dic = dictionary_input.copy()
-        super(WeightedDie, self).__init__()
+
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
+        super(WeightedDie, self).__init__()
 
     def get_size(self):
         return self._die_size
@@ -180,7 +176,6 @@ class WeightedDie(ProtoDie):
         return out.rstrip('\n')
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D({1:3, 2:1}) --> 5D2  W:4"""
         return '{}{}'.format(number, self)
 
     def __str__(self):
@@ -194,18 +189,16 @@ class WeightedDie(ProtoDie):
 
 
 class ModWeightedDie(WeightedDie):
-    """stores and returns info for a weighted die. and a modifier modifies the
-    values"""
 
     def __init__(self, dictionary_input, modifier):
         """
-        ModWeightedDei({1:3, 2:1, 3:1}, -3) creates a
-        D3 that rolls a (1-3=-2)neg two 3 times more than a (2-3=-1)neg one or a (3-3=0)zero.
+        stores and returns info for die with different chances for different rolls.
+        The modifier changes the value of the rolls.
+        ModWeightedDie({1:1, 2:5}, -1) rolls 0once for every five times that 1 is rolled.
 
-        :param dictionary_input: {roll: weight} roll: int, weight: int>=0
-        :type dictionary_input: dict
-        :param modifier:
-        :type modifier: int
+        :param dictionary_input: {roll: weight} roll: int, weight: int>=0\n
+            sum of all weights >0
+        :param modifier: int
         """
         self._mod = modifier
         super(ModWeightedDie, self).__init__(dictionary_input)
@@ -216,11 +209,9 @@ class ModWeightedDie(WeightedDie):
 
     @property
     def all_events(self):
-        """returns the tuple list that is the dice values adjust by the mod"""
         return sorted([(roll + self._mod, weight) for roll, weight in self._dic.items() if weight])
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, D({1:2. 2:1})+3 --> 5D2+15  W:3"""
         return '{0}D{1}{2:+}  W:{3}'.format(number, self._die_size,
                                             number * self._mod, self._weight)
 
@@ -233,8 +224,6 @@ class ModWeightedDie(WeightedDie):
 
 
 class StrongDie(ProtoDie):
-    """stores and returns info for a Die that acts like a different Die with
-    many votes."""
 
     def __init__(self, input_die, multiplier):
         """
@@ -242,10 +231,8 @@ class StrongDie(ProtoDie):
         D3-1 with twice the influence of a regular die.  so it would roll
         0, 2, 4.  die_size=input_die.get_size(), weight=input_die.get_weight().
 
-        :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or sub
-        :type input_die: ProtoDie
+        :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
         :param multiplier: int >=1
-        :type multiplier: int
         """
         self._original = input_die
         self._multiply = multiplier

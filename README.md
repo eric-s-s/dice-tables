@@ -25,16 +25,16 @@ for three two-sided dice.  useful for quick demo.
 
 event_keys functions tell the range of rolls or other non-zero events stored in the table.
 ```
-In [4]: table.event_keys()
+In [4]: table.event_keys
 Out[4]: [3, 4, 5, 6]
 
-In [5]: table.event_keys_range()
+In [5]: table.event_range
 Out[5]: (3, 6)
 ```
 here are all the possible rolls and the frequencies with which they occur.  
 3 has one possible combination (1,1,1) and 4 has 3 [(1,1,2), (1,2,1), (2,1,1)]
 ```
-In [7]: table.get_event_all()
+In [7]: table.all_events
 Out[7]: [(3, 1), (4, 3), (5, 3), (6, 1)]
 ```
 the get_event_range function follows range's (start, stop_before) and list zero
@@ -46,13 +46,13 @@ Out[8]: (5, 3)
 In [10]: table.get_event_range(1, 5)
 Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
 ```
-other usefull methods. biggest_event picks one of the event_keys with highest
+other useful methods. biggest_event picks one of the event_keys with highest
 get_event and returns the tuple of (value, get_event).
 ```
-In [11]: table.biggest_event()
+In [11]: table.biggest_event
 Out[11]: (4, 3)
 
-In [12]: table.total_occurrences()
+In [12]: table.total_occurrences
 Out[12]: 8
 
 In [13]: table.mean()

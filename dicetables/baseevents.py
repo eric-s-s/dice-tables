@@ -90,8 +90,7 @@ class InputVerifier(object):
 
 class IntegerEvents(object):
     def __init__(self):
-        self.verifier = InputVerifier()
-        self.verifier.verify_all_events(self.all_events)
+        InputVerifier().verify_all_events(self.all_events)
 
     @property
     def all_events(self):
@@ -105,22 +104,18 @@ class IntegerEvents(object):
 
 
 class AdditiveEvents(IntegerEvents):
-    """manages (event, number of occurrences) for events that can be added to, like dice rolls."""
-
-    def __init__(self, seed_dictionary):
+    def __init__(self, events_dictionary):
         """
 
-        :param seed_dictionary: {event: occurrences}\n
-            event = int. occurrences = int >=0
+        :param events_dictionary: {event: occurrences}\n
+            event=int. occurrences=int >=0
             total occurrences > 0
-        :raises: InvalidEventsError
         """
-        self._table = seed_dictionary.copy()
+        self._table = events_dictionary.copy()
         super(AdditiveEvents, self).__init__()
 
     @property
     def event_keys(self):
-        """return the all the values, in order, that have non-zero occurrences"""
         return sorted([key for key in self._table.keys() if self._table[key]])
 
     @property
@@ -149,19 +144,13 @@ class AdditiveEvents(IntegerEvents):
         return sum(all_occurrences)
 
     def get_event(self, event):
-        """:return: (event, occurrences)"""
         return event, self._table.get(event, 0)
 
     def get_range_of_events(self, start, stop_before):
-        """:return: dict.items()-like all_events [(event, occurrences), ..]"""
-        tuple_list = []
-        for value in range(start, stop_before):
-            tuple_list.append(self.get_event(value))
-        return tuple_list
+        return [self.get_event(event) for event in range(start, stop_before)]
 
     def __str__(self):
-        min_event, max_event = self.event_range
-        return 'table from {} to {}'.format(min_event, max_event)
+        return 'table from {} to {}'.format(*self.event_range)
 
     def mean(self):
         numerator = sum([value * freq for value, freq in self._table.items()])
