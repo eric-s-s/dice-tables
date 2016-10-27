@@ -139,20 +139,9 @@ def one_time_trial(combine_times, events_tuples, input_dict_size=1, use_exponent
         print('one_time_trial prepped list {}'.format(events_tuples))
     input_dict = get_input_dict(input_dict_size, use_exponential_occurrences)
 
-    control_events = lim.AdditiveEvents(input_dict)
-    control_events_action = get_control_action(control_events, events_tuples)
+    events_tuples = [pair for pair in events_tuples if pair[1]]
 
-    events_for_indexed_values = lim.AdditiveEvents(input_dict)
-
-    events_to_add = lim.AdditiveEvents(dict(events_tuples))
-
-    indexed_values_start = time.clock()
-    events_for_indexed_values.combine_by_indexed_values(combine_times, events_to_add)
-    indexed_values_time = time.clock() - indexed_values_start
-
-    control_start = time.clock()
-    control_events_action(combine_times, events_to_add)
-    control_time = time.clock() - control_start
+    control_time, indexed_values_time = get_control_and_indexed_values_times(combine_times, events_tuples, input_dict)
 
     list_length = float(len(events_tuples))
     event_occurrences = float(events_tuples[0][1])
@@ -173,19 +162,34 @@ def get_input_dict(input_dict_size, use_exponential_occurrences):
     return input_dict
 
 
-def get_control_method_str(prepped_list):
-    if prepped_list[0][1] == 1:
-        return 'flattened_list'
-    else:
-        return 'all_events'
+def get_control_and_indexed_values_times(combine_times, events_tuples, input_dict):
+    control_events_action = get_control_action(input_dict, events_tuples)
+
+    events_for_indexed_values = lim.AdditiveEvents(input_dict)
+    events_to_add = lim.AdditiveEvents(dict(events_tuples))
+    indexed_values_start = time.clock()
+    events_for_indexed_values.combine_by_indexed_values(combine_times, events_to_add)
+    indexed_values_time = time.clock() - indexed_values_start
+    control_start = time.clock()
+    control_events_action(combine_times, events_to_add)
+    control_time = time.clock() - control_start
+    return control_time, indexed_values_time
 
 
-def get_control_action(control_events, events_tuples):
+def get_control_action(input_dict, events_tuples):
+    control_events = lim.AdditiveEvents(input_dict)
     control_method_str = get_control_method_str(events_tuples)
     control_method_dict = {'tuple_list': control_events.combine_by_tuple_list,
                            'flattened_list': control_events.combine_by_flattened_list}
     control_events_action = control_method_dict[control_method_str]
     return control_events_action
+
+
+def get_control_method_str(prepped_list):
+    if prepped_list[0][1] == 1:
+        return 'flattened_list'
+    else:
+        return 'tuple_list'
 
 
 def time_trial_vary_start_dict(events_tuple_list, input_dict_start_size=1000, input_dict_downward_step=5,
@@ -259,14 +263,10 @@ def time_trial(generator, variable_name, adds_per_trial=1, automatic_adds_per_tr
         print('adds {}'.format(adds_per_trial))
         y_axis, control_time, indexed_values_time = one_time_trial(adds_per_trial, tuple_list_for_trial,
                                                                    input_dict_size=input_dict_size)
-        if variable_name == 'list_length':
-            variable = y_axis[0]
-        elif variable_name == 'event_occurrences_linear':
-            variable = y_axis[1]
-        elif variable_name == 'event_occurrences':
-            variable = y_axis[2]
-        else:
-            variable = y_axis[3]
+        variable_order = ['list_length', 'event_occurrences_linear', 'event_occurrences', 'increasing_gaps']
+        index = variable_order.index(variable_name)
+        variable = y_axis[index]
+
         print('results: variable: {:.2}, control: {:.3e}, IndexedValues: {:.3e}'.format(variable,
                                                                                         control_time,
                                                                                         indexed_values_time))
@@ -621,21 +621,11 @@ def get_tuple_list(size, many_occurrences=False, step=1):
 
 
 def get_indexed_advantage_ratio(start_dict_size, adds, tuple_list_sizes, many_occurrences):
+
     events_tuples = get_tuple_list(tuple_list_sizes, many_occurrences)
-    events_to_add = lim.AdditiveEvents(dict(events_tuples))
-
     input_dict = get_input_dict(start_dict_size, True)
-    control_events = lim.AdditiveEvents(input_dict)
-    control_events_action = get_control_action(control_events, events_tuples)
-    events_for_indexed_values = lim.AdditiveEvents(input_dict)
 
-    indexed_values_start = time.clock()
-    events_for_indexed_values.combine_by_indexed_values(adds, events_to_add)
-    indexed_values_time = time.clock() - indexed_values_start
-
-    control_start = time.clock()
-    control_events_action(adds, events_to_add)
-    control_time = time.clock() - control_start
+    control_time, indexed_values_time = get_control_and_indexed_values_times(adds, events_tuples, input_dict)
 
     return control_time / indexed_values_time
 
@@ -817,6 +807,6 @@ def get_side_by_side_data(left_answer, right_answer):
 
 if __name__ == '__main__':
 
-    graphing_ui()
+    # graphing_ui()
 
-    # data_points_ui()
+    data_points_ui()

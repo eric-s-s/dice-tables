@@ -173,28 +173,31 @@ class AdditiveEvents(IntegerEvents):
         truncated_total_occurrences = total_occurrences // factor_to_truncate_digits
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
 
+    def get_dict(self):
+        return dict(self.all_events)
+
     def combine(self, times, events):
-        combiner = DictCombiner(dict(self.all_events))
+        combiner = DictCombiner(self.get_dict())
         dictionary = combiner.combine_by_fastest(times, events).get_dict()
         self._table = dictionary
 
     def combine_by_flattened_list(self, times, events):
         """
 
-        :WARNING - UNSAFE METHOD: flattened_list = len(total occurrences of events).
+        :WARNING - UNSAFE METHOD: len(flattened_list) = total occurrences of events.
             if this list is too big, it will raise MemoryError or OverflowError
         """
-        combiner = DictCombiner(dict(self.all_events))
+        combiner = DictCombiner(self.get_dict())
         dictionary = combiner.combine_by_flattened_list(times, events).get_dict()
         self._table = dictionary
 
     def combine_by_tuple_list(self, times, events):
-        combiner = DictCombiner(dict(self.all_events))
+        combiner = DictCombiner(self.get_dict())
         dictionary = combiner.combine_by_tuple_list(times, events).get_dict()
         self._table = dictionary
 
     def combine_by_indexed_values(self, times, events):
-        combiner = DictCombiner(dict(self.all_events))
+        combiner = DictCombiner(self.get_dict())
         dictionary = combiner.combine_by_indexed_values(times, events).get_dict()
         self._table = dictionary
 
@@ -204,6 +207,6 @@ class AdditiveEvents(IntegerEvents):
         :WARNING - UNSAFE METHOD: There is no record of what you added to an AdditiveEvents.
             If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
-        combiner = DictCombiner(dict(self.all_events))
+        combiner = DictCombiner(self.get_dict())
         dictionary = combiner.remove_by_tuple_list(times, events).get_dict()
         self._table = dictionary

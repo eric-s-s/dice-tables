@@ -83,14 +83,13 @@ class Die(ProtoDie):
         :param die_size: int > 0
         """
         self._die_size = die_size
-        self._weight = 0
         super(Die, self).__init__()
 
     def get_size(self):
         return self._die_size
 
     def get_weight(self):
-        return self._weight
+        return 0
 
     @property
     def all_events(self):
@@ -106,7 +105,7 @@ class Die(ProtoDie):
         return 'D{}'.format(self._die_size)
 
     def __repr__(self):
-        return 'Die({})'.format(self.get_size())
+        return 'Die({})'.format(self._die_size)
 
 
 class ModDie(Die):
@@ -129,8 +128,7 @@ class ModDie(Die):
 
     @property
     def all_events(self):
-        return [(value + self._mod, 1)
-                for value in range(1, self._die_size + 1)]
+        return [(value + self._mod, 1) for value in range(1, self._die_size + 1)]
 
     def multiply_str(self, number):
         return '{}D{}{:+}'.format(number, self._die_size, number * self._mod)
@@ -139,7 +137,7 @@ class ModDie(Die):
         return 'D{0}{1:+}'.format(self._die_size, self._mod)
 
     def __repr__(self):
-        return 'ModDie({}, {})'.format(self.get_size(), self.get_modifier())
+        return 'ModDie({}, {})'.format(self._die_size, self._mod)
 
 
 class WeightedDie(ProtoDie):
@@ -150,14 +148,18 @@ class WeightedDie(ProtoDie):
     def __init__(self, dictionary_input):
         """
 
-        :param dictionary_input: {roll: weight} roll: int, weight: int>=0\n
+        :param dictionary_input: {roll: weight} roll: int>1, weight: int>=0\n
             the sum of all weights >0
         """
         self._dic = dictionary_input.copy()
-
+        self._raise_value_error_for_rolls_less_than_one()
         self._die_size = max(self._dic.keys())
         self._weight = sum(self._dic.values())
         super(WeightedDie, self).__init__()
+
+    def _raise_value_error_for_rolls_less_than_one(self):
+        if any(roll < 1 for roll in self._dic.keys()):
+            raise ValueError('rolls may not be less than 1. use ModWeightedDie')
 
     def get_size(self):
         return self._die_size
@@ -170,7 +172,7 @@ class WeightedDie(ProtoDie):
         return sorted([pair for pair in self._dic.items() if pair[1]])
 
     def weight_info(self):
-        num_len = len(str(self.get_size()))
+        num_len = len(str(self._die_size))
         out = str(self) + '\n'
         for roll in range(1, self._die_size + 1):
             out += ('    a roll of {:>{}} has a weight of {}\n'
@@ -223,7 +225,7 @@ class ModWeightedDie(WeightedDie):
 
     def __repr__(self):
         to_fix = super(ModWeightedDie, self).__repr__()[:-1]
-        return 'Mod' + to_fix + ', {})'.format(self.get_modifier())
+        return 'Mod' + to_fix + ', {})'.format(self._mod)
 
 
 class StrongDie(ProtoDie):
@@ -240,17 +242,17 @@ class StrongDie(ProtoDie):
         :param multiplier: int >=1
         """
         self._original = input_die
-        self._multiply = multiplier
+        self._multiplier = multiplier
         super(StrongDie, self).__init__()
 
     def get_size(self):
-        return self.get_input_die().get_size()
+        return self._original.get_size()
 
     def get_weight(self):
         return self._original.get_weight()
 
     def get_multiplier(self):
-        return self._multiply
+        return self._multiplier
 
     def get_input_die(self):
         """returns an instance of the original die"""
@@ -259,23 +261,21 @@ class StrongDie(ProtoDie):
     @property
     def all_events(self):
         old = self._original.all_events
-        return [(pair[0] * self.get_multiplier(), pair[1]) for pair in old]
+        return [(pair[0] * self._multiplier, pair[1]) for pair in old]
 
     def weight_info(self):
-        return (self._original.weight_info().replace(
-            str(self._original), str(self)))
+        return self._original.weight_info().replace(str(self._original), str(self))
 
     def multiply_str(self, number):
-        """return the str of die times a number. 5, (D6+3)X3 --> (5D6+15)X3"""
-        return '({})X{}'.format(self.get_input_die().multiply_str(number),
-                                self.get_multiplier())
+        return '({})X{}'.format(self._original.multiply_str(number),
+                                self._multiplier)
 
     def __str__(self):
-        return '({})X{}'.format(self.get_input_die(), self.get_multiplier())
+        return '({})X{}'.format(self._original, self.get_multiplier())
 
     def __repr__(self):
-        return 'StrongDie({!r}, {})'.format(self.get_input_die(),
-                                            self.get_multiplier())
+        return 'StrongDie({!r}, {})'.format(self._original,
+                                            self._multiplier)
 
 
 class DiceTable(AdditiveEvents):

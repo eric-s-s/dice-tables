@@ -4,15 +4,13 @@ dicetables
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
-this module uses DiceTable and AdditiveEvents to do actions on a
-table of (event represented by an int, get_event that event occurs)
+This module uses DiceTable and AdditiveEvents to combine
+dice and any other events that can be added together.
 since dice combinations quickly balloon, it's been designed to do float  
 math with ints over 10^309.
 
-changed in this version - StrongDie.__str__, .multiply_str,
-python3 support for tests/tsting_add_speed.py
-
-added in this version - StrongDie.get_input_die, .get_multiplier
+There are many changes from the previous version, and they will
+be listed at the bottom of this README.
 
 DiceTable is a AdditiveEvents that keeps a list of all the Die objects
 that have been added and removed using the add_die and remove_die methods.
@@ -29,7 +27,7 @@ that have been added and removed using the add_die and remove_die methods.
 I have now created a table contains all the rolls and their combinations  
 for three two-sided dice.  useful for quick demo.
 
-event_keys functions tell the range of rolls or other non-zero events stored in the table.::
+event_keys property tell the range of rolls or other non-zero events stored in the table.::
 
     In [4]: table.event_keys
     Out[4]: [3, 4, 5, 6]
@@ -38,7 +36,8 @@ event_keys functions tell the range of rolls or other non-zero events stored in 
     Out[5]: (3, 6)
 
 here are all the possible rolls and the frequencies with which they occur.  
-3 has one possible combination (1,1,1) and 4 has 3 [(1,1,2), (1,2,1), (2,1,1)]::
+3 has one possible combination-[(1,1,1)] and 4 has three-[(1,1,2), (1,2,1), (2,1,1)]
+5 has three-[(1,2,2), (2,1,2), (2,2,1)] and 6 has one-[(2,2,2)]::
 
     In [7]: table.all_events
     Out[7]: [(3, 1), (4, 3), (5, 3), (6, 1)]
@@ -49,11 +48,11 @@ for any roll that won't happen. ::
     In [8]: table.get_event(5)
     Out[8]: (5, 3)
 
-    In [10]: table.get_event_range(1, 5)
+    In [10]: table.get_range_of_events(1, 5)
     Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
 
-other usefull methods. biggest_event picks one of the event_keys with highest
-get_event and returns the tuple of (value, get_event). ::
+other useful methods. biggest_event picks the first event with highest
+occurrences and returns the tuple of (value, get_event). ::
 
     In [11]: table.biggest_event
     Out[11]: (4, 3)
@@ -69,7 +68,7 @@ get_event and returns the tuple of (value, get_event). ::
 
 the above methods are all from base class AdditiveEvents. The following are specific methods to
 DiceTable. 
-The add_die and remove_die method use Die objects. the other 3 kinds of Die are shown here.::
+The add_die and remove_die methods use Die objects. the other 3 kinds of Die are shown here.::
 
     In [27]: table.add_die(5, dt.ModDie(6, 3))
 
@@ -109,31 +108,103 @@ The add_die and remove_die method use Die objects. the other 3 kinds of Die are 
     5D6+15
         No weights
 
-------------------
-NEW DIE TYPE ADDED
-------------------
-StrongDie takes a regular die and gives it an outsized strength.
+-------------
+THE DIE TYPES
+-------------
+Die is a standard die. Die(2) rolls 1 or 2
+
+ModDie is Die + modifier.  so ModDie(2, 1) rolls 2 or 3 instead of 1 or 2
+
+WeightedDie rolls different rolls with different frequency. So WeightedDie({1:1, 2:4})
+rolls 2 four times as often as 1.
+
+ModWeightedDie ... you'll never guess. ModWeightedDie({1: 1, 2: 4}, -1)
+rolls 1 (2-1) four times as often as 0 (1-1).
+
+StrongDie takes a regular die and gives it an out-sized strength.
 so StrongDie(Die(3), 2) would be one die that rolls double results 
-for a D3.  it would roll. 2, 4 or 6. the all_events for a weighted
-die would compare like this. 
+for a D3.  it would roll. 2, 4 or 6. the all_events compare like this.
 
-StrongDie(ModWeightedDie({1:1, 2:2}, -3), 5)
-original tuple list is [(-2, 1), (-1, 2)]
-new tuple list is [(-10, 1), (-5, 2)]::
+ModWeightedDie({1: 1, 2: 2}, -3).all_events = [(-2, 1), (-1, 2)]
+StrongDie(ModWeightedDie({1:1, 2:2}, -3), 5).all_events = [(-10, 1), (-5, 2)]
+::
 
-    In [1]: my_die = dt.StrongDie(dt.ModWeightedDie({1:1, 2:2}, -3), 5)
+    In[3]: die = dt.Die(6)
+
+    In[4]: die.all_events
+    Out[4]: [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)]
+
+    In[5]: die.get_weight()
+    Out[5]: 0
+
+    In[6]: die
+    Out[6]: Die(6)
+
+    In[7]: mod_die = dt.ModDie(6, -1)
+
+    In[8]: mod_die.all_events
+    Out[8]: [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]
+
+    In[9]: mod_die.get_modifier()
+    Out[9]: -1
+
+    In[10]: mod_die.multiply_str(5)
+    Out[10]: '5D6-5'
+
+    In[11]: w_die = dt.WeightedDie({0: 1, 3: 4})
+    ValueError: rolls may not be less than 1. use ModWeightedDie
+
+    In[14]: w_die = dt.WeightedDie({1: 1, 3: 4})
+
+    In[15]: w_die.all_events
+    Out[15]: [(1, 1), (3, 4)]
+
+    In[16]: w_die
+    Out[16]: WeightedDie({1: 1, 2: 0, 3: 4})
+
+    In[17]: w_die.get_weight()
+    Out[17]: 5
+
+    In[18]: w_die.get_size()
+    Out[18]: 3
+
+    In[19]: print(w_die.weight_info())
+    D3  W:5
+        a roll of 1 has a weight of 1
+        a roll of 2 has a weight of 0
+        a roll of 3 has a weight of 4
+
+    In[20]: mw_die = dt.ModWeightedDie({1: 1, 3: 4}, -2)
+
+    In[21]: mw_die.all_events
+    Out[21]: [(-1, 1), (1, 4)]
+
+    In[22]: mw_die.get_size()
+    Out[22]: 3
+
+    In[23]: mw_die.multiply_str(5)
+    Out[23]: '5D3-10  W:5'
+
+    In[24]: print(mw_die.weight_info())
+    D3-2  W:5
+        a roll of 1 has a weight of 1
+        a roll of 2 has a weight of 0
+        a roll of 3 has a weight of 4
+
+
+    In [25]: my_die = dt.StrongDie(dt.ModWeightedDie({1:1, 2:2}, -3), 5)
     
-    In [2]: str(my_die)
-    Out[2]: '(D2-3  W:3)X5'
+    In [26]: str(my_die)
+    Out[26]: '(D2-3  W:3)X5'
 
-    In [3]: my_die.multiply_str(7)
-    Out[3]: '(7D2-21  W:3)X5'
+    In [27]: my_die.multiply_str(7)
+    Out[27]: '(7D2-21  W:3)X5'
 
-    In [4]: my_die.get_multiplier()
-    Out[4]: 5
+    In [28]: my_die.get_multiplier()
+    Out[28]: 5
 
-    In [5]: my_die.get_input_die()
-    Out[5]: ModWeightedDie({1: 1, 2: 2}, -3)
+    In [29]: my_die.get_input_die()
+    Out[29]: ModWeightedDie({1: 1, 2: 2}, -3)
 
 
 -------------------------------------------------------------------
@@ -174,7 +245,7 @@ full_table_string uses dt.format_number() to make a readable output of the table
     2: 0.0
     3: 4.000e+1000
 
-stats returns the odds of a list occuring in the table::
+stats returns the odds of a list occurring in the table::
 
     In [24]: dt.stats(table, [2,3,4])
     Out[24]: ('2-4', '4', '8', '2.0', '50.0')
