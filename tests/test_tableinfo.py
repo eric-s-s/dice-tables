@@ -19,8 +19,8 @@ class TestTableInfo(unittest.TestCase):
     """
     def test_scinote_works_as_expected(self):
         self.assertEqual(ti.format_number(123456.78), '123,457')
-        self.assertEqual(ti.format_number(123456.78, dig_len=7), '123,456.8')
-        self.assertEqual(ti.format_number(123456.78, dig_len=7, max_comma_exp=4), '1.234568e+5')
+        self.assertEqual(ti.format_number(123456.78, digits_shown=7), '123,456.8')
+        self.assertEqual(ti.format_number(123456.78, digits_shown=7, max_comma_exp=4), '1.234568e+5')
         self.assertEqual(ti.format_number(0.0000123), '1.230e-5')
         self.assertEqual(ti.format_number(0.0000123, min_fixed_pt_exp=-6), '0.00001230')
         self.assertEqual(ti.format_number(123456 * 10 ** 1000), '1.235e+1005')

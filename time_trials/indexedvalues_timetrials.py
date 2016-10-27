@@ -124,36 +124,40 @@ def get_generator(variable_name, first_event, start_length,
                                                         event_occurrences, gaps_per_iteration, randomize)
 
 
-def one_time_trial(combine_times, events, input_dict_size=1, use_exponential_occurrences=True):
+def one_time_trial(combine_times, events_tuples, input_dict_size=1, use_exponential_occurrences=True):
     """
 
     :param combine_times:
-    :param events:
+    :param events_tuples:
     :param input_dict_size: =1
     :param use_exponential_occurrences: =True
     :return: (list_len, # occurrences, log10(# occurrences), range/events, start dict size)\n
         , control time, IndexedValues time
     """
 
-    if events[0][1] < 10**100:
-        print('one_time_trial prepped list {}'.format(events))
+    if events_tuples[0][1] < 10**100:
+        print('one_time_trial prepped list {}'.format(events_tuples))
     input_dict = get_input_dict(input_dict_size, use_exponential_occurrences)
-    control_method = get_control_method(events)
+
     control_events = lim.AdditiveEvents(input_dict)
+    control_events_action = get_control_action(control_events, events_tuples)
+
     events_for_indexed_values = lim.AdditiveEvents(input_dict)
 
+    events_to_add = lim.AdditiveEvents(dict(events_tuples))
+
     indexed_values_start = time.clock()
-    events_for_indexed_values.combine(combine_times, events, method='indexed_values')
+    events_for_indexed_values.combine_by_indexed_values(combine_times, events_to_add)
     indexed_values_time = time.clock() - indexed_values_start
 
     control_start = time.clock()
-    control_events.combine(combine_times, events, method=control_method)
+    control_events_action(combine_times, events_to_add)
     control_time = time.clock() - control_start
 
-    list_length = float(len(events))
-    event_occurrences = float(events[0][1])
-    event_occurrences_exponent = log10(events[0][1])
-    events_range_vs_events = (max(events)[0] - min(events)[0] + 1) / float(list_length)
+    list_length = float(len(events_tuples))
+    event_occurrences = float(events_tuples[0][1])
+    event_occurrences_exponent = log10(events_tuples[0][1])
+    events_range_vs_events = (max(events_tuples)[0] - min(events_tuples)[0] + 1) / float(list_length)
     start_dict_size = float(input_dict_size)
     y_axis_variables = (list_length, event_occurrences, event_occurrences_exponent, events_range_vs_events,
                         start_dict_size)
@@ -169,11 +173,19 @@ def get_input_dict(input_dict_size, use_exponential_occurrences):
     return input_dict
 
 
-def get_control_method(prepped_list):
+def get_control_method_str(prepped_list):
     if prepped_list[0][1] == 1:
         return 'flattened_list'
     else:
         return 'all_events'
+
+
+def get_control_action(control_events, events_tuples):
+    control_method_str = get_control_method_str(events_tuples)
+    control_method_dict = {'tuple_list': control_events.combine_by_tuple_list,
+                           'flattened_list': control_events.combine_by_flattened_list}
+    control_events_action = control_method_dict[control_method_str]
+    return control_events_action
 
 
 def time_trial_vary_start_dict(events_tuple_list, input_dict_start_size=1000, input_dict_downward_step=5,
@@ -609,19 +621,20 @@ def get_tuple_list(size, many_occurrences=False, step=1):
 
 
 def get_indexed_advantage_ratio(start_dict_size, adds, tuple_list_sizes, many_occurrences):
-    events = get_tuple_list(tuple_list_sizes, many_occurrences)
+    events_tuples = get_tuple_list(tuple_list_sizes, many_occurrences)
+    events_to_add = lim.AdditiveEvents(dict(events_tuples))
 
     input_dict = get_input_dict(start_dict_size, True)
-    control_method = get_control_method(events)
     control_events = lim.AdditiveEvents(input_dict)
+    control_events_action = get_control_action(control_events, events_tuples)
     events_for_indexed_values = lim.AdditiveEvents(input_dict)
 
     indexed_values_start = time.clock()
-    events_for_indexed_values.combine(adds, events, method='indexed_values')
+    events_for_indexed_values.combine_by_indexed_values(adds, events_to_add)
     indexed_values_time = time.clock() - indexed_values_start
 
     control_start = time.clock()
-    control_events.combine(adds, events, method=control_method)
+    control_events_action(adds, events_to_add)
     control_time = time.clock() - control_start
 
     return control_time / indexed_values_time

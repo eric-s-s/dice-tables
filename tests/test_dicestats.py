@@ -212,7 +212,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.StrongDie(dt.Die(3), 5).get_multiplier(), 5)
 
     def test_StrongDie_get_original(self):
-        self.assertEqual(dt.StrongDie(dt.Die(3), 5).get_original(), dt.Die(3))
+        self.assertEqual(dt.StrongDie(dt.Die(3), 5).get_input_die(), dt.Die(3))
 
     def test_StrongDie_tuple_list(self):
         orig = dt.ModWeightedDie({1: 2, 2: 1}, 1)
@@ -272,7 +272,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_get_original(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
-        self.assertEqual(dt.StrongDie(die, 3).get_original(), die)
+        self.assertEqual(dt.StrongDie(die, 3).get_input_die(), die)
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_str(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)

@@ -179,6 +179,11 @@ class AdditiveEvents(IntegerEvents):
         self._table = dictionary
 
     def combine_by_flattened_list(self, times, events):
+        """
+
+        :WARNING - UNSAFE METHOD: flattened_list = len(total occurrences of events).
+            if this list is too big, it will raise MemoryError or OverflowError
+        """
         combiner = DictCombiner(dict(self.all_events))
         dictionary = combiner.combine_by_flattened_list(times, events).get_dict()
         self._table = dictionary
@@ -195,8 +200,9 @@ class AdditiveEvents(IntegerEvents):
 
     def remove(self, times, events):
         """
-        IF YOU REMOVE WHAT YOU HAVEN'T ADDED, NO ERROR WILL BE RAISED BUT YOU WILL HAVE BUGS.
-        There is no record of what you added to an AdditiveEvents.  Please use with caution.
+
+        :WARNING - UNSAFE METHOD: There is no record of what you added to an AdditiveEvents.
+            If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
         combiner = DictCombiner(dict(self.all_events))
         dictionary = combiner.remove_by_tuple_list(times, events).get_dict()

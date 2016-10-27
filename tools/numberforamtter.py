@@ -14,6 +14,12 @@ def is_int(number):
 
 class NumberFormatter(object):
     def __init__(self, shown_digits=4, max_comma_exp=6, min_fixed_pt_exp=-3):
+        """
+
+        :param shown_digits: int >= 1
+        :param max_comma_exp: int >= -1
+        :param min_fixed_pt_exp: int <= 0
+        """
         self._shown_digits = None
         self._max_comma_exp = None
         self._min_fixed_pt_exp = None

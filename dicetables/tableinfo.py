@@ -8,12 +8,17 @@ from dicetables.baseevents import safe_true_div
 from tools.numberforamtter import NumberFormatter
 
 
-def format_number(num, dig_len=4, max_comma_exp=6, min_fixed_pt_exp=-3):
-    """num is int, float or long.  dig_len is int and < 18 and >= 2.
-    returns a string of num in a nicely readable form.  rounds to dig_len.
-    note- dig_len over 18 works but has errors in output"""
-    formatter = NumberFormatter(dig_len, max_comma_exp, min_fixed_pt_exp)
-    return formatter.format(num)
+def format_number(number, digits_shown=4, max_comma_exp=6, min_fixed_pt_exp=-3):
+    """
+
+    :param number: any numerical type
+    :param digits_shown: 1 < int <=18
+    :param max_comma_exp: int >= -1
+    :param min_fixed_pt_exp: int <= 0
+    :return: str
+    """
+    formatter = NumberFormatter(digits_shown, max_comma_exp, min_fixed_pt_exp)
+    return formatter.format(number)
 
 
 class GraphDataGenerator(object):
@@ -89,14 +94,11 @@ def get_exact_pct_number(number, total_values):
 def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
     """
 
-    :param table: or DiceTable
-    :type table: dicetables.AdditiveEvents
-    :param percent: y-values are percentages=True
+    :param table: any AdditiveEvents or children
+    :param percent: =True: y-values are percentages
     :param axes: True: [(x-axis), (y-axis)], False:[(xy-point), (xy-point), ...]
-    :param include_zeroes: =True, include zero occurrences within table.event_range
-    :param exact: =False, points only good to ten decimal places.
-    :return:
-    :rtype: list[tuple]
+    :param include_zeroes: =True: include zero occurrences within table.event_range
+    :param exact:  =False: percentages only good to ten decimal places.
     """
     data_generator = GraphDataGenerator(percent, include_zeroes, exact)
     if axes:
@@ -106,8 +108,13 @@ def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
 
 
 def graph_pts_overflow(table, axes=True, zeroes=True):
-    """return graph points and the factor they are modified by to control for
-    overflow problems by long ints."""
+    """
+
+    :param table: any AdditiveEvents or children
+    :param axes: =True: [(x-axis), (y-axis)], False:[(xy-point), (xy-point), ...]
+    :param zeroes: =True: include zero occurrences within table.event_range
+    :return: ([graphing data], 'factor all y-data  was divided by')
+    """
     raw_pts = GraphDataGenerator(include_zeroes=zeroes).get_raw_points(table)
     formatter = NumberFormatter(shown_digits=2)
 
@@ -128,10 +135,8 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
 def full_table_string(table, include_zeroes=True):
     """
 
-    :param table: or DiceTable
-    :type table: dicetables.AdditiveEvents
+    :param table: any AdditiveEvents or children
     :param include_zeroes: =True, include zero occurrences within table.event_range
-    :return:
     """
     formatter = NumberFormatter()
     graph_data = GraphDataGenerator(include_zeroes=include_zeroes)
@@ -143,20 +148,18 @@ def full_table_string(table, include_zeroes=True):
     return out_str
 
 
-def stats(table, values):
+def stats(table, query_values):
     """
 
-    :type table: dicetables.AdditiveEvents
-    :param table: or DiceTable
-    :type values: list[int]
-    :param values: events you want info for
+    :param table: any AdditiveEvents or children
+    :param query_values: list(int)
     :rtype: tuple[str]
-    :return: (str of values, values combinations, total combinations, inverse chance, pct chance)
+    :return: ("query_values", "query_values combinations", "total combinations", "inverse chance", "pct chance")
     """
     formatter = NumberFormatter()
     total_combinations = table.total_occurrences
     combinations_of_values = 0
-    no_copies = set(values)
+    no_copies = set(query_values)
     for value in no_copies:
         combinations_of_values += table.get_event(value)[1]
 
@@ -168,7 +171,7 @@ def stats(table, values):
         pct = Decimal(100.0) / inverse_chance
         inverse_chance_str = formatter.format(inverse_chance)
         pct_str = formatter.format(pct)
-    return (get_string_for_sequence(values),
+    return (get_string_for_sequence(query_values),
             formatter.format(combinations_of_values),
             formatter.format(total_combinations),
             inverse_chance_str,

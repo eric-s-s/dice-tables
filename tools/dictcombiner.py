@@ -34,8 +34,7 @@ class DictCombiner(object):
         new_dict = {}
         for event, current_frequency in self._dict.items():
             for new_event, frequency in tuple_list:
-                new_dict[event + new_event] = (new_dict.get(event + new_event, 0) +
-                                               frequency * current_frequency)
+                new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + frequency * current_frequency)
         return DictCombiner(new_dict)
 
     def combine_by_indexed_values(self, times, integer_events):
@@ -45,13 +44,13 @@ class DictCombiner(object):
             indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events_tuples)
         return DictCombiner(dict(indexed_values_to_update.get_items()))
 
-    def combine_by_fastest(self, times, events_tuples):
+    def combine_by_fastest(self, times, integer_events):
         method_dict = {'tuple_list': self.combine_by_tuple_list,
                        'flattened_list': self.combine_by_flattened_list,
                        'indexed_values': self.combine_by_indexed_values}
-        method = self.get_fastest_combine_method(times, events_tuples)
+        method = self.get_fastest_combine_method(times, integer_events)
 
-        return method_dict[method](times, events_tuples)
+        return method_dict[method](times, integer_events)
 
     def get_fastest_combine_method(self, times, integer_events):
         events_tuples = integer_events.all_events
@@ -61,7 +60,7 @@ class DictCombiner(object):
 
     @staticmethod
     def _compare_tuple_list_with_flattened_list(events_tuples):
-        max_occurrences_to_events_ratio_for_add_by_list = 1.3
+        max_occurrences_to_events_ratio_for_flattened_list = 1.3
         safe_limit_flattened_list_len = 10 ** 4
         total_occurrences = sum([pair[1] for pair in events_tuples])
 
@@ -69,15 +68,15 @@ class DictCombiner(object):
             return 'tuple_list'
 
         occurrences_to_events_ratio = float(total_occurrences) / len(events_tuples)
-        if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_add_by_list:
+        if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_flattened_list:
             return 'tuple_list'
         return 'flattened_list'
 
     def _compare_with_indexed_values(self, first_method, times, events_tuples):
-        new_events_size = len(events_tuples)
-        current_size_cutoff = get_current_size_cutoff(first_method, times, new_events_size)
-        current_events_size = len(self._dict.keys())
-        if current_events_size < current_size_cutoff:
+        size_of_events_tuples = len(events_tuples)
+        cutoff_size = get_current_size_cutoff(first_method, times, size_of_events_tuples)
+        size_of_main_events = len(self._dict.keys())
+        if size_of_main_events < cutoff_size:
             return first_method
         else:
             return 'indexed_values'
@@ -117,14 +116,11 @@ def flatten_events_tuples(events_tuples):
     return flattened_list
 
 
-def get_current_size_cutoff(first_method, times, new_events_size):
+def get_current_size_cutoff(first_method, combine_times, size_of_events_tuples):
     """
-    data_dict = {new_event_size: {times: (current_events_size_choices), ...}, ...}
+    keys_are_new_event_size = {size_of_events_tuples: {combine_times: (choices_for_current_size_cutoff), ...}, ...}
 
-    :param first_method: 'flattened_list', 'tuple_list'
-    :param times:
-    :param new_events_size:
-    :return: current events cutoff size
+    :first_method: 'flattened_list', 'tuple_list'
     """
     keys_are_new_event_size = {
         2: {10: (250, 500), 50: (100, 200), 500: (1, 1)},
@@ -135,12 +131,12 @@ def get_current_size_cutoff(first_method, times, new_events_size):
         20: {1: (50, 100), 3: (1, 50), 4: (1, 1)},
         50: {1: (50, 100), 3: (1, 1)}
     }
-    closest_new_size = get_best_key(new_events_size, keys_are_new_event_size)
+    closest_new_size = get_best_key(size_of_events_tuples, keys_are_new_event_size)
     keys_are_times = keys_are_new_event_size[closest_new_size]
-    closest_times = get_best_key(times, keys_are_times)
-    current_size_choices = keys_are_times[closest_times]
-    current_size_index = {'flattened_list': 0, 'tuple_list': 1}[first_method]
-    current_size_cutoff = current_size_choices[current_size_index]
+    closest_times = get_best_key(combine_times, keys_are_times)
+    choices_for_current_size_cutoff = keys_are_times[closest_times]
+    index_to_choose = {'flattened_list': 0, 'tuple_list': 1}[first_method]
+    current_size_cutoff = choices_for_current_size_cutoff[index_to_choose]
     return current_size_cutoff
 
 

@@ -12,7 +12,7 @@ math with ints over 10^309.
 changed in this version - StrongDie.__str__, .multiply_str,
 python3 support for tests/tsting_add_speed.py
 
-added in this version - StrongDie.get_original, .get_multiplier
+added in this version - StrongDie.get_input_die, .get_multiplier
 
 DiceTable is a AdditiveEvents that keeps a list of all the Die objects
 that have been added and removed using the add_die and remove_die methods.
@@ -132,7 +132,7 @@ new tuple list is [(-10, 1), (-5, 2)]::
     In [4]: my_die.get_multiplier()
     Out[4]: 5
 
-    In [5]: my_die.get_original()
+    In [5]: my_die.get_input_die()
     Out[5]: ModWeightedDie({1: 1, 2: 2}, -3)
 
 
