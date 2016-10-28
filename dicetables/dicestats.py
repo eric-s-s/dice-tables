@@ -153,8 +153,6 @@ class WeightedDie(ProtoDie):
         """
         self._dic = dictionary_input.copy()
         self._raise_value_error_for_rolls_less_than_one()
-        self._die_size = max(self._dic.keys())
-        self._weight = sum(self._dic.values())
         super(WeightedDie, self).__init__()
 
     def _raise_value_error_for_rolls_less_than_one(self):
@@ -162,19 +160,19 @@ class WeightedDie(ProtoDie):
             raise ValueError('rolls may not be less than 1. use ModWeightedDie')
 
     def get_size(self):
-        return self._die_size
+        return max(self._dic.keys())
 
     def get_weight(self):
-        return self._weight
+        return sum(self._dic.values())
 
     @property
     def all_events(self):
         return sorted([pair for pair in self._dic.items() if pair[1]])
 
     def weight_info(self):
-        num_len = len(str(self._die_size))
+        num_len = len(str(self.get_size()))
         out = str(self) + '\n'
-        for roll in range(1, self._die_size + 1):
+        for roll in range(1, self.get_size() + 1):
             out += ('    a roll of {:>{}} has a weight of {}\n'
                     .format(roll, num_len, self._dic.get(roll, 0)))
         return out.rstrip('\n')
@@ -183,7 +181,7 @@ class WeightedDie(ProtoDie):
         return '{}{}'.format(number, self)
 
     def __str__(self):
-        return 'D{}  W:{}'.format(self._die_size, self._weight)
+        return 'D{}  W:{}'.format(self.get_size(), self.get_weight())
 
     def __repr__(self):
         new_dic = {}
@@ -217,11 +215,11 @@ class ModWeightedDie(WeightedDie):
         return sorted([(roll + self._mod, weight) for roll, weight in self._dic.items() if weight])
 
     def multiply_str(self, number):
-        return '{0}D{1}{2:+}  W:{3}'.format(number, self._die_size,
-                                            number * self._mod, self._weight)
+        return '{0}D{1}{2:+}  W:{3}'.format(number, self.get_size(),
+                                            number * self._mod, self.get_weight())
 
     def __str__(self):
-        return 'D{0}{1:+}  W:{2}'.format(self._die_size, self._mod, self._weight)
+        return 'D{0}{1:+}  W:{2}'.format(self.get_size(), self._mod, self.get_weight())
 
     def __repr__(self):
         to_fix = super(ModWeightedDie, self).__repr__()[:-1]
@@ -241,11 +239,16 @@ class StrongDie(ProtoDie):
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
         :param multiplier: int != 0
         """
-        if multiplier == 0:
-            raise ValueError('multiplier may not be 0')
-        self._original = input_die
         self._multiplier = multiplier
+
+        self._raise_error_for_multiplier_at_zero()
+
+        self._original = input_die
         super(StrongDie, self).__init__()
+
+    def _raise_error_for_multiplier_at_zero(self):
+        if self._multiplier == 0:
+            raise ValueError('multiplier may not be 0')
 
     def get_size(self):
         return self._original.get_size()
@@ -338,7 +341,7 @@ class DiceTable(AdditiveEvents):
         self.combine(number, die)
         self.update_list(number, die)
 
-    def raise_error_for_too_many_removes(self, num, die):
+    def _raise_error_for_too_many_removes(self, num, die):
         if self.number_of_dice(die) < num:
             raise ValueError('dice not in table, or removed too many dice')
 
@@ -348,7 +351,7 @@ class DiceTable(AdditiveEvents):
         :param number: int>=number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        self.raise_error_for_too_many_removes(number, die)
+        self._raise_error_for_too_many_removes(number, die)
         self.remove(number, die)
         self.update_list(-1 * number, die)
 

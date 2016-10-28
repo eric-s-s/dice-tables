@@ -153,20 +153,60 @@ multiply_str(number), __str__(), __repr__(), and the property all_events.
 
 They are all immutable , hashable and rich-comparable so that multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
-sorted with any other kind of die.
+sorted with any other kind of die. Comparisons done by (size, weight, all_events, __repr__(as a last resort)).
+So::
+
+    In [54]: dice_list
+    Out[54]:
+    [ModDie(2, 0),
+     WeightedDie({1: 1, 2: 1}),
+     Die(2),
+     ModWeightedDie({1: 1, 2: 1}, 0),
+     StrongDie(Die(2), 1),
+     StrongDie(WeightedDie({1: 1, 2: 1}), 1)]
+
+    In [58]: [die.all_events == [(1, 1), (2, 1)] for die in dice_list]
+    Out[58]: [True, True, True, True, True, True]
+
+    In [56]: sorted(dice_list)
+    Out[56]:
+    [Die(2),
+     ModDie(2, 0),
+     StrongDie(Die(2), 1),
+     ModWeightedDie({1: 1, 2: 1}, 0),
+     StrongDie(WeightedDie({1: 1, 2: 1}), 1),
+     WeightedDie({1: 1, 2: 1})]
+
+    In [67]: [die == dt.Die(2) for die in sorted(dice_list)]
+    Out[67]: [True, False, False, False, False, False]
+
+    In [61]: my_set = {dt.Die(6)}
+
+    In [62]: my_set.add(dt.Die(6))
+
+    In [63]: my_set
+    Out[63]: {Die(6)}
+
+    In [64]: my_set.add(dt.ModDie(6, 0))
+
+    In [65]: my_set
+    Out[65]: {Die(6), ModDie(6, 0)}
 
 The dice:
 
 Die
     A basic die.  dt.Die(4) rolls 1, 2, 3, 4 with equal weight
 
-    added methods:
+    No added methods
 
-    - None
 
 ModDie
     A die with a modifier.  The modifier is added to each die roll.
-    dt.ModDie(4, -2) -1, 0, 1, 2 with equal weight.
+    dt.ModDie(4, -2) rolls -1, 0, 1, 2 with equal weight.
+
+    added methods:
+
+    - .get_modifier()
 
 WeightedDie
     A die that rolls different rolls with different frequencies.
@@ -174,13 +214,34 @@ WeightedDie
     six times as often as 1, rolls 3 three times as often as 1
     and never rolls 2
 
+    No added methods.
+
 ModWeightedDie
     A die with a modifier that rolls different rolls with different frequencies.
-    dt.Weighted
+    dt.ModWeightedDie({1:1, 3:3, 4:6}, 3) is a 4-sided die. 4 is added to all
+    die rolls.  The same as WeightedDie.
+
+    added methods:
+
+    - .get_modifier()
+
+StrongDie
+    A die that is a strong version of any other die (including another StrongDie
+    if you're feeling especially silly). So a StrongDie with a multiplier of 2
+    would add 2 for each 1 that was rolled.
+
+    dt.StrongDie(dt.Die(4), 5) is a 4-sided die that rolls 5, 10, 15, 20 with
+    equal weight. dt.StrongDie(dt.Die(4), -1) is a 4 sided die that rolls -1, -2, -3, -4
+
+    added methods:
+
+    - .get_multiplier()
+    - .get_input_die()
 
 -------------------------------------------
 DETAILS OF AdditiveEvents AND IntegerEvents
 -------------------------------------------
+
 --------------------------
 HOW TO GET ERRORS AND BUGS
 --------------------------

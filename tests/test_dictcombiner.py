@@ -2,6 +2,8 @@ import unittest
 from dicetables.baseevents import AdditiveEvents
 from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff, DictCombiner
 
+# TODO test every set of keys in dict for fastest method.  how fucking embarrassing
+
 
 class TestDictCombiner(unittest.TestCase):
     def setUp(self):

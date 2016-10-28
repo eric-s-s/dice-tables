@@ -48,13 +48,11 @@ class InvalidEventsError(ValueError):
 
 class InputVerifier(object):
     def __init__(self):
+        self._int_tuple = (int,)
+        self._type_str = 'ints'
         if version_info[0] < 3:
-            self._int_tuple = (int, long)
-            type_str = 'ints or longs'
-        else:
-            self._int_tuple = (int, )
-            type_str = 'ints'
-        self.types_message = 'all values must be {}'.format(type_str)
+            self._int_tuple += (long, )
+            self._type_str += ' or longs'
 
     def verify_all_events(self, all_events):
         """
@@ -62,20 +60,15 @@ class InputVerifier(object):
         :param all_events: IntegerEvents.all_events
         :raises: InvalidEventsError
         """
-        cannot_be_empty = 'events may not be empty. a good alternative is the identity - [(0, 1)].'
-        only_pos_occurrences = 'no negative or zero occurrences in Events.all_events'
-        bad_types = self.types_message
-
         if not all_events:
-            raise InvalidEventsError(cannot_be_empty)
-
+            raise InvalidEventsError('events may not be empty. a good alternative is the identity - [(0, 1)].')
         events, occurrences = zip(*all_events)
         if not self.is_sorted(events):
             raise InvalidEventsError('Events.all_events must be sorted')
         if not self.is_all_ints(events) or not self.is_all_ints(occurrences):
-            raise InvalidEventsError(bad_types)
+            raise InvalidEventsError('all values must be {}'.format(self._type_str))
         if any(occurrence <= 0 for occurrence in occurrences):
-            raise InvalidEventsError(only_pos_occurrences)
+            raise InvalidEventsError('no negative or zero occurrences in Events.all_events')
 
     def is_int(self, number):
         return isinstance(number, self._int_tuple)
@@ -84,8 +77,8 @@ class InputVerifier(object):
         return all(self.is_int(value) for value in iterable)
 
     @staticmethod
-    def is_sorted(lst):
-        return list(lst) == sorted(lst)
+    def is_sorted(iterable):
+        return list(iterable) == sorted(iterable)
 
 
 class IntegerEvents(object):
