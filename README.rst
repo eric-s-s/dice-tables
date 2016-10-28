@@ -42,23 +42,120 @@ TL;DR
     Out[5]: [(2, 1), (3, 2), (4, 2), (5, 1)]
 
 
-event_keys property tell the range of rolls or other non-zero events stored in the table.::
+Here are basic table functions::
 
-    In [4]: table.event_keys
-    Out[4]: [3, 4, 5, 6]
+    In [6]: table.add_die(100, dt.Die(2))
 
-    In [5]: table.event_range
-    Out[5]: (3, 6)
+    In [7]: table.remove_die(99, dt.Die(2))
 
-here are all the possible rolls and the frequencies with which they occur.  
-3 has one possible combination-[(1,1,1)] and 4 has three-[(1,1,2), (1,2,1), (2,1,1)]
-5 has three-[(1,2,2), (2,1,2), (2,2,1)] and 6 has one-[(2,2,2)]::
+    In[17]: print(table)
+    2D2
+    1D3
 
-    In [7]: table.all_events
-    Out[7]: [(3, 1), (4, 3), (5, 3), (6, 1)]
+    In [11]: table.all_events
+    Out[11]: [(3, 1), (4, 3), (5, 4), (6, 3), (7, 1)]
 
-the get_event_range function follows range's (start, stop_before) and list zero
-for any roll that won't happen. ::
+    In [12]: table.event_keys
+    Out[12]: [3, 4, 5, 6, 7]
+
+    In [20]: table.total_occurrences
+    Out[20]: 12
+
+    In [13]: table.event_range
+    Out[13]: (3, 7)
+
+    In [14]: table.biggest_event
+    Out[14]: (5, 4)
+
+    In [15]: table.get_event(6)
+    Out[15]: (6, 3)
+
+    In [16]: table.get_range_of_events(0, 5)
+    Out[16]: [(0, 0), (1, 0), (2, 0), (3, 1), (4, 3)]
+
+    In [18]: table.mean()
+    Out[18]: 5.0
+
+    In [19]: table.stddev()
+    Out[19]: 1.0801
+
+    In [20]: table.get_list()
+    Out[20]: [(Die(2), 2), (Die(3), 1)]
+
+    In [21]: print(table.weights_info())
+    2D2
+        No weights
+
+    1D3
+        No weights
+
+Here are the useful non-method functions and objects::
+
+    In [37]: print(dt.full_table_string(table))
+    3: 1
+    4: 3
+    5: 4
+    6: 3
+    7: 1
+
+    In[39]: stats_str = "{} occurred {} times out of {} combinations.\n \
+                  That's a one in {} chance or {}%"
+
+    In[39]: stats_info = dt.stats(table, [1,2,3,4])
+
+    In[40]: print(stat_str.format(*stats_info))
+    1-4 occurred 4 times out of 12 combinations.
+    That's a one in 3.000 chance or 33.33%
+
+    In [41]: dt.GraphDataGenerator().get_axes(table)
+    Out[41]: [(3, 4, 5, 6, 7),
+              (8.333333333333334, 25.0, 33.333333333333336, 25.0, 8.333333333333334)]
+
+    In [42]: dt.GraphDataGenerator().get_points(table)
+    Out[42]:
+    [(3, 8.333333333333334),
+     (4, 25.0),
+     (5, 33.333333333333336),
+     (6, 25.0),
+     (7, 8.333333333333334)]
+
+    (or you may use the wrapper-function "graph_pts")
+
+    In[43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
+
+    In[47]: print(dt.full_table_string(silly_table, include_zeroes=False))
+      1: 123,456
+    100: 1.234e+1004
+
+    (If include_zeroes=True, you'd get also get 2: 0, 3: 0 ...)
+
+    In[49]: stats_info = dt.stats(silly_table, list(range(-5000, 5)))
+
+    In[51]: print(stats_str.format(*stats_info))
+    (-5,000)-4 occurred 123,456 times out of 1.234e+1004 combinations.
+    That's a one in 1.000e+999 chance or 1.000e-997%
+
+
+Finally, here are all the kinds of dice you can add.
+- dt.Die(6)
+- dt.ModDie(6, -2)
+- dt.WeightedDie({1:1, 2:5, 3:2})
+- dt.ModWeightedDie({1:1, 2:5, 3:2}, 5)
+- dt.StrongDie(dt.Die(6), 5)
+
+----------------------
+DETAILS OF DIE CLASSES
+----------------------
+-------------------------------------------
+DETAILS OF AdditiveEvents AND IntegerEvents
+-------------------------------------------
+--------------------------
+HOW TO GET ERRORS AND BUGS
+--------------------------
+-------
+CHANGES
+-------
+::
 
     In [8]: table.get_event(5)
     Out[8]: (5, 3)

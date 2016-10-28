@@ -239,8 +239,10 @@ class StrongDie(ProtoDie):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
-        :param multiplier: int >=1
+        :param multiplier: int != 0
         """
+        if multiplier == 0:
+            raise ValueError('multiplier may not be 0')
         self._original = input_die
         self._multiplier = multiplier
         super(StrongDie, self).__init__()
@@ -261,6 +263,8 @@ class StrongDie(ProtoDie):
     @property
     def all_events(self):
         old = self._original.all_events
+        if self._multiplier < 0:
+            old.reverse()
         return [(pair[0] * self._multiplier, pair[1]) for pair in old]
 
     def weight_info(self):

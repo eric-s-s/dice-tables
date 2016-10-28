@@ -200,6 +200,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.ModWeightedDie({1: 2}, -3).multiply_str(5), '5D1-15  W:2')
 
     #  StrongDie tests
+    # TODO tests *-1, *0
     def test_StrongDie_get_size(self):
         orig = dt.ModWeightedDie({1: 2}, -3)
         self.assertEqual(dt.StrongDie(orig, 100).get_size(), orig.get_size())
