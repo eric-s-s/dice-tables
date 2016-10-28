@@ -19,9 +19,9 @@ that have been added and removed using the add_die and remove_die methods.
 TL;DR
 -----
 
-|Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,
-|you get the following combinations.
-|(1,1) / (1, 2) (2, 1) / (2, 2), (1, 3) / (2, 3):
+| Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,
+| you get the following combinations.
+| (1,1) / (1, 2) (2, 1) / (2, 2), (1, 3) / (2, 3):
 
 - roll2: 1 occurrence  (1 in 6 chance)
 - roll3: 2 occurrences  (2 in 6 chance)
