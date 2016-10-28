@@ -6,27 +6,25 @@ a module for statistics of die rolls and other events
 =====================================================
 This module uses DiceTable and AdditiveEvents to combine
 dice and other events that can be added together.
-since dice combinations quickly balloon, it's been designed to do float  
-math with ints over 10^309.
 
 There are many changes from the previous version, and they will
 be listed in "CHANGES" at the bottom of this README.
 
-DiceTable is a AdditiveEvents that keeps a list of all the Die objects
-that have been added and removed using the add_die and remove_die methods.
+DiceTable is a list of (event, occurrences) that keeps track of all the
+Die objects that have been added and removed using the add_die and remove_die methods.
 
------
-TL;DR
------
+----------
+THE BASICS
+----------
 
 | Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,
 | you get the following combinations.
 | (1,1) / (1, 2) (2, 1) / (2, 2), (1, 3) / (2, 3):
 
-- roll2: 1 occurrence  (1 in 6 chance)
-- roll3: 2 occurrences  (2 in 6 chance)
-- roll4: 2 occurrences  (3 in 6 chance)
-- roll5: 1 occurrence  (1 in 6 chance)
+- roll - 2: 1 occurrence  (1 in 6 chance)
+- roll - 3: 2 occurrences  (2 in 6 chance)
+- roll - 4: 2 occurrences  (3 in 6 chance)
+- roll - 5: 1 occurrence  (1 in 6 chance)
 
 ::
 
@@ -119,7 +117,8 @@ Here are the useful non-method functions and objects::
      (6, 25.0),
      (7, 8.333333333333334)]
 
-    (or you may use the wrapper-function "graph_pts")
+(or you may use the wrapper-function "graph_pts")
+::
 
     In[43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
 
@@ -127,7 +126,8 @@ Here are the useful non-method functions and objects::
       1: 123,456
     100: 1.234e+1004
 
-    (If include_zeroes=True, you'd get also get 2: 0, 3: 0 ...)
+(If include_zeroes=True, you'd get also get 2: 0, 3: 0 ... 99: 0)
+::
 
     In[49]: stats_info = dt.stats(silly_table, list(range(-5000, 5)))
 
@@ -136,7 +136,8 @@ Here are the useful non-method functions and objects::
     That's a one in 1.000e+999 chance or 1.000e-997%
 
 
-Finally, here are all the kinds of dice you can add.
+Finally, here are all the kinds of dice you can add
+
 - dt.Die(6)
 - dt.ModDie(6, -2)
 - dt.WeightedDie({1:1, 2:5, 3:2})
@@ -146,15 +147,46 @@ Finally, here are all the kinds of dice you can add.
 ----------------------
 DETAILS OF DIE CLASSES
 ----------------------
+All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
+They all require implementations of get_size(), get_weight(), weight_info(),
+multiply_str(number), __str__(), __repr__(), and the property all_events.
+
+They are all immutable , hashable and rich-comparable so that multiple names can safely point
+to the same instance of a Die, they can be used in sets and dictionary keys and they can be
+sorted with any other kind of die.
+
+The dice:
+
+Die
+    A basic die.  dt.Die(4) rolls 1, 2, 3, 4 with equal weight
+
+    added methods:
+
+    - None
+
+ModDie
+    A die with a modifier.  The modifier is added to each die roll.
+    dt.ModDie(4, -2) -1, 0, 1, 2 with equal weight.
+
+WeightedDie
+    A die that rolls different rolls with different frequencies.
+    dt.WeightedDie({1:1, 3:3, 4:6}) is a 4-sided die.  It rolls 4
+    six times as often as 1, rolls 3 three times as often as 1
+    and never rolls 2
+
+ModWeightedDie
+    A die with a modifier that rolls different rolls with different frequencies.
+    dt.Weighted
+
 -------------------------------------------
 DETAILS OF AdditiveEvents AND IntegerEvents
 -------------------------------------------
 --------------------------
 HOW TO GET ERRORS AND BUGS
 --------------------------
--------
+=======
 CHANGES
--------
+=======
 ::
 
     In [8]: table.get_event(5)
