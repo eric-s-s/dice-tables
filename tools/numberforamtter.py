@@ -98,7 +98,7 @@ class NumberFormatter(object):
         return self._format_number_and_exponent_to_exponent(number, exponent)
 
     def format(self, number):
-        if abs(number) == 0:
+        if number == 0:
             return '0'
         exponent = self.get_exponent(number)
         if 0 > exponent >= self.min_fixed_pt_exp:

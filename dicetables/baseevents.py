@@ -56,9 +56,6 @@ class InputVerifier(object):
             type_str = 'ints'
         self.types_message = 'all values must be {}'.format(type_str)
 
-    def is_int(self, number):
-        return isinstance(number, self._int_tuple)
-
     def verify_all_events(self, all_events):
         """
 
@@ -79,6 +76,9 @@ class InputVerifier(object):
             raise InvalidEventsError(bad_types)
         if any(occurrence <= 0 for occurrence in occurrences):
             raise InvalidEventsError(only_pos_occurrences)
+
+    def is_int(self, number):
+        return isinstance(number, self._int_tuple)
 
     def is_all_ints(self, iterable):
         return all(self.is_int(value) for value in iterable)
@@ -126,6 +126,7 @@ class AdditiveEvents(IntegerEvents):
     @property
     def all_events(self):
         return [(key, self._table[key]) for key in self.event_keys]
+        # return [pair for pair in self._table.items() if pair[1]]
 
     @property
     def biggest_event(self):

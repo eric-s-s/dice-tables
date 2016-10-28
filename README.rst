@@ -5,15 +5,28 @@ dicetables
 a module for statistics of die rolls and other events
 =====================================================
 This module uses DiceTable and AdditiveEvents to combine
-dice and any other events that can be added together.
+dice and other events that can be added together.
 since dice combinations quickly balloon, it's been designed to do float  
 math with ints over 10^309.
 
 There are many changes from the previous version, and they will
-be listed at the bottom of this README.
+be listed in "CHANGES" at the bottom of this README.
 
 DiceTable is a AdditiveEvents that keeps a list of all the Die objects
 that have been added and removed using the add_die and remove_die methods.
+
+-----
+TL;DR
+-----
+
+|Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,
+|you get the following combinations.
+|(1,1) / (1, 2) (2, 1) / (2, 2), (1, 3) / (2, 3):
+
+- roll2: 1 occurrence  (1 in 6 chance)
+- roll3: 2 occurrences  (2 in 6 chance)
+- roll4: 2 occurrences  (3 in 6 chance)
+- roll5: 1 occurrence  (1 in 6 chance)
 
 ::
 
@@ -21,11 +34,13 @@ that have been added and removed using the add_die and remove_die methods.
 
     In [2]: table = dt.DiceTable()
 
-    In [3]: table.add_die(3, dt.Die(2))
+    In [3]: table.add_die(1, dt.Die(2))
 
+    In [4]: table.add_die(1, dt.Die(3))
 
-I have now created a table contains all the rolls and their combinations  
-for three two-sided dice.  useful for quick demo.
+    In [5]: table.all_events
+    Out[5]: [(2, 1), (3, 2), (4, 2), (5, 1)]
+
 
 event_keys property tell the range of rolls or other non-zero events stored in the table.::
 
