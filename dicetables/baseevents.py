@@ -62,12 +62,9 @@ class InputVerifier(object):
         """
         if not all_events:
             raise InvalidEventsError('events may not be empty. a good alternative is the identity - [(0, 1)].')
-        events, occurrences = zip(*all_events)
-        if not self.is_sorted(events):
-            raise InvalidEventsError('Events.all_events must be sorted')
-        if not self.is_all_ints(events) or not self.is_all_ints(occurrences):
+        if not self.is_all_ints(all_events.keys()) or not self.is_all_ints(all_events.values()):
             raise InvalidEventsError('all values must be {}'.format(self._type_str))
-        if any(occurrence <= 0 for occurrence in occurrences):
+        if any(occurrence <= 0 for occurrence in all_events.values()):
             raise InvalidEventsError('no negative or zero occurrences in Events.all_events')
 
     def is_int(self, number):
@@ -83,10 +80,9 @@ class InputVerifier(object):
 
 class IntegerEvents(object):
     def __init__(self):
-        InputVerifier().verify_all_events(self.all_events)
+        InputVerifier().verify_all_events(self.get_dict())
 
-    @property
-    def all_events(self):
+    def get_dict(self):
         """
 
         :return: sorted([(event, occurrence) .. ] if occurrence != 0)
@@ -94,6 +90,10 @@ class IntegerEvents(object):
         message = ('all_events must return a SORTED tuple list of\n' +
                    '[(event, occurrences),  ...] event=int, occurrence=int>0.')
         raise NotImplementedError(message)
+
+
+def scrub_zeroes(dictionary):
+    return dict([item for item in dictionary.items() if item[1]])
 
 
 class AdditiveEvents(IntegerEvents):
@@ -104,12 +104,12 @@ class AdditiveEvents(IntegerEvents):
             event=int. occurrences=int >=0
             total occurrences > 0
         """
-        self._table = events_dictionary.copy()
+        self._table = scrub_zeroes(events_dictionary)
         super(AdditiveEvents, self).__init__()
 
     @property
     def event_keys(self):
-        return sorted([key for key in self._table.keys() if self._table[key]])
+        return sorted(self._table.keys())
 
     @property
     def event_range(self):
@@ -118,7 +118,7 @@ class AdditiveEvents(IntegerEvents):
 
     @property
     def all_events(self):
-        return [(key, self._table[key]) for key in self.event_keys]
+        return sorted(self._table.items())
         # return [pair for pair in self._table.items() if pair[1]]
 
     @property
@@ -168,11 +168,11 @@ class AdditiveEvents(IntegerEvents):
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
 
     def get_dict(self):
-        return dict(self.all_events)
+        return self._table.copy()
 
     def combine(self, times, events):
         combiner = DictCombiner(self.get_dict())
-        dictionary = combiner.combine_by_fastest(times, events).get_dict()
+        dictionary = combiner.combine_by_fastest(times, events.get_dict()).get_dict()
         self._table = dictionary
 
     def combine_by_flattened_list(self, times, events):
@@ -182,17 +182,17 @@ class AdditiveEvents(IntegerEvents):
             if this list is too big, it will raise MemoryError or OverflowError
         """
         combiner = DictCombiner(self.get_dict())
-        dictionary = combiner.combine_by_flattened_list(times, events).get_dict()
+        dictionary = combiner.combine_by_flattened_list(times, events.get_dict()).get_dict()
         self._table = dictionary
 
     def combine_by_tuple_list(self, times, events):
         combiner = DictCombiner(self.get_dict())
-        dictionary = combiner.combine_by_tuple_list(times, events).get_dict()
+        dictionary = combiner.combine_by_tuple_list(times, events.get_dict()).get_dict()
         self._table = dictionary
 
     def combine_by_indexed_values(self, times, events):
         combiner = DictCombiner(self.get_dict())
-        dictionary = combiner.combine_by_indexed_values(times, events).get_dict()
+        dictionary = combiner.combine_by_indexed_values(times, events.get_dict()).get_dict()
         self._table = dictionary
 
     def remove(self, times, events):
@@ -202,5 +202,5 @@ class AdditiveEvents(IntegerEvents):
             If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
         combiner = DictCombiner(self.get_dict())
-        dictionary = combiner.remove_by_tuple_list(times, events).get_dict()
+        dictionary = combiner.remove_by_tuple_list(times, events.get_dict()).get_dict()
         self._table = dictionary

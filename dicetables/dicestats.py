@@ -22,8 +22,7 @@ class ProtoDie(IntegerEvents):
     def get_weight(self):
         raise NotImplementedError
 
-    @property
-    def all_events(self):
+    def get_dict(self):
         raise NotImplementedError
 
     def weight_info(self):
@@ -45,18 +44,18 @@ class ProtoDie(IntegerEvents):
         return hash('hash of {!r}, {}, {}, {}'.format(self,
                                                       self.get_size(),
                                                       self.get_weight(),
-                                                      self.all_events))
+                                                      self.get_dict()))
 
     def __lt__(self, other):
         return (
-            (self.get_size(), self.get_weight(), self.all_events, repr(self)) <
-            (other.get_size(), other.get_weight(), other.all_events, repr(other))
+            (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) <
+            (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))
         )
 
     def __eq__(self, other):
         return (
-            (self.get_size(), self.get_weight(), self.all_events, repr(self)) ==
-            (other.get_size(), other.get_weight(), other.all_events, repr(other))
+            (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) ==
+            (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))
         )
 
     def __ne__(self, other):
@@ -91,9 +90,8 @@ class Die(ProtoDie):
     def get_weight(self):
         return 0
 
-    @property
-    def all_events(self):
-        return [(value, 1) for value in range(1, self._die_size + 1)]
+    def get_dict(self):
+        return dict.fromkeys(range(1, self._die_size + 1), 1)
 
     def weight_info(self):
         return str(self) + '\n    No weights'
@@ -126,18 +124,21 @@ class ModDie(Die):
     def get_modifier(self):
         return self._mod
 
-    @property
-    def all_events(self):
-        return [(value + self._mod, 1) for value in range(1, self._die_size + 1)]
+    def get_dict(self):
+        return dict.fromkeys(range(1 + self._mod, self.get_size() + 1 + self._mod), 1)
 
     def multiply_str(self, number):
-        return '{}D{}{:+}'.format(number, self._die_size, number * self._mod)
+        return '{}D{}{:+}'.format(number, self.get_size(), number * self._mod)
 
     def __str__(self):
-        return 'D{0}{1:+}'.format(self._die_size, self._mod)
+        return 'D{0}{1:+}'.format(self.get_size(), self._mod)
 
     def __repr__(self):
-        return 'ModDie({}, {})'.format(self._die_size, self._mod)
+        return 'ModDie({}, {})'.format(self.get_size(), self._mod)
+
+
+def scrub_zeroes(dictionary):
+    return dict([item for item in dictionary.items() if item[1]])
 
 
 class WeightedDie(ProtoDie):
@@ -151,7 +152,7 @@ class WeightedDie(ProtoDie):
         :param dictionary_input: {roll: weight} roll: int>1, weight: int>=0\n
             the sum of all weights >0
         """
-        self._dic = dictionary_input.copy()
+        self._dic = scrub_zeroes(dictionary_input)
         self._raise_value_error_for_rolls_less_than_one()
         super(WeightedDie, self).__init__()
 
@@ -165,9 +166,8 @@ class WeightedDie(ProtoDie):
     def get_weight(self):
         return sum(self._dic.values())
 
-    @property
-    def all_events(self):
-        return sorted([pair for pair in self._dic.items() if pair[1]])
+    def get_dict(self):
+        return self._dic.copy()
 
     def weight_info(self):
         num_len = len(str(self.get_size()))
@@ -210,9 +210,11 @@ class ModWeightedDie(WeightedDie):
     def get_modifier(self):
         return self._mod
 
-    @property
-    def all_events(self):
-        return sorted([(roll + self._mod, weight) for roll, weight in self._dic.items() if weight])
+    def get_dict(self):
+        new = {}
+        for roll, weight in super(ModWeightedDie, self).get_dict().items():
+            new[roll + self._mod] = weight
+        return new
 
     def multiply_str(self, number):
         return '{0}D{1}{2:+}  W:{3}'.format(number, self.get_size(),
@@ -263,12 +265,12 @@ class StrongDie(ProtoDie):
         """returns an instance of the original die"""
         return self._original
 
-    @property
-    def all_events(self):
-        old = self._original.all_events
-        if self._multiplier < 0:
-            old.reverse()
-        return [(pair[0] * self._multiplier, pair[1]) for pair in old]
+    def get_dict(self):
+        new = {}
+        old = self._original.get_dict()
+        for roll, weight in old.items():
+            new[roll * self._multiplier] = weight
+        return new
 
     def weight_info(self):
         return self._original.weight_info().replace(str(self._original), str(self))

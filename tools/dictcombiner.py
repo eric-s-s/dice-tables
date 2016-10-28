@@ -9,9 +9,9 @@ class DictCombiner(object):
     def get_dict(self):
         return self._dict.copy()
 
-    def combine_by_flattened_list(self, times, integer_events):
+    def combine_by_flattened_list(self, times, other_dict):
         events_dict = DictCombiner(self.get_dict())
-        flattened_list = flatten_events_tuples(integer_events.all_events)
+        flattened_list = flatten_events_tuples(other_dict)
         for _ in range(times):
             events_dict = events_dict.combine_once_with_flattened_list(flattened_list)
         return events_dict
@@ -23,57 +23,55 @@ class DictCombiner(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_tuple_list(self, times, integer_events):
-        events_tuples = integer_events.all_events
+    def combine_by_tuple_list(self, times, other_dict):
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
-            new_events = new_events.combine_once_with_tuple_list(events_tuples)
+            new_events = new_events.combine_once_with_tuple_list(other_dict)
         return new_events
 
-    def combine_once_with_tuple_list(self, tuple_list):
+    def combine_once_with_tuple_list(self, other_dict):
         new_dict = {}
         for event, current_frequency in self._dict.items():
-            for new_event, frequency in tuple_list:
+            for new_event, frequency in other_dict.items():
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + frequency * current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_indexed_values(self, times, integer_events):
-        events_tuples = integer_events.all_events
+    def combine_by_indexed_values(self, times, other_dict):
+        events_tuples = list(other_dict.items())
         indexed_values_to_update = generate_indexed_values_from_dict(self._dict)
         for _ in range(times):
             indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events_tuples)
         return DictCombiner(dict(indexed_values_to_update.get_items()))
 
-    def combine_by_fastest(self, times, integer_events):
+    def combine_by_fastest(self, times, other_dict):
         method_dict = {'tuple_list': self.combine_by_tuple_list,
                        'flattened_list': self.combine_by_flattened_list,
                        'indexed_values': self.combine_by_indexed_values}
-        method = self.get_fastest_combine_method(times, integer_events)
+        method = self.get_fastest_combine_method(times, other_dict)
 
-        return method_dict[method](times, integer_events)
+        return method_dict[method](times, other_dict)
 
-    def get_fastest_combine_method(self, times, integer_events):
-        events_tuples = integer_events.all_events
-        first_comparison = self._compare_tuple_list_with_flattened_list(events_tuples)
-        second_comparison = self._compare_with_indexed_values(first_comparison, times, events_tuples)
+    def get_fastest_combine_method(self, times, other_dict):
+        first_comparison = self._compare_tuple_list_with_flattened_list(other_dict)
+        second_comparison = self._compare_with_indexed_values(first_comparison, times, other_dict)
         return second_comparison
 
     @staticmethod
-    def _compare_tuple_list_with_flattened_list(events_tuples):
+    def _compare_tuple_list_with_flattened_list(other_dict):
         max_occurrences_to_events_ratio_for_flattened_list = 1.3
         safe_limit_flattened_list_len = 10 ** 4
-        total_occurrences = sum([pair[1] for pair in events_tuples])
+        total_occurrences = sum(other_dict.values())
 
         if total_occurrences >= safe_limit_flattened_list_len:
             return 'tuple_list'
 
-        occurrences_to_events_ratio = float(total_occurrences) / len(events_tuples)
+        occurrences_to_events_ratio = float(total_occurrences) / len(other_dict.keys())
         if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_flattened_list:
             return 'tuple_list'
         return 'flattened_list'
 
-    def _compare_with_indexed_values(self, first_method, times, events_tuples):
-        size_of_events_tuples = len(events_tuples)
+    def _compare_with_indexed_values(self, first_method, times, other_dict):
+        size_of_events_tuples = len(other_dict.keys())
         cutoff_size = get_current_size_cutoff(first_method, times, size_of_events_tuples)
         size_of_main_events = len(self._dict.keys())
         if size_of_main_events < cutoff_size:
@@ -81,8 +79,8 @@ class DictCombiner(object):
         else:
             return 'indexed_values'
 
-    def remove_by_tuple_list(self, times, integer_events):
-        events_tuples = integer_events.all_events
+    def remove_by_tuple_list(self, times, other_dict):
+        events_tuples = sorted(other_dict.items())
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
             new_events = new_events.remove_once_by_tuple_list(events_tuples)
@@ -103,15 +101,16 @@ class DictCombiner(object):
                 for event_being_removed, event_weight in events_tuples[1:]:
                     removal_value_offset = event_being_removed - min_event_being_removed
                     freq_at_new_event -= new_dict.get(target_event - removal_value_offset, 0) * event_weight
-                new_dict[target_event] = freq_at_new_event // events_tuples[0][1]
+                if freq_at_new_event:
+                    new_dict[target_event] = freq_at_new_event // events_tuples[0][1]
             except KeyError:
                 continue
         return DictCombiner(new_dict)
 
 
-def flatten_events_tuples(events_tuples):
+def flatten_events_tuples(dictionary):
     flattened_list = []
-    for event, freq in events_tuples:
+    for event, freq in dictionary.items():
         flattened_list = flattened_list + [event] * freq
     return flattened_list
 

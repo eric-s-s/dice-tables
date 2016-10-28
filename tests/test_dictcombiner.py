@@ -1,5 +1,4 @@
 import unittest
-from dicetables.baseevents import AdditiveEvents
 from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff, DictCombiner
 
 # TODO test every set of keys in dict for fastest method.  how fucking embarrassing
@@ -47,49 +46,47 @@ class TestDictCombiner(unittest.TestCase):
             self.assertIn(self.identity_combiner.get_fastest_combine_method(1, high_occurrence), accepted_choices)
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_total_occurrences_min(self):
-        events = AdditiveEvents({1: 1})
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, {1: 1}), 'flattened_list')
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_total_occurrences_mid(self):
-        events = AdditiveEvents(dict.fromkeys(range(100), 1))
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        other_dict = dict.fromkeys(range(100), 1)
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, other_dict), 'flattened_list')
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_total_occurrences_edge(self):
-        events = AdditiveEvents(dict.fromkeys(range(9999), 1))
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        other_dict = dict.fromkeys(range(9999), 1)
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, other_dict), 'flattened_list')
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_total_occurrences_over_edge(self):
         """
         this cutoff is not for speed but for safety.  as the next test will demonstrate
         """
-        events = AdditiveEvents(dict.fromkeys(range(10000), 1))
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'tuple_list')
+        other_dict = dict.fromkeys(range(10000), 1)
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, other_dict), 'tuple_list')
 
     def test_DictCombiner_demonstrate_why_there_is_cutoff_for_flattened_list(self):
-        ok_events = [(1, 10 ** 4)]
+        ok_events = {1: 10 ** 4}
         self.assertEqual(flatten_events_tuples(ok_events), [1] * 10 ** 4)
-        bad_events = [(1, 10 ** 20)]
+        bad_events = {1: 10 ** 20}
         self.assertRaises((OverflowError, MemoryError), flatten_events_tuples, bad_events)
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_ratio_under(self):
-        events = AdditiveEvents({1: 1, 2: 1, 3: 2, 4: 1})
-        ratio = events.total_occurrences / float(len(events.event_keys))
+        other_dict = {1: 1, 2: 1, 3: 2, 4: 1}
+        ratio = sum(other_dict.values()) / float(len(list(other_dict.keys())))
         self.assertEqual(ratio, 1.25)
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, other_dict), 'flattened_list')
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_ratio_edge(self):
-        events = AdditiveEvents({0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 10: 4})
-        ratio = events.total_occurrences / float(len(events.event_keys))
+        other_dict = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 10: 4}
+        ratio = sum(other_dict.values()) / float(len(list(other_dict.keys())))
         self.assertEqual(ratio, 1.3)
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'flattened_list')
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, other_dict), 'flattened_list')
 
     def test_DictCombiner_get_fastest_method_tuple_vs_flattened_by_ratio_over_edge(self):
-        events_dict = dict.fromkeys(range(99), 1)
-        events_dict[100] = 32
-        events = AdditiveEvents(events_dict)
-        ratio = events.total_occurrences / float(len(events.event_keys))
+        other_dict = dict.fromkeys(range(99), 1)
+        other_dict[100] = 32
+        ratio = sum(other_dict.values()) / float(len(list(other_dict.keys())))
         self.assertEqual(ratio, 1.31)
-        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, events), 'tuple_list')
+        self.assertEqual(self.identity_combiner.get_fastest_combine_method(1, other_dict), 'tuple_list')
 
     def test_DictCombiner_get_fastest_method_part_get_best_key_below_min(self):
         test_dict = {1: 1, 3: 1, 5: 1}
@@ -130,20 +127,20 @@ class TestDictCombiner(unittest.TestCase):
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_indexed(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
-        sized_twenty = AdditiveEvents(dict.fromkeys(range(20), 1))
+        sized_twenty = dict.fromkeys(range(20), 1)
         self.assertEqual(get_current_size_cutoff('flattened_list', 20, 4), 1)
         self.assertEqual(self.identity_combiner.get_fastest_combine_method(4, sized_twenty),
                          'indexed_values')
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_other(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
-        sized_four = AdditiveEvents(dict.fromkeys(range(4), 2))
+        sized_four = dict.fromkeys(range(4), 2)
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
         self.assertEqual(self.identity_combiner.get_fastest_combine_method(4, sized_four), 'tuple_list')
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_below_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
-        sized_four = AdditiveEvents(dict.fromkeys(range(4), 2))
+        sized_four = dict.fromkeys(range(4), 2)
         current_size_five = DictCombiner(dict.fromkeys(range(5), 1))
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_five.get_fastest_combine_method(20, sized_four),
@@ -151,7 +148,7 @@ class TestDictCombiner(unittest.TestCase):
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_at_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
-        sized_four = AdditiveEvents(dict.fromkeys(range(4), 2))
+        sized_four = dict.fromkeys(range(4), 2)
         current_size_fifty = DictCombiner(dict.fromkeys(range(50), 1))
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_fifty.get_fastest_combine_method(20, sized_four),
@@ -159,7 +156,7 @@ class TestDictCombiner(unittest.TestCase):
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_above_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
-        sized_four = AdditiveEvents(dict.fromkeys(range(4), 2))
+        sized_four = dict.fromkeys(range(4), 2)
         current_size_fifty_one = DictCombiner(dict.fromkeys(range(51), 1))
         self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_fifty_one.get_fastest_combine_method(20, sized_four),
@@ -173,6 +170,6 @@ def events_generator():
         middle_occurrences = dict([(event, 1 + event % 3) for event in range(step_by_power_of_two)])
         high_occurrences = dict([(event, 1 + 2 * event) for event in range(step_by_power_of_two)])
         step_by_power_of_two *= 2
-        yield (AdditiveEvents(single_occurrence),
-               AdditiveEvents(middle_occurrences),
-               AdditiveEvents(high_occurrences))
+        yield (single_occurrence,
+               middle_occurrences,
+               high_occurrences)
