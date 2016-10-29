@@ -72,29 +72,29 @@ class TestLongIntMath(unittest.TestCase):
         self.assertEqual(error.args[0], 'message')
 
     def test_EventsVerifier_verify_all_events_pass(self):
-        self.assertIsNone(self.checker.verify_all_events({1: 1}))
+        self.assertIsNone(self.checker.verify_get_dict({1: 1}))
 
     def test_EventsVerifier_verify_all_events_empty(self):
         self.assert_my_regex(lim.InvalidEventsError,
-                             'events may not be empty. a good alternative is the identity - [(0, 1)].',
-                             self.checker.verify_all_events, {})
+                             'events may not be empty. a good alternative is the identity - {0: 1}.',
+                             self.checker.verify_get_dict, {})
 
     def test_EventsVerifier_verify_all_events_zero_occurrences(self):
         self.assert_my_regex(lim.InvalidEventsError,
-                             'no negative or zero occurrences in Events.all_events',
-                             self.checker.verify_all_events, {1: 0, 2: 0})
+                             'no negative or zero occurrences in Events.get_dict()',
+                             self.checker.verify_get_dict, {1: 0, 2: 0})
 
     def test_EventsVerifier_verify_events_by_tuple_negative_occurrences(self):
-        self.assert_my_regex(lim.InvalidEventsError, 'no negative or zero occurrences in Events.all_events',
-                             self.checker.verify_all_events, {1: -1})
+        self.assert_my_regex(lim.InvalidEventsError, 'no negative or zero occurrences in Events.get_dict()',
+                             self.checker.verify_get_dict, {1: -1})
 
     def test_EventsVerifier_verify_all_events_non_int_occurrences(self):
         self.assert_my_regex(lim.InvalidEventsError, self.types_error,
-                             self.checker.verify_all_events, {1: 1.0})
+                             self.checker.verify_get_dict, {1: 1.0})
 
     def test_EventsVerifier_verify_events_by_tuple_non_int_event(self):
         self.assert_my_regex(lim.InvalidEventsError, self.types_error,
-                             self.checker.verify_all_events, {1.0: 1})
+                             self.checker.verify_get_dict, {1.0: 1})
 
     def test_EventsVerifier_is_all_ints_pass(self):
         self.assertTrue(self.checker.is_all_ints([10 ** value for value in range(500)]))
@@ -103,10 +103,10 @@ class TestLongIntMath(unittest.TestCase):
         self.assertFalse(self.checker.is_all_ints([1.0, 1, 1, 1, 1, 1]))
 
     def test_EventsVerifier_does_not_work_if_does_not_follow_minimum_requirements(self):
-        self.assertRaises(AttributeError, self.checker.verify_all_events, 'a')
-        self.assertRaises(AttributeError, self.checker.verify_all_events, [1, 2, 3])
-        self.assertRaises(AttributeError, self.checker.verify_all_events, [(1, 2, 3), (4, 5, 6)])
-        self.assertRaises(lim.InvalidEventsError, self.checker.verify_all_events, {'a': 'b'})
+        self.assertRaises(AttributeError, self.checker.verify_get_dict, 'a')
+        self.assertRaises(AttributeError, self.checker.verify_get_dict, [1, 2, 3])
+        self.assertRaises(AttributeError, self.checker.verify_get_dict, [(1, 2, 3), (4, 5, 6)])
+        self.assertRaises(lim.InvalidEventsError, self.checker.verify_get_dict, {'a': 'b'})
 
     #  AdditiveEvents tests
     def test_AdditiveEvents_init_zero_occurrences_dict_raises_error(self):
@@ -395,7 +395,7 @@ class TestLongIntMath(unittest.TestCase):
         self.identity.combine(1, arbitrary_large_events)
         self.identity_b.combine(2, arbitrary_large_events)
         self.identity_b.remove(1, arbitrary_large_events)
-        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
+        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
 
     def test_AdditiveEvents_combine_works_regardless_of_order(self):
         arbitrary_a = lim.AdditiveEvents({1: 2, 3: 10 ** 456})
@@ -404,8 +404,8 @@ class TestLongIntMath(unittest.TestCase):
         self.identity.combine(2, arbitrary_b)
         self.identity_b.combine(2, arbitrary_b)
         self.identity_b.combine(1, arbitrary_a)
-        self.assertEqual(self.identity.all_events,
-                         self.identity_b.all_events)
+        self.assertEqual(self.identity.get_dict(),
+                         self.identity_b.get_dict())
 
     def test_AdditiveEvents_remove_removes_same_regardless_of_order(self):
         arbitrary_a = lim.AdditiveEvents({-1: 2, 3: 5})
@@ -419,7 +419,7 @@ class TestLongIntMath(unittest.TestCase):
 
         self.identity_b.combine(1, arbitrary_b)
         self.identity_b.combine(1, arbitrary_a)
-        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
+        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
 
 
 if __name__ == '__main__':

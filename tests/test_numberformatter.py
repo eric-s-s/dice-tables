@@ -151,15 +151,15 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(float_format, '1.23e+02')
         self.assertEqual(dec_format, '1.23e+2')
 
-        self.assertEqual(nf.remove_extra_zero_from_exponent(float_format), '1.23e+2')
-        self.assertEqual(nf.remove_extra_zero_from_exponent(dec_format), '1.23e+2')
-        self.assertEqual(nf.remove_extra_zero_from_exponent(dec_zero_exponent), '1.00e+0')
+        self.assertEqual(nf.remove_extra_zero_from_single_digit_exponent(float_format), '1.23e+2')
+        self.assertEqual(nf.remove_extra_zero_from_single_digit_exponent(dec_format), '1.23e+2')
+        self.assertEqual(nf.remove_extra_zero_from_single_digit_exponent(dec_zero_exponent), '1.00e+0')
 
     def test_remove_extra_zero_from_exponent(self):
-        self.assertEqual(nf.remove_extra_zero_from_exponent(str(1.23e-5)), '1.23e-5')
-        self.assertEqual(nf.remove_extra_zero_from_exponent('{:.2e}'.format(123000)),
+        self.assertEqual(nf.remove_extra_zero_from_single_digit_exponent(str(1.23e-5)), '1.23e-5')
+        self.assertEqual(nf.remove_extra_zero_from_single_digit_exponent('{:.2e}'.format(123000)),
                          '1.23e+5')
-        self.assertEqual(nf.remove_extra_zero_from_exponent('{:.2e}'.format(1)),
+        self.assertEqual(nf.remove_extra_zero_from_single_digit_exponent('{:.2e}'.format(1)),
                          '1.00e+0')
 
     def test_NumberFormatter_format_as_exponent_not_remove_extra_zero(self):

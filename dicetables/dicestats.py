@@ -131,14 +131,10 @@ class ModDie(Die):
         return '{}D{}{:+}'.format(number, self.get_size(), number * self._mod)
 
     def __str__(self):
-        return 'D{0}{1:+}'.format(self.get_size(), self._mod)
+        return 'D{}{:+}'.format(self.get_size(), self._mod)
 
     def __repr__(self):
         return 'ModDie({}, {})'.format(self.get_size(), self._mod)
-
-
-def scrub_zeroes(dictionary):
-    return dict([item for item in dictionary.items() if item[1]])
 
 
 class WeightedDie(ProtoDie):
@@ -174,11 +170,11 @@ class WeightedDie(ProtoDie):
         return dict([item for item in self._raw_dic.items() if item[1]])
 
     def weight_info(self):
-        num_len = len(str(self.get_size()))
+        max_roll_str_len = len(str(self.get_size()))
         out = str(self) + '\n'
         for roll in range(1, self.get_size() + 1):
             out += ('    a roll of {:>{}} has a weight of {}\n'
-                    .format(roll, num_len, self._raw_dic.get(roll, 0)))
+                    .format(roll, max_roll_str_len, self._raw_dic.get(roll, 0)))
         return out.rstrip('\n')
 
     def multiply_str(self, number):
@@ -222,11 +218,11 @@ class ModWeightedDie(WeightedDie):
         return new
 
     def multiply_str(self, number):
-        return '{0}D{1}{2:+}  W:{3}'.format(number, self.get_size(),
-                                            number * self._mod, self.get_weight())
+        return '{}D{}{:+}  W:{}'.format(number, self.get_size(),
+                                        number * self._mod, self.get_weight())
 
     def __str__(self):
-        return 'D{0}{1:+}  W:{2}'.format(self.get_size(), self._mod, self.get_weight())
+        return 'D{}{:+}  W:{}'.format(self.get_size(), self._mod, self.get_weight())
 
     def __repr__(self):
         to_fix = super(ModWeightedDie, self).__repr__()[:-1]
@@ -244,7 +240,7 @@ class StrongDie(ProtoDie):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
-        :param multiplier: int != 0
+        :param multiplier: int
         """
         self._multiplier = multiplier
         self._original = input_die
@@ -281,12 +277,6 @@ class StrongDie(ProtoDie):
 
     def __repr__(self):
         return 'StrongDie({!r}, {})'.format(self._original, self._multiplier)
-
-
-def add_paren_to_less_than_one(number):
-    if number < 1:
-        return '({})'.format(number)
-    return '{}'.format(number)
 
 
 class DiceTable(AdditiveEvents):
@@ -342,12 +332,9 @@ class DiceTable(AdditiveEvents):
         :param number: int>= 0
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
+        raise_error_for_negative_number(number)
         self.combine(number, die)
         self.update_list(number, die)
-
-    def _raise_error_for_too_many_removes(self, num, die):
-        if self.number_of_dice(die) < num:
-            raise ValueError('dice not in table, or removed too many dice')
 
     def remove_die(self, number, die):
         """
@@ -355,7 +342,16 @@ class DiceTable(AdditiveEvents):
         :param number: int>=number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
+        raise_error_for_negative_number(number)
         self._raise_error_for_too_many_removes(number, die)
         self.remove(number, die)
         self.update_list(-1 * number, die)
 
+    def _raise_error_for_too_many_removes(self, num, die):
+        if self.number_of_dice(die) < num:
+            raise ValueError('dice not in table, or removed too many dice')
+
+
+def raise_error_for_negative_number(number):
+    if number < 0:
+        raise ValueError('number must be int >= 0')

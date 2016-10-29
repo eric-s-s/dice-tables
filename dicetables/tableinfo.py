@@ -118,18 +118,22 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     raw_pts = GraphDataGenerator(include_zeroes=zeroes).get_raw_points(table)
     formatter = NumberFormatter(shown_digits=2)
 
-    factor = 1
-    overflow_point = 10 ** 300
-    exponent_adjustment = 4
-
-    if table.biggest_event[1] > overflow_point:
-        power = int(log10(table.biggest_event[1])) - exponent_adjustment
-        factor = 10 ** power
+    factor = get_overflow_factor(table)
     factor_string = formatter.format(factor)
     new_points = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
     if axes:
         new_points = list(zip(*new_points))
     return new_points, factor_string
+
+
+def get_overflow_factor(table):
+    factor = 1
+    overflow_point = 10 ** 300
+    exponent_adjustment = 4
+    if table.biggest_event[1] > overflow_point:
+        power = int(log10(table.biggest_event[1])) - exponent_adjustment
+        factor = 10 ** power
+    return factor
 
 
 def full_table_string(table, include_zeroes=True):

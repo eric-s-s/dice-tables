@@ -70,7 +70,7 @@ class NumberFormatter(object):
         try:
             answer = '{:.{}e}'.format(number, self.shown_digits - 1)
             if -10 < exponent < 10:
-                return remove_extra_zero_from_exponent(answer)
+                return remove_extra_zero_from_single_digit_exponent(answer)
             return answer
         except OverflowError:
             return self._format_huge_int_and_exponent_to_exponent(number, exponent)
@@ -109,7 +109,7 @@ class NumberFormatter(object):
             return self._format_number_and_exponent_to_exponent(number, exponent)
 
 
-def remove_extra_zero_from_exponent(answer):
+def remove_extra_zero_from_single_digit_exponent(answer):
     if answer[-2] == '0':
         return answer[:-2] + answer[-1:]
     return answer

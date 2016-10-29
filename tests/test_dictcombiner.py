@@ -1,5 +1,5 @@
 import unittest
-from tools.dictcombiner import flatten_events_tuples, get_best_key, get_current_size_cutoff, DictCombiner
+from tools.dictcombiner import flatten_events_tuples, get_best_key, get_indexed_values_min, DictCombiner
 
 # TODO test every set of keys in dict for fastest method.  how fucking embarrassing
 
@@ -110,8 +110,8 @@ class TestDictCombiner(unittest.TestCase):
         {new_event_size: {times: (current_events_size_choices), ...}, ...}
         {4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
         """
-        self.assertEqual(get_current_size_cutoff('flattened_list', 20, 4), 1)
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_indexed_values_min('flattened_list', 20, 4), 1)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 4), 50)
 
     def test_DictCombiner_get_fastest_method_part_get_current_size_cutoff_uses_get_best_key(self):
         """
@@ -119,30 +119,30 @@ class TestDictCombiner(unittest.TestCase):
         4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
         6: ...
         """
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
-        self.assertEqual(get_current_size_cutoff('tuple_list', 39, 4), 50)
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 5), 50)
-        self.assertEqual(get_current_size_cutoff('tuple_list', 1, 1), 500)
-        self.assertEqual(get_current_size_cutoff('tuple_list', 10000, 100000), 1)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 4), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 39, 4), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 5), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 1, 1), 500)
+        self.assertEqual(get_indexed_values_min('tuple_list', 10000, 100000), 1)
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_indexed(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_twenty = dict.fromkeys(range(20), 1)
-        self.assertEqual(get_current_size_cutoff('flattened_list', 20, 4), 1)
+        self.assertEqual(get_indexed_values_min('flattened_list', 20, 4), 1)
         self.assertEqual(self.identity_combiner.get_fastest_combine_method(4, sized_twenty),
                          'indexed_values')
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_size_of_one_other(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = dict.fromkeys(range(4), 2)
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 4), 50)
         self.assertEqual(self.identity_combiner.get_fastest_combine_method(4, sized_four), 'tuple_list')
 
     def test_DictCombiner_get_fastest_method_uses_size_cutoff_to_choose_below_cutoff(self):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = dict.fromkeys(range(4), 2)
         current_size_five = DictCombiner(dict.fromkeys(range(5), 1))
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_five.get_fastest_combine_method(20, sized_four),
                          'tuple_list')
 
@@ -150,7 +150,7 @@ class TestDictCombiner(unittest.TestCase):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = dict.fromkeys(range(4), 2)
         current_size_fifty = DictCombiner(dict.fromkeys(range(50), 1))
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_fifty.get_fastest_combine_method(20, sized_four),
                          'indexed_values')
 
@@ -158,7 +158,7 @@ class TestDictCombiner(unittest.TestCase):
         """4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},"""
         sized_four = dict.fromkeys(range(4), 2)
         current_size_fifty_one = DictCombiner(dict.fromkeys(range(51), 1))
-        self.assertEqual(get_current_size_cutoff('tuple_list', 20, 4), 50)
+        self.assertEqual(get_indexed_values_min('tuple_list', 20, 4), 50)
         self.assertEqual(current_size_fifty_one.get_fastest_combine_method(20, sized_four),
                          'indexed_values')
 

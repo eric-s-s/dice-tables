@@ -5,12 +5,9 @@ they are slower, without really conferring any great advantages.  :("""
 from __future__ import print_function
 from decimal import Decimal
 import time
-from collections import Counter
-import numpy as np
 from tools.dictcombiner import DictCombiner
 import dicetables as dt
 import dicetables.baseevents as lim
-import numpydict as npd
 
 
 def time_trial(times, func, *args):
@@ -50,77 +47,6 @@ def time_trial_output(times, text, func, *args):
 # for demonstration that NumberFormatter.format() works better
 def format_huge_int_using_decimal(huge_int, dig_len=4):
     return '{:.{}e}'.format(Decimal(huge_int), dig_len - 1)
-
-
-# here for notes only if need be can experiment in DictCombiner
-class CounterTable(lim.AdditiveEvents):
-    def __init__(self, seed):
-        lim.AdditiveEvents.__init__(self, seed)
-        self._table = Counter(self._table)
-
-    def _add_a_list(self, lst):
-        new_dic = Counter()
-        for event in lst:
-            event_dic = Counter({event + value: frequency for value, frequency in self._table.items()})
-            new_dic.update(event_dic)
-        self._table = new_dic
-
-    def _add_tuple_list(self, lst):
-        new_dic = Counter()
-        for value, current_frequency in self._table.items():
-            for val, freq in lst:
-                new_dic[value + val] += freq * current_frequency
-        self._table = new_dic
-
-
-def make_list_from_tuples(tuple_list):
-    out = []
-    for val, freq in tuple_list:
-        out = out + freq * [val]
-    return out
-
-
-# here for notes only!  can now use DictCombiner and add there!
-class NumpyTable(object):
-    def __init__(self, seed_dict):
-        start_val, array = npd.convert_tuple_list_to_array_and_start_value(sorted(seed_dict.items()))
-        self.counter = npd.NumpyCounter(start_val, array)
-
-    def add_a_list(self, input_list):
-        original = self.counter.start_val
-        old_array = self.counter.array[:]
-        self.counter.start_val = original + input_list[0]
-        for val in input_list[1:]:
-            start_val = original + val
-            new_array = old_array[:]
-            self.counter = self.counter.add(npd.NumpyCounter(start_val, new_array))
-
-    def add(self, times, tuple_list):
-        to_add = make_list_from_tuples(tuple_list)
-        for _ in range(times):
-            self.add_a_list(to_add)
-
-    def make_transformation_matrix(self, events_tuples):
-        increase_in_start_val = min(events_tuples)[0]
-        events_tuples_size = max(events_tuples)[0] - increase_in_start_val
-        row = self.counter.array.size
-        col = row + events_tuples_size
-        trans = np.zeros((row, col), dtype=object)
-        for row in range(trans.shape[0]):
-            for index, val in events_tuples:
-                index -= increase_in_start_val
-                trans[row][row + index] = val
-        return trans, increase_in_start_val
-
-    def single_transform_add(self, tuple_list):
-        trans, start_val = self.make_transformation_matrix(tuple_list)
-        new_array = self.counter.array.dot(trans)
-        new_start = self.counter.start_val + start_val
-        self.counter = npd.NumpyCounter(new_start, new_array)
-
-    def combine_by_matrix_transform(self, times, tuple_list):
-        for _ in range(times):
-            self.single_transform_add(tuple_list)
 
 
 def get_int(question):

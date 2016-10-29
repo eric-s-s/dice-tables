@@ -80,6 +80,12 @@ Here are basic table functions::
     In [20]: table.get_list()
     Out[20]: [(Die(2), 2), (Die(3), 1)]
 
+    In [22]: table.number_of_dice(dt.Die(10))
+    Out[22]: 0
+
+    In [22]: table.number_of_dice(dt.Die(2))
+    Out[22]: 2
+
     In [21]: print(table.weights_info())
     2D2
         No weights
@@ -149,7 +155,7 @@ DETAILS OF DIE CLASSES
 ----------------------
 All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
 They all require implementations of get_size(), get_weight(), weight_info(),
-multiply_str(number), __str__(), __repr__(), and the property all_events.
+multiply_str(number), __str__(), __repr__() and get_dict() <-required for any IntegerEvents.
 
 They are all immutable , hashable and rich-comparable so that multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
@@ -214,7 +220,9 @@ WeightedDie
     six times as often as 1, rolls 3 three times as often as 1
     and never rolls 2
 
-    No added methods.
+    added methods:
+
+    - .get_raw_dict()
 
 ModWeightedDie
     A die with a modifier that rolls different rolls with different frequencies.
@@ -223,6 +231,7 @@ ModWeightedDie
 
     added methods:
 
+    - .get_raw_dict()
     - .get_modifier()
 
 StrongDie
@@ -231,7 +240,7 @@ StrongDie
     would add 2 for each 1 that was rolled.
 
     dt.StrongDie(dt.Die(4), 5) is a 4-sided die that rolls 5, 10, 15, 20 with
-    equal weight. dt.StrongDie(dt.Die(4), -1) is a 4 sided die that rolls -1, -2, -3, -4
+    equal weight. dt.StrongDie(dt.Die(4), -1) is a 4 sided die that rolls -1, -2, -3, -4.
 
     added methods:
 
@@ -241,327 +250,206 @@ StrongDie
 -------------------------------------------
 DETAILS OF AdditiveEvents AND IntegerEvents
 -------------------------------------------
+All tables and dice inherit from IntegerEvents.  All subclasses of IntegerEvents need the method
+get_dict() which returns {event: occurrences, ...} for each NON-ZERO occurrence.  When you instantiate
+any subclass, it checks to make sure you're get_dict() is legal.
+
+AdditiveEvents is the parent of DiceTable.  You can add and remove events using the ".combine" method which tries
+to pick the fastest combining algorithm. You can pick it yourself by calling ".combine_by_<algorithm>". You can
+combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,
+but there's no record of it.  You can use this to copy a table::
+
+    In [31]: first = dt.DiceTable()
+
+    In [32]: first.add_die(20, dt.Die(6))
+
+    In [33]: first.add_die(7, dt.Die(9))
+
+    In [34]: second = dt.DiceTable()
+
+    In [35]: second.combine(1, first)
+
+    In [36]: second.get_dict() == first.get_dict()
+    Out[36]: True
+
+    In [37]: for die, number in first.get_list():
+                second.update_list(number, die)
+
+    In [38]: second.get_list() == first.get_list()
+    Out[38]: True
 
 --------------------------
 HOW TO GET ERRORS AND BUGS
 --------------------------
+::
+
+    In[3]: dt.Die(0)
+    dicetables.baseevents.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
+
+    In[5]: dt.AdditiveEvents({1.0: 2})
+    dicetables.baseevents.InvalidEventsError: all values must be ints
+
+    In[6]: dt.WeightedDie({1: 1, 2: -5})
+    dicetables.baseevents.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
+
+but these are ok, because .get_dict() scrubs the zeroes::
+
+    In [9]: dt.AdditiveEvents({1: 1, 2: 0}).get_dict()
+    Out[9]: {1: 1}
+
+    In [11]: weird = dt.WeightedDie({1: 1, 2: 0})
+
+    In [12]: weird.get_dict()
+    Out[12]: {1: 1}
+
+    In[13]: weird.get_size()
+    Out[13]: 2
+
+    In[14]: weird.__repr__()
+    Out[14]: 'WeightedDie({1: 1, 2: 0})'
+
+Special rule for WeightedDie and ModWeightedDie::
+
+    In[15]: dt.WeightedDie({0: 1})
+    ValueError: rolls may not be less than 1. use ModWeightedDie
+
+    In[16]: dt.ModWeightedDie({0: 1}, 1)
+    ValueError: rolls may not be less than 1. use ModWeightedDie
+
+Here's how to add 0 one time (which does nothing, btw)::
+
+    In[18]: dt.ModWeightedDie({1: 1}, -1).get_dict()
+    Out[18]: {0: 1}
+
+StrongDie also has a weird case that can be unpredictable.  Basically, don't multiply by zero::
+
+    In[43]: table = dt.DiceTable()
+
+    In[44]: table.add_die(1, dt.Die(6))
+
+    In[45]: table.add_die(100, dt.StrongDie(dt.Die(100), 0))
+
+    In[46]: table.get_dict()
+
+    Out[46]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
+
+    In[47]: print(table)
+    1D6
+    (100D100)X(0)
+
+    In[48]: table.add_die(2, dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)) <- this rolls zero with weight 4
+
+    In[49]: print(table)
+    (2D3-2  W:6)X(0)
+    1D6
+    (100D100)X(0)
+
+    In[50]: table.get_dict()
+    Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's just stupid.
+
+
+
+"remove_die" raises an error if you remove too many times, but if you use "remove" to remove what you
+haven't added, it may or may not raise an error, but it's guaranteed buggy::
+
+    In [19]: table = dt.DiceTable()
+
+    In [20]: table.add_die(1, dt.Die(6))
+
+    In [21]: table.remove_die(4, dt.Die(6))
+    ValueError: dice not in table, or removed too many dice
+
+    In [22]: table.remove_die(1, dt.Die(10))
+    ValueError: dice not in table, or removed too many dice
+
+    In [6]: table.add_die(-3, dt.Die(6))
+    ValueError: number must be int >= 0
+
+    In [10]: table.get_dict()
+    Out[10]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
+
+    In[31]: table.remove(10, dt.Die(2))
+    ValueError: min() arg is an empty sequence <-not bad
+
+    In[32]: table.remove(2, dt.Die(2))
+
+    In[33]: table.get_dict()
+    Out[33]: {-1: 1, 1: 1} <-ok bad.  garbage
+
+    In[34]: table.remove(1, dt.AdditiveEvents({-5: 100}))
+
+    In[35]: table.get_dict()
+    Out[35]: {} <- very bad.
+
+Calling combine_by_flattened_list can be risky::
+
+    In[36]: x = dt.AdditiveEvents({1:1, 2: 5})
+
+    In[37]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
+
+    In[39]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
+    MemoryError
+
+    In[42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
+    OverflowError: cannot fit 'int' into an index-sized integer
+
+Strangely, this is safe::
+
+    In[51]: x = dt.AdditiveEvents({1: 1, 2: 1})
+
+    In[52]: x.combine(1, x)
+
+    In[53]: x.get_dict()
+    Out[53]: {2: 1, 3: 2, 4: 1}
+
+    In[54]: x.combine(1, x)
+
+    In[55]: x.get_dict()
+    Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1}
+
 =======
 CHANGES
 =======
-::
-
-    In [8]: table.get_event(5)
-    Out[8]: (5, 3)
-
-    In [10]: table.get_range_of_events(1, 5)
-    Out[10]: [(1, 0), (2, 0), (3, 1), (4, 3)]
-
-other useful methods. biggest_event picks the first event with highest
-occurrences and returns the tuple of (value, get_event). ::
-
-    In [11]: table.biggest_event
-    Out[11]: (4, 3)
-
-    In [12]: table.total_occurrences
-    Out[12]: 8
-
-    In [13]: table.mean()
-    Out[13]: 4.5
-
-    In [14]: table.stddev()
-    Out[14]: 0.866
-
-the above methods are all from base class AdditiveEvents. The following are specific methods to
-DiceTable. 
-The add_die and remove_die methods use Die objects. the other 3 kinds of Die are shown here.::
-
-    In [27]: table.add_die(5, dt.ModDie(6, 3))
-
-    In [28]: table.add_die(3, dt.WeightedDie({1:1, 2:2}))
-
-    In [29]: table.add_die(2, dt.ModWeightedDie({1:1, 2:3}, -5))
-
-    In [30]: print(table)
-    3D2
-    3D2  W:3
-    2D2-10  W:4
-    5D6+15
-
-    In [31]: table.remove_die(3, dt.Die(2))
-
-    In [32]: table.add_die(1000, dt.Die(4))
-
-    In [34]: table.get_list()
-    Out[34]: 
-    [(WeightedDie({1: 1, 2: 2}), 3),
-     (ModWeightedDie({1: 1, 2: 3}, -5), 2),
-     (Die(4), 1000),
-     (ModDie(6, 3), 5)]
-
-    In [36]: print(table.weights_info())
-    3D2  W:3
-        a roll of 1 has a weight of 1
-        a roll of 2 has a weight of 2
-
-    2D2-10  W:4
-        a roll of 1 has a weight of 1
-        a roll of 2 has a weight of 3
-
-    1000D4
-        No weights
-
-    5D6+15
-        No weights
-
--------------
-THE DIE TYPES
--------------
-Die is a standard die. Die(2) rolls 1 or 2
-
-ModDie is Die + modifier.  so ModDie(2, 1) rolls 2 or 3 instead of 1 or 2
-
-WeightedDie rolls different rolls with different frequency. So WeightedDie({1:1, 2:4})
-rolls 2 four times as often as 1.
-
-ModWeightedDie ... you'll never guess. ModWeightedDie({1: 1, 2: 4}, -1)
-rolls 1 (2-1) four times as often as 0 (1-1).
-
-StrongDie takes a regular die and gives it an out-sized strength.
-so StrongDie(Die(3), 2) would be one die that rolls double results 
-for a D3.  it would roll. 2, 4 or 6. the all_events compare like this.
-
-ModWeightedDie({1: 1, 2: 2}, -3).all_events = [(-2, 1), (-1, 2)]
-StrongDie(ModWeightedDie({1:1, 2:2}, -3), 5).all_events = [(-10, 1), (-5, 2)]
-::
-
-    In[3]: die = dt.Die(6)
-
-    In[4]: die.all_events
-    Out[4]: [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)]
-
-    In[5]: die.get_weight()
-    Out[5]: 0
-
-    In[6]: die
-    Out[6]: Die(6)
-
-    In[7]: mod_die = dt.ModDie(6, -1)
-
-    In[8]: mod_die.all_events
-    Out[8]: [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]
-
-    In[9]: mod_die.get_modifier()
-    Out[9]: -1
-
-    In[10]: mod_die.multiply_str(5)
-    Out[10]: '5D6-5'
-
-    In[11]: w_die = dt.WeightedDie({0: 1, 3: 4})
-    ValueError: rolls may not be less than 1. use ModWeightedDie
-
-    In[14]: w_die = dt.WeightedDie({1: 1, 3: 4})
-
-    In[15]: w_die.all_events
-    Out[15]: [(1, 1), (3, 4)]
-
-    In[16]: w_die
-    Out[16]: WeightedDie({1: 1, 2: 0, 3: 4})
-
-    In[17]: w_die.get_weight()
-    Out[17]: 5
-
-    In[18]: w_die.get_size()
-    Out[18]: 3
-
-    In[19]: print(w_die.weight_info())
-    D3  W:5
-        a roll of 1 has a weight of 1
-        a roll of 2 has a weight of 0
-        a roll of 3 has a weight of 4
-
-    In[20]: mw_die = dt.ModWeightedDie({1: 1, 3: 4}, -2)
-
-    In[21]: mw_die.all_events
-    Out[21]: [(-1, 1), (1, 4)]
-
-    In[22]: mw_die.get_size()
-    Out[22]: 3
-
-    In[23]: mw_die.multiply_str(5)
-    Out[23]: '5D3-10  W:5'
-
-    In[24]: print(mw_die.weight_info())
-    D3-2  W:5
-        a roll of 1 has a weight of 1
-        a roll of 2 has a weight of 0
-        a roll of 3 has a weight of 4
-
-
-    In [25]: my_die = dt.StrongDie(dt.ModWeightedDie({1:1, 2:2}, -3), 5)
-    
-    In [26]: str(my_die)
-    Out[26]: '(D2-3  W:3)X5'
-
-    In [27]: my_die.multiply_str(7)
-    Out[27]: '(7D2-21  W:3)X5'
-
-    In [28]: my_die.get_multiplier()
-    Out[28]: 5
-
-    In [29]: my_die.get_input_die()
-    Out[29]: ModWeightedDie({1: 1, 2: 2}, -3)
-
-
--------------------------------------------------------------------
-non-method functions for graphing, printing and general readability
--------------------------------------------------------------------
-::
-
-    In [15]: big_table = dt.AdditiveEvents({1:10 ** 1000, 3: 4 * 10**1000})
-
-    In [18]: table.get_list()
-    Out[18]: [(Die(2), 3)]
-
-    In [19]: dt.graph_pts(table)
-    Out[19]: [(3, 4, 5, 6), (12.5, 37.5, 37.5, 12.5)]
-
-    In [20]: dt.graph_pts(big_table, axes=False)
-    Out[20]: [(1, 20.0), (2, 0.0), (3, 80.0)]
-
-graph pts returns roll\\percent chance for graphing functions. it defaults to returning percent but you can return the actual combinations::
-
-    In [21]: dt.graph_pts(big_table, percent=False)
-    Out[21]: 
-    [(1, 2, 3),
-     (10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000L,
-      0,
-      40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000L)]
-
-this is often too large for graphing functions which rely on float math, so graph_pts_overflow
-divides everything by a factor and returns a string of that factor::
-
-    In [22]: dt.graph_pts_overflow(big_table)
-    Out[22]: ([(1, 2, 3), (10000L, 0L, 40000L)], '1.0e+996')
-
-full_table_string uses dt.format_number() to make a readable output of the table::
-
-    In [23]: print(dt.full_table_string(big_table))
-    1: 1.000e+1000
-    2: 0.0
-    3: 4.000e+1000
-
-stats returns the odds of a list occurring in the table::
-
-    In [24]: dt.stats(table, [2,3,4])
-    Out[24]: ('2-4', '4', '8', '2.0', '50.0')
-
-on the table of 3 2-sided dice, 2-4 occured 4 times out of 8 total combinations.  
-that's a one in 2.0 chance or 50.0 percent
-
-also of note is dt.format_number().  this functions takes any number and returns a
-nice string for humans.::
-
-    In [22]: dt.format_number(123**1234, dig_len=10)
-    Out[22]: '8.768140821e+2578'
-
---------------------------
-non-method math functions.
---------------------------
-
-safe_true_div, long_int_times, long_int_pow are wrapper functions for Decimal class.
-they take floats or ints as arguments and return floats if possible, else ints.
-they are for dealing with float math on the very large ints these tables generate.::
-
-    In [25]: dt.safe_true_div(10**1000, 57*10**1005)
-    Out[25]: 1.7543859649122808e-07
-
-
-==============
-niggly details
-==============
-------------
-dice classes
-------------
-all dice classes are children of ProtoDie.  they all require the same methods
-as ProtoDie and use them for hash and comparison.  There are no setter methods
-for dice.  they should be treated as immutable event_keys.  if two dice are ==,
-their hash value will be ==.  so::
-
-    In [2]: x = dt.Die(6)
-
-    In [3]: y = dt.Die(6)
-
-    In [4]: z = dt.ModDie(6, -1)
-
-    In [5]: zz = dt.ModDie(6, 0)
-
-    In [6]: x == y
-    Out[6]: True
-
-    In [7]: x == z
-    Out[7]: False
-
-    In [8]: x == zz
-    Out[8]: False
-
-    In [9]: x > z
-    Out[9]: True
-
-    In [10]: x > zz
-    Out[10]: False
-
-    In [11]: dic = {}
-
-    In [12]: dic[x] = 1
-
-    In [13]: dic[y] = 'abc'
-
-    In [14]: dic[z] = 3
-
-    In [15]: dic[zz] = 4
-
-    In [16]: dic
-    Out[16]: {ModDie(6, -1): 3, Die(6): 'abc', ModDie(6, 0): 4}
-
---------------
-AdditiveEvents
---------------
-LongIntTables are instantiated with a dictionary of {value: get_event it occurs}.
-DiceTable instantiates as the identity table, {0:1}
-
-AdditiveEvents has methods add() and remove() that take an argument of a tuple list.
-so you could recreate a DiceTable if you had stored it's tuple list and dice like so.::
-
-    In [40]: table = dt.DiceTable()
-
-    In [41]: table.add_die(1000, dt.Die(4))
-
-    In [42]: all_events = table.get_event_all()
-
-    In [43]: new_table = dt.DiceTable()
-
-    In [44]: new_table.add(1, all_events)
-
-    In [45]: new_table.get_list()
-    Out[45]: []
-
-    In [46]: new_table.update_list(1200, dt.Die(4))
-
-ooopsy! oh no! what to do??::
-
-    In [47]: new_table.update_list(-200, dt.Die(4))
-
-    In [48]: new_table.get_list()
-    Out[48]: [(Die(4), 1000)]
-
-    In [49]: new_table.get_list() == table.get_list()
-    Out[49]: True
-
-    In [50]: new_table.get_event_all() == table.get_event_all()
-    Out[50]: True
-
- 
-    
-
+The base class of DiceTable is now called AdditiveEvents and not LongIntTable.  the module longintmath.py
+is renamed baseevents.py. All combining is done with other IntegerEvents.  If any IntegerEvents events is
+instantiated in a way that would cause bugs, it raises an error; the same is true for any dice.
+
+AdditiveEvents.combine take any IntegerEvents as an argument whereas LongIntTable.add took a list of tuples as
+an argument.
+
+Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
+which returns a dictionary and not a list of tuples.
+
+scinote and graph_pts were re-written as objects: NumberFormatter, GraphDataGenerator.
+two functions, format_number and graph_pts are wrapper functions for these objects. Several
+class methods were changed to properties.  Here is the full list of
+
+For output: The string for StrongDie now puts parentheses around the multiplier. stats() now shows tiny percentages.
+Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
+
+Here are all the original methods and their changes.
+
+CONVERSIONS = {
+
+    | 'LongIntTable.add()': 'AdditiveEvents.combine()',
+    | 'LongIntTable.frequency()': 'AdditiveEvents.get_event()',
+    | 'LongIntTable.frequency_all()': 'AdditiveEvents.all_events',
+    | 'LongIntTable.frequency_highest()': 'AdditiveEvents.biggest_event',
+    | 'LongIntTable.frequency_range()': 'AdditiveEvents.get_range_of_events()',
+    | 'LongIntTable.mean()': 'AdditiveEvents.mean()',
+    | 'LongIntTable.merge()': 'GONE',
+    | 'LongIntTable.remove()': 'AdditiveEvents.remove()',
+    | 'LongIntTable.stddev()': 'AdditiveEvents.stddev()',
+    | 'LongIntTable.total_frequency()': 'AdditiveEvents.total_occurrences',
+    | 'LongIntTable.update_frequency()': 'GONE',
+    | 'LongIntTable.update_value_add()': 'GONE',
+    | 'LongIntTable.update_value_ow()': 'GONE',
+    | 'LongIntTable.values()': 'AdditiveEvents.event_keys',
+    | 'LongIntTable.values_max()': 'AdditiveEvents.event_range[0]',
+    | 'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
+    | 'LongIntTable.values_range()': 'AdditiveEvents.event_range',
+    | 'ProtoDie.tuple_list()': 'sorted(ProtoDie.get_dict().items())'
+    | 'scinote()': ('format_number()', 'NumberFormatter.format()'),
+    | }
 
 

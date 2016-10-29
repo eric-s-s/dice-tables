@@ -54,18 +54,18 @@ class InputVerifier(object):
             self._int_tuple += (long, )
             self._type_str += ' or longs'
 
-    def verify_all_events(self, all_events):
+    def verify_get_dict(self, all_events):
         """
 
         :param all_events: IntegerEvents.all_events
         :raises: InvalidEventsError
         """
         if not all_events:
-            raise InvalidEventsError('events may not be empty. a good alternative is the identity - [(0, 1)].')
+            raise InvalidEventsError('events may not be empty. a good alternative is the identity - {0: 1}.')
         if not self.is_all_ints(all_events.keys()) or not self.is_all_ints(all_events.values()):
             raise InvalidEventsError('all values must be {}'.format(self._type_str))
         if any(occurrence <= 0 for occurrence in all_events.values()):
-            raise InvalidEventsError('no negative or zero occurrences in Events.all_events')
+            raise InvalidEventsError('no negative or zero occurrences in Events.get_dict()')
 
     def is_int(self, number):
         return isinstance(number, self._int_tuple)
@@ -73,22 +73,18 @@ class InputVerifier(object):
     def is_all_ints(self, iterable):
         return all(self.is_int(value) for value in iterable)
 
-    @staticmethod
-    def is_sorted(iterable):
-        return list(iterable) == sorted(iterable)
-
 
 class IntegerEvents(object):
     def __init__(self):
-        InputVerifier().verify_all_events(self.get_dict())
+        InputVerifier().verify_get_dict(self.get_dict())
 
     def get_dict(self):
         """
 
-        :return: sorted([(event, occurrence) .. ] if occurrence != 0)
+        :return: {event: occurrences}
         """
-        message = ('all_events must return a SORTED tuple list of\n' +
-                   '[(event, occurrences),  ...] event=int, occurrence=int>0.')
+        message = ('get_dict() must return a dictionary\n' +
+                   '{event: occurrences, ...} event=int, occurrence=int>0.')
         raise NotImplementedError(message)
 
 
@@ -107,6 +103,9 @@ class AdditiveEvents(IntegerEvents):
         self._table = scrub_zeroes(events_dictionary)
         super(AdditiveEvents, self).__init__()
 
+    def get_dict(self):
+        return self._table.copy()
+
     @property
     def event_keys(self):
         return sorted(self._table.keys())
@@ -119,7 +118,6 @@ class AdditiveEvents(IntegerEvents):
     @property
     def all_events(self):
         return sorted(self._table.items())
-        # return [pair for pair in self._table.items() if pair[1]]
 
     @property
     def biggest_event(self):
@@ -134,8 +132,7 @@ class AdditiveEvents(IntegerEvents):
 
     @property
     def total_occurrences(self):
-        all_occurrences = self._table.values()
-        return sum(all_occurrences)
+        return sum(self._table.values())
 
     def get_event(self, event):
         return event, self._table.get(event, 0)
@@ -153,6 +150,14 @@ class AdditiveEvents(IntegerEvents):
 
     def stddev(self, decimal_place=4):
         avg = self.mean()
+        factor_to_truncate_digits = self._get_truncation_factor(decimal_place)
+        truncated_deviations = 0
+        for event_value, occurrences in self._table.items():
+            truncated_deviations += (occurrences // factor_to_truncate_digits) * (avg - event_value) ** 2.
+        truncated_total_occurrences = self.total_occurrences // factor_to_truncate_digits
+        return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
+
+    def _get_truncation_factor(self, decimal_place):
         extra_digits = 5
         largest_exponent = int(log10(self.biggest_event[1]))
         required_exp_for_accuracy = 2 * (extra_digits + decimal_place)
@@ -160,15 +165,7 @@ class AdditiveEvents(IntegerEvents):
             factor_to_truncate_digits = 1
         else:
             factor_to_truncate_digits = 10 ** (largest_exponent - required_exp_for_accuracy)
-        truncated_deviations = 0
-        total_occurrences = self.total_occurrences
-        for event_value, occurrences in self._table.items():
-            truncated_deviations += (occurrences // factor_to_truncate_digits) * (avg - event_value) ** 2.
-        truncated_total_occurrences = total_occurrences // factor_to_truncate_digits
-        return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
-
-    def get_dict(self):
-        return self._table.copy()
+        return factor_to_truncate_digits
 
     def combine(self, times, events):
         combiner = DictCombiner(self.get_dict())
