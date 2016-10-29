@@ -2,13 +2,12 @@
 THIS MODULE REQUIRES numpy AND matplotlib TO RUN CORRECTLY
 
 this hastily cobbled together module demonstrates the conditions each of the following methods is fastest
-AdditiveEvents.combine_by_tuple_list and AdditiveEvents.combine_by_flattened_list
+AdditiveEvents.combine_by_dictionary and AdditiveEvents.combine_by_flattened_list
 the main determining factor seems to the ratio of (total event occurrences) to (total number of events).
 the quick_and_dirty_ui is set up to demonstrate this.
 
 THIS MODULE REQUIRES numpy AND matplotlib TO RUN CORRECTLY
 """
-# pylint: disable=protected-access
 from __future__ import print_function
 
 import time
@@ -64,7 +63,7 @@ def gen_random_point(val_list):
 
 def one_time_trial(events, num_adds, start_dict_size=1):
     """add t_list to identity AdditiveEvents num_adds times, using combine_once_with_flattened_list and
-    combine_once_with_tuple_list.  returns the ratio of sum_of_freq/num_of_values, and the
+    combine_once_with_dictionary.  returns the ratio of sum_of_freq/num_of_values, and the
     time for each function to do the adding."""
     events_total_occurrences = sum([pair[1] for pair in events])
 
@@ -80,7 +79,7 @@ def one_time_trial(events, num_adds, start_dict_size=1):
 
     id_table_b = lim.AdditiveEvents(start_dict)
     start_b = time.clock()
-    id_table_b.combine_by_tuple_list(num_adds, to_combine)
+    id_table_b.combine_by_dictionary(num_adds, to_combine)
     tuple_time = time.clock() - start_b
 
     return occurrences_to_events_ratio, tuple_time, flattened_list_time

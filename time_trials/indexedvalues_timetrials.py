@@ -179,7 +179,7 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
 def get_control_action(input_dict, events_tuples):
     control_events = lim.AdditiveEvents(input_dict)
     control_method_str = get_control_method_str(events_tuples)
-    control_method_dict = {'tuple_list': control_events.combine_by_tuple_list,
+    control_method_dict = {'tuple_list': control_events.combine_by_dictionary,
                            'flattened_list': control_events.combine_by_flattened_list}
     control_events_action = control_method_dict[control_method_str]
     return control_events_action
@@ -807,6 +807,6 @@ def get_side_by_side_data(left_answer, right_answer):
 
 if __name__ == '__main__':
 
-    # graphing_ui()
+    graphing_ui()
 
-    data_points_ui()
+    # data_points_ui()

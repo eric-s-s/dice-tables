@@ -23,7 +23,7 @@ def time_trial(times, func, *args):
 def combine_trial(times, new_events, method, the_object):
     start = time.clock()
     method_dict = {'fastest': the_object.combine,
-                   'tuple_list': the_object.combine_by_tuple_list,
+                   'dictionary': the_object.combine_by_dictionary,
                    'indexed_values': the_object.combine_by_indexed_values,
                    'flattened_list': the_object.combine_by_flattened_list}
     method_dict[method](times, new_events)
@@ -179,7 +179,8 @@ def fastest_vs_tuple_indexed_ui():
         number_of_adds = get_answer('how many times to combine?', 1, 2000)
 
         print('\n get_fastest_method')
-        print(time_trial_output(1, 'get_fastest', show_fastest_method_speed.get_fastest_combine_method, 1, flat_events))
+        print(time_trial_output(1, 'get_fastest', show_fastest_method_speed.get_fastest_combine_method, 1,
+                                flat_events.get_dict()))
         print('\nFASTEST with one occurrence')
         print_combine_trial(number_of_adds, flat_events, 'fastest', flattened_list_fastest)
         print(flattened_list_fastest.event_range)
@@ -193,7 +194,7 @@ def fastest_vs_tuple_indexed_ui():
         print(tuple_list_fastest.event_range)
 
         print('\nTUPLE_LIST with many occurrence')
-        print_combine_trial(number_of_adds, tuple_events, 'tuple_list', tuple_list_control)
+        print_combine_trial(number_of_adds, tuple_events, 'dictionary', tuple_list_control)
         print(tuple_list_control.event_range)
 
 

@@ -185,9 +185,9 @@ class AdditiveEvents(IntegerEvents):
         dictionary = combiner.combine_by_flattened_list(times, events.get_dict()).get_dict()
         self._table = dictionary
 
-    def combine_by_tuple_list(self, times, events):
+    def combine_by_dictionary(self, times, events):
         combiner = DictCombiner(self.get_dict())
-        dictionary = combiner.combine_by_tuple_list(times, events.get_dict()).get_dict()
+        dictionary = combiner.combine_by_dictionary(times, events.get_dict()).get_dict()
         self._table = dictionary
 
     def combine_by_indexed_values(self, times, events):

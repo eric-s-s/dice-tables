@@ -232,12 +232,12 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_AdditiveEvents_combine_method_is_tuple_list_identity(self):
         to_combine = lim.AdditiveEvents({1: 2, 2: 2})
-        self.identity.combine_by_tuple_list(1, to_combine)
+        self.identity.combine_by_dictionary(1, to_combine)
         self.assertEqual(self.identity.all_events, to_combine.all_events)
 
     def test_AdditiveEvents_combine_method_is_tuple_list_complex(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
-        self.identity.combine_by_tuple_list(3, to_combine)
+        self.identity.combine_by_dictionary(3, to_combine)
         """
         {1: 1, 2: 2}
 
@@ -251,7 +251,7 @@ class TestLongIntMath(unittest.TestCase):
     def test_AdditiveEvents_combine_method_is_tuple_list_complex_AdditiveEvents(self):
         to_combine = lim.AdditiveEvents({1: 1, 2: 2})
         complex_events = lim.AdditiveEvents({2: 1, 3: 4, 4: 4})
-        complex_events.combine_by_tuple_list(1, to_combine)
+        complex_events.combine_by_dictionary(1, to_combine)
         """
         {2: 1, 3: 4, 4: 4}
 
@@ -327,7 +327,7 @@ class TestLongIntMath(unittest.TestCase):
         fastest = lim.AdditiveEvents({0: 1})
         events = lim.AdditiveEvents({1: 1})
         flattened.combine_by_flattened_list(1, events)
-        tuple_list.combine_by_tuple_list(1, events)
+        tuple_list.combine_by_dictionary(1, events)
         indexed.combine_by_indexed_values(1, events)
         fastest.combine(1, events)
         self.assertEqual(flattened.all_events, events.all_events)

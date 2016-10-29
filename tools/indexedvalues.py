@@ -45,11 +45,7 @@ class IndexedValues(object):
         return self.start_index, len(self.raw_values) + self.start_index - 1
 
     def get_items(self):
-        out = []
-        for index, value in enumerate(self.raw_values):
-            if value:
-                out.append((index + self.start_index, value))
-        return out
+        return [(index + self.start_index, value) for index, value in enumerate(self.raw_values) if value]
 
     def get_value_at_key(self, key):
         index = key - self.start_index
@@ -58,32 +54,21 @@ class IndexedValues(object):
         else:
             return self.raw_values[index]
 
-    def combine(self, other):
-        offset_for_higher = self.start_index - other.start_index
-        if offset_for_higher < 0:
-            lower = self
-            higher = other
-        else:
-            lower = other
-            higher = self
-        new_values = combine_values(lower.raw_values, higher.raw_values, abs(offset_for_higher))
-        return IndexedValues(lower.start_index, new_values)
-
-    def combine_with_events_list(self, sorted_tuple_list_of_events):
+    def combine_with_dictionary(self, no_zero_values_dict):
         """
-        :param sorted_tuple_list_of_events: MAY NOT BE EMPTY
+        :param no_zero_values_dict: MAY NOT BE EMPTY
         """
         base_list = self.raw_values
 
-        first_event = sorted_tuple_list_of_events[0][0]
-        last_event = sorted_tuple_list_of_events[-1][0]
+        first_event = min(no_zero_values_dict.keys())
+        last_event = max(no_zero_values_dict.keys())
 
         new_start_index = self.start_index + first_event
         new_size = len(base_list) + last_event - first_event
 
         container_for_lists_to_combine = []
 
-        for event, occurrences in sorted_tuple_list_of_events:
+        for event, occurrences in no_zero_values_dict.items():
             index_offset = event - first_event
             new_group_of_events = get_events_list(base_list, occurrences, new_size, index_offset)
             container_for_lists_to_combine.append(new_group_of_events)
@@ -107,10 +92,3 @@ def change_list_len_with_zeroes(input_list, new_size, index_offset):
     left = [0] * index_offset
     right = [0] * (new_size - index_offset - len(input_list))
     return left + input_list + right
-
-
-def combine_values(lower, higher, offset_for_higher):
-    new_size = max(len(lower), len(higher) + offset_for_higher)
-    lower = change_list_len_with_zeroes(lower, new_size, 0)
-    higher = change_list_len_with_zeroes(higher, new_size, offset_for_higher)
-    return list(map(add, lower, higher))

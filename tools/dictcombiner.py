@@ -1,17 +1,20 @@
-"""a class that combines a dictionary with valid IntegerEvents"""
+"""a class that combines dictionaries of {int: int >=1}"""
 from tools.indexedvalues import generate_indexed_values_from_dict
 
 
 class DictCombiner(object):
-    def __init__(self, dictionary):
-        self._dict = dictionary
+    """
+    All input dictionaries are {int: int>=1}
+    """
+    def __init__(self, dict_has_values_only_gt_zero):
+        self._dict = dict_has_values_only_gt_zero
 
     def get_dict(self):
         return self._dict.copy()
 
-    def combine_by_flattened_list(self, times, other_dict):
+    def combine_by_flattened_list(self, times, dict_has_values_only_gt_zero):
         events_dict = DictCombiner(self.get_dict())
-        flattened_list = flatten_events_tuples(other_dict)
+        flattened_list = flatten_events_tuples(dict_has_values_only_gt_zero)
         for _ in range(times):
             events_dict = events_dict.combine_once_with_flattened_list(flattened_list)
         return events_dict
@@ -23,64 +26,63 @@ class DictCombiner(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_tuple_list(self, times, other_dict):
+    def combine_by_dictionary(self, times, dict_has_values_only_gt_zero):
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
-            new_events = new_events.combine_once_with_tuple_list(other_dict)
+            new_events = new_events.combine_once_with_dictionary(dict_has_values_only_gt_zero)
         return new_events
 
-    def combine_once_with_tuple_list(self, other_dict):
+    def combine_once_with_dictionary(self, dict_has_values_only_gt_zero):
         new_dict = {}
         for event, current_frequency in self._dict.items():
-            for new_event, frequency in other_dict.items():
+            for new_event, frequency in dict_has_values_only_gt_zero.items():
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + frequency * current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_indexed_values(self, times, other_dict):
-        events_tuples = list(other_dict.items())
+    def combine_by_indexed_values(self, times, dict_has_values_only_gt_zero):
         indexed_values_to_update = generate_indexed_values_from_dict(self._dict)
         for _ in range(times):
-            indexed_values_to_update = indexed_values_to_update.combine_with_events_list(events_tuples)
+            indexed_values_to_update = indexed_values_to_update.combine_with_dictionary(dict_has_values_only_gt_zero)
         return DictCombiner(dict(indexed_values_to_update.get_items()))
 
-    def combine_by_fastest(self, times, other_dict):
-        method_dict = {'tuple_list': self.combine_by_tuple_list,
+    def combine_by_fastest(self, times, dict_has_values_only_gt_zero):
+        method_dict = {'tuple_list': self.combine_by_dictionary,
                        'flattened_list': self.combine_by_flattened_list,
                        'indexed_values': self.combine_by_indexed_values}
-        method = self.get_fastest_combine_method(times, other_dict)
+        method = self.get_fastest_combine_method(times, dict_has_values_only_gt_zero)
 
-        return method_dict[method](times, other_dict)
+        return method_dict[method](times, dict_has_values_only_gt_zero)
 
-    def get_fastest_combine_method(self, times, other_dict):
-        first_comparison = self._compare_tuple_list_with_flattened_list(other_dict)
-        second_comparison = self._compare_with_indexed_values(first_comparison, times, other_dict)
+    def get_fastest_combine_method(self, times, dict_has_values_only_gt_zero):
+        first_comparison = self._compare_tuple_list_with_flattened_list(dict_has_values_only_gt_zero)
+        second_comparison = self._compare_with_indexed_values(first_comparison, times, dict_has_values_only_gt_zero)
         return second_comparison
 
     @staticmethod
-    def _compare_tuple_list_with_flattened_list(other_dict):
+    def _compare_tuple_list_with_flattened_list(dict_has_values_only_gt_zero):
         max_occurrences_to_events_ratio_for_flattened_list = 1.3
         safe_limit_flattened_list_len = 10 ** 4
-        total_occurrences = sum(other_dict.values())
+        total_occurrences = sum(dict_has_values_only_gt_zero.values())
 
         if total_occurrences >= safe_limit_flattened_list_len:
             return 'tuple_list'
 
-        occurrences_to_events_ratio = float(total_occurrences) / len(other_dict.keys())
+        occurrences_to_events_ratio = float(total_occurrences) / len(dict_has_values_only_gt_zero)
         if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_flattened_list:
             return 'tuple_list'
         return 'flattened_list'
 
-    def _compare_with_indexed_values(self, first_method, times, other_dict):
-        size_of_events_tuples = len(other_dict.keys())
+    def _compare_with_indexed_values(self, first_method, times, dict_has_values_only_gt_zero):
+        size_of_events_tuples = len(dict_has_values_only_gt_zero)
         cutoff_size = get_current_size_cutoff(first_method, times, size_of_events_tuples)
-        size_of_main_events = len(self._dict.keys())
+        size_of_main_events = len(self._dict)
         if size_of_main_events < cutoff_size:
             return first_method
         else:
             return 'indexed_values'
 
-    def remove_by_tuple_list(self, times, other_dict):
-        events_tuples = sorted(other_dict.items())
+    def remove_by_tuple_list(self, times, dict_has_values_only_gt_zero):
+        events_tuples = sorted(dict_has_values_only_gt_zero.items())
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
             new_events = new_events.remove_once_by_tuple_list(events_tuples)

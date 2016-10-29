@@ -164,7 +164,6 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(repr(dt.WeightedDie({1: 1, 2: 3})),
                          'WeightedDie({1: 1, 2: 3})')
 
-    @unittest.skip('check this')
     def test_WeightedDie_repr_edge_case(self):
         die1 = dt.WeightedDie({1: 1, 3: 0})
         die2 = dt.WeightedDie({1: 1, 2: 0, 3: 0})
@@ -223,7 +222,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_weight_info(self):
         dic = dict((x, x + 1) for x in range(1, 6, 2))
-        weights_str = ('(D5  W:12)X10\n' +
+        weights_str = ('(D5  W:12)X(10)\n' +
                        '    a roll of 1 has a weight of 2\n' +
                        '    a roll of 2 has a weight of 0\n' +
                        '    a roll of 3 has a weight of 4\n' +
@@ -234,11 +233,11 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_multiply_str(self):
         orig = dt.ModWeightedDie({1: 2}, -3)
-        expected = '(5D1-15  W:2)X100'
+        expected = '(5D1-15  W:2)X(100)'
         self.assertEqual(dt.StrongDie(orig, 100).multiply_str(5), expected)
 
     def test_StrongDie_str(self):
-        self.assertEqual(str(dt.StrongDie(dt.Die(7), 5)), '(D7)X5')
+        self.assertEqual(str(dt.StrongDie(dt.Die(7), 5)), '(D7)X(5)')
 
     def test_StrongDie_repr(self):
         self.assertEqual(repr(dt.StrongDie(dt.Die(7), 5)), 'StrongDie(Die(7), 5)')
@@ -278,7 +277,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_str(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
-        self.assertEqual(dt.StrongDie(die, 3).__str__(), '((D3+1)X2)X3')
+        self.assertEqual(dt.StrongDie(die, 3).__str__(), '((D3+1)X(2))X(3)')
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_repr(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
@@ -286,11 +285,11 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_multiply_str(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
-        self.assertEqual(dt.StrongDie(die, 3).multiply_str(5), '((5D3+5)X2)X3')
+        self.assertEqual(dt.StrongDie(die, 3).multiply_str(5), '((5D3+5)X(2))X(3)')
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_weight_info(self):
         die = dt.StrongDie(dt.ModWeightedDie({1: 4}, 1), 2)
-        self.assertEqual(dt.StrongDie(die, 3).weight_info(), '((D1+1  W:4)X2)X3\n    a roll of 1 has a weight of 4')
+        self.assertEqual(dt.StrongDie(die, 3).weight_info(), '((D1+1  W:4)X(2))X(3)\n    a roll of 1 has a weight of 4')
 
     #  ProtoDie __hash__
 
@@ -350,7 +349,6 @@ class TestDiceStats(unittest.TestCase):
         table = dt.DiceTable()
         self.assertEqual(table.weights_info(), '')
 
-    @unittest.skip('check this')
     def test_DiceTable_weights_info_returns_appropriate_string(self):
         table = dt.DiceTable()
         table.update_list(2, dt.Die(4))
