@@ -634,7 +634,6 @@ def get_data_list(many_occurrences):
 
     titles = ('ADDS', 'DICT SIZE', 'LIST SIZE', 'OCCUR MANY', 'RESULT')
     adds = [1, 2, 3, 4, 5, 10, 20, 50, 100, 500, 1000, 2000]
-    # adds = [1, 2, 3]
     start_dict_sizes = [1, 10, 50, 100, 200, 500, 1000, 2000, 5000]
     tuple_list_sizes = [2, 3, 4, 6, 8, 10, 20, 50, 100]
     all_data = [titles]

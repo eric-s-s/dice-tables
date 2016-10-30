@@ -218,7 +218,6 @@ def quick_and_dirty_ui():
     """a UI to demonstrate add speeds"""
     print(get_welcome())
     this_will_take_forever = 2500
-    # too_short_for_accuracy = 1200
     needs_many_points = 50
     max_vals = 300
     min_vals = 3
@@ -241,7 +240,7 @@ def quick_and_dirty_ui():
             num_vals = min_vals
 
         max_adds = this_will_take_forever // num_vals
-        min_adds = 1  # + too_short_for_accuracy // num_vals
+        min_adds = 1
         num_adds_question = ('please input the number of adds per trial\n' +
                              'an int between %s and %s\n' % (min_adds, max_adds))
         num_adds = get_int(num_adds_question)

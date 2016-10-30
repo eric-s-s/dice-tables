@@ -349,8 +349,11 @@ StrongDie also has a weird case that can be unpredictable.  Basically, don't mul
 
 
 
-"remove_die" raises an error if you remove too many times, but if you use "remove" to remove what you
-haven't added, it may or may not raise an error, but it's guaranteed buggy::
+"remove_die" and "add_die" are safe. They raise an error if you
+remove too many dice or add or remove a negative number.
+If you remove or combine with a negative, nothing should happen,
+but if you use "remove" to remove what you haven't added,
+it may or may not raise an error, but it's guaranteed buggy::
 
     In [19]: table = dt.DiceTable()
 
@@ -363,6 +366,9 @@ haven't added, it may or may not raise an error, but it's guaranteed buggy::
     ValueError: dice not in table, or removed too many dice
 
     In [6]: table.add_die(-3, dt.Die(6))
+    ValueError: number must be int >= 0
+
+    In [6]: table.remove_die(-3, dt.Die(6))
     ValueError: number must be int >= 0
 
     In [10]: table.get_dict()
@@ -422,12 +428,12 @@ which returns a dictionary and not a list of tuples.
 
 scinote and graph_pts were re-written as objects: NumberFormatter, GraphDataGenerator.
 two functions, format_number and graph_pts are wrapper functions for these objects. Several
-class methods were changed to properties.  Here is the full list of
+class methods were changed to properties.
 
 For output: The string for StrongDie now puts parentheses around the multiplier. stats() now shows tiny percentages.
 Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
 
-Here are all the original methods and their changes.
+Here are all the original methods and their changes. You should be able to copy and paste this.
 
 CONVERSIONS = {
 
@@ -448,8 +454,8 @@ CONVERSIONS = {
     | 'LongIntTable.values_max()': 'AdditiveEvents.event_range[0]',
     | 'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
     | 'LongIntTable.values_range()': 'AdditiveEvents.event_range',
-    | 'ProtoDie.tuple_list()': 'sorted(ProtoDie.get_dict().items())'
-    | 'scinote()': ('format_number()', 'NumberFormatter.format()'),
+    | 'ProtoDie.tuple_list()': 'sorted(ProtoDie.get_dict().items())',
+    | 'scinote()': ('format_number()', 'NumberFormatter.format()')
     | }
 
 

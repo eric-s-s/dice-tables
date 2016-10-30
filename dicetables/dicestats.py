@@ -339,7 +339,7 @@ class DiceTable(AdditiveEvents):
     def remove_die(self, number, die):
         """
 
-        :param number: int>=number of "die" in table
+        :param number: 0 <= int <= number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
         raise_error_for_negative_number(number)
