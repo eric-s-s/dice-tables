@@ -156,7 +156,8 @@ any IntegerEvents.
 They are all immutable , hashable and rich-comparable so that multiple 
 names can safely point to the same instance of a Die, they can be used 
 in sets and dictionary keys and they can be sorted with any other kind 
-of die. Comparisons done by (size, weight, all_events, __repr__(as a last resort)).
+of die. Comparisons are done by (size, weight, all_events,
+__repr__(as a last resort)).
 
 So:
 ```
@@ -256,7 +257,7 @@ instantiate any subclass, it checks to make sure you're get_dict() is legal.
 
 AdditiveEvents is the parent of DiceTable. You can add and remove events 
 using the ".combine" method which tries to pick the fastest combining
-algorithm. You can pick it yourself by calling ".combine_by_<algorithm>".
+algorithm. You can pick it yourself by calling ".combine_by_\<algorithm\>".
 You can combine and remove DiceTable, AdditiveEvents, Die or any other
 IntegerEvents with the "combine" and "remove" methods, but there's no
 record of it. You can use this to copy a table::
@@ -350,8 +351,11 @@ In[50]: table.get_dict()
 Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's just stupid.
 ```
 
-"remove_die" raises an error if you remove too many times, but if you use "remove" to remove what you
-haven't added, it may or may not raise an error, but it's guaranteed buggy
+"remove_die" and "add_die" are safe. They raise an error if you
+remove too many dice or add or remove a negative number.
+If you remove or combine with a negative number, nothing should happen.
+If you use "remove" to remove what you haven't added,
+it may or may not raise an error, but it's guaranteed buggy
 ```
 In [19]: table = dt.DiceTable()
 
@@ -382,53 +386,59 @@ In[34]: table.remove(1, dt.AdditiveEvents({-5: 100}))
 In[35]: table.get_dict()
 Out[35]: {} <- very bad.
 ```
-Calling combine_by_flattened_list can be risky::
+Calling combine_by_flattened_list can be risky:
+```
+In[36]: x = dt.AdditiveEvents({1:1, 2: 5})
 
-    In[36]: x = dt.AdditiveEvents({1:1, 2: 5})
+In[37]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
 
-    In[37]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
+In[39]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
+MemoryError
 
-    In[39]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
-    MemoryError
+In[42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
+OverflowError: cannot fit 'int' into an index-sized integer
+```
+Combining events with themselves is safe:
+```
+In[51]: x = dt.AdditiveEvents({1: 1, 2: 1})
 
-    In[42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
-    OverflowError: cannot fit 'int' into an index-sized integer
+In[52]: x.combine(1, x)
 
-Strangely, this is safe::
+In[53]: x.get_dict()
+Out[53]: {2: 1, 3: 2, 4: 1}
 
-    In[51]: x = dt.AdditiveEvents({1: 1, 2: 1})
+In[54]: x.combine(1, x)
 
-    In[52]: x.combine(1, x)
-
-    In[53]: x.get_dict()
-    Out[53]: {2: 1, 3: 2, 4: 1}
-
-    In[54]: x.combine(1, x)
-
-    In[55]: x.get_dict()
-    Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1}
-
+In[55]: x.get_dict()
+Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1} 
+```
 
 #CHANGES
 
-The base class of DiceTable is now called AdditiveEvents and not LongIntTable. The module longintmath.py
-is renamed baseevents.py. All combining is done with other IntegerEvents. If any IntegerEvents events is
-instantiated in a way that would cause bugs, it raises an error; the same is true for any dice.
+The base class of DiceTable is now called AdditiveEvents and not 
+LongIntTable. The module longintmath.py is renamed baseevents.py. If any
+IntegerEvents events is instantiated in a way that would cause bugs, it
+raises an error; the same is true for any dice.
 
-AdditiveEvents.combine take any IntegerEvents as an argument whereas LongIntTable.add took a list of tuples as
-an argument.
+AdditiveEvents.combine take any IntegerEvents as an argument whereas
+LongIntTable.add took a list of tuples as an argument.
 
-Any subclass of ProtoDie no longer has the .tuple_list() method. It has been replaced by the .get_dict() method
-which returns a dictionary and not a list of tuples.
+Any subclass of ProtoDie no longer has the .tuple_list() method.  It has
+been replaced by the .get_dict() method which returns a dictionary and
+not a list of tuples.
 
-scinote and graph_pts were re-written as objects: NumberFormatter, GraphDataGenerator.
-two functions, format_number and graph_pts are wrapper functions for these objects. Several
-class methods were changed to properties. Here is the full list of
+scinote and graph_pts were re-written as objects: NumberFormatter and
+GraphDataGenerator. Two functions, format_number and graph_pts, are
+wrapper functions for these objects.
 
-For output: The string for StrongDie now puts parentheses around the multiplier. stats() now shows tiny percentages.
-Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
+For output: The string for StrongDie now puts parentheses around the
+multiplier. stats() now shows tiny percentages. Any exponent between 10
+and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
 
-Here are all the original methods and their changes. You should be able to copy and paste this.
+Several AdditiveEvents class methods were changed to properties. Here
+are all the original methods and their changes. You should be able to
+copy and paste this.
+
 
 ```
 CONVERSIONS = {'LongIntTable.add()': 'AdditiveEvents.combine()',

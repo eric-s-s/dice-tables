@@ -806,6 +806,6 @@ def get_side_by_side_data(left_answer, right_answer):
 
 if __name__ == '__main__':
 
-    graphing_ui()
+    # graphing_ui()
 
-    # data_points_ui()
+    data_points_ui()

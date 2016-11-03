@@ -159,7 +159,7 @@ multiply_str(number), __str__(), __repr__() and get_dict() <-required for any In
 
 They are all immutable , hashable and rich-comparable so that multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
-sorted with any other kind of die. Comparisons done by (size, weight, all_events, __repr__(as a last resort)).
+sorted with any other kind of die. Comparisons are done by (size, weight, all_events, __repr__(as a last resort)).
 So::
 
     In [54]: dice_list
@@ -351,8 +351,8 @@ StrongDie also has a weird case that can be unpredictable.  Basically, don't mul
 
 "remove_die" and "add_die" are safe. They raise an error if you
 remove too many dice or add or remove a negative number.
-If you remove or combine with a negative, nothing should happen,
-but if you use "remove" to remove what you haven't added,
+If you remove or combine with a negative number, nothing should happen.
+If you use "remove" to remove what you haven't added,
 it may or may not raise an error, but it's guaranteed buggy::
 
     In [19]: table = dt.DiceTable()
@@ -399,7 +399,7 @@ Calling combine_by_flattened_list can be risky::
     In[42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
     OverflowError: cannot fit 'int' into an index-sized integer
 
-Strangely, this is safe::
+Combining events with themselves is safe::
 
     In[51]: x = dt.AdditiveEvents({1: 1, 2: 1})
 
@@ -417,8 +417,8 @@ Strangely, this is safe::
 CHANGES
 =======
 The base class of DiceTable is now called AdditiveEvents and not LongIntTable.  the module longintmath.py
-is renamed baseevents.py. All combining is done with other IntegerEvents.  If any IntegerEvents events is
-instantiated in a way that would cause bugs, it raises an error; the same is true for any dice.
+is renamed baseevents.py. If any IntegerEvents events is instantiated in a way that would cause bugs,
+it raises an error; the same is true for any dice.
 
 AdditiveEvents.combine take any IntegerEvents as an argument whereas LongIntTable.add took a list of tuples as
 an argument.
@@ -426,13 +426,13 @@ an argument.
 Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
 which returns a dictionary and not a list of tuples.
 
-scinote and graph_pts were re-written as objects: NumberFormatter, GraphDataGenerator.
-two functions, format_number and graph_pts are wrapper functions for these objects. Several
-class methods were changed to properties.
+scinote and graph_pts were re-written as objects: NumberFormatter and GraphDataGenerator.
+Two functions, format_number and graph_pts, are wrapper functions for these objects.
 
 For output: The string for StrongDie now puts parentheses around the multiplier. stats() now shows tiny percentages.
 Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
 
+Several AdditiveEvents class methods were changed to properties.
 Here are all the original methods and their changes. You should be able to copy and paste this.
 
 CONVERSIONS = {
@@ -455,7 +455,7 @@ CONVERSIONS = {
     | 'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
     | 'LongIntTable.values_range()': 'AdditiveEvents.event_range',
     | 'ProtoDie.tuple_list()': 'sorted(ProtoDie.get_dict().items())',
-    | 'scinote()': ('format_number()', 'NumberFormatter.format()')
+    | 'scinote()': ('format_number()', 'NumberFormatter.format()'),
     | }
 
 

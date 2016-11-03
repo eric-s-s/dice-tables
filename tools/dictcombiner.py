@@ -58,7 +58,7 @@ class DictCombiner(object):
         """
         :dictionary: {int: int>0, ...}
         """
-        method_dict = {'tuple_list': self.combine_by_dictionary,
+        method_dict = {'dictionary': self.combine_by_dictionary,
                        'flattened_list': self.combine_by_flattened_list,
                        'indexed_values': self.combine_by_indexed_values}
         method = self.get_fastest_combine_method(times, dictionary)
@@ -80,16 +80,16 @@ class DictCombiner(object):
         total_occurrences = sum(dictionary.values())
 
         if total_occurrences >= safe_limit_flattened_list_len:
-            return 'tuple_list'
+            return 'dictionary'
 
         occurrences_to_events_ratio = float(total_occurrences) / len(dictionary)
         if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_flattened_list:
-            return 'tuple_list'
+            return 'dictionary'
         return 'flattened_list'
 
     def _compare_with_indexed_values(self, first_method, times, dictionary):
         size_of_dict_to_combine = len(dictionary)
-        min_size_for_indexed_values = get_indexed_values_min(first_method, times, size_of_dict_to_combine)
+        min_size_for_indexed_values = get_indexed_values_min(first_method, size_of_dict_to_combine, times)
         size_of_main_dict = len(self._dict)
         if size_of_main_dict < min_size_for_indexed_values:
             return first_method
@@ -148,27 +148,38 @@ def flatten_events_tuples(dictionary):
     return flattened_list
 
 
-def get_indexed_values_min(first_method, combine_times, size_of_dict_to_combine):
+def get_indexed_values_min(first_method, size_of_dict_to_combine, combine_times):
     """
-    keys_are_dict_size = {size_of_events_tuples: {combine_times: (min_size_tuple), ...}, ...}
+    {'first method': {size of input dict: {combine times: size of Dictcombiner.get_dict(), ...}, ...}, ... }
 
-    :first_method: 'flattened_list', 'tuple_list'
+    :first_method: 'flattened_list', 'dictionary'
     """
-    keys_are_dict_size = {
-        2: {10: (250, 500), 50: (100, 200), 500: (1, 1)},
-        3: {4: (500, 500), 10: (50, 100), 20: (10, 50), 50: (1, 10), 100: (1, 1)},
-        4: {2: (500, 100), 4: (50, 100), 20: (1, 50), 50: (1, 1)},
-        6: {2: (500, 500), 4: (10, 50), 20: (1, 1)},
-        8: {1: (500, 1000), 2: (200, 200), 5: (50, 50), 10: (1, 1)},
-        20: {1: (50, 100), 3: (1, 50), 4: (1, 1)},
-        50: {1: (50, 100), 3: (1, 1)}
+    choices = {'flattened_list': {
+        2: {10: 200,  20: 100,  100: 50,  500: 1},
+        4: {2: 100, 5: 50, 10: 10, 20: 1},
+        6: {1: 100, 4: 50, 10: 1},
+        8: {1: 100, 3: 50, 5: 10, 10: 1},
+        20: {1: 50, 3: 10, 4: 1},
+        50: {1: 50, 3: 1},
+        100: {1: 100, 2: 1}
+        },
+        'dictionary': {
+        2: {10: 100, 50: 50, 100: 1},
+        4: {2: 100, 10: 50, 50: 1},
+        6: {2: 50, 10: 10, 20: 1},
+        8: {1: 100, 3: 50, 10: 1},
+        10: {1: 100, 3: 50, 5: 1},
+        20: {1: 50, 3: 10, 4: 1},
+        50: {1: 50, 2: 10, 3: 1},
+        100: {1: 100, 2: 1}
+        }
     }
-    closes_dict_size = get_best_key(size_of_dict_to_combine, keys_are_dict_size)
-    keys_are_times = keys_are_dict_size[closes_dict_size]
+    keys_are_input_dict_size = choices[first_method]
+
+    closest_dict_size = get_best_key(size_of_dict_to_combine, keys_are_input_dict_size)
+    keys_are_times = keys_are_input_dict_size[closest_dict_size]
     closest_times = get_best_key(combine_times, keys_are_times)
-    min_size_tuple = keys_are_times[closest_times]
-    index_to_choose = {'flattened_list': 0, 'tuple_list': 1}[first_method]
-    min_size_for_indexed_values = min_size_tuple[index_to_choose]
+    min_size_for_indexed_values = keys_are_times[closest_times]
     return min_size_for_indexed_values
 
 

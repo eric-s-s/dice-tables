@@ -6,26 +6,6 @@ from sys import version_info
 
 from tools.dictcombiner import DictCombiner
 
-CONVERSIONS = {'LongIntTable.add()': 'AdditiveEvents.combine()',
-               'LongIntTable.frequency()': 'AdditiveEvents.get_event()',
-               'LongIntTable.frequency_all()': 'AdditiveEvents.all_events',
-               'LongIntTable.frequency_highest()': 'AdditiveEvents.biggest_event',
-               'LongIntTable.frequency_range()': 'AdditiveEvents.get_range_of_events()',
-               'LongIntTable.mean()': 'AdditiveEvents.mean()',
-               'LongIntTable.merge()': 'GONE',
-               'LongIntTable.remove()': 'AdditiveEvents.remove()',
-               'LongIntTable.stddev()': 'AdditiveEvents.stddev()',
-               'LongIntTable.total_frequency()': 'AdditiveEvents.total_occurrences',
-               'LongIntTable.update_frequency()': 'GONE',
-               'LongIntTable.update_value_add()': 'GONE',
-               'LongIntTable.update_value_ow()': 'GONE',
-               'LongIntTable.values()': 'AdditiveEvents.event_keys',
-               'LongIntTable.values_max()': 'AdditiveEvents.event_range[0]',
-               'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
-               'LongIntTable.values_range()': 'AdditiveEvents.event_range',
-               'scinote()': ('format_number()', 'NumberFormatter.format()'),
-               }
-
 
 def _convert_decimal_to_float_or_int(num):
     answer_as_float = float(num)

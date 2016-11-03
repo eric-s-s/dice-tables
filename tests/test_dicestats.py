@@ -61,7 +61,7 @@ class TestDiceStats(unittest.TestCase):
     def test_WeightedDie_lt_by_weight(self):
         self.assertEqual(dt.WeightedDie({2: 2}) < dt.WeightedDie({2: 3}), True)
 
-    def test_WeightedDie_lt_by_tuple_list(self):
+    def test_WeightedDie_lt_by_sorted_dict(self):
         self.assertEqual(dt.WeightedDie({1: 1, 2: 2}) < dt.WeightedDie({1: 2, 2: 1}), True)
 
     def test_Die_lt_by_repr(self):
@@ -74,8 +74,8 @@ class TestDiceStats(unittest.TestCase):
         self.assertNotEqual(dt.Die(1), dt.StrongDie(dt.Die(1), 1))
 
     def test_StrongDie_gt_same_size_lt_larger(self):
-        self.assertGreater(dt.StrongDie(dt.Die(1), 2), dt.Die(1))
-        self.assertLess(dt.StrongDie(dt.Die(1), 5), dt.Die(2))
+        self.assertTrue(dt.StrongDie(dt.Die(1), 2) > dt.Die(1))
+        self.assertTrue(dt.StrongDie(dt.Die(1), 5) < dt.Die(2))
 
     #  Die tests
     def test_Die_get_size(self):
@@ -84,7 +84,7 @@ class TestDiceStats(unittest.TestCase):
     def test_Die_get_weight(self):
         self.assertEqual(dt.Die(10).get_weight(), 0)
 
-    def test_Die_tuple_list(self):
+    def test_Die_get_dict(self):
         self.assertEqual(dt.Die(3).get_dict(), {1: 1, 2: 1, 3: 1})
 
     def test_Die_weight_info(self):
@@ -103,7 +103,7 @@ class TestDiceStats(unittest.TestCase):
     def test_ModDie_get_modifier(self):
         self.assertEqual(dt.ModDie(7, 33).get_modifier(), 33)
 
-    def test_ModDie_tuple_list(self):
+    def test_ModDie_get_dict(self):
         self.assertEqual(dt.ModDie(2, 5).get_dict(), {6: 1, 7: 1})
 
     def test_ModDie_string(self):
@@ -119,16 +119,22 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.ModDie(5, -3).multiply_str(2), '2D5-6')
 
     #  WeightedDie tests
+    def test_WeightedDie_init_raises_value_error_on_zero_key(self):
+        self.assertRaises(ValueError, dt.WeightedDie, {0: 1, 2: 1})
+
+    def test_WeightedDie_init_raises_value_error_on_negative_key(self):
+        self.assertRaises(ValueError, dt.WeightedDie, {-5: 1, 2: 1})
+
     def test_WeightedDie_get_size(self):
         self.assertEqual(dt.WeightedDie({5: 2, 2: 5}).get_size(), 5)
 
     def test_WeightedDie_get_weight(self):
         self.assertEqual(dt.WeightedDie({1: 2, 3: 5}).get_weight(), 7)
 
-    def test_WeightedDie_tuple_list(self):
+    def test_WeightedDie_get_dict(self):
         self.assertEqual(dt.WeightedDie({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
 
-    def test_WeightedDie_tuple_list_doesnt_return_zero_frequencies(self):
+    def test_WeightedDie_get_dict_doesnt_return_zero_frequencies(self):
         self.assertEqual(dt.WeightedDie({1: 2, 3: 0}).get_dict(), {1: 2})
 
     def test_WeightedDie_weight_info(self):
@@ -179,7 +185,7 @@ class TestDiceStats(unittest.TestCase):
     def test_ModWeightedDie_get_mod(self):
         self.assertEqual(dt.ModWeightedDie({1: 2}, 3).get_modifier(), 3)
 
-    def test_ModWeightedDie_tuple_list(self):
+    def test_ModWeightedDie_get_dict(self):
         self.assertEqual(dt.ModWeightedDie({1: 2, 3: 4}, -2).get_dict(),
                          {1 - 2: 2, 3 - 2: 4})
 
@@ -200,7 +206,6 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(dt.ModWeightedDie({1: 2}, -3).multiply_str(5), '5D1-15  W:2')
 
     #  StrongDie tests
-    # TODO tests *-1, *0
     def test_StrongDie_get_size(self):
         orig = dt.ModWeightedDie({1: 2}, -3)
         self.assertEqual(dt.StrongDie(orig, 100).get_size(), orig.get_size())
@@ -215,10 +220,18 @@ class TestDiceStats(unittest.TestCase):
     def test_StrongDie_get_original(self):
         self.assertEqual(dt.StrongDie(dt.Die(3), 5).get_input_die(), dt.Die(3))
 
-    def test_StrongDie_tuple_list(self):
+    def test_StrongDie_get_dict(self):
         orig = dt.ModWeightedDie({1: 2, 2: 1}, 1)
         self.assertEqual(dt.StrongDie(orig, 100).get_dict(),
                          {200: 2, 300: 1})
+
+    def test_StrongDie_zero_multiplier(self):
+        self.assertEqual(dt.StrongDie(dt.WeightedDie({1: 2, 3: 4}), 0).get_dict(),
+                         {0: 4})
+
+    def test_StrongDie_negative_multiplier(self):
+        self.assertEqual(dt.StrongDie(dt.WeightedDie({1: 2, 3: 4}), -2).get_dict(),
+                         {-2: 2, -6: 4})
 
     def test_StrongDie_weight_info(self):
         dic = dict((x, x + 1) for x in range(1, 6, 2))
@@ -242,15 +255,15 @@ class TestDiceStats(unittest.TestCase):
     def test_StrongDie_repr(self):
         self.assertEqual(repr(dt.StrongDie(dt.Die(7), 5)), 'StrongDie(Die(7), 5)')
 
-    def test_StrongDie_expected_lt_cases_positive_tuple_list(self):
+    def test_StrongDie_expected_lt_cases_positive_sorted_dict_start(self):
         die = dt.Die(5)
         self.assertEqual(die < dt.StrongDie(die, 2), True)
 
-    def test_StrongDie_expected_lt_cases_zero_tuple_list(self):
+    def test_StrongDie_expected_lt_cases_zero_sorted_dict_start(self):
         die = dt.ModDie(5, -1)
         self.assertEqual(die < dt.StrongDie(die, 2), True)
 
-    def test_StrongDie_expected_lt_cases_negative_tuple_list(self):
+    def test_StrongDie_expected_lt_cases_negative_sorted_dict_start(self):
         die = dt.ModDie(5, -3)
         self.assertEqual(die < dt.StrongDie(die, 2), False)
 
@@ -262,32 +275,32 @@ class TestDiceStats(unittest.TestCase):
         die = dt.StrongDie(dt.WeightedDie({1: 5}), 2)
         self.assertEqual(dt.StrongDie(die, 3).get_weight(), 5)
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_tuple_list(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_get_dict(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         expected_tuple = dict([(roll * 6, 1) for roll in [2, 3, 4]])
         self.assertEqual(dt.StrongDie(die, 3).get_dict(), expected_tuple)
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_get_multiplier(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_get_multiplier(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         self.assertEqual(dt.StrongDie(die, 3).get_multiplier(), 3)
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_get_original(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_get_original(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         self.assertEqual(dt.StrongDie(die, 3).get_input_die(), die)
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_str(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_str(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         self.assertEqual(dt.StrongDie(die, 3).__str__(), '((D3+1)X(2))X(3)')
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_repr(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_repr(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         self.assertEqual(dt.StrongDie(die, 3).__repr__(), 'StrongDie(StrongDie(ModDie(3, 1), 2), 3)')
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_multiply_str(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_multiply_str(self):
         die = dt.StrongDie(dt.ModDie(3, 1), 2)
         self.assertEqual(dt.StrongDie(die, 3).multiply_str(5), '((5D3+5)X(2))X(3)')
 
-    def test_StrongDie_edge_StrongDie_of_StrongDie_weight_info(self):
+    def test_StrongDie_edge_case_StrongDie_of_StrongDie_weight_info(self):
         die = dt.StrongDie(dt.ModWeightedDie({1: 4}, 1), 2)
         self.assertEqual(dt.StrongDie(die, 3).weight_info(), '((D1+1  W:4)X(2))X(3)\n    a roll of 1 has a weight of 4')
 
@@ -311,7 +324,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertNotEqual(hash(one_a), hash(not_same_c))
 
     #  DiceTable tests
-    def test_DiceTable_inits_empty(self):
+    def test_DiceTable_init_empty(self):
         table = dt.DiceTable()
         self.assertEqual(table.get_dict(), {0: 1})
         self.assertEqual(table.get_list(), [])
@@ -372,6 +385,10 @@ class TestDiceStats(unittest.TestCase):
         table_str = '2D4-4\n5D4+10  W:10\n3D10'
         self.assertEqual(str(table), table_str)
 
+    def test_DiceTable_add_die_raise_error_for_negative_add(self):
+        table = dt.DiceTable()
+        self.assertRaises(ValueError, table.add_die, -2, dt.Die(5))
+
     def test_DiceTable_add_die_doesnt_add_zero_dice(self):
         table = dt.DiceTable()
         table.add_die(0, dt.Die(4))
@@ -384,6 +401,10 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(table.get_list(), [(dt.Die(4), 2)])
         freq_all = dict([(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)])
         self.assertEqual(table.get_dict(), freq_all)
+
+    def test_DiceTable_remove_die_raise_error_for_negative_add(self):
+        table = dt.DiceTable()
+        self.assertRaises(ValueError, table.remove_die, -2, dt.Die(5))
 
     def test_DiceTable_remove_die_removes_correct_dice(self):
         table = dt.DiceTable()
