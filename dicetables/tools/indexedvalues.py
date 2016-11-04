@@ -1,4 +1,5 @@
 """a simulated Counter dict with numpy arrays"""
+from __future__ import absolute_import
 
 
 def make_start_index_and_list(sorted_tuple_list):

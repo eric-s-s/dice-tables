@@ -1,4 +1,6 @@
 """test indexedlist"""
+from __future__ import absolute_import
+
 import unittest
 
 from dicetables.tools import indexedvalues as iv

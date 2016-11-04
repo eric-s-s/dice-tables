@@ -1,4 +1,5 @@
 """fancy number formatting"""
+from __future__ import absolute_import
 
 from math import log10
 from sys import version_info

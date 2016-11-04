@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import unittest
 
 from dicetables.tools.dictcombiner import flatten_events_tuples, get_best_key, get_indexed_values_min, DictCombiner
@@ -325,3 +327,7 @@ def events_generator():
         yield (single_occurrence,
                middle_occurrences,
                high_occurrences)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -17,7 +17,7 @@ class TestTableInfo(unittest.TestCase):
     """
     note: format_number is simply a wrapper for NumberFormatter.  for full tests, see test_numberformatter.py
     """
-    def test_scinote_works_as_expected(self):
+    def test_format_number_works_as_expected(self):
         self.assertEqual(ti.format_number(123456.78), '123,457')
         self.assertEqual(ti.format_number(123456.78, digits_shown=7), '123,456.8')
         self.assertEqual(ti.format_number(123456.78, digits_shown=7, max_comma_exp=4), '1.234568e+5')

@@ -1,4 +1,6 @@
 """a class that combines dictionaries of {int: int >=1}"""
+from __future__ import absolute_import
+
 from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
 
 

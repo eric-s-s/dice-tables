@@ -1,5 +1,7 @@
 """ this module contains the class LongIntTable and longintmath that the table
 needs to deal with it's BFN"""
+from __future__ import absolute_import
+
 from decimal import Decimal
 from math import log10
 from sys import version_info

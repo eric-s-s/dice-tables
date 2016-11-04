@@ -254,3 +254,7 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(formatter.format(nine_digits), '9,999,999.990')
         formatter.shown_digits = 8
         self.assertEqual(formatter.format(nine_digits), '1.0000000e+7')
+
+
+if __name__ == '__main__':
+    unittest.main()
