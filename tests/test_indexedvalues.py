@@ -10,11 +10,6 @@ class TestIndexedValues(unittest.TestCase):
         self.assertEqual(indexed_values.start_index, start_index)
         self.assertEqual(indexed_values.raw_values, values)
 
-    # def assert_combine(self, start_index_values_1, start_index_values_2, expected_items):
-    #     first = iv.IndexedValues(*start_index_values_1)
-    #     second = iv.IndexedValues(*start_index_values_2)
-    #     return self.assertEqual(first.combine(second).get_items(), expected_items)
-
     def test_make_start_index_and_list_empty(self):
         start_index, lst = iv.make_start_index_and_list([])
         self.assertEqual(start_index, 0)

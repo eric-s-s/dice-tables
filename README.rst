@@ -42,6 +42,9 @@ THE BASICS
 
 Here are basic table functions::
 
+    In [5]: str(table)
+    Out[5]: '1D2\n1D3'
+
     In [6]: table.add_die(100, dt.Die(2))
 
     In [7]: table.remove_die(99, dt.Die(2))
@@ -164,7 +167,7 @@ multiply_str(number), __str__(), __repr__() and get_dict() <-required for any In
 
 They are all immutable , hashable and rich-comparable so that multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
-sorted with any other kind of die. Comparisons are done by (size, weight, all_events, __repr__(as a last resort)).
+sorted with any other kind of die. Comparisons are done by (size, weight, get_dict, __repr__(as a last resort)).
 So::
 
     In [54]: dice_list

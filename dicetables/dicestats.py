@@ -215,11 +215,8 @@ class ModWeightedDie(WeightedDie):
         return self._mod
 
     def get_dict(self):
-        new = {}
-        for roll, weight in self.get_raw_dict().items():
-            if weight:
-                new[roll + self._mod] = weight
-        return new
+        return dict([(roll + self._mod, weight)
+                     for roll, weight in self.get_raw_dict().items() if weight])
 
     def multiply_str(self, number):
         return '{}D{}{:+}  W:{}'.format(number, self.get_size(),
@@ -263,11 +260,8 @@ class StrongDie(ProtoDie):
         return self._original
 
     def get_dict(self):
-        new = {}
-        old = self._original.get_dict()
-        for roll, weight in old.items():
-            new[roll * self._multiplier] = weight
-        return new
+        return dict([(roll * self._multiplier, weight)
+                     for roll, weight in self._original.get_dict().items()])
 
     def weight_info(self):
         return self._original.weight_info().replace(str(self._original), str(self))
