@@ -5,7 +5,7 @@ from decimal import Decimal
 from math import log10
 
 from dicetables.baseevents import safe_true_div
-from tools.numberforamtter import NumberFormatter
+from dicetables.tools.numberforamtter import NumberFormatter
 
 
 def format_number(number, digits_shown=4, max_comma_exp=6, min_fixed_pt_exp=-3):

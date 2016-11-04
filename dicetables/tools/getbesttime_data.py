@@ -6,8 +6,8 @@ from __future__ import print_function
 
 import time
 from itertools import cycle
-# import dicetables.baseevents as lim
-from tools.dictcombiner import DictCombiner
+
+from dicetables.tools import DictCombiner
 
 
 def get_input_dict(input_dict_size, use_exponential_occurrences):

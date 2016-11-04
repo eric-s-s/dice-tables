@@ -1,7 +1,7 @@
 """test indexedlist"""
 import unittest
 
-import tools.indexedvalues as iv
+from dicetables.tools import indexedvalues as iv
 
 
 class TestIndexedValues(unittest.TestCase):

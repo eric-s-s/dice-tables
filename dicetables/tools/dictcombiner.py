@@ -1,5 +1,5 @@
 """a class that combines dictionaries of {int: int >=1}"""
-from tools.indexedvalues import generate_indexed_values_from_dict
+from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
 
 
 class DictCombiner(object):

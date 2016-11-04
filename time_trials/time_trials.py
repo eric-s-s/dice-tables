@@ -3,11 +3,13 @@ why i don't use Counter (also disappoint. while it is only marginally slower, it
 they are slower, without really conferring any great advantages.  :("""
 
 from __future__ import print_function
-from decimal import Decimal
+
 import time
-from tools.dictcombiner import DictCombiner
+from decimal import Decimal
+
 import dicetables as dt
 import dicetables.baseevents as lim
+from dicetables.tools.dictcombiner import DictCombiner
 
 
 def time_trial(times, func, *args):

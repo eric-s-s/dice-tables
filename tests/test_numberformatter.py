@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import unittest
 from decimal import Decimal
 
-import tools.numberforamtter as nf
+from dicetables.tools import numberforamtter as nf
 
 
 class TestTableInfo(unittest.TestCase):

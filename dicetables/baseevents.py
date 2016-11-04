@@ -4,7 +4,7 @@ from decimal import Decimal
 from math import log10
 from sys import version_info
 
-from tools.dictcombiner import DictCombiner
+from dicetables.tools.dictcombiner import DictCombiner
 
 
 def _convert_decimal_to_float_or_int(num):
@@ -34,17 +34,17 @@ class InputVerifier(object):
             self._int_tuple += (long, )
             self._type_str += ' or longs'
 
-    def verify_get_dict(self, all_events):
+    def verify_get_dict(self, events_dict):
         """
 
-        :param all_events: IntegerEvents.all_events
+        :param events_dict: IntegerEvents.get_dict()
         :raises: InvalidEventsError
         """
-        if not all_events:
+        if not events_dict:
             raise InvalidEventsError('events may not be empty. a good alternative is the identity - {0: 1}.')
-        if not self.is_all_ints(all_events.keys()) or not self.is_all_ints(all_events.values()):
+        if not self.is_all_ints(events_dict.keys()) or not self.is_all_ints(events_dict.values()):
             raise InvalidEventsError('all values must be {}'.format(self._type_str))
-        if any(occurrence <= 0 for occurrence in all_events.values()):
+        if any(occurrence <= 0 for occurrence in events_dict.values()):
             raise InvalidEventsError('no negative or zero occurrences in Events.get_dict()')
 
     def is_int(self, number):

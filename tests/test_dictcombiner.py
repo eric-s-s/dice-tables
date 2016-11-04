@@ -1,5 +1,6 @@
 import unittest
-from tools.dictcombiner import flatten_events_tuples, get_best_key, get_indexed_values_min, DictCombiner
+
+from dicetables.tools.dictcombiner import flatten_events_tuples, get_best_key, get_indexed_values_min, DictCombiner
 
 
 class TestDictCombiner(unittest.TestCase):

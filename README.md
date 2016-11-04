@@ -18,7 +18,7 @@ you get the following combinations.
 
 - roll - 2: 1 occurrence  (1 in 6 chance)
 - roll - 3: 2 occurrences  (2 in 6 chance)
-- roll - 4: 2 occurrences  (3 in 6 chance)
+- roll - 4: 2 occurrences  (2 in 6 chance)
 - roll - 5: 1 occurrence  (1 in 6 chance)
 
 ```
@@ -121,7 +121,9 @@ Out[42]:
  (6, 25.0),
  (7, 8.333333333333334)]
 ```
-(or you may use the wrapper-function "graph_pts")
+instead of GraphDataGenerator obj, you can also use the wrapper function,
+graph_pts(). Both give you y-values that are % of total occurrences 
+unless told otherwise.
 ```
 In[43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
 
@@ -147,6 +149,10 @@ Finally, here are all the kinds of dice you can add
 - dt.ModWeightedDie({1:1, 2:5, 3:2}, 5)
 - dt.StrongDie(dt.Die(6), 5)
 
+That's all of the basic implementation. The rest of this is details
+about base classes, details of the die classes, what causes errors and
+the changes from the previous version.
+
 ###DETAILS OF DIE CLASSES
 All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
 They all require implementations of get_size(), get_weight(), weight_info(),
@@ -170,7 +176,7 @@ Out[54]:
  StrongDie(Die(2), 1),
  StrongDie(WeightedDie({1: 1, 2: 1}), 1)]
 
-In [58]: [die.all_events == [(1, 1), (2, 1)] for die in dice_list]
+In [58]: [die.get_dict() == {1: 1, 2: 1} for die in dice_list]
 Out[58]: [True, True, True, True, True, True]
 
 In [56]: sorted(dice_list)
@@ -227,7 +233,7 @@ and never rolls 2
 ModWeightedDie
 
 * A die with a modifier that rolls different rolls with different frequencies.
-dt.ModWeightedDie({1:1, 3:3, 4:6}, 3) is a 4-sided die. 4 is added to all
+dt.ModWeightedDie({1:1, 3:3, 4:6}, 3) is a 4-sided die. 3 is added to all
 die rolls.  The same as WeightedDie.
 
 * added methods:
@@ -281,7 +287,7 @@ In [37]: for die, number in first.get_list():
 In [38]: second.get_list() == first.get_list()
 Out[38]: True
 ```
-HOW TO GET ERRORS AND BUGS
+###HOW TO GET ERRORS AND BUGS
 
 ```
 
@@ -294,7 +300,8 @@ dicetables.baseevents.InvalidEventsError: all values must be ints
 In[6]: dt.WeightedDie({1: 1, 2: -5})
 dicetables.baseevents.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
 ```
-but these are ok, because .get_dict() scrubs the zeroes
+but these are ok, because AdditiveEvents and WeightedDie specifically
+scrub the zeroes in their get_dict() methods.
 ```
 
 In [9]: dt.AdditiveEvents({1: 1, 2: 0}).get_dict()
@@ -355,7 +362,7 @@ Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's jus
 remove too many dice or add or remove a negative number.
 If you remove or combine with a negative number, nothing should happen.
 If you use "remove" to remove what you haven't added,
-it may or may not raise an error, but it's guaranteed buggy
+it may or may not raise an error, but it's guaranteed buggy.
 ```
 In [19]: table = dt.DiceTable()
 
@@ -374,17 +381,17 @@ In [10]: table.get_dict()
 Out[10]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
 In[31]: table.remove(10, dt.Die(2))
-ValueError: min() arg is an empty sequence <-not bad
+ValueError: min() arg is an empty sequence <-didn't know this would happen, but at least failed loudly
 
 In[32]: table.remove(2, dt.Die(2))
 
 In[33]: table.get_dict()
-Out[33]: {-1: 1, 1: 1} <-ok bad.  garbage
+Out[33]: {-1: 1, 1: 1} <-bad. this is a random answer
 
 In[34]: table.remove(1, dt.AdditiveEvents({-5: 100}))
 
 In[35]: table.get_dict()
-Out[35]: {} <- very bad.
+Out[35]: {} <-very bad. this is an illegal answer.
 ```
 Calling combine_by_flattened_list can be risky:
 ```
@@ -420,8 +427,8 @@ LongIntTable. The module longintmath.py is renamed baseevents.py. If any
 IntegerEvents events is instantiated in a way that would cause bugs, it
 raises an error; the same is true for any dice.
 
-AdditiveEvents.combine take any IntegerEvents as an argument whereas
-LongIntTable.add took a list of tuples as an argument.
+AdditiveEvents.combine/remove take any IntegerEvents as an argument
+whereas LongIntTable.add/remove took a list of tuples as an argument.
 
 Any subclass of ProtoDie no longer has the .tuple_list() method.  It has
 been replaced by the .get_dict() method which returns a dictionary and
