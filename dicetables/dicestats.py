@@ -9,8 +9,8 @@ class ProtoDie(IntegerEvents):
     base object for any kind of die.
 
 
-    :all Die objects need: get_size(), get_weight(), weight_info(), multiply_str(), all_events
-    :all_events: must be sorted and have no zero occurrences.
+    :all Die objects need: get_size(), get_weight(), weight_info(), multiply_str(), get_dict()
+    :get_dict(): must return {int: int >0}
 
     """
     def __init__(self):
@@ -149,12 +149,19 @@ class WeightedDie(ProtoDie):
             the sum of all weights >0
         """
 
-        self._raw_dic = dictionary_input.copy()
-        self._raise_value_error_for_rolls_less_than_one()
+        self._raw_dic = self._create_raw_dict(dictionary_input)
         super(WeightedDie, self).__init__()
 
-    def _raise_value_error_for_rolls_less_than_one(self):
-        if any(roll < 1 for roll in self._raw_dic.keys()):
+    def _create_raw_dict(self, dictionary):
+        self._raise_value_error_for_rolls_less_than_one(dictionary)
+        output = {}
+        for key in range(1, max(dictionary.keys()) + 1):
+            output[key] = dictionary.get(key, 0)
+        return output
+
+    @staticmethod
+    def _raise_value_error_for_rolls_less_than_one(dictionary):
+        if any(roll < 1 for roll in dictionary):
             raise ValueError('rolls may not be less than 1. use ModWeightedDie')
 
     def get_raw_dict(self):
@@ -184,10 +191,7 @@ class WeightedDie(ProtoDie):
         return 'D{}  W:{}'.format(self.get_size(), self.get_weight())
 
     def __repr__(self):
-        new_dic = {}
-        for roll in range(1, self.get_size() + 1):
-            new_dic[roll] = self._raw_dic.get(roll, 0)
-        return 'WeightedDie({})'.format(new_dic)
+        return 'WeightedDie({})'.format(self._raw_dic)
 
 
 class ModWeightedDie(WeightedDie):
@@ -225,8 +229,7 @@ class ModWeightedDie(WeightedDie):
         return 'D{}{:+}  W:{}'.format(self.get_size(), self._mod, self.get_weight())
 
     def __repr__(self):
-        to_fix = super(ModWeightedDie, self).__repr__()[:-1]
-        return 'Mod' + to_fix + ', {})'.format(self._mod)
+        return 'ModWeightedDie({}, {})'.format(self.get_raw_dict(), self._mod)
 
 
 class StrongDie(ProtoDie):

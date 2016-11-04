@@ -5,9 +5,7 @@ this module generates a txt file to get dictionaries.  it take a WHILE to run.
 from __future__ import print_function
 
 import time
-from itertools import cycle
-
-from dicetables.tools import DictCombiner
+from dicetables.tools.dictcombiner import DictCombiner
 
 
 def get_input_dict(input_dict_size, use_exponential_occurrences):
@@ -23,8 +21,6 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
 
     combiner = DictCombiner(input_dict)
     to_be_combined = dict(events_tuples)
-    # events_for_indexed_values = lim.AdditiveEvents(input_dict)
-    # events_to_add = lim.AdditiveEvents(dict(events_tuples))
 
     indexed_values_start = time.clock()
     combiner.combine_by_indexed_values(combine_times, to_be_combined)
@@ -50,14 +46,6 @@ def get_control_method_str(prepped_list):
         return 'flattened_list'
     else:
         return 'tuple_list'
-
-
-def get_plot_style_generator():
-    pt_style = cycle(['o', '<', '>', 'v', 's', 'p', '*',
-                      '+', 'x', 'D', 'd'])
-    colors = cycle(['b', 'y', 'r', 'c', 'm', 'k', 'g'])
-    while True:
-        yield '{}{}-'.format(next(colors), next(pt_style))
 
 
 def get_tuple_list(size, many_occurrences=False, step=1):
