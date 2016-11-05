@@ -5,7 +5,7 @@ this module generates a txt file to get dictionaries.  it take a WHILE to run.
 from __future__ import print_function
 
 import time
-from dicetables.tools.dictcombiner import DictCombiner
+from dicetables.baseevents import DictCombiner
 
 
 def get_input_dict(input_dict_size, use_exponential_occurrences):
@@ -99,32 +99,29 @@ def dict_maker(data_points):
             obj_size_list.append(obj_size)
             data_map[input_size][times] = obj_size_list
 
-    for key in data_map.keys():
-        for new_key in data_map[key].keys():
-            data_map[key][new_key] = min(data_map[key][new_key])
+    for input_size in data_map.keys():
+        for times in data_map[input_size].keys():
+            first_obj_size_at_threshold = min(data_map[input_size][times])
+            data_map[input_size][times] = first_obj_size_at_threshold
 
-    return remove_extra_one_results(data_map)
+    return remove_excess_one_obj_size_results(data_map)
 
 
-def remove_extra_one_results(data_map):
+def remove_excess_one_obj_size_results(data_map):
     new_data_map = {}
-    for big_key in data_map.keys():
-        old_small_map = data_map[big_key]
-        small_map = {}
-        for small_key in sorted(old_small_map.keys()):
-            value = old_small_map[small_key]
-            small_map[small_key] = value
-            if value == 1:
+    for input_size in data_map.keys():
+        old_times_obj_size_map = data_map[input_size]
+        times_obj_size_map = {}
+        for times in sorted(old_times_obj_size_map.keys()):
+            obj_size = old_times_obj_size_map[times]
+            times_obj_size_map[times] = obj_size
+            if obj_size == 1:
                 break
-        new_data_map[big_key] = small_map
+        new_data_map[input_size] = times_obj_size_map
     return new_data_map
 
 
-def write_dict_file():
-    write_dict_file_with_name('dictionaries.txt')
-
-
-def write_dict_file_with_name(file_name):
+def write_dict_file(file_name):
     lines = []
     for suffix in range(10):
         print('on set {} of 9'.format(suffix))
@@ -141,19 +138,19 @@ def write_dict_file_with_name(file_name):
         file.write('\n'.join(lines))
 
 
-def write_grouped_data_file_name(file_name):
-    flat, many = re_format(file_name)
-    if file_name.endswith('.txt'):
-        file_name = file_name[:-4]
+def write_two_txt_files_from_original(original_file_name):
+    flat, many = convert_text_to_dicts_list(original_file_name)
+    if original_file_name.endswith('.txt'):
+        original_file_name = original_file_name[:-4]
     new_flat_str = group_dicts(flat)
     new_many_str = group_dicts(many)
-    with open(file_name + '_flat.txt', 'w') as file:
+    with open(original_file_name + '_flat.txt', 'w') as file:
         file.write(new_flat_str)
-    with open(file_name + '_many.txt', 'w') as file:
+    with open(original_file_name + '_many.txt', 'w') as file:
         file.write(new_many_str)
 
 
-def re_format(file_name):
+def convert_text_to_dicts_list(file_name):
     with open(file_name, 'r') as file:
         lines = file.read().split('\n')
     flat = []
@@ -169,24 +166,24 @@ def re_format(file_name):
 def group_dicts(dic_list):
     common_keys = sorted(dic_list[0].keys())
     lines = []
-    for big_key in common_keys:
-        lines.append('input list: {}'.format(big_key))
-        key_list = get_key_list(dic_list, big_key)
+    for input_size in common_keys:
+        lines.append('input list: {}'.format(input_size))
+        times_list = get_all_times_keys_for_one_input_size(dic_list, input_size)
         for dic in dic_list:
-            small_dic = dic[big_key]
-            lines.append('    ' + sorted_line_dic(small_dic, key_list))
+            times_obj_size = dic[input_size]
+            lines.append('    ' + sorted_dict_as_single_line_str(times_obj_size, times_list))
         lines.append('')
     return '\n'.join(lines)
 
 
-def get_key_list(dic_list, big_key):
-    big_set = set()
+def get_all_times_keys_for_one_input_size(dic_list, input_size):
+    times_set = set()
     for dic in dic_list:
-        big_set = big_set.union(set(dic[big_key].keys()))
-    return sorted(big_set)
+        times_set = times_set.union(set(dic[input_size].keys()))
+    return sorted(times_set)
 
 
-def sorted_line_dic(dic, key_list):
+def sorted_dict_as_single_line_str(dic, key_list):
     width = 10
     blank = ' '*width
     out_str = '{'
@@ -201,5 +198,5 @@ def sorted_line_dic(dic, key_list):
 
 if __name__ == '__main__':
 
-    # write_dict_file_with_name('dict_combiner.txt')
-    write_grouped_data_file_name('dict_combiner.txt')
+    # write_dict_file('dict_combiner.txt')
+    write_two_txt_files_from_original('dict_combiner.txt')

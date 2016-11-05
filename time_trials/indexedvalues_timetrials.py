@@ -11,7 +11,7 @@ from os import getcwd
 from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
-import dicetables.baseevents as lim
+import dicetables.baseevents as base
 
 
 WELCOME_TXT = 'hi'
@@ -136,7 +136,7 @@ def one_time_trial(combine_times, events_tuples, input_dict_size=1, use_exponent
     """
 
     if events_tuples[0][1] < 10**100:
-        print('one_time_trial prepped list {}'.format(events_tuples))
+        print('one_time_trial prepped list [{} .. {}]'.format(events_tuples[0], events_tuples[-1]))
     input_dict = get_input_dict(input_dict_size, use_exponential_occurrences)
 
     events_tuples = [pair for pair in events_tuples if pair[1]]
@@ -165,8 +165,8 @@ def get_input_dict(input_dict_size, use_exponential_occurrences):
 def get_control_and_indexed_values_times(combine_times, events_tuples, input_dict):
     control_events_action = get_control_action(input_dict, events_tuples)
 
-    events_for_indexed_values = lim.AdditiveEvents(input_dict)
-    events_to_add = lim.AdditiveEvents(dict(events_tuples))
+    events_for_indexed_values = base.AdditiveEvents(input_dict)
+    events_to_add = base.AdditiveEvents(dict(events_tuples))
     indexed_values_start = time.clock()
     events_for_indexed_values.combine_by_indexed_values(combine_times, events_to_add)
     indexed_values_time = time.clock() - indexed_values_start
@@ -177,7 +177,7 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
 
 
 def get_control_action(input_dict, events_tuples):
-    control_events = lim.AdditiveEvents(input_dict)
+    control_events = base.AdditiveEvents(input_dict)
     control_method_str = get_control_method_str(events_tuples)
     control_method_dict = {'tuple_list': control_events.combine_by_dictionary,
                            'flattened_list': control_events.combine_by_flattened_list}
@@ -533,7 +533,7 @@ def graphing_ui():
     while True:
         plt.figure(plt_figure)
         plt_figure += 1
-        # plt.ion()
+        plt.ion()
         variable_choice = get_answer('enter "1" for varying input events\' length\n' +
                                      'enter "2" for varying input events\' # of occurrences\n' +
                                      'enter "3" for varying input events\' gaps in values\n' +
@@ -554,10 +554,7 @@ def graphing_ui():
         input_variables = get_kwargs(variable)
         action(**input_variables)
 
-
-# TODO FIX THIS
-        plt.waitforbuttonpress()
-        # plt.pause(0.1)
+        plt.pause(0.1)
 
 
 def get_kwargs(request):
@@ -806,6 +803,6 @@ def get_side_by_side_data(left_answer, right_answer):
 
 if __name__ == '__main__':
 
-    # graphing_ui()
+    graphing_ui()
 
-    data_points_ui()
+    # data_points_ui()

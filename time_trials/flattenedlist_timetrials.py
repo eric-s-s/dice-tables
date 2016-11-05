@@ -15,7 +15,7 @@ import random
 from os import getcwd
 import matplotlib.pyplot as plt
 import numpy as np
-import dicetables.baseevents as lim
+import dicetables.baseevents as base
 
 
 def gen_one_point(val_list, loc='mid'):
@@ -70,14 +70,14 @@ def one_time_trial(events, num_adds, start_dict_size=1):
     occurrences_to_events_ratio = events_total_occurrences/float(len(events))
 
     start_dict = dict([(event, 1 + event % 100) for event in range(start_dict_size)])
-    to_combine = lim.AdditiveEvents(dict(events))
+    to_combine = base.AdditiveEvents(dict(events))
 
-    id_table_a = lim.AdditiveEvents(start_dict)
+    id_table_a = base.AdditiveEvents(start_dict)
     start_a = time.clock()
     id_table_a.combine_by_flattened_list(num_adds, to_combine)
     flattened_list_time = time.clock() - start_a
 
-    id_table_b = lim.AdditiveEvents(start_dict)
+    id_table_b = base.AdditiveEvents(start_dict)
     start_b = time.clock()
     id_table_b.combine_by_dictionary(num_adds, to_combine)
     tuple_time = time.clock() - start_b

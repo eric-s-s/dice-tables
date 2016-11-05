@@ -5,10 +5,6 @@ from sys import version_info
 import unittest
 from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier, safe_true_div
 
-FLOAT_BIG = 1e+300
-FLOAT_SMALL = 1e+100
-LONG_BIG = 10 ** 1000
-
 
 class TestLongIntMath(unittest.TestCase):
     def setUp(self):
@@ -36,28 +32,28 @@ class TestLongIntMath(unittest.TestCase):
 
     #  safe_true_div tests
     def test_safe_true_div_returns_zero_when_answer_power_below_neg_300ish(self):
-        self.assertEqual(safe_true_div(FLOAT_BIG, LONG_BIG), 0)
+        self.assertEqual(safe_true_div(1e+300, 10 ** 1000), 0)
 
     def test_safe_true_div_long_long_makes_float(self):
-        result = safe_true_div(10 ** 300 * LONG_BIG, LONG_BIG)
+        result = safe_true_div(10 ** 1300, 10 ** 1000)
         self.assertAlmostEqual(result, 10 ** 300, delta=10 ** 290)
         self.assertIsInstance(result, float)
 
     def test_safe_true_div_long_long_makes_float_with_negative_num(self):
-        result = safe_true_div(-10 ** 300 * LONG_BIG, LONG_BIG)
+        result = safe_true_div(-10 ** 1300, 10 ** 1000)
         self.assertAlmostEqual(result, -10 ** 300, delta=10 ** 290)
         self.assertIsInstance(result, float)
 
     def test_safe_true_div_float_float_makes_long(self):
-        result = safe_true_div(FLOAT_BIG, 1 / FLOAT_SMALL)
+        result = safe_true_div(1e+300, 1e-100)
         self.assertAlmostEqual(result, 10 ** 400, delta=10 ** 390)
 
     def test_safe_true_div_float_float_makes_long_with_negative_num(self):
-        result = safe_true_div(FLOAT_BIG, -1 / FLOAT_SMALL)
+        result = safe_true_div(1e+300, -1e-100)
         self.assertAlmostEqual(result, -10 ** 400, delta=10 ** 390)
 
     def test_safe_true_div_long_long_makes_negative_power_float(self):
-        result = safe_true_div(LONG_BIG, LONG_BIG * 10 ** 200)
+        result = safe_true_div(10 ** 1000, 10 ** 1200)
         self.assertAlmostEqual(result, 10 ** -200, delta=10 ** -210)
 
     #  InputVerifier tests
@@ -71,28 +67,28 @@ class TestLongIntMath(unittest.TestCase):
         self.assertEqual(str(error), 'message')
         self.assertEqual(error.args[0], 'message')
 
-    def test_EventsVerifier_verify_all_events_pass(self):
+    def test_EventsVerifier_verify_get_dict_pass(self):
         self.assertIsNone(self.checker.verify_get_dict({1: 1}))
 
-    def test_EventsVerifier_verify_all_events_empty(self):
+    def test_EventsVerifier_verify_get_dict_empty(self):
         self.assert_my_regex(InvalidEventsError,
                              'events may not be empty. a good alternative is the identity - {0: 1}.',
                              self.checker.verify_get_dict, {})
 
-    def test_EventsVerifier_verify_all_events_zero_occurrences(self):
+    def test_EventsVerifier_verify_get_dict_zero_occurrences(self):
         self.assert_my_regex(InvalidEventsError,
                              'no negative or zero occurrences in Events.get_dict()',
                              self.checker.verify_get_dict, {1: 0, 2: 0})
 
-    def test_EventsVerifier_verify_events_by_tuple_negative_occurrences(self):
+    def test_EventsVerifier_verify_get_dict_negative_occurrences(self):
         self.assert_my_regex(InvalidEventsError, 'no negative or zero occurrences in Events.get_dict()',
                              self.checker.verify_get_dict, {1: -1})
 
-    def test_EventsVerifier_verify_all_events_non_int_occurrences(self):
+    def test_EventsVerifier_verify_get_dict_non_int_occurrences(self):
         self.assert_my_regex(InvalidEventsError, self.types_error,
                              self.checker.verify_get_dict, {1: 1.0})
 
-    def test_EventsVerifier_verify_events_by_tuple_non_int_event(self):
+    def test_EventsVerifier_verify_get_dict_non_int_event(self):
         self.assert_my_regex(InvalidEventsError, self.types_error,
                              self.checker.verify_get_dict, {1.0: 1})
 
@@ -145,29 +141,29 @@ class TestLongIntMath(unittest.TestCase):
         self.assertEqual(table.get_range_of_events(0, 4),
                          [(0, 0), (1, 1), (2, 2), (3, 0)])
 
-    def test_AdditiveEvents_get_all_events(self):
+    def test_AdditiveEvents_all_events(self):
         table = AdditiveEvents({1: 1, 2: 2})
         self.assertEqual(table.all_events,
                          [(1, 1), (2, 2)])
 
-    def test_AdditiveEvents_get_all_events_sorts(self):
+    def test_AdditiveEvents_all_events_sorts(self):
         table = AdditiveEvents({2: 1, 1: 2})
         self.assertEqual(table.all_events,
                          [(1, 2), (2, 1)])
 
-    def test_AdditiveEvents_get_all_events_does_not_return_zero_frequencies(self):
+    def test_AdditiveEvents_all_events_does_not_return_zero_frequencies(self):
         table = AdditiveEvents({-1: 2, 0: 0, 1: 2})
         self.assertEqual(table.all_events, [(-1, 2), (1, 2)])
 
-    def test_AdditiveEvents_get_biggest_event_returns_first_biggest_event(self):
+    def test_AdditiveEvents_biggest_event_returns_first_biggest_event(self):
         table = AdditiveEvents({-1: 5, 0: 1, 2: 5})
         self.assertEqual(table.biggest_event, (-1, 5), (2, 5))
 
-    def test_AdditiveEvents_get_biggest_event_returns_only_biggest_event(self):
+    def test_AdditiveEvents_biggest_event_returns_only_biggest_event(self):
         table = AdditiveEvents({-1: 5, 0: 1, 2: 10})
         self.assertEqual(table.biggest_event, (2, 10))
 
-    def test_AdditiveEvents_get_total_event_occurrences(self):
+    def test_AdditiveEvents_total_event_occurrences(self):
         table = AdditiveEvents({1: 2, 3: 4})
         self.assertEqual(table.total_occurrences, 2 + 4)
 

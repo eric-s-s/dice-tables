@@ -3,79 +3,193 @@
 from __future__ import absolute_import
 
 import unittest
-from dicetables.dicestats import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, DiceTable
+from dicetables.dicestats import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, DiceTable, ProtoDie
+
+
+class DummyDie(ProtoDie):
+    def __init__(self, size, weight, dictionary, repr_str):
+        self.size = size
+        self.weight = weight
+        self.dictionary = dictionary
+        self.repr_str = repr_str
+        super(DummyDie, self).__init__()
+
+    def get_dict(self):
+        return self.dictionary
+
+    def get_size(self):
+        return self.size
+
+    def get_weight(self):
+        return self.weight
+
+    def __repr__(self):
+        return self.repr_str
+
+    def __str__(self):
+        return 'hi'
+
+    def multiply_str(self, number):
+        return str(number)
+
+    def weight_info(self):
+        return 'es, bubelah.'
 
 
 class TestDiceStats(unittest.TestCase):
 
     # rich comparison testing
-    def test_Die_equal(self):
-        self.assertEqual(Die(3) == Die(3), True)
-        self.assertEqual(Die(1) == Die(5), False)
+    def test_ProtoDie_equality_true(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(2, 3, {2: 2}, 'b')
+        self.assertTrue(first == second)
 
-    def test_Die_not_equal(self):
-        self.assertEqual(Die(3) != Die(10), True)
-        self.assertEqual(Die(5) != Die(5), False)
+    def test_ProtoDie_equality_false_by_size(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(100, 3, {2: 2}, 'b')
+        self.assertFalse(first == second)
 
-    def test_Die_lt(self):
-        self.assertEqual(Die(4) < Die(5), True)
-        self.assertEqual(Die(4) < Die(4), False)
-        self.assertEqual(Die(4) < Die(3), False)
+    def test_ProtoDie_equality_false_by_weight(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(2, 100, {2: 2}, 'b')
+        self.assertFalse(first == second)
 
-    def test_Die_le(self):
-        self.assertEqual(Die(4) <= Die(5), True)
-        self.assertEqual(Die(4) <= Die(4), True)
-        self.assertEqual(Die(4) <= Die(3), False)
+    def test_ProtoDie_equality_false_by_get_dict(self):
+        first = DummyDie(2, 3, {200: 200}, 'b')
+        second = DummyDie(2, 3, {2: 2}, 'b')
+        self.assertFalse(first == second)
 
-    def test_Die_gt(self):
-        self.assertEqual(Die(7) > Die(7), False)
-        self.assertEqual(Die(7) > Die(1), True)
-        self.assertEqual(Die(8) > Die(7), True)
+    def test_ProtoDie_equality_false_by_get_repr(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(2, 3, {2: 2}, 'different repr')
+        self.assertFalse(first == second)
 
-    def test_Die_ge(self):
-        self.assertEqual(Die(4) >= Die(5), False)
-        self.assertEqual(Die(4) >= Die(4), True)
-        self.assertEqual(Die(4) >= Die(3), True)
+    def test_ProtoDie_lt_by_size(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(20, 3, {2: 2}, 'b')
+        self.assertTrue(first < second)
 
-    def test_Die_ModDie_eq(self):
-        self.assertEqual(ModDie(4, 1) == Die(4), False)
-        self.assertEqual(Die(4) == ModDie(4, -1), False)
+    def test_ProtoDie_lt_by_weight(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(2, 30, {2: 2}, 'b')
+        self.assertTrue(first < second)
 
-    def test_Die_ModDie_lt(self):
-        self.assertEqual(Die(4) < ModDie(4, 1), True)
-        self.assertEqual(Die(4) < ModDie(4, -1), False)
+    def test_ProtoDie_lt_by_sorted_get_dict(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(2, 3, {20: 2}, 'b')
+        third = DummyDie(2, 3, {20: 20}, 'b')
+        self.assertTrue(first < second)
+        self.assertTrue(first < third)
+        self.assertTrue(second < third)
 
-    def test_ModDie_with_zero_mod_not_equal_Die_due_to_repr(self):
-        self.assertEqual(ModDie(10, 0) != Die(10), True)
+    def test_ProtoDie_lt_by_repr(self):
+        first = DummyDie(2, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'b')
+        self.assertTrue(first < second)
 
-    def test_WeightedDie_eq(self):
-        self.assertEqual(WeightedDie({1: 1}) == WeightedDie({1: 1}), True)
-        self.assertEqual(WeightedDie({1: 1}) == WeightedDie({2: 2}), False)
+    def test_ProtoDie_lt_by_size_is_most_important(self):
+        first = DummyDie(2, 30, {20: 20}, 'b')
+        second = DummyDie(20, 3, {2: 2}, 'a')
+        self.assertTrue(first < second)
 
-    def test_WeightedDie_not_equal_Die_with_same_dictionary(self):
-        self.assertEqual(WeightedDie({1: 1, 2: 1}) == Die(2), False)
+    def test_ProtoDie_lt_by_weight_is_second_most_important(self):
+        first = DummyDie(2, 3, {20: 20}, 'b')
+        second = DummyDie(2, 30, {2: 2}, 'a')
+        self.assertTrue(first < second)
 
-    def test_WeightedDie_lt_by_size(self):
-        self.assertEqual(WeightedDie({2: 2}) < WeightedDie({3: 2}), True)
+    def test_ProtoDie_lt_by_sorted_get_dict_is_third_most_important_and_so_repr_is_last(self):
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = DummyDie(2, 3, {20: 20}, 'a')
+        self.assertTrue(first < second)
 
-    def test_WeightedDie_lt_by_weight(self):
-        self.assertEqual(WeightedDie({2: 2}) < WeightedDie({2: 3}), True)
+    def test_ProtoDie_not_equal_true(self):
+        first = DummyDie(20, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'a')
+        self.assertTrue(first != second)
+        self.assertFalse(first == second)
 
-    def test_WeightedDie_lt_by_sorted_dict(self):
-        self.assertEqual(WeightedDie({1: 1, 2: 2}) < WeightedDie({1: 2, 2: 1}), True)
+    def test_ProtoDie_not_equal_false(self):
+        first = DummyDie(2, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'a')
+        self.assertTrue(first == second)
+        self.assertFalse(first != second)
 
-    def test_Die_lt_by_repr(self):
-        self.assertEqual(WeightedDie({1: 1}) > ModWeightedDie({1: 1}, 0), True)
+    def test_ProtoDie_gt_true(self):
+        first = DummyDie(20, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'a')
+        self.assertTrue(first > second)
 
-    def test_ModWeightedDie_with_zero_mod_not_equal_WeightedDie(self):
-        self.assertEqual(WeightedDie({1: 2}) == ModWeightedDie({1: 2}, 0), False)
+    def test_ProtoDie_gt_false(self):
+        first = DummyDie(20, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'a')
+        self.assertFalse(second > first)
 
-    def test_StrongDie_with_one_multiplier_not_equal_Die(self):
-        self.assertNotEqual(Die(1), StrongDie(Die(1), 1))
+    def test_ProtoDie_le_true(self):
+        first = DummyDie(2, 3, {2: 2}, 'a')
+        second = DummyDie(20, 3, {2: 2}, 'a')
+        self.assertTrue(first <= second)
+        self.assertTrue(first <= first)
 
-    def test_StrongDie_gt_same_size_lt_larger(self):
-        self.assertTrue(StrongDie(Die(1), 2) > Die(1))
-        self.assertTrue(StrongDie(Die(1), 5) < Die(2))
+    def test_ProtoDie_le_false(self):
+        first = DummyDie(2, 3, {2: 2}, 'a')
+        second = DummyDie(20, 3, {2: 2}, 'a')
+        self.assertFalse(second <= first)
+
+    def test_ProtoDie_ge_true(self):
+        first = DummyDie(20, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'a')
+        self.assertTrue(first >= second)
+        self.assertTrue(first >= first)
+
+    def test_ProtoDie_ge_false(self):
+        first = DummyDie(20, 3, {2: 2}, 'a')
+        second = DummyDie(2, 3, {2: 2}, 'a')
+        self.assertFalse(second >= first)
+
+    def test_ProtoDie_lt_all_die_types_can_sort_with_each_other(self):
+        dice = [StrongDie(Die(2), 1),
+                ModWeightedDie({1: 1, 2: 1}, 0),
+                WeightedDie({1: 1, 2: 1}),
+                ModDie(2, 0),
+                Die(2),
+                Die(3)]
+        self.assertIsNone(dice.sort())
+
+    def test_ProtoDie_lt_all_die_types_sort_as_expected(self):
+        dice = [StrongDie(Die(2), 1),
+                ModWeightedDie({1: 1, 2: 1}, 0),
+                WeightedDie({1: 2, 2: 0}),
+                ModDie(2, 0),
+                Die(2),
+                Die(3)]
+        sorted_dice = [Die(2),
+                       ModDie(2, 0),
+                       StrongDie(Die(2), 1),
+                       ModWeightedDie({1: 1, 2: 1}, 0),
+                       WeightedDie({1: 2, 2: 0}),
+                       Die(3)]
+        self.assertEqual(sorted(dice), sorted_dice)
+
+    def test_ProtoDie_hash_white_box_test(self):
+        hash_str = 'hash of REPR, 2, 3, {4: 5}'
+        self.assertEqual(hash(DummyDie(2, 3, {4: 5}, 'REPR')), hash(hash_str))
+
+    def test_ProtoDie_hash_with_Die(self):
+        one_a = Die(1)
+        one_b = Die(1)
+        self.assertEqual(hash(one_a), hash(one_b))
+        self.assertNotEqual(hash(one_a), hash(Die(2)))
+
+    def test_ProtoDie_hash_with_Die_and_ModDie(self):
+        one_a = ModDie(1, 0)
+        one_b = ModDie(1, 0)
+        not_same_a = Die(1)
+        not_same_b = ModDie(2, 0)
+        not_same_c = ModDie(1, 1)
+        self.assertEqual(hash(one_a), hash(one_b))
+        self.assertNotEqual(hash(one_a), hash(not_same_a))
+        self.assertNotEqual(hash(one_a), hash(not_same_b))
+        self.assertNotEqual(hash(one_a), hash(not_same_c))
 
     #  Die tests
     def test_Die_get_size(self):
@@ -128,8 +242,11 @@ class TestDiceStats(unittest.TestCase):
     def test_WeightedDie_get_size(self):
         self.assertEqual(WeightedDie({5: 2, 2: 5}).get_size(), 5)
 
+    def test_WeightedDie_get_size_edge_case(self):
+        self.assertEqual(WeightedDie({1: 1, 3: 0}).get_size(), 3)
+
     def test_WeightedDie_get_weight(self):
-        self.assertEqual(WeightedDie({1: 2, 3: 5}).get_weight(), 7)
+        self.assertEqual(WeightedDie({1: 2, 3: 5}).get_weight(), 2+5)
 
     def test_WeightedDie_get_dict(self):
         self.assertEqual(WeightedDie({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
@@ -181,6 +298,12 @@ class TestDiceStats(unittest.TestCase):
     def test_WeightedDie_multiply_str(self):
         self.assertEqual(WeightedDie({1: 1, 5: 3}).multiply_str(2), '2D5  W:4')
 
+    def test_WeightedDie_get_raw_dict(self):
+        self.assertEqual(WeightedDie({1: 2, 2: 4}).get_raw_dict(), {1: 2, 2: 4})
+
+    def test_WeightedDie_get_raw_dict_includes_zeroes(self):
+        self.assertEqual(WeightedDie({2: 1, 4: 1, 5: 0}).get_raw_dict(), {1: 0, 2: 1, 3: 0, 4: 1, 5: 0})
+
     #  ModWeightedDie tests
     def test_ModWeightedDie_get_mod(self):
         self.assertEqual(ModWeightedDie({1: 2}, 3).get_modifier(), 3)
@@ -217,7 +340,7 @@ class TestDiceStats(unittest.TestCase):
     def test_StrongDie_get_multiplier(self):
         self.assertEqual(StrongDie(Die(3), 5).get_multiplier(), 5)
 
-    def test_StrongDie_get_original(self):
+    def test_StrongDie_get_input_die(self):
         self.assertEqual(StrongDie(Die(3), 5).get_input_die(), Die(3))
 
     def test_StrongDie_get_dict(self):
@@ -254,18 +377,6 @@ class TestDiceStats(unittest.TestCase):
 
     def test_StrongDie_repr(self):
         self.assertEqual(repr(StrongDie(Die(7), 5)), 'StrongDie(Die(7), 5)')
-
-    def test_StrongDie_expected_lt_cases_positive_sorted_dict_start(self):
-        die = Die(5)
-        self.assertEqual(die < StrongDie(die, 2), True)
-
-    def test_StrongDie_expected_lt_cases_zero_sorted_dict_start(self):
-        die = ModDie(5, -1)
-        self.assertEqual(die < StrongDie(die, 2), True)
-
-    def test_StrongDie_expected_lt_cases_negative_sorted_dict_start(self):
-        die = ModDie(5, -3)
-        self.assertEqual(die < StrongDie(die, 2), False)
 
     def test_StrongDie_edge_StrongDie_of_StrongDie_size(self):
         die = StrongDie(Die(5), 2)
@@ -304,27 +415,8 @@ class TestDiceStats(unittest.TestCase):
         die = StrongDie(ModWeightedDie({1: 4}, 1), 2)
         self.assertEqual(StrongDie(die, 3).weight_info(), '((D1+1  W:4)X(2))X(3)\n    a roll of 1 has a weight of 4')
 
-    #  ProtoDie __hash__
-
-    def test_ProtoDie_hash_with_Die(self):
-        one_a = Die(1)
-        one_b = Die(1)
-        self.assertEqual(hash(one_a), hash(one_b))
-        self.assertNotEqual(hash(one_a), hash(Die(2)))
-
-    def test_ProtoDie_hash_with_Die_and_ModDie(self):
-        one_a = ModDie(1, 0)
-        one_b = ModDie(1, 0)
-        not_same_a = Die(1)
-        not_same_b = ModDie(2, 0)
-        not_same_c = ModDie(1, 1)
-        self.assertEqual(hash(one_a), hash(one_b))
-        self.assertNotEqual(hash(one_a), hash(not_same_a))
-        self.assertNotEqual(hash(one_a), hash(not_same_b))
-        self.assertNotEqual(hash(one_a), hash(not_same_c))
-
     #  DiceTable tests
-    def test_DiceTable_init_empty(self):
+    def test_DiceTable_init_identity_dict_empty_dice_list(self):
         table = DiceTable()
         self.assertEqual(table.get_dict(), {0: 1})
         self.assertEqual(table.get_list(), [])
@@ -335,7 +427,7 @@ class TestDiceStats(unittest.TestCase):
         table.update_list(2, Die(4))
         self.assertIn((Die(4), 5), table.get_list())
 
-    def test_DiceTable_update_list_doesnt_combine_similar_dice(self):
+    def test_DiceTable_update_list_doesnt_combine_unequal_dice(self):
         table = DiceTable()
         table.update_list(3, Die(3))
         table.update_list(2, WeightedDie({1: 1, 2: 1, 3: 1}))
@@ -399,8 +491,8 @@ class TestDiceStats(unittest.TestCase):
         table = DiceTable()
         table.add_die(2, Die(4))
         self.assertEqual(table.get_list(), [(Die(4), 2)])
-        freq_all = dict([(2, 1), (3, 2), (4, 3), (5, 4), (6, 3), (7, 2), (8, 1)])
-        self.assertEqual(table.get_dict(), freq_all)
+        events_dict = {2: 1, 3: 2, 4: 3, 5: 4, 6: 3, 7: 2, 8: 1}
+        self.assertEqual(table.get_dict(), events_dict)
 
     def test_DiceTable_remove_die_raise_error_for_negative_add(self):
         table = DiceTable()

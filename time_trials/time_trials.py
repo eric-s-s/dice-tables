@@ -8,8 +8,7 @@ import time
 from decimal import Decimal
 
 import dicetables as dt
-import dicetables.baseevents as lim
-from dicetables.tools.dictcombiner import DictCombiner
+import dicetables.baseevents as be
 
 
 def time_trial(times, func, *args):
@@ -92,11 +91,11 @@ def fastest_vs_tuple_indexed_ui():
         start_dict_size = get_answer('pick a start size for AdditiveEvents', 1, 1000)
         start_dict = dict([(event, 2 ** (event % 100)) for event in range(start_dict_size)])
 
-        show_fastest_method_speed = DictCombiner(start_dict)
-        flattened_list_control = lim.AdditiveEvents(start_dict)
-        flattened_list_fastest = lim.AdditiveEvents(start_dict)
-        tuple_list_control = lim.AdditiveEvents(start_dict)
-        tuple_list_fastest = lim.AdditiveEvents(start_dict)
+        show_fastest_method_speed = be.DictCombiner(start_dict)
+        flattened_list_control = be.AdditiveEvents(start_dict)
+        flattened_list_fastest = be.AdditiveEvents(start_dict)
+        tuple_list_control = be.AdditiveEvents(start_dict)
+        tuple_list_fastest = be.AdditiveEvents(start_dict)
 
         added_events_size = get_answer('how long is new events to combine', 2, 1000)
         added_event_occurrences = get_answer('how many occurrences per event', 2, 10 ** 300)
