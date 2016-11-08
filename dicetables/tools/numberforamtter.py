@@ -87,6 +87,10 @@ class NumberFormatter(object):
         return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
 
     def format_fixed_point(self, number):
+        """
+
+        :param number: number < 0
+        """
         exponent = self.get_exponent(number)
         return self._format_number_and_exponent_to_fixed_point(number, exponent)
 

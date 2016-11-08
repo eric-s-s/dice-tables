@@ -8,6 +8,21 @@ from dicetables.baseevents import safe_true_div
 from dicetables.tools.numberforamtter import NumberFormatter
 
 
+class EventsInformation(object):
+    def __init__(self, events):
+        self._dict = events.get_dict()
+
+    def events_range(self):
+        keys = self._dict.keys()
+        return min(keys), max(keys)
+
+    def total_occurrences(self):
+        return sum(self._dict.values())
+
+    def all_events(self):
+        return sorted(self._dict.items())
+
+
 def format_number(number, digits_shown=4, max_comma_exp=6, min_fixed_pt_exp=-3):
     """
 

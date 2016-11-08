@@ -1,7 +1,4 @@
-"""for all things dicey."""
-from __future__ import absolute_import
-
-from dicetables.baseevents import AdditiveEvents, IntegerEvents
+from dicetables.baseevents import IntegerEvents
 
 
 class ProtoDie(IntegerEvents):
@@ -174,14 +171,13 @@ class WeightedDie(ProtoDie):
         return sum(self._raw_dic.values())
 
     def get_dict(self):
-        return dict([item for item in self._raw_dic.items() if item[1]])
+        return dict(item for item in self._raw_dic.items() if item[1])
 
     def weight_info(self):
         max_roll_str_len = len(str(self.get_size()))
         out = str(self) + '\n'
-        for roll in range(1, self.get_size() + 1):
-            out += ('    a roll of {:>{}} has a weight of {}\n'
-                    .format(roll, max_roll_str_len, self._raw_dic.get(roll, 0)))
+        for roll, weight in sorted(self.get_raw_dict().items()):
+            out += '    a roll of {:>{}} has a weight of {}\n'.format(roll, max_roll_str_len, weight)
         return out.rstrip('\n')
 
     def multiply_str(self, number):
@@ -215,8 +211,8 @@ class ModWeightedDie(WeightedDie):
         return self._mod
 
     def get_dict(self):
-        return dict([(roll + self._mod, weight)
-                     for roll, weight in self.get_raw_dict().items() if weight])
+        return dict((roll + self._mod, weight)
+                    for roll, weight in self.get_raw_dict().items() if weight)
 
     def multiply_str(self, number):
         return '{}D{}{:+}  W:{}'.format(number, self.get_size(),
@@ -260,8 +256,8 @@ class StrongDie(ProtoDie):
         return self._original
 
     def get_dict(self):
-        return dict([(roll * self._multiplier, weight)
-                     for roll, weight in self._original.get_dict().items()])
+        return dict((roll * self._multiplier, weight)
+                    for roll, weight in self._original.get_dict().items())
 
     def weight_info(self):
         return self._original.weight_info().replace(str(self._original), str(self))
@@ -274,81 +270,3 @@ class StrongDie(ProtoDie):
 
     def __repr__(self):
         return 'StrongDie({!r}, {})'.format(self._original, self._multiplier)
-
-
-class DiceTable(AdditiveEvents):
-    """
-    DiceTable() creates an empty table that dice can be added to and removed from
-    """
-
-    def __init__(self):
-        super(DiceTable, self).__init__({0: 1})
-        self._dice_list = {}
-
-    def update_list(self, number_added, die):
-        """
-
-        :param number_added: int: can be negative but should not reduce "die" count below zero
-        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
-        """
-        self._dice_list[die] = self._dice_list.get(die, 0) + number_added
-        if self._dice_list[die] == 0:
-            del self._dice_list[die]
-
-    def get_list(self):
-        """
-
-        :return: sorted copy of dice list: [(die, number of dice), ...]
-        """
-        return sorted(self._dice_list.items())
-
-    def number_of_dice(self, query_die):
-        return self._dice_list.get(query_die, 0)
-
-    def weights_info(self):
-        """
-
-        :return: str: complete info for all dice
-        """
-        out_str = ''
-        for die, number in self.get_list():
-            adjusted = die.weight_info().replace(str(die),
-                                                 die.multiply_str(number))
-            out_str += adjusted + '\n\n'
-        return out_str.rstrip('\n')
-
-    def __str__(self):
-        out_str = ''
-        for die, number in self.get_list():
-            out_str += '{}\n'.format(die.multiply_str(number))
-        return out_str.rstrip('\n')
-
-    def add_die(self, number, die):
-        """
-
-        :param number: int>= 0
-        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
-        """
-        raise_error_for_negative_number(number)
-        self.combine(number, die)
-        self.update_list(number, die)
-
-    def remove_die(self, number, die):
-        """
-
-        :param number: 0 <= int <= number of "die" in table
-        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
-        """
-        raise_error_for_negative_number(number)
-        self._raise_error_for_too_many_removes(number, die)
-        self.remove(number, die)
-        self.update_list(-1 * number, die)
-
-    def _raise_error_for_too_many_removes(self, num, die):
-        if self.number_of_dice(die) < num:
-            raise ValueError('dice not in table, or removed too many dice')
-
-
-def raise_error_for_negative_number(number):
-    if number < 0:
-        raise ValueError('number must be int >= 0')

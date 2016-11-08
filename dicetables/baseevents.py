@@ -71,7 +71,7 @@ class IntegerEvents(object):
 
 
 def scrub_zeroes(dictionary):
-    return dict([item for item in dictionary.items() if item[1]])
+    return dict(item for item in dictionary.items() if item[1])
 
 
 class AdditiveEvents(IntegerEvents):
@@ -126,7 +126,7 @@ class AdditiveEvents(IntegerEvents):
         return 'table from {} to {}'.format(*self.event_range)
 
     def mean(self):
-        numerator = sum([value * freq for value, freq in self._table.items()])
+        numerator = sum((value * freq) for value, freq in self._table.items())
         denominator = self.total_occurrences
         return safe_true_div(numerator, denominator)
 

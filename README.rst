@@ -5,17 +5,27 @@ dicetables
 a module for statistics of die rolls and other events
 =====================================================
 This module uses DiceTable and AdditiveEvents to combine
-dice and other events that can be added together.
+dice and other events that can be added together. It is used to
+figure out the probability of events occurring.  For instance, if you
+roll 100 six-sided dice, the chance of rolling any number between 100
+and 300 is 0.15 percent.
 
 There are many changes from the previous version, and they will
 be listed in "CHANGES" at the bottom of this README.
 
-DiceTable is a list of (event, occurrences) that keeps track of all the
-Die objects that have been added and removed using the add_die and remove_die methods.
+contents:
+
+- THE BASICS
+- THE DICE
+- EVENTS OBJECTS
+- HOW TO GET ERRORS AND BUGS
+- CHANGES
 
 ----------
 THE BASICS
 ----------
+DiceTable is the main object for adding and removing dice. It
+
 
 | Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,
 | you get the following combinations.
@@ -145,7 +155,6 @@ unless told otherwise.
     In[51]: print(stats_str.format(*stats_info))
     (-5,000)-4 occurred 123,456 times out of 1.234e+1004 combinations.
     That's a one in 1.000e+999 chance or 1.000e-997%
-
 
 Finally, here are all the kinds of dice you can add
 
@@ -281,10 +290,22 @@ but there's no record of it.  You can use this to copy a table::
     Out[36]: True
 
     In [37]: for die, number in first.get_list():
-                second.update_list(number, die)
+                second._update_list(number, die)
 
     In [38]: second.get_list() == first.get_list()
     Out[38]: True
+
+DiceTables also has a class method for making a "table" to your specifications. This can easily lead to bugs.
+So use with caution.
+::
+
+    In [28]: nonsense = dt.DiceTable.create_table({1: 2, 3: 4}, [(dt.Die(2), 3), (dt.Die(4), 1)])
+
+    In [29]: nonsense.get_dict()
+    Out[29]: {1: 2, 3: 4}
+
+    In [30]: nonsense.get_list()
+    Out[30]: [(Die(2), 3), (Die(4), 1)]
 
 --------------------------
 HOW TO GET ERRORS AND BUGS
@@ -462,6 +483,7 @@ CONVERSIONS = {
     | 'LongIntTable.values_max()': 'AdditiveEvents.event_range[0]',
     | 'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
     | 'LongIntTable.values_range()': 'AdditiveEvents.event_range',
+    | 'DiceTable.update_list()': 'DiceTable._update_list()',
     | 'ProtoDie.tuple_list()': 'sorted(ProtoDie.get_dict().items())',
     | 'scinote()': ('format_number()', 'NumberFormatter.format()'),
     | }
