@@ -4,23 +4,83 @@ from __future__ import absolute_import
 from decimal import Decimal
 from math import log10
 
-from dicetables.baseevents import safe_true_div
 from dicetables.tools.numberforamtter import NumberFormatter
+
+
+def safe_true_div(numerator, denominator):
+    """floating point division for any sized number"""
+    ans = Decimal(numerator) / Decimal(denominator)
+    return _convert_decimal_to_float_or_int(ans)
+
+
+def _convert_decimal_to_float_or_int(num):
+    answer_as_float = float(num)
+    if answer_as_float == float('inf') or answer_as_float == float('-inf'):
+        return int(num)
+    else:
+        return answer_as_float
 
 
 class EventsInformation(object):
     def __init__(self, events):
         self._dict = events.get_dict()
 
+    def events_keys(self):
+        return sorted(self._dict.keys())
+
     def events_range(self):
-        keys = self._dict.keys()
-        return min(keys), max(keys)
+        all_keys = self.events_keys()
+        return all_keys[0], all_keys[-1]
 
     def total_occurrences(self):
         return sum(self._dict.values())
 
     def all_events(self):
         return sorted(self._dict.items())
+
+    def all_events_include_zeroes(self):
+        start, stop = self.events_range()
+        return self.get_range_of_events(start, stop + 1)
+
+    def biggest_event(self):
+        """
+
+        :return: (event, occurrences) for first event with highest occurrences
+        """
+        highest_occurrences = max(self._dict.values())
+        for event in sorted(self._dict.keys()):
+            if self._dict[event] == highest_occurrences:
+                return event, highest_occurrences
+
+    def get_event(self, event):
+        return event, self._dict.get(event, 0)
+
+    def get_range_of_events(self, start, stop_before):
+        return [self.get_event(event) for event in range(start, stop_before)]
+
+    def mean(self):
+        numerator = sum((value * freq) for value, freq in self._dict.items())
+        denominator = self.total_occurrences()
+        return safe_true_div(numerator, denominator)
+
+    def stddev(self, decimal_place=4):
+        avg = self.mean()
+        factor_to_truncate_digits = self._get_truncation_factor(decimal_place)
+        truncated_deviations = 0
+        for event_value, occurrences in self._dict.items():
+            truncated_deviations += (occurrences // factor_to_truncate_digits) * (avg - event_value) ** 2.
+        truncated_total_occurrences = self.total_occurrences() // factor_to_truncate_digits
+        return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
+
+    def _get_truncation_factor(self, decimal_place):
+        extra_digits = 5
+        largest_exponent = int(log10(self.biggest_event()[1]))
+        required_exp_for_accuracy = 2 * (extra_digits + decimal_place)
+        if largest_exponent < required_exp_for_accuracy:
+            factor_to_truncate_digits = 1
+        else:
+            factor_to_truncate_digits = 10 ** (largest_exponent - required_exp_for_accuracy)
+        return factor_to_truncate_digits
 
 
 def format_number(number, digits_shown=4, max_comma_exp=6, min_fixed_pt_exp=-3):
@@ -70,27 +130,29 @@ class GraphDataGenerator(object):
     def exact(self, boolean):
         self._exact = bool(boolean)
 
-    def get_raw_points(self, events_table):
+    def _get_raw_points(self, info_getter):
         if self.include_zeroes:
-            start, end = events_table.event_range
-            return events_table.get_range_of_events(start, end + 1)
+            return info_getter.all_events_include_zeroes()
         else:
-            return events_table.all_events
+            return info_getter.all_events()
 
     def get_percent_points(self, events_table):
+        info_getter = EventsInformation(events_table)
         if self.exact:
             pct_method = get_exact_pct_number
         else:
             pct_method = get_fast_pct_number
-        raw_points = self.get_raw_points(events_table)
-        total_values = events_table.total_occurrences
+
+        raw_points = self._get_raw_points(info_getter)
+
+        total_values = info_getter.total_occurrences()
         return [(event, pct_method(occurrence, total_values)) for event, occurrence in raw_points]
 
     def get_points(self, events_table):
         if self.percent:
             return self.get_percent_points(events_table)
         else:
-            return self.get_raw_points(events_table)
+            return self._get_raw_points(EventsInformation(events_table))
 
     def get_axes(self, events_table):
         return list(zip(*self.get_points(events_table)))
@@ -130,7 +192,10 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     :param zeroes: =True: include zero occurrences within table.event_range
     :return: ([graphing data], 'factor all y-data  was divided by')
     """
-    raw_pts = GraphDataGenerator(include_zeroes=zeroes).get_raw_points(table)
+    if zeroes:
+        raw_pts = EventsInformation(table).all_events_include_zeroes()
+    else:
+        raw_pts = EventsInformation(table).all_events()
     formatter = NumberFormatter(shown_digits=2)
 
     factor = get_overflow_factor(table)
@@ -145,8 +210,9 @@ def get_overflow_factor(table):
     factor = 1
     overflow_point = 10 ** 300
     exponent_adjustment = 4
-    if table.biggest_event[1] > overflow_point:
-        power = int(log10(table.biggest_event[1])) - exponent_adjustment
+    biggest_occurrences = EventsInformation(table).biggest_event()[1]
+    if biggest_occurrences > overflow_point:
+        power = int(log10(biggest_occurrences)) - exponent_adjustment
         factor = 10 ** power
     return factor
 
@@ -158,10 +224,14 @@ def full_table_string(table, include_zeroes=True):
     :param include_zeroes: =True, include zero occurrences within table.event_range
     """
     formatter = NumberFormatter()
-    graph_data = GraphDataGenerator(include_zeroes=include_zeroes)
-    the_pts = graph_data.get_raw_points(table)
+    info_getter = EventsInformation(table)
+    if include_zeroes:
+        the_pts = info_getter.all_events_include_zeroes()
+    else:
+        the_pts = info_getter.all_events()
     out_str = ''
-    value_right_just = len(str(table.event_range[1]))
+    min_event, max_event = info_getter.events_range()
+    value_right_just = max(len(str(min_event)), len(str(max_event)))
     for value, frequency in the_pts:
         out_str += '{:>{}}: {}\n'.format(value, value_right_just, formatter.format(frequency))
     return out_str
@@ -176,25 +246,31 @@ def stats(table, query_values):
     :return: ("query_values", "query_values combinations", "total combinations", "inverse chance", "pct chance")
     """
     formatter = NumberFormatter()
-    total_combinations = table.total_occurrences
-    combinations_of_values = 0
-    no_copies = set(query_values)
-    for value in no_copies:
-        combinations_of_values += table.get_event(value)[1]
+    info_getter = EventsInformation(table)
+    total_combinations = info_getter.total_occurrences()
+    query_values_occurrences = get_query_values_occurrences(query_values, info_getter)
 
-    if combinations_of_values == 0:
+    if query_values_occurrences == 0:
         inverse_chance_str = 'infinity'
         pct_str = formatter.format(0)
     else:
-        inverse_chance = Decimal(total_combinations) / Decimal(combinations_of_values)
+        inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
         pct = Decimal(100.0) / inverse_chance
         inverse_chance_str = formatter.format(inverse_chance)
         pct_str = formatter.format(pct)
     return (get_string_for_sequence(query_values),
-            formatter.format(combinations_of_values),
+            formatter.format(query_values_occurrences),
             formatter.format(total_combinations),
             inverse_chance_str,
             pct_str)
+
+
+def get_query_values_occurrences(query_values, info_getter):
+    combinations_of_values = 0
+    no_copies = set(query_values)
+    for value in no_copies:
+        combinations_of_values += info_getter.get_event(value)[1]
+    return combinations_of_values
 
 
 def get_string_for_sequence(input_list):

@@ -1,18 +1,146 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the tableinfo.py module"""
+"""tests for the eventsinfo.py module"""
 
 from __future__ import absolute_import
 
 import unittest
 from dicetables import AdditiveEvents
-import dicetables.tableinfo as ti
+import dicetables.eventsinfo as ti
 
 
-class TestTableInfo(unittest.TestCase):
+class TestEventsInfo(unittest.TestCase):
 
     def assert_list_almost_equal(self, first, second, places=None, delta=None):
         for index, element in enumerate(first):
             self.assertAlmostEqual(element, second[index], places=places, delta=delta)
+
+    def test_safe_true_div_returns_zero_when_answer_power_below_neg_300ish(self):
+        self.assertEqual(ti.safe_true_div(1e+300, 10 ** 1000), 0)
+
+    def test_safe_true_div_long_long_makes_float(self):
+        result = ti.safe_true_div(10 ** 1300, 10 ** 1000)
+        self.assertAlmostEqual(result, 10 ** 300, delta=10 ** 290)
+        self.assertIsInstance(result, float)
+
+    def test_safe_true_div_long_long_makes_float_with_negative_num(self):
+        result = ti.safe_true_div(-10 ** 1300, 10 ** 1000)
+        self.assertAlmostEqual(result, -10 ** 300, delta=10 ** 290)
+        self.assertIsInstance(result, float)
+
+    def test_safe_true_div_float_float_makes_long(self):
+        result = ti.safe_true_div(1e+300, 1e-100)
+        self.assertAlmostEqual(result, 10 ** 400, delta=10 ** 390)
+
+    def test_safe_true_div_float_float_makes_long_with_negative_num(self):
+        result = ti.safe_true_div(1e+300, -1e-100)
+        self.assertAlmostEqual(result, -10 ** 400, delta=10 ** 390)
+
+    def test_safe_true_div_long_long_makes_negative_power_float(self):
+        result = ti.safe_true_div(10 ** 1000, 10 ** 1200)
+        self.assertAlmostEqual(result, 10 ** -200, delta=10 ** -210)
+
+    def test_EventsInformation_event_keys_removes_zero_occurrences(self):
+        test = ti.EventsInformation(AdditiveEvents({0: 1, 1: 0}))
+        self.assertEqual(test.events_keys(), [0])
+
+    def test_EventsInformation_event_keys_sorts(self):
+        test = ti.EventsInformation(AdditiveEvents({2: 1, 1: 1, 3: 1}))
+        self.assertEqual(test.events_keys(), [1, 2, 3])
+
+    def test_EventsInformation_event_range(self):
+        zero_to_two = ti.EventsInformation(AdditiveEvents({0: 2, 1: 1, 2: 5, 4: 0}))
+        self.assertEqual(zero_to_two.events_range(), (0, 2))
+
+    def test_EventsInformation_get_event(self):
+        zero_three = ti.EventsInformation(AdditiveEvents({0: 3}))
+        self.assertEqual(zero_three.get_event(0), (0, 3))
+
+    def test_EventsInformation_get_event_returns_for_empty_event(self):
+        zero_three = ti.EventsInformation(AdditiveEvents({0: 3}))
+        self.assertEqual(zero_three.get_event(100), (100, 0))
+
+    def test_EventsInformation_get_range_of_events(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 1, 2: 2}))
+        self.assertEqual(test.get_range_of_events(0, 4),
+                         [(0, 0), (1, 1), (2, 2), (3, 0)])
+
+    def test_EventsInformation_all_events(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 1, 2: 2}))
+        self.assertEqual(test.all_events(),
+                         [(1, 1), (2, 2)])
+
+    def test_EventsInformation_all_events_sorts(self):
+        test = ti.EventsInformation(AdditiveEvents({2: 1, 1: 2}))
+        self.assertEqual(test.all_events(),
+                         [(1, 2), (2, 1)])
+
+    def test_EventsInformation_all_events_does_not_return_zero_frequencies(self):
+        test = ti.EventsInformation(AdditiveEvents({-1: 2, 0: 0, 1: 2}))
+        self.assertEqual(test.all_events(), [(-1, 2), (1, 2)])
+
+    def test_EventsInformation_all_events_include_zeroes_no_zeroes(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 1, 2: 2}))
+        self.assertEqual(test.all_events_include_zeroes(),
+                         [(1, 1), (2, 2)])
+
+    def test_EventsInformation_all_events_include_zeroes_end_zeroes(self):
+        test = ti.EventsInformation(AdditiveEvents({0: 0, 1: 1, 2: 2, 3: 0}))
+        self.assertEqual(test.all_events_include_zeroes(),
+                         [(1, 1), (2, 2)])
+
+    def test_EventsInformation_all_events_include_zeroes_mid_zeroes(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 1, 2: 0, 3: 2}))
+        self.assertEqual(test.all_events_include_zeroes(),
+                         [(1, 1), (2, 0), (3, 2)])
+
+    def test_EventsInformation_biggest_event_returns_first_biggest_event(self):
+        test = ti.EventsInformation(AdditiveEvents({-1: 5, 0: 1, 2: 5}))
+        self.assertEqual(test.biggest_event(), (-1, 5), (2, 5))
+
+    def test_EventsInformation_biggest_event_returns_only_biggest_event(self):
+        test = ti.EventsInformation(AdditiveEvents({-1: 5, 0: 1, 2: 10}))
+        self.assertEqual(test.biggest_event(), (2, 10))
+
+    def test_EventsInformation_total_event_occurrences(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 2, 3: 4}))
+        self.assertEqual(test.total_occurrences(), 2 + 4)
+
+    def test_AdditiveEvents_mean_normal_case(self):
+        test = ti.EventsInformation(AdditiveEvents({-1: 5, 1: 5}))
+        self.assertEqual(test.mean(), 0)
+
+    def test_AdditiveEvents_mean_with_non_uniform_table(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 2, 2: 5}))
+        mean = (2 + 10) / float(2 + 5)
+        self.assertEqual(test.mean(), mean)
+
+    def test_AdditiveEvents_mean_with_large_number_table(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 2 * 10 ** 1000, 2: 2 * 10 ** 1000}))
+        self.assertEqual(test.mean(), 1.5)
+
+    def test_AdditiveEvents_stddev_low_occurrences(self):
+        low_freq = ti.EventsInformation(AdditiveEvents({2: 1, -2: 1, 1: 1, -1: 1}))
+        self.assertEqual(low_freq.stddev(), round((10 / 4.) ** 0.5, 4))
+
+    def test_AdditiveEvents_stddev_low_occurrences_change_decimal_place_value(self):
+        low_freq = ti.EventsInformation(AdditiveEvents({2: 1, -2: 1, 1: 1, -1: 1}))
+        self.assertEqual(low_freq.stddev(decimal_place=10), round((10 / 4.) ** 0.5, 10))
+
+    def test_AdditiveEvents_stddev_middle_high_occurrences(self):
+        high_freq = ti.EventsInformation(AdditiveEvents({2: 10 ** 50, -2: 10 ** 50, 1: 10 ** 50, -1: 10 ** 50}))
+        self.assertEqual(high_freq.stddev(), round((10 / 4.) ** 0.5, 4))
+
+    def test_AdditiveEvents_stddev_middle_high_occurrences_change_decimal_place_value(self):
+        high_freq = ti.EventsInformation(AdditiveEvents({2: 10 ** 50, -2: 10 ** 50, 1: 10 ** 50, -1: 10 ** 50}))
+        self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5 ** 0.5, 10))
+
+    def test_AdditiveEvents_stddev_very_high_occurrences(self):
+        high_freq = ti.EventsInformation(AdditiveEvents({2: 10 ** 500, -2: 10 ** 500, 1: 10 ** 500, -1: 10 ** 500}))
+        self.assertEqual(high_freq.stddev(), round((10 / 4.) ** 0.5, 4))
+
+    def test_AdditiveEvents_stddev_very_high_occurrences_change_decimal_place_value(self):
+        high_freq = ti.EventsInformation(AdditiveEvents({2: 10 ** 500, -2: 10 ** 500, 1: 10 ** 500, -1: 10 ** 500}))
+        self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5 ** 0.5, 10))
 
     """
     note: format_number is simply a wrapper for NumberFormatter.  for full tests, see test_numberformatter.py
@@ -164,7 +292,7 @@ class TestTableInfo(unittest.TestCase):
         table = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.graph_pts_overflow(table), ([(1, 2, 3), (1, 0, 1)], '1'))
 
-    def test_graph_pts_overflow_for_larg_numbers(self):
+    def test_graph_pts_overflow_for_large_numbers(self):
         table = AdditiveEvents({1: 10 ** 200, 2: 1})
         self.assertEqual(ti.graph_pts_overflow(table),
                          ([(1, 2), (10 ** 200, 1)], '1'))
@@ -184,10 +312,15 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ti.full_table_string(table, include_zeroes=False),
                          '1: 1\n3: 1\n')
 
-    def test_full_table_string_right_justifies_all_values(self):
+    def test_full_table_string_right_justifies_all_values_big_max(self):
         table = AdditiveEvents({1: 10, 10: 200, 1000: 3000})
         self.assertEqual(ti.full_table_string(table, include_zeroes=False),
                          '   1: 10\n  10: 200\n1000: 3,000\n')
+
+    def test_full_table_string_right_justifies_all_values_big_min(self):
+        table = AdditiveEvents({-1000: 2, 1: 10, 10: 200, 1000: 3000})
+        self.assertEqual(ti.full_table_string(table, include_zeroes=False),
+                         '-1000: 2\n    1: 10\n   10: 200\n 1000: 3,000\n')
 
     def test_full_table_string_edge_case(self):
         table = AdditiveEvents({0: 1})

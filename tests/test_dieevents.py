@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 import unittest
-from dicetables.diceevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, ProtoDie
+from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, ProtoDie
 
 
 class DummyDie(ProtoDie):

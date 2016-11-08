@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 import unittest
-from dicetables.diceevents import Die, ModWeightedDie, ModDie
+from dicetables.dieevents import Die, ModWeightedDie, ModDie
 from dicetables.dicetable import DiceTable, DiceRecord, DiceRecordError
 from dicetables.baseevents import InvalidEventsError
 
@@ -41,47 +41,47 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(DiceRecord({Die(3): 4, Die(2): 1}).get_record(), {Die(2): 1, Die(3): 4})
 
     def test_DiceRecord_add_die_raises_error_for_negative_add(self):
-        self.assertRaises(DiceRecordError, DiceRecord({}).add_die, Die(1), -5)
+        self.assertRaises(DiceRecordError, DiceRecord({}).add_die, -5, Die(1))
 
     def test_DiceRecord_add_die_error_message(self):
         with self.assertRaises(DiceRecordError) as cm:
-            DiceRecord({}).add_die(Die(1), -5)
+            DiceRecord({}).add_die(-5, Die(1))
         self.assertEqual(cm.exception.args[0], 'May not add negative dice to DiceRecord. Error at (Die(1), -5)')
 
     def test_DiceRecord_add_die_returns_new_record_with_die_added_to_die_already_there(self):
         record = DiceRecord({Die(1): 2})
-        self.assertEqual(record.add_die(Die(1), 3).get_record(), {Die(1): 5})
+        self.assertEqual(record.add_die(3, Die(1)).get_record(), {Die(1): 5})
 
     def test_DiceRecord_add_die_returns_new_record_with_new_die_added(self):
         record = DiceRecord({Die(1): 2})
-        self.assertEqual(record.add_die(Die(2), 3).get_record(), {Die(1): 2, Die(2): 3})
+        self.assertEqual(record.add_die(3, Die(2)).get_record(), {Die(1): 2, Die(2): 3})
 
     def test_DiceRecord_remove_die_raises_error_for_negative_add(self):
-        self.assertRaises(DiceRecordError, DiceRecord({}).remove_die, Die(1), -5)
+        self.assertRaises(DiceRecordError, DiceRecord({}).remove_die, -5, Die(1))
 
     def test_DiceRecord_remove_die_error_message(self):
         with self.assertRaises(DiceRecordError) as cm:
-            DiceRecord({}).remove_die(Die(1), -5)
+            DiceRecord({}).remove_die(-5, Die(1))
         self.assertEqual(cm.exception.args[0], 'May not remove negative dice from DiceRecord. Error at (Die(1), -5)')
 
     def test_DiceRecord_remove_die_returns_correct_new_record(self):
         record = DiceRecord({Die(1): 2, Die(2): 5})
-        self.assertEqual(record.remove_die(Die(2), 3).get_record(), {Die(1): 2, Die(2): 2})
+        self.assertEqual(record.remove_die(3, Die(2)).get_record(), {Die(1): 2, Die(2): 2})
 
     def test_DiceRecord_remove_die_returns_correct_new_record_all_dice_removed_from_list(self):
         record = DiceRecord({Die(1): 2, Die(2): 5})
-        self.assertEqual(record.remove_die(Die(2), 5).get_record(), {Die(1): 2})
+        self.assertEqual(record.remove_die(5, Die(2)).get_record(), {Die(1): 2})
 
     def test_DiceRecord_remove_die_raises_error_when_too_many_dice_removed_from_list(self):
         record = DiceRecord({Die(1): 2, Die(2): 5})
         with self.assertRaises(DiceRecordError) as cm:
-            record.remove_die(Die(2), 17)
+            record.remove_die(17, Die(2))
         self.assertEqual(cm.exception.args[0], 'Removed too many dice from DiceRecord. Error at (Die(2), -12)')
 
     def test_DiceRecord_remove_die_raises_error_when_dice_not_in_record_removed_from_list(self):
         record = DiceRecord({Die(1): 2})
         with self.assertRaises(DiceRecordError) as cm:
-            record.remove_die(Die(2), 17)
+            record.remove_die(17, Die(2))
         self.assertEqual(cm.exception.args[0], 'Removed too many dice from DiceRecord. Error at (Die(2), -17)')
 
     def test_DiceRecord_str_empty(self):

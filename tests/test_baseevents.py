@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 from sys import version_info
 import unittest
-from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier, safe_true_div
+from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier
 
 
 class TestLongIntMath(unittest.TestCase):
@@ -29,32 +29,6 @@ class TestLongIntMath(unittest.TestCase):
 
     def test_assert_my_regex(self):
         self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
-
-    #  safe_true_div tests
-    def test_safe_true_div_returns_zero_when_answer_power_below_neg_300ish(self):
-        self.assertEqual(safe_true_div(1e+300, 10 ** 1000), 0)
-
-    def test_safe_true_div_long_long_makes_float(self):
-        result = safe_true_div(10 ** 1300, 10 ** 1000)
-        self.assertAlmostEqual(result, 10 ** 300, delta=10 ** 290)
-        self.assertIsInstance(result, float)
-
-    def test_safe_true_div_long_long_makes_float_with_negative_num(self):
-        result = safe_true_div(-10 ** 1300, 10 ** 1000)
-        self.assertAlmostEqual(result, -10 ** 300, delta=10 ** 290)
-        self.assertIsInstance(result, float)
-
-    def test_safe_true_div_float_float_makes_long(self):
-        result = safe_true_div(1e+300, 1e-100)
-        self.assertAlmostEqual(result, 10 ** 400, delta=10 ** 390)
-
-    def test_safe_true_div_float_float_makes_long_with_negative_num(self):
-        result = safe_true_div(1e+300, -1e-100)
-        self.assertAlmostEqual(result, -10 ** 400, delta=10 ** 390)
-
-    def test_safe_true_div_long_long_makes_negative_power_float(self):
-        result = safe_true_div(10 ** 1000, 10 ** 1200)
-        self.assertAlmostEqual(result, 10 ** -200, delta=10 ** -210)
 
     #  InputVerifier tests
     def test_InvalidEventsError_empty(self):
@@ -116,57 +90,6 @@ class TestLongIntMath(unittest.TestCase):
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1.0: 1})
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1: -1})
 
-    def test_AdditiveEvents_event_keys_removes_zero_occurrences(self):
-        test_table = AdditiveEvents({0: 1, 1: 0})
-        self.assertEqual(test_table.event_keys, [0])
-
-    def test_AdditiveEvents_event_keys_sorts(self):
-        test_table = AdditiveEvents({2: 1, 1: 1, 3: 1})
-        self.assertEqual(test_table.event_keys, [1, 2, 3])
-
-    def test_AdditiveEvents_event_range(self):
-        zero_to_two = AdditiveEvents({0: 2, 1: 1, 2: 5, 4: 0})
-        self.assertEqual(zero_to_two.event_range, (0, 2))
-
-    def test_AdditiveEvents_get_event(self):
-        zero_three = AdditiveEvents({0: 3})
-        self.assertEqual(zero_three.get_event(0), (0, 3))
-
-    def test_AdditiveEvents_get_event_returns_for_empty_event(self):
-        zero_three = AdditiveEvents({0: 3})
-        self.assertEqual(zero_three.get_event(100), (100, 0))
-
-    def test_AdditiveEvents_get_range_of_events(self):
-        table = AdditiveEvents({1: 1, 2: 2})
-        self.assertEqual(table.get_range_of_events(0, 4),
-                         [(0, 0), (1, 1), (2, 2), (3, 0)])
-
-    def test_AdditiveEvents_all_events(self):
-        table = AdditiveEvents({1: 1, 2: 2})
-        self.assertEqual(table.all_events,
-                         [(1, 1), (2, 2)])
-
-    def test_AdditiveEvents_all_events_sorts(self):
-        table = AdditiveEvents({2: 1, 1: 2})
-        self.assertEqual(table.all_events,
-                         [(1, 2), (2, 1)])
-
-    def test_AdditiveEvents_all_events_does_not_return_zero_frequencies(self):
-        table = AdditiveEvents({-1: 2, 0: 0, 1: 2})
-        self.assertEqual(table.all_events, [(-1, 2), (1, 2)])
-
-    def test_AdditiveEvents_biggest_event_returns_first_biggest_event(self):
-        table = AdditiveEvents({-1: 5, 0: 1, 2: 5})
-        self.assertEqual(table.biggest_event, (-1, 5), (2, 5))
-
-    def test_AdditiveEvents_biggest_event_returns_only_biggest_event(self):
-        table = AdditiveEvents({-1: 5, 0: 1, 2: 10})
-        self.assertEqual(table.biggest_event, (2, 10))
-
-    def test_AdditiveEvents_total_event_occurrences(self):
-        table = AdditiveEvents({1: 2, 3: 4})
-        self.assertEqual(table.total_occurrences, 2 + 4)
-
     def test_AdditiveEvents_string_returns_min_to_max(self):
         table = AdditiveEvents({-1: 1, 2: 1, 5: 1})
         self.assertEqual(str(table), 'table from -1 to 5')
@@ -174,43 +97,6 @@ class TestLongIntMath(unittest.TestCase):
     def test_AdditiveEvents_string_is_in_order_and_ignores_high_zero_values(self):
         table = AdditiveEvents({2: 0, 1: 1, -1: 1, -2: 0})
         self.assertEqual(str(table), 'table from -1 to 1')
-
-    def test_AdditiveEvents_mean_normal_case(self):
-        table = AdditiveEvents({-1: 5, 1: 5})
-        self.assertEqual(table.mean(), 0)
-
-    def test_AdditiveEvents_mean_with_non_uniform_table(self):
-        table = AdditiveEvents({1: 2, 2: 5})
-        mean = (2 + 10) / float(2 + 5)
-        self.assertEqual(table.mean(), mean)
-
-    def test_AdditiveEvents_mean_with_large_number_table(self):
-        table = AdditiveEvents({1: 2 * 10 ** 1000, 2: 2 * 10 ** 1000})
-        self.assertEqual(table.mean(), 1.5)
-
-    def test_AdditiveEvents_stddev_low_occurrences(self):
-        low_freq = AdditiveEvents({2: 1, -2: 1, 1: 1, -1: 1})
-        self.assertEqual(low_freq.stddev(), round((10 / 4.) ** 0.5, 4))
-
-    def test_AdditiveEvents_stddev_low_occurrences_change_decimal_place_value(self):
-        low_freq = AdditiveEvents({2: 1, -2: 1, 1: 1, -1: 1})
-        self.assertEqual(low_freq.stddev(decimal_place=10), round((10 / 4.) ** 0.5, 10))
-
-    def test_AdditiveEvents_stddev_middle_high_occurrences(self):
-        high_freq = AdditiveEvents({2: 10 ** 50, -2: 10 ** 50, 1: 10 ** 50, -1: 10 ** 50})
-        self.assertEqual(high_freq.stddev(), round((10 / 4.) ** 0.5, 4))
-
-    def test_AdditiveEvents_stddev_middle_high_occurrences_change_decimal_place_value(self):
-        high_freq = AdditiveEvents({2: 10 ** 50, -2: 10 ** 50, 1: 10 ** 50, -1: 10 ** 50})
-        self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5 ** 0.5, 10))
-
-    def test_AdditiveEvents_stddev_very_high_occurrences(self):
-        high_freq = AdditiveEvents({2: 10 ** 500, -2: 10 ** 500, 1: 10 ** 500, -1: 10 ** 500})
-        self.assertEqual(high_freq.stddev(), round((10 / 4.) ** 0.5, 4))
-
-    def test_AdditiveEvents_stddev_very_high_occurrences_change_decimal_place_value(self):
-        high_freq = AdditiveEvents({2: 10 ** 500, -2: 10 ** 500, 1: 10 ** 500, -1: 10 ** 500})
-        self.assertEqual(high_freq.stddev(decimal_place=10), round(2.5 ** 0.5, 10))
 
     def test_AdditiveEvents_combine_negative_times_does_nothing(self):
         identity = AdditiveEvents({0: 1})
@@ -240,19 +126,19 @@ class TestLongIntMath(unittest.TestCase):
     def test_AdditiveEvents_combine_works_with_low_total_occurrences_events(self):
         low_ratio_events = AdditiveEvents({1: 1, 2: 1})
         self.identity.combine(1, low_ratio_events)
-        self.assertEqual(self.identity.all_events, low_ratio_events.all_events)
+        self.assertEqual(self.identity.get_dict(), low_ratio_events.get_dict())
 
     def test_AdditiveEvents_combine_works_with_high_total_occurrences_events(self):
-        high_ratio_tuples = [(1, 10 ** 1000), (2, 10 ** 1000)]
-        self.identity.combine(1, AdditiveEvents(dict(high_ratio_tuples)))
-        self.assertEqual(self.identity.all_events, high_ratio_tuples)
+        high_ratio_dict = {1: 10 ** 1000, 2: 10 ** 1000}
+        self.identity.combine(1, AdditiveEvents(high_ratio_dict))
+        self.assertEqual(self.identity.get_dict(), high_ratio_dict)
 
     def test_AdditiveEvents_one_multiple_combine_is_multiple_single_combines(self):
         to_add = AdditiveEvents({1: 2, 3: 4})
         self.identity.combine(1, to_add)
         self.identity.combine(1, to_add)
         self.identity_b.combine(2, to_add)
-        self.assertEqual(self.identity.all_events, self.identity_b.all_events)
+        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
 
     def test_AdditiveEvents_combine_combines_correctly(self):
         to_add = AdditiveEvents({1: 2, 2: 2})
