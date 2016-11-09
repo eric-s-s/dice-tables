@@ -257,6 +257,57 @@ class TestTableInfo(unittest.TestCase):
         formatter.shown_digits = 8
         self.assertEqual(formatter.format(nine_digits), '1.0000000e+7')
 
+    def test_NumberFormatter_is_special_case_zero(self):
+        self.assertTrue(nf.NumberFormatter().is_special_case(0))
+        self.assertTrue(nf.NumberFormatter().is_special_case(0.0))
+
+    def test_NumberFormatter_is_special_case_infinity(self):
+        self.assertTrue(nf.NumberFormatter().is_special_case(float('inf')))
+        self.assertTrue(nf.NumberFormatter().is_special_case(Decimal('inf')))
+
+    def test_NumberFormatter_is_special_case_neg_infinity(self):
+        self.assertTrue(nf.NumberFormatter().is_special_case(float('-inf')))
+        self.assertTrue(nf.NumberFormatter().is_special_case(Decimal('-inf')))
+
+    def test_NumberFormatter_is_special_case_false(self):
+        self.assertFalse(nf.NumberFormatter().is_special_case(1.23))
+        self.assertFalse(nf.NumberFormatter().is_special_case(-10*1111))
+        self.assertFalse(nf.NumberFormatter().is_special_case(Decimal('1e-1000')))
+        self.assertFalse(nf.NumberFormatter().is_special_case(Decimal('1e+1000')))
+        self.assertFalse(nf.NumberFormatter().is_special_case(Decimal('-1e+1000')))
+
+    def test_NumberFormatter_get_special_case_zero(self):
+        self.assertEqual(nf.NumberFormatter().get_special_case(0), '0')
+        self.assertEqual(nf.NumberFormatter().get_special_case(0.0), '0')
+
+    def test_NumberFormatter_get_special_case_infinity(self):
+        self.assertEqual(nf.NumberFormatter().get_special_case(float('inf')), 'Infinity')
+        self.assertEqual(nf.NumberFormatter().get_special_case(Decimal('inf')), 'Infinity')
+
+    def test_NumberFormatter_get_special_case_neg_infinity(self):
+        self.assertEqual(nf.NumberFormatter().get_special_case(float('-inf')), '-Infinity')
+        self.assertEqual(nf.NumberFormatter().get_special_case(Decimal('-inf')), '-Infinity')
+
+    def test_NumberFormatter_format_special_cases(self):
+        self.assertEqual(nf.NumberFormatter().format(0), '0')
+        self.assertEqual(nf.NumberFormatter().format(float('inf')), 'Infinity')
+        self.assertEqual(nf.NumberFormatter().format(float('-inf')), '-Infinity')
+
+    def test_NumberFormatter_format_fixed_point_special_cases(self):
+        self.assertEqual(nf.NumberFormatter().format_fixed_point(0), '0')
+        self.assertEqual(nf.NumberFormatter().format_fixed_point(float('inf')), 'Infinity')
+        self.assertEqual(nf.NumberFormatter().format_fixed_point(float('-inf')), '-Infinity')
+
+    def test_NumberFormatter_format_commaed_special_cases(self):
+        self.assertEqual(nf.NumberFormatter().format_commaed(0), '0')
+        self.assertEqual(nf.NumberFormatter().format_commaed(float('inf')), 'Infinity')
+        self.assertEqual(nf.NumberFormatter().format_commaed(float('-inf')), '-Infinity')
+
+    def test_NumberFormatter_format_exponent_special_cases(self):
+        self.assertEqual(nf.NumberFormatter().format_exponent(0), '0')
+        self.assertEqual(nf.NumberFormatter().format_exponent(float('inf')), 'Infinity')
+        self.assertEqual(nf.NumberFormatter().format_exponent(float('-inf')), '-Infinity')
+
 
 if __name__ == '__main__':
     unittest.main()

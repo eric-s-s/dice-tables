@@ -130,22 +130,22 @@ class EventsCalculations(object):
         return value_right_just
 
     def stats_strings(self, query_values):
+        """
+
+        :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
+        """
         formatter = NumberFormatter()
 
-        total_combinations = self.info.total_occurrences()
+        total_occurrences = self.info.total_occurrences()
         query_values_occurrences = self._get_query_values_occurrences(query_values)
 
-        if query_values_occurrences == 0:
-            inverse_chance_str = 'infinity'
-            pct_str = formatter.format(0)
-        else:
-            inverse_chance_str, pct_str = self._calculate_chance_and_pct(formatter, query_values_occurrences,
-                                                                         total_combinations)
+        inverse_chance_str, pct_str = self._calculate_chance_and_pct(query_values_occurrences, total_occurrences)
+
         return (get_string_for_sequence(query_values),
                 formatter.format(query_values_occurrences),
-                formatter.format(total_combinations),
-                inverse_chance_str,
-                pct_str)
+                formatter.format(total_occurrences),
+                formatter.format(inverse_chance_str),
+                formatter.format(pct_str))
 
     def _get_query_values_occurrences(self, query_values):
         combinations_of_values = 0
@@ -155,10 +155,12 @@ class EventsCalculations(object):
         return combinations_of_values
 
     @staticmethod
-    def _calculate_chance_and_pct(formatter, query_values_occurrences, total_combinations):
+    def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
+        if not query_values_occurrences:
+            return float('inf'), 0
         inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
         pct = Decimal(100.0) / inverse_chance
-        return formatter.format(inverse_chance), formatter.format(pct)
+        return inverse_chance, pct
 
 
 def get_fast_pct_number(number, total_values):
@@ -179,10 +181,9 @@ def get_string_for_sequence(input_list):
 
 
 def split_at_gaps_larger_than_one(sorted_list):
-    max_gap_size = 1
     list_of_sequences = []
     for value in sorted_list:
-        if not list_of_sequences or gap_is_too_big(list_of_sequences, value, max_gap_size):
+        if not list_of_sequences or gap_is_larger_than_one(list_of_sequences, value):
             list_of_sequences.append([value])
         else:
             last_group = list_of_sequences[-1]
@@ -190,7 +191,8 @@ def split_at_gaps_larger_than_one(sorted_list):
     return list_of_sequences
 
 
-def gap_is_too_big(list_of_sequences, value, max_gap_size):
+def gap_is_larger_than_one(list_of_sequences, value):
+    max_gap_size = 1
     last_value_of_list = list_of_sequences[-1][-1]
     return value - last_value_of_list > max_gap_size
 

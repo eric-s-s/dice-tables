@@ -305,23 +305,12 @@ class TestEventsInfo(unittest.TestCase):
     def test_format_one_sequence_first_and_last_different(self):
         self.assertEqual(ti.format_one_sequence([-1, 3, 2]), '(-1)-2')
 
-    def test_gap_is_too_big_size_one_true(self):
-        self.assertTrue(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 7, 1))
+    def test_gap_is_larger_than_one_true(self):
+        self.assertTrue(ti.gap_is_larger_than_one([[1, 2, 3], [4, 5]], 7))
 
-    def test_gap_is_too_big_size_one_false(self):
-        self.assertFalse(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 5, 1))
-        self.assertFalse(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 6, 1))
-
-    def test_gap_is_too_big_higher_size_true_false(self):
-        self.assertTrue(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 11, 5))
-        self.assertTrue(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 15, 5))
-        self.assertFalse(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 10, 5))
-        self.assertFalse(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 7, 5))
-
-    def test_gap_is_too_big_size_zero_true_false(self):
-        self.assertTrue(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 6, 0))
-        self.assertTrue(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 15, 0))
-        self.assertFalse(ti.gap_is_too_big([[1, 2, 3], [4, 5]], 5, 0))
+    def test_gap_is_larger_than_one_false(self):
+        self.assertFalse(ti.gap_is_larger_than_one([[1, 2, 3], [4, 5]], 5))
+        self.assertFalse(ti.gap_is_larger_than_one([[1, 2, 3], [4, 5]], 6))
 
     def test_split_at_gaps_larger_than_one_empty_list(self):
         self.assertEqual(ti.split_at_gaps_larger_than_one([]), [])
@@ -363,7 +352,7 @@ class TestEventsInfo(unittest.TestCase):
 
     def test_EventsCalculations_stats_strings_values_not_in_table(self):
         calculator = ti.EventsCalculations(AdditiveEvents({1: 1}))
-        expected = ('2', '0', '1', 'infinity', '0')
+        expected = ('2', '0', '1', 'Infinity', '0')
         self.assertEqual(calculator.stats_strings([2]), expected)
 
     def test_EventsCalculations_stats_strings_does_not_repeat_values(self):

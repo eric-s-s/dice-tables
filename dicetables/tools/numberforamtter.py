@@ -24,6 +24,7 @@ class NumberFormatter(object):
         self._shown_digits = None
         self._max_comma_exp = None
         self._min_fixed_pt_exp = None
+        self._special_cases = {0: '0', float('inf'): 'Infinity', float('-inf'): '-Infinity'}
 
         self.shown_digits = shown_digits
         self.max_comma_exp = max_comma_exp
@@ -91,20 +92,26 @@ class NumberFormatter(object):
 
         :param number: number < 0
         """
+        if self.is_special_case(number):
+            return self.get_special_case(number)
         exponent = self.get_exponent(number)
         return self._format_number_and_exponent_to_fixed_point(number, exponent)
 
     def format_commaed(self, number):
+        if self.is_special_case(number):
+            return self.get_special_case(number)
         exponent = self.get_exponent(number)
         return self._format_number_and_exponent_to_commas(number, exponent)
 
     def format_exponent(self, number):
+        if self.is_special_case(number):
+            return self.get_special_case(number)
         exponent = self.get_exponent(number)
         return self._format_number_and_exponent_to_exponent(number, exponent)
 
     def format(self, number):
-        if number == 0:
-            return '0'
+        if self.is_special_case(number):
+            return self.get_special_case(number)
         exponent = self.get_exponent(number)
         if 0 > exponent >= self.min_fixed_pt_exp:
             return self._format_number_and_exponent_to_fixed_point(number, exponent)
@@ -112,6 +119,12 @@ class NumberFormatter(object):
             return self._format_number_and_exponent_to_commas(number, exponent)
         else:
             return self._format_number_and_exponent_to_exponent(number, exponent)
+
+    def is_special_case(self, number):
+        return number in self._special_cases
+
+    def get_special_case(self, number):
+        return self._special_cases[number]
 
 
 def remove_extra_zero_from_single_digit_exponent(answer):
