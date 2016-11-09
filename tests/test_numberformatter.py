@@ -1,3 +1,5 @@
+# pylint: disable=missing-docstring, invalid-name, too-many-public-methods, line-too-long
+
 from __future__ import absolute_import
 
 import unittest

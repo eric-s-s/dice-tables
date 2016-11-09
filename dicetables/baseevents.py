@@ -2,7 +2,6 @@
 needs to deal with it's BFN"""
 from __future__ import absolute_import
 
-from math import log10
 from sys import version_info
 
 from dicetables.tools.dictcombiner import DictCombiner
