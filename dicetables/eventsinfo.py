@@ -51,9 +51,17 @@ class EventsInformation(object):
         :return: (event, occurrences) for first event with highest occurrences
         """
         highest_occurrences = max(self._dict.values())
-        for event in sorted(self._dict.keys()):
-            if self._dict[event] == highest_occurrences:
+        for event, occurrences in sorted(self._dict.items()):
+            if occurrences == highest_occurrences:
                 return event, highest_occurrences
+
+    def biggest_events_all(self):
+        highest_occurrences = max(self._dict.values())
+        output = []
+        for event, occurrences in sorted(self._dict.items()):
+            if occurrences == highest_occurrences:
+                output.append((event, occurrences))
+        return sorted(output)
 
     def get_event(self, event):
         return event, self._dict.get(event, 0)
@@ -219,6 +227,18 @@ def format_for_sequence_str(num):
 
 # wrappers for deprecated functions
 
+def events_range(events):
+    return EventsInformation(events).events_range()
+
+
+def mean(events):
+    return EventsCalculations(events).mean()
+
+
+def stddev(events, decimal_place=4):
+    return EventsCalculations(events).stddev(decimal_place=decimal_place)
+
+
 def stats(events, query_values):
     return EventsCalculations(events).stats_strings(query_values)
 
@@ -232,11 +252,21 @@ def format_number(number, digits_shown=4, max_comma_exp=6, min_fixed_pt_exp=-3):
     return formatter.format(number)
 
 
-def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
+def graph_pts(events, percent=True, axes=True, include_zeroes=True, exact=False):
+    """
+
+    :param events: any AdditiveEvents or children
+    :param percent: =True: y-values are pct of total occurrences,\n
+        False: y-values are occurrences
+    :param axes: =True: [(x-axis), (y-axis)], False:[(xy-point), (xy-point), ...]
+    :param include_zeroes: =True: include zero occurrences within the event range
+    :param exact: =False: get results quickly, but only good to about 10 decimal places,\n
+        =True: get result slowly, but calculated to many decimal places
+    """
     if percent:
-        points = _get_pct_pts(table, include_zeroes, exact)
+        points = _get_pct_pts(events, include_zeroes, exact)
     else:
-        points = _get_non_pct_pts(table, include_zeroes)
+        points = _get_non_pct_pts(events, include_zeroes)
 
     if axes:
         return list(zip(*points))
@@ -244,37 +274,37 @@ def graph_pts(table, percent=True, axes=True, include_zeroes=True, exact=False):
         return points
 
 
-def _get_non_pct_pts(table, include_zeroes):
+def _get_non_pct_pts(events, include_zeroes):
     if include_zeroes:
-        points = EventsInformation(table).all_events_include_zeroes()
+        points = EventsInformation(events).all_events_include_zeroes()
     else:
-        points = EventsInformation(table).all_events()
+        points = EventsInformation(events).all_events()
     return points
 
 
-def _get_pct_pts(table, include_zeroes, exact):
-    calculator = EventsCalculations(table, include_zeroes)
+def _get_pct_pts(events, include_zeroes, exact):
+    calculator = EventsCalculations(events, include_zeroes)
     if exact:
         return calculator.percentage_points_exact()
     else:
         return calculator.percentage_points()
 
 
-def graph_pts_overflow(table, axes=True, zeroes=True):
+def graph_pts_overflow(events, axes=True, zeroes=True):
     """
 
-    :param table: any AdditiveEvents or children
+    :param events: any AdditiveEvents or children
     :param axes: =True: [(x-axis), (y-axis)], False:[(xy-point), (xy-point), ...]
-    :param zeroes: =True: include zero occurrences within table.event_range
+    :param zeroes: =True: include zero occurrences within the event range
     :return: ([graphing data], 'factor all y-data  was divided by')
     """
     if zeroes:
-        raw_pts = EventsInformation(table).all_events_include_zeroes()
+        raw_pts = EventsInformation(events).all_events_include_zeroes()
     else:
-        raw_pts = EventsInformation(table).all_events()
+        raw_pts = EventsInformation(events).all_events()
     formatter = NumberFormatter(shown_digits=2)
 
-    factor = get_overflow_factor(table)
+    factor = get_overflow_factor(events)
     factor_string = formatter.format(factor)
     new_points = [(x_val, y_val // factor) for x_val, y_val in raw_pts]
     if axes:
@@ -282,15 +312,14 @@ def graph_pts_overflow(table, axes=True, zeroes=True):
     return new_points, factor_string
 
 
-def get_overflow_factor(table):
+def get_overflow_factor(events):
     factor = 1
     overflow_point = 10 ** 300
     exponent_adjustment = 4
-    biggest_occurrences = EventsInformation(table).biggest_event()[1]
+    biggest_occurrences = EventsInformation(events).biggest_event()[1]
     if biggest_occurrences > overflow_point:
         power = int(log10(biggest_occurrences)) - exponent_adjustment
         factor = 10 ** power
     return factor
-
 
 

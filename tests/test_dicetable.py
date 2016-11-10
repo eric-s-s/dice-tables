@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 import unittest
 from dicetables.dieevents import Die, ModWeightedDie, ModDie
-from dicetables.dicetable import DiceTable, DiceRecord, DiceRecordError
+from dicetables.dicetable import DiceTable, DiceRecord, DiceRecordError, RichDiceTable
 from dicetables.baseevents import InvalidEventsError
 
 
@@ -217,6 +217,112 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(cm.exception.args[0],
                          'Removed too many dice from DiceRecord. Error at (Die(4), -1)')
 
+    def test_RichDiceTable_init_does_DiceTable_init(self):
+        table = RichDiceTable({1: 1}, [])
+        self.assertEqual(table.get_dict(), {1: 1})
+        self.assertEqual(table.get_list(), [])
+
+    def test_RichDiceTable_init_does_has_correct_calc(self):
+        table = RichDiceTable({1: 1}, [])
+        self.assertEqual(table.calc.percentage_points(), [(1, 100.0)])
+
+    def test_RichDiceTable_calc_defaults_to_include_zeros(self):
+        table = RichDiceTable({1: 1}, [])
+        self.assertTrue(table.calc.include_zeroes)
+
+    def test_RichDiceTable_init_calc_includes_zeros_false(self):
+        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        self.assertFalse(table.calc.include_zeroes)
+
+    def test_RichDiceTable_update_info_resets_calc(self):
+        table = RichDiceTable({1: 1}, [])
+        table.add_die(1, Die(2))
+        self.assertEqual(table.calc.percentage_points(), [(2, 50.0), (3, 50.0)])
+
+    def test_RichDiceTable_update_info_keeps_include_zeroes_info_true(self):
+        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=True)
+        table.add_die(1, Die(2))
+        self.assertTrue(table.calc.include_zeroes)
+
+    def test_RichDiceTable_update_info_keeps_include_zeroes_info_false(self):
+        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        table.add_die(1, Die(2))
+        self.assertFalse(table.calc.include_zeroes)
+
+    def test_RichDiceTable_set_calc_includes_zeroes_setter_switches_calc_status(self):
+        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        table.calc_includes_zeroes = True
+        self.assertTrue(table.calc.include_zeroes)
+
+    def test_RichDiceTable_info_property(self):
+        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        self.assertEqual(table.info.all_events(), [(1, 1)])
+        self.assertEqual(table.info.events_range(), (1, 1))
+
+    def test_RichDiceTable_info_property_updates(self):
+        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        self.assertEqual(table.info.all_events(), [(1, 1)])
+        table.add_die(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(2, 1), (3, 1)])
+
+    def test_RichDiceTable_new_class_method_get_dict(self):
+        table = RichDiceTable.new()
+        self.assertEqual(table.get_dict(), {0: 1})
+
+    def test_RichDiceTable_new_class_method_get_list(self):
+        table = RichDiceTable.new()
+        self.assertEqual(table.get_list(), [])
+
+    def test_RichDiceTable_new_class_method_has_calc_and_info(self):
+        table = RichDiceTable.new()
+        self.assertEqual(table.info.all_events(), [(0, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(0, 100.0)])
+
+    def test_RichDiceTable_new_class_method_calc_includes_zeroes_is_True(self):
+        table = RichDiceTable.new()
+        self.assertTrue(table.calc_includes_zeroes)
+
+    def test_RichDiceTable_add_die_updates_calc_and_info(self):
+        table = RichDiceTable.new()
+        table.add_die(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(1, 1), (2, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(1, 50.0), (2, 50.0)])
+
+    def test_RichDiceTable_combine_updates_calc_and_info(self):
+        table = RichDiceTable.new()
+        table.combine(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(1, 1), (2, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(1, 50.0), (2, 50.0)])
+
+    def test_RichDiceTable_combine_by_dictionary_updates_calc_and_info(self):
+        table = RichDiceTable.new()
+        table.combine_by_dictionary(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(1, 1), (2, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(1, 50.0), (2, 50.0)])
+
+    def test_RichDiceTable_combine_by_flattened_list_updates_calc_and_info(self):
+        table = RichDiceTable.new()
+        table.combine_by_flattened_list(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(1, 1), (2, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(1, 50.0), (2, 50.0)])
+
+    def test_RichDiceTable_combine_by_indexed_values_updates_calc_and_info(self):
+        table = RichDiceTable.new()
+        table.combine_by_indexed_values(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(1, 1), (2, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(1, 50.0), (2, 50.0)])
+
+    def test_RichDiceTable_remove_die_updates_calc_and_info(self):
+        table = RichDiceTable({1: 1, 2: 1}, [(Die(2), 1)])
+        table.remove_die(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(0, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(0, 100.0)])
+
+    def test_RichDiceTable_remove_updates_calc_and_info(self):
+        table = RichDiceTable({1: 1, 2: 1}, [])
+        table.remove(1, Die(2))
+        self.assertEqual(table.info.all_events(), [(0, 1)])
+        self.assertEqual(table.calc.percentage_points(), [(0, 100.0)])
 
 if __name__ == '__main__':
     unittest.main()

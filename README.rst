@@ -18,6 +18,7 @@ contents:
 - THE BASICS
 - THE DICE
 - EVENTS OBJECTS
+- DiceTable, RichDiceTable, EventsInformation and EventsCalculations
 - HOW TO GET ERRORS AND BUGS
 - CHANGES
 
@@ -40,14 +41,14 @@ DiceTable is the main object for adding and removing dice. It
 
     In [1]: import dicetables as dt
 
-    In [2]: table = dt.DiceTable()
+    In [2]: table = dt.DiceTable.new()
 
     In [3]: table.add_die(1, dt.Die(2))
 
     In [4]: table.add_die(1, dt.Die(3))
 
-    In [5]: table.all_events
-    Out[5]: [(2, 1), (3, 2), (4, 2), (5, 1)]
+    In [5]: table.get_dict()
+    Out[5]: {2: 1, 3: 2, 4: 2, 5: 1}
 
 
 Here are basic table functions::
@@ -59,36 +60,9 @@ Here are basic table functions::
 
     In [7]: table.remove_die(99, dt.Die(2))
 
-    In[17]: print(table)
+    In [17]: print(table)
     2D2
     1D3
-
-    In [11]: table.all_events
-    Out[11]: [(3, 1), (4, 3), (5, 4), (6, 3), (7, 1)]
-
-    In [12]: table.event_keys
-    Out[12]: [3, 4, 5, 6, 7]
-
-    In [20]: table.total_occurrences
-    Out[20]: 12
-
-    In [13]: table.event_range
-    Out[13]: (3, 7)
-
-    In [14]: table.biggest_event
-    Out[14]: (5, 4)
-
-    In [15]: table.get_event(6)
-    Out[15]: (6, 3)
-
-    In [16]: table.get_range_of_events(0, 5)
-    Out[16]: [(0, 0), (1, 0), (2, 0), (3, 1), (4, 3)]
-
-    In [18]: table.mean()
-    Out[18]: 5.0
-
-    In [19]: table.stddev()
-    Out[19]: 1.0801
 
     In [20]: table.get_list()
     Out[20]: [(Die(2), 2), (Die(3), 1)]
@@ -106,53 +80,141 @@ Here are basic table functions::
     1D3
         No weights
 
-Here are the useful non-method functions and objects::
+To get useful information, use EventsInformation object and EventsCalculations object::
 
-    In [37]: print(dt.full_table_string(table))
-    3: 1
-    4: 3
-    5: 4
-    6: 3
-    7: 1
+    In [1]: table = dt.DiceTable.new()
+    In [2]: table.add_die(2, dt.StrongDie(dt.Die(2), 3))
 
-    In[39]: stats_str = "{} occurred {} times out of {} combinations.\n \
-                  That's a one in {} chance or {}%"
+    In [3]: table.get_dict()
+    Out[3]: {6: 1, 9: 2, 12: 1}
 
-    In[39]: stats_info = dt.stats(table, [1,2,3,4])
+    In [4]: info = dt.EventsInformation(table)
 
-    In[40]: print(stat_str.format(*stats_info))
-    1-4 occurred 4 times out of 12 combinations.
-    That's a one in 3.000 chance or 33.33%
+    In [5]: info.all_events()
+    Out[5]: [(6, 1), (9, 2), (12, 1)]
 
-    In [41]: dt.GraphDataGenerator().get_axes(table)
-    Out[41]: [(3, 4, 5, 6, 7),
-              (8.333333333333334, 25.0, 33.333333333333336, 25.0, 8.333333333333334)]
 
-    In [42]: dt.GraphDataGenerator().get_points(table)
-    Out[42]:
-    [(3, 8.333333333333334),
-     (4, 25.0),
-     (5, 33.333333333333336),
-     (6, 25.0),
-     (7, 8.333333333333334)]
+    In [6]: info.all_events_include_zeroes()
+    Out[6]: [(6, 1), (7, 0), (8, 0), (9, 2), (10, 0), (11, 0), (12, 1)]
 
-instead of GraphDataGenerator obj, you can also use the wrapper function,
-graph_pts(). Both give you y-values that are % of total occurrences
-unless told otherwise.
+    In [7]: info.events_keys()
+    Out[7]: [6, 9, 12]
+
+    In [8]: info.events_range()
+    Out[8]: (6, 12)
+
+    In [9]: info.get_event(4)
+    Out[9]: (4, 0)
+
+    In [11]: info.get_range_of_events(7, 13)
+    Out[11]: [(7, 0), (8, 0), (9, 2), (10, 0), (11, 0), (12, 1)]
+
+    In [12]: info.biggest_event()
+    Out[12]: (9, 2)
+
+    In [13]: info.total_occurrences()
+    Out[13]: 4
+
+    In [14]: calc = dt.EventsCalculations(table)
+
+    In [15]: calc.mean()
+    Out[15]: 9.0
+
+    In [16]: calc.stddev()
+    Out[16]: 2.1213
+
+    In [17]: calc.percentage_points()
+    Out[17]: [(6, 25.0), (7, 0.0), (8, 0.0), (9, 50.0), (10, 0.0), (11, 0.0), (12, 25.0)]
+
+    In [18]: print(calc.full_table_string())
+     6: 1
+     7: 0
+     8: 0
+     9: 2
+    10: 0
+    11: 0
+    12: 1
+
+    In [19]: calc.include_zeroes = False
+    In [20]: print(calc.full_table_string())
+     6: 1
+     9: 2
+    12: 1
+
+    In [21]: stats_str = "{} occurred {} times out of {} combinations.\nThat's a one in {} chance or {}%"
+
+    In [22]: print(stats_str.format(*calcs.stats_strings([1, 2, 5, 8, 9, 10])))
+    1-2, 5, 8-10 occurred 2 times out of 4 combinations.
+    That's a one in 2.000 chance or 50.00%
+
+    In [23]: calc.percentage_axes()
+    Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
+
+
+::
+Please note that these objects do not follow changes to the DiceTable. RichDiceTable owns and
+updates these objects, but uses more memory::
+
+    In [3]: table = dt.DiceTable.new()
+
+    In [5]: info = dt.EventsInformation(table)
+
+    In [6]: calc = dt.EventsCalculations(table)
+
+    In [7]: info.events_range()
+    Out[7]: (0, 0)
+
+    In [8]: calc.mean()
+    Out[8]: 0.0
+
+    In [9]: table.add_die(100, dt.Die(6))
+
+    In [10]: info.events_range()
+    Out[10]: (0, 0)
+
+    In [11]: calc.mean()
+    Out[11]: 0.0
+
+    In [20]: dt.EventsInformation(table).events_range()
+    Out[20]: (100, 600)
+
+    In [12]: r_table = dt.RichDiceTable.new()
+
+    In [13]: r_table.info.events_range()
+    Out[13]: (0, 0)
+
+    In [14]: r_table.calc.mean()
+    Out[14]: 0.0
+
+    In [15]: r_table.add_die(100, dt.Die(6))
+
+    In [16]: r_table.info.events_range()
+    Out[16]: (100, 600)
+
+    In [17]: r_table.calc.mean()
+    Out[17]: 350.0
+
+
+
+You may also access this functionality with wrapper functions:
+
+- events_range
+- mean
+- stddev
+- stats
+- full_table_string
+- graph_pts
 ::
 
-    In[43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
+    In [43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
 
-    In[47]: print(dt.full_table_string(silly_table, include_zeroes=False))
+    In [47]: print(dt.full_table_string(silly_table, include_zeroes=False))
       1: 123,456
     100: 1.234e+1004
 
-(If include_zeroes=True, you'd get also get 2: 0, 3: 0 ... 99: 0)
-::
+    In [49]: stats_info = dt.stats(silly_table, list(range(-5000, 5)))
 
-    In[49]: stats_info = dt.stats(silly_table, list(range(-5000, 5)))
-
-    In[51]: print(stats_str.format(*stats_info))
+    In [51]: print(stats_str.format(*stats_info))
     (-5,000)-4 occurred 123,456 times out of 1.234e+1004 combinations.
     That's a one in 1.000e+999 chance or 1.000e-997%
 
@@ -165,7 +227,7 @@ Finally, here are all the kinds of dice you can add
 - dt.StrongDie(dt.Die(6), 5)
 
 That's all of the basic implementation. The rest of this is details about base classes, details of the
-die classes, what causes errors and the changes from the previous version.
+die classes, details of dicetable classes, what causes errors and the changes from the previous version.
 
 ----------------------
 DETAILS OF DIE CLASSES
@@ -274,51 +336,59 @@ any subclass, it checks to make sure you're get_dict() is legal.
 AdditiveEvents is the parent of DiceTable.  You can add and remove events using the ".combine" method which tries
 to pick the fastest combining algorithm. You can pick it yourself by calling ".combine_by_<algorithm>". You can
 combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,
-but there's no record of it.  You can use this to copy a table::
+but there's no record of it::
 
-    In [31]: first = dt.DiceTable()
+    In [31]: first = dt.DiceTable.new()
 
     In [32]: first.add_die(20, dt.Die(6))
 
     In [33]: first.add_die(7, dt.Die(9))
 
-    In [34]: second = dt.DiceTable()
+    In [34]: second = dt.DiceTable.new()
 
     In [35]: second.combine(1, first)
 
     In [36]: second.get_dict() == first.get_dict()
     Out[36]: True
 
-    In [37]: for die, number in first.get_list():
-                second._update_list(number, die)
+    In [37]: second.get_list()
+    Out[37]: []
 
-    In [38]: second.get_list() == first.get_list()
-    Out[38]: True
+    In [38]: third = dt.AdditiveEvents(first.get_dict())
 
-DiceTables also has a class method for making a "table" to your specifications. This can easily lead to bugs.
-So use with caution.
-::
+    In [39]: third.combine(5, dt.Die(10))
 
-    In [28]: nonsense = dt.DiceTable.create_table({1: 2, 3: 4}, [(dt.Die(2), 3), (dt.Die(4), 1)])
+    In [40]: first.add_die(5, dt.Die(10))
 
-    In [29]: nonsense.get_dict()
-    Out[29]: {1: 2, 3: 4}
+    In [41]: first.get_dict() == third.get_dict()
+    Out[41]: True
 
-    In [30]: nonsense.get_list()
-    Out[30]: [(Die(2), 3), (Die(4), 1)]
+    In [42]: print(first)
+    20D6
+    7D9
+    10D10
+
+    In [43]: first.combine(2, dt.Die(1234))
+
+    In [44]: print(first)
+    20D6
+    7D9
+    10D10
+
+
 
 --------------------------
 HOW TO GET ERRORS AND BUGS
 --------------------------
 ::
 
-    In[3]: dt.Die(0)
+    In [3]: dt.Die(0)
     dicetables.baseevents.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
-    In[5]: dt.AdditiveEvents({1.0: 2})
+    In [5]: dt.AdditiveEvents({1.0: 2})
     dicetables.baseevents.InvalidEventsError: all values must be ints
 
-    In[6]: dt.WeightedDie({1: 1, 2: -5})
+    In [6]: dt.WeightedDie({1: 1, 2: -5})
     dicetables.baseevents.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
 
 but these are ok, because AdditiveEvents and WeightedDie specifically scrub the zeroes in their get_dict() methods::
@@ -331,49 +401,49 @@ but these are ok, because AdditiveEvents and WeightedDie specifically scrub the 
     In [12]: weird.get_dict()
     Out[12]: {1: 1}
 
-    In[13]: weird.get_size()
+    In [13]: weird.get_size()
     Out[13]: 2
 
-    In[14]: weird.__repr__()
+    In [14]: weird.__repr__()
     Out[14]: 'WeightedDie({1: 1, 2: 0})'
 
 Special rule for WeightedDie and ModWeightedDie::
 
-    In[15]: dt.WeightedDie({0: 1})
+    In [15]: dt.WeightedDie({0: 1})
     ValueError: rolls may not be less than 1. use ModWeightedDie
 
-    In[16]: dt.ModWeightedDie({0: 1}, 1)
+    In [16]: dt.ModWeightedDie({0: 1}, 1)
     ValueError: rolls may not be less than 1. use ModWeightedDie
 
 Here's how to add 0 one time (which does nothing, btw)::
 
-    In[18]: dt.ModWeightedDie({1: 1}, -1).get_dict()
+    In [18]: dt.ModWeightedDie({1: 1}, -1).get_dict()
     Out[18]: {0: 1}
 
 StrongDie also has a weird case that can be unpredictable.  Basically, don't multiply by zero::
 
-    In[43]: table = dt.DiceTable()
+    In [43]: table = dt.DiceTable()
 
-    In[44]: table.add_die(1, dt.Die(6))
+    In [44]: table.add_die(1, dt.Die(6))
 
-    In[45]: table.add_die(100, dt.StrongDie(dt.Die(100), 0))
+    In [45]: table.add_die(100, dt.StrongDie(dt.Die(100), 0))
 
-    In[46]: table.get_dict()
+    In [46]: table.get_dict()
 
     Out[46]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
-    In[47]: print(table)
+    In [47]: print(table)
     1D6
     (100D100)X(0)
 
-    In[48]: table.add_die(2, dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)) <- this rolls zero with weight 4
+    In [48]: table.add_die(2, dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)) <- this rolls zero with weight 4
 
-    In[49]: print(table)
+    In [49]: print(table)
     (2D3-2  W:6)X(0)
     1D6
     (100D100)X(0)
 
-    In[50]: table.get_dict()
+    In [50]: table.get_dict()
     Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's just stupid.
 
 
@@ -403,51 +473,61 @@ it may or may not raise an error, but it's guaranteed buggy::
     In [10]: table.get_dict()
     Out[10]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
-    In[31]: table.remove(10, dt.Die(2))
+    In [31]: table.remove(10, dt.Die(2))
     ValueError: min() arg is an empty sequence <-didn't know this would happen, but at least failed loudly
 
-    In[32]: table.remove(2, dt.Die(2))
+    In [32]: table.remove(2, dt.Die(2))
 
-    In[33]: table.get_dict()
+    In [33]: table.get_dict()
     Out[33]: {-1: 1, 1: 1} <-bad. this is a random answer
 
-    In[34]: table.remove(1, dt.AdditiveEvents({-5: 100}))
+    In [34]: table.remove(1, dt.AdditiveEvents({-5: 100}))
 
-    In[35]: table.get_dict()
+    In [35]: table.get_dict()
     Out[35]: {} <-very bad. this is an illegal answer.
 
 Calling combine_by_flattened_list can be risky::
 
-    In[36]: x = dt.AdditiveEvents({1:1, 2: 5})
+    In [36]: x = dt.AdditiveEvents({1:1, 2: 5})
 
-    In[37]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
+    In [37]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
 
-    In[39]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
+    In [39]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
     MemoryError
 
-    In[42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
+    In [42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
     OverflowError: cannot fit 'int' into an index-sized integer
 
 Combining events with themselves is safe::
 
-    In[51]: x = dt.AdditiveEvents({1: 1, 2: 1})
+    In [51]: x = dt.AdditiveEvents({1: 1, 2: 1})
 
-    In[52]: x.combine(1, x)
+    In [52]: x.combine(1, x)
 
-    In[53]: x.get_dict()
+    In [53]: x.get_dict()
     Out[53]: {2: 1, 3: 2, 4: 1}
 
-    In[54]: x.combine(1, x)
+    In [54]: x.combine(1, x)
 
-    In[55]: x.get_dict()
+    In [55]: x.get_dict()
     Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1}
 
 =======
 CHANGES
 =======
-The base class of DiceTable is now called AdditiveEvents and not LongIntTable.  the module longintmath.py
-is renamed baseevents.py. If any IntegerEvents events is instantiated in a way that would cause bugs,
-it raises an error; the same is true for any dice.
+The larges change is that DiceTable.__init__() now takes two arguments - a dictionary of {event: occurrences}
+and a list of [(die, number), ]. to create a new table, call the class method DiceTable.new(). This change allows
+easy creation of a new dice table from data. new_table = DiceTable(old_table.get_dict(), old_table.get_list()) or
+new_table = DiceTable(stored_dict, stored_dice_list).
+
+The following modules have been renamed.
+
+- longintmath: baseevents
+- dicestats: dieevents, dicetable
+- tableinfo: eventsinfo
+
+The base class of DiceTable is now called AdditiveEvents and not LongIntTable. If any IntegerEvents events is
+instantiated in a way that would cause bugs, it raises an error; the same is true for any dice.
 
 AdditiveEvents.combine/remove take any IntegerEvents as an argument whereas LongIntTable.add/remove took a list of
 tuples as an argument.
@@ -455,37 +535,52 @@ tuples as an argument.
 Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
 which returns a dictionary and not a list of tuples.
 
-scinote and graph_pts were re-written as objects: NumberFormatter and GraphDataGenerator.
-Two functions, format_number and graph_pts, are wrapper functions for these objects.
+all of tableinfo was rewritten as objects. although they are deprecated, the following still exist as wrapper
+functions for those objects: format_number, graph_pts, full_table_string, stats.
 
-For output: The string for StrongDie now puts parentheses around the multiplier. stats() now shows tiny percentages.
+the new objects are:
+
+- NumberFormatter
+- EventsInformation
+- EventsCalculations
+
+For output: The string for StrongDie now puts parentheses around the multiplier.
+stats() now shows tiny percentages, and if infinite, show 'Infinity'.
 Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
 
-Several AdditiveEvents class methods were changed to properties.
-Here are all the original methods and their changes. You should be able to copy and paste this.
+Several AdditiveEvents class methods were removed to the EventsInformation object.
 
 CONVERSIONS = {
-
-    | 'LongIntTable.add()': 'AdditiveEvents.combine()',
-    | 'LongIntTable.frequency()': 'AdditiveEvents.get_event()',
-    | 'LongIntTable.frequency_all()': 'AdditiveEvents.all_events',
-    | 'LongIntTable.frequency_highest()': 'AdditiveEvents.biggest_event',
-    | 'LongIntTable.frequency_range()': 'AdditiveEvents.get_range_of_events()',
-    | 'LongIntTable.mean()': 'AdditiveEvents.mean()',
-    | 'LongIntTable.merge()': 'GONE',
-    | 'LongIntTable.remove()': 'AdditiveEvents.remove()',
-    | 'LongIntTable.stddev()': 'AdditiveEvents.stddev()',
-    | 'LongIntTable.total_frequency()': 'AdditiveEvents.total_occurrences',
-    | 'LongIntTable.update_frequency()': 'GONE',
-    | 'LongIntTable.update_value_add()': 'GONE',
-    | 'LongIntTable.update_value_ow()': 'GONE',
-    | 'LongIntTable.values()': 'AdditiveEvents.event_keys',
-    | 'LongIntTable.values_max()': 'AdditiveEvents.event_range[0]',
-    | 'LongIntTable.values_min()': 'AdditiveEvents.event_range[1]',
-    | 'LongIntTable.values_range()': 'AdditiveEvents.event_range',
-    | 'DiceTable.update_list()': 'DiceTable._update_list()',
-    | 'ProtoDie.tuple_list()': 'sorted(ProtoDie.get_dict().items())',
-    | 'scinote()': ('format_number()', 'NumberFormatter.format()'),
+    | 'DiceTable()': 'DiceTable.new()',
+    | 'LongIntTable.add': 'AdditiveEvents.combine',
+    | 'LongIntTable.frequency': 'EventsInformation(event).get_event',
+    | 'LongIntTable.frequency_all': 'EventsInformation(event).all_events',
+    | 'LongIntTable.frequency_highest': 'EventsInformation(event).biggest_event',
+    | 'LongIntTable.frequency_range': 'EventsInformation(event).get_range_of_events',
+    | 'LongIntTable.mean': 'EventsCalculations(event).mean',
+    | 'LongIntTable.merge': 'GONE',
+    | 'LongIntTable.remove': 'AdditiveEvents.remove',
+    | 'LongIntTable.stddev': 'EventsCalculations(event).stddev',
+    | 'LongIntTable.total_frequency': 'EventsInformation(event).total_occurrences',
+    | 'LongIntTable.update_frequency': 'GONE',
+    | 'LongIntTable.update_value_add': 'GONE',
+    | 'LongIntTable.update_value_ow': 'GONE',
+    | 'LongIntTable.values': 'EventsInformation(event).event_keys',
+    | 'LongIntTable.values_max': 'EventsInformation(event).event_range[0]',
+    | 'LongIntTable.values_min': 'EventsInformation(event).event_range[1]',
+    | 'LongIntTable.values_range': 'EventsInformation(event).event_range',
+    | 'DiceTable.update_list': 'DiceTable._update_list',
+    | 'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(events).all_events'),
+    | 'scinote': ('format_number', 'NumberFormatter.format'),
+    | 'full_table_string', 'EventsCalculations(event).full_table_string',
+    | 'stats', 'EventsCalculations(event).stats_strings',
+    | 'graph_pts': ('graph_pts',
+                    'EventsCalculations(event).percentage_points',
+                    'EventsCalculations(event).percentage_points_exact',
+                    'EventsCalculations(event).percentage_axes',
+                    'EventsCalculations(event).percentage_axes_exact',
+                    'EventsInformation(events).all_events',
+                    'EventsInformation(events).all_events_include_zeroes')
     | }
 
 
