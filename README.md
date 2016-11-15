@@ -194,7 +194,8 @@ You may also access this functionality with wrapper functions:
 - stddev
 - stats
 - full_table_string
-- graph_pts
+- percentage_points
+- percentage_axes
 ```
 In [43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
 
@@ -227,7 +228,7 @@ They all require implementations of get_size(), get_weight(), weight_info(),
 multiply_str(number), __str__(), __repr__() and get_dict() <-required for 
 any IntegerEvents.
 
-They are all immutable , hashable and rich-comparable so that multiple 
+They are all immutable , hashable and rich-comparable. Multiple 
 names can safely point to the same instance of a Die, they can be used 
 in sets and dictionary keys and they can be sorted with any other kind 
 of die. Comparisons are done by (size, weight, get_dict,
@@ -352,27 +353,52 @@ Out[36]: True
 In [37]: second.get_list()
 Out[37]: []
 
-In [38]: third = dt.AdditiveEvents(first.get_dict())
-
-In [39]: third.combine(5, dt.Die(10))
-
-In [40]: first.add_die(5, dt.Die(10))
-
-In [41]: first.get_dict() == third.get_dict()
-Out[41]: True
-
-In [42]: print(first)
+In [41]: print(first)
 20D6
 7D9
 10D10
 
-In [43]: first.combine(2, dt.Die(1234))
+In [42]: first.combine_by_dictionary(2, dt.Die(1234))
+
+In [43]: first.combine_by_indexed_values(2, dt.AdditiveEvents({1: 2, 3: 4})
 
 In [44]: print(first)
 20D6
 7D9
 10D10
+
+In [45]: second.get_dict() == first.get_dict()
+Out[45]: False
 ```
+###DiceTable and RichDiceTable
+You can instantiate any DiceTable or RichDiceTable with any data you like.
+This allows you to create a DiceTable from stored information or to copy.
+```
+In [14]: old = dt.DiceTable.new()
+
+In [16]: old.add_die(100, dt.Die(6))
+
+In [17]: events_record = old.get_dict()
+
+In [18]: dice_record = old.get_list()
+
+In [19]: new = dt.DiceTable(events_record, dice_record)
+
+In [20]: print(new)
+100D6
+
+In [21]: also_new = dt.RichDiceTable(new.get_list(), [(dt.Die(6), 100)], calc_includes_zeroes=False)
+
+In [46]: also_new.get_dict() == new.get_dict() == new.get_dict()
+Out[46]: True
+
+In [47]: new.get_list() == new.get_list() == also_new.get_list()
+Out[47]: True
+```
+
+To get an identity table,
+use the class method DiceTable.new() or RichDiceTable.new().
+
 ###HOW TO GET ERRORS AND BUGS
 
 ```
@@ -443,7 +469,6 @@ In [49]: print(table)
 In [50]: table.get_dict()
 Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's just stupid.
 ```
-
 "remove_die" and "add_die" are safe. They raise an error if you
 remove too many dice or add or remove a negative number.
 If you remove or combine with a negative number, nothing should happen.
@@ -455,16 +480,19 @@ In [19]: table = dt.DiceTable()
 In [20]: table.add_die(1, dt.Die(6))
 
 In [21]: table.remove_die(4, dt.Die(6))
-ValueError: dice not in table, or removed too many dice
+dicetables.dicetable.DiceRecordError: Removed too many dice from DiceRecord. Error at (Die(6), -3)
 
 In [22]: table.remove_die(1, dt.Die(10))
-ValueError: dice not in table, or removed too many dice
+dicetables.dicetable.DiceRecordError: Removed too many dice from DiceRecord. Error at (Die(10), -1)
 
-In [6]: table.add_die(-3, dt.Die(6))
-ValueError: number must be int >= 0
+In [26]: table.add_die(-3, dt.Die(6))
+dicetables.dicetable.DiceRecordError: May not add negative dice to DiceRecord. Error at (Die(6), -3)
 
-In [10]: table.get_dict()
-Out[10]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
+In [27]: table.remove_die(-3, dt.Die(6))
+dicetables.dicetable.DiceRecordError: May not remove negative dice from DiceRecord. Error at (Die(6), -3)
+
+In [30]: table.get_dict()
+Out[30]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
 In [31]: table.remove(10, dt.Die(2))
 ValueError: min() arg is an empty sequence <-didn't know this would happen, but at least failed loudly
@@ -478,6 +506,20 @@ In [34]: table.remove(1, dt.AdditiveEvents({-5: 100}))
 
 In [35]: table.get_dict()
 Out[35]: {} <-very bad. this is an illegal answer.
+```
+Since you can instantiate a DiceTable with any legal input,
+you can make a table with utter nonsense. It will work horribly.
+for instance, the dictionary for 2D6 is
+
+{2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1}
+```
+In[22]: nonsense = dt.DiceTable({1: 1}, [(dt.Die(6), 2)]) <- BAD DATA!!!!
+
+In[23]: print(nonsense)  <- the dice record says it has 2D6, but the events dictionary is WRONG
+2D6
+
+In[24]: nonsense.remove_die(2, dt.Die(6))  <- so here's your error. I hope you're happy.
+ValueError: min() arg is an empty sequence
 ```
 Calling combine_by_flattened_list can be risky:
 ```

@@ -73,26 +73,30 @@ class EventsInformation(object):
 class EventsCalculations(object):
 
     def __init__(self, events, include_zeroes=True):
-        self.info = EventsInformation(events)
+        self._info = EventsInformation(events)
         self.include_zeroes = include_zeroes
 
+    @property
+    def info(self):
+        return self._info
+
     def mean(self):
-        numerator = sum((value * freq) for value, freq in self.info.get_items())
-        denominator = self.info.total_occurrences()
+        numerator = sum((value * freq) for value, freq in self._info.get_items())
+        denominator = self._info.total_occurrences()
         return safe_true_div(numerator, denominator)
 
     def stddev(self, decimal_place=4):
         avg = self.mean()
         factor_to_truncate_digits = self._get_truncation_factor(decimal_place)
         truncated_deviations = 0
-        for event_value, occurrences in self.info.get_items():
+        for event_value, occurrences in self._info.get_items():
             truncated_deviations += (occurrences // factor_to_truncate_digits) * (avg - event_value) ** 2.
-        truncated_total_occurrences = self.info.total_occurrences() // factor_to_truncate_digits
+        truncated_total_occurrences = self._info.total_occurrences() // factor_to_truncate_digits
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
 
     def _get_truncation_factor(self, decimal_place):
         extra_digits = 5
-        largest_exponent = int(log10(self.info.biggest_event()[1]))
+        largest_exponent = int(log10(self._info.biggest_event()[1]))
         required_exp_for_accuracy = 2 * (extra_digits + decimal_place)
         if largest_exponent < required_exp_for_accuracy:
             factor_to_truncate_digits = 1
@@ -115,14 +119,14 @@ class EventsCalculations(object):
     def _percentage_points_by_method(self, method_str):
         methods = {'fast': get_fast_pct_number, 'exact': get_exact_pct_number}
         pct_method = methods[method_str]
-        total_values = self.info.total_occurrences()
+        total_values = self._info.total_occurrences()
         return [(event, pct_method(occurrence, total_values)) for event, occurrence in self._get_data_set()]
 
     def _get_data_set(self):
         if self.include_zeroes:
-            return self.info.all_events_include_zeroes()
+            return self._info.all_events_include_zeroes()
         else:
-            return self.info.all_events()
+            return self._info.all_events()
 
     def full_table_string(self):
         formatter = NumberFormatter()
@@ -133,7 +137,7 @@ class EventsCalculations(object):
         return out_str
 
     def _get_right_just(self):
-        min_event, max_event = self.info.events_range()
+        min_event, max_event = self._info.events_range()
         value_right_just = max(len(str(min_event)), len(str(max_event)))
         return value_right_just
 
@@ -144,7 +148,7 @@ class EventsCalculations(object):
         """
         formatter = NumberFormatter()
 
-        total_occurrences = self.info.total_occurrences()
+        total_occurrences = self._info.total_occurrences()
         query_values_occurrences = self._get_query_values_occurrences(query_values)
 
         inverse_chance_str, pct_str = self._calculate_chance_and_pct(query_values_occurrences, total_occurrences)
@@ -159,7 +163,7 @@ class EventsCalculations(object):
         combinations_of_values = 0
         no_copies = set(query_values)
         for value in no_copies:
-            combinations_of_values += self.info.get_event(value)[1]
+            combinations_of_values += self._info.get_event(value)[1]
         return combinations_of_values
 
     @staticmethod
@@ -225,7 +229,7 @@ def format_for_sequence_str(num):
     return '({:,})'.format(num) if num < 0 else '{:,}'.format(num)
 
 
-# wrappers for deprecated functions
+# wrappers functions and deprecated functions
 
 def events_range(events):
     return EventsInformation(events).events_range()
@@ -237,6 +241,14 @@ def mean(events):
 
 def stddev(events, decimal_place=4):
     return EventsCalculations(events).stddev(decimal_place=decimal_place)
+
+
+def percentage_points(events, include_zeroes=True):
+    return EventsCalculations(events, include_zeroes).percentage_points()
+
+
+def percentage_axes(events, include_zeroes=True):
+    return EventsCalculations(events, include_zeroes).percentage_axes()
 
 
 def stats(events, query_values):
@@ -321,5 +333,3 @@ def get_overflow_factor(events):
         power = int(log10(biggest_occurrences)) - exponent_adjustment
         factor = 10 ** power
     return factor
-
-

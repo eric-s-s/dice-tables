@@ -417,6 +417,22 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 1, 2: 2})
         self.assertEqual(ti.stddev(events, decimal_place=2), 0.47)
 
+    def test_percentage_points_zeros_true(self):
+        events = AdditiveEvents({1: 1, 3: 1})
+        self.assertEqual(ti.percentage_points(events, include_zeroes=True), [(1, 50.0), (2, 0), (3, 50.0)])
+
+    def test_percentage_points_zeros_false(self):
+        events = AdditiveEvents({1: 1, 3: 1})
+        self.assertEqual(ti.percentage_points(events, include_zeroes=False), [(1, 50.0), (3, 50.0)])
+
+    def test_percentage_axes_zeros_true(self):
+        events = AdditiveEvents({1: 1, 3: 1})
+        self.assertEqual(ti.percentage_axes(events, include_zeroes=True), [(1, 2, 3), (50.0, 0, 50.0)])
+
+    def test_percentage_axes_zeros_false(self):
+        events = AdditiveEvents({1: 1, 3: 1})
+        self.assertEqual(ti.percentage_axes(events, include_zeroes=False), [(1, 3), (50.0, 50.0)])
+
     def test_stats(self):
         events = AdditiveEvents({1: 1})
         self.assertEqual(ti.stats(events, [1]), ('1', '1', '1', '1.000', '100.0'))

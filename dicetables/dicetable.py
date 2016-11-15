@@ -118,6 +118,7 @@ class RichDiceTable(DiceTable):
     def __init__(self, input_dict, dice_list, calc_includes_zeroes=True):
         super(RichDiceTable, self).__init__(input_dict, dice_list)
         self._zeroes_bool = None
+
         self.calc_includes_zeroes = calc_includes_zeroes
         self._calc = EventsCalculations(self, calc_includes_zeroes)
 
@@ -140,10 +141,6 @@ class RichDiceTable(DiceTable):
     def calc_includes_zeroes(self, bool_value):
         self._zeroes_bool = bool(bool_value)
         self.update_info()
-
-    @classmethod
-    def new(cls):
-        return cls({0: 1}, [])
 
     def add_die(self, number, die):
         super(RichDiceTable, self).add_die(number, die)
