@@ -16,9 +16,10 @@ be listed in "CHANGES" at the bottom of this README.
 contents:
 
 - THE BASICS
-- THE DICE
-- EVENTS OBJECTS
-- DiceTable, RichDiceTable, EventsInformation and EventsCalculations
+- Die Classes
+- AdditiveEvents And IntegerEvents
+- DiceTable And RichDiceTable
+- EventsInformation And EventsCalculations
 - HOW TO GET ERRORS AND BUGS
 - CHANGES
 
@@ -151,8 +152,6 @@ To get useful information, use EventsInformation object and EventsCalculations o
     In [23]: calc.percentage_axes()
     Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
 
-
-::
 Please note that these objects do not follow changes to the DiceTable. RichDiceTable owns and
 updates these objects, but uses more memory::
 
@@ -231,9 +230,9 @@ Finally, here are all the kinds of dice you can add
 That's all of the basic implementation. The rest of this is details about base classes, details of the
 die classes, details of dicetable classes, what causes errors and the changes from the previous version.
 
-----------------------
-DETAILS OF DIE CLASSES
-----------------------
+-----------
+Die Classes
+-----------
 All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
 They all require implementations of get_size(), get_weight(), weight_info(),
 multiply_str(number), __str__(), __repr__() and get_dict() <-required for any IntegerEvents.
@@ -328,9 +327,9 @@ StrongDie
     - .get_multiplier()
     - .get_input_die()
 
--------------------------------------------
-DETAILS OF AdditiveEvents AND IntegerEvents
--------------------------------------------
+--------------------------------
+AdditiveEvents And IntegerEvents
+--------------------------------
 All tables and dice inherit from IntegerEvents.  All subclasses of IntegerEvents need the method
 get_dict() which returns {event: occurrences, ...} for each NON-ZERO occurrence.  When you instantiate
 any subclass, it checks to make sure you're get_dict() is legal.
@@ -374,7 +373,7 @@ but there's no record of it::
     Out[45]: False
 
 ---------------------------
-DiceTable and RichDiceTable
+DiceTable And RichDiceTable
 ---------------------------
 You can instantiate any DiceTable or RichDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
@@ -404,17 +403,117 @@ This allows you to create a DiceTable from stored information or to copy.
 
 To get an identity table,
 use the class method DiceTable.new() or RichDiceTable.new().
+This creates a table with an empty dice record and the events
+identity {0: 1}.
+
+One thing of note with a RichDiceTable: The boolean calc_includes_zeroes
+determines whether the .calc object includes zeroes (obviously) and
+changing it causes the the object to update. Every time the object is
+updated, it uses this boolean value. If you directly set the boolean on
+the .calc object, it will revert at the next update.
+::
+
+    In [85]: r_table = dt.RichDiceTable.new()
+
+    In [91]: r_table.calc_includes_zeroes = True
+
+    In [88]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+
+    In [89]: print(r_table.calc.full_table_string())
+    2: 1
+    3: 0
+    4: 1
+
+    In [90]: r_table.calc.include_zeroes = False
+
+    In [91]: r_table.calc_includes_zeroes
+    Out[91]: True
+
+    In [92]: print(r_table.calc.full_table_string())
+    2: 1
+    4: 1
+
+    In [93]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+
+    In [94]: print(r_table.calc.full_table_string())
+    4: 1
+    5: 0
+    6: 2
+    7: 0
+    8: 1
+
+    In [95]: r_table.calc_includes_zeroes = False
+
+    In [96]: print(r_table.calc.full_table_string())
+    4: 1
+    6: 2
+    8: 1
+
 
 ----------------------------------------
-EventsInformation AND EventsCalculations
+EventsInformation And EventsCalculations
 ----------------------------------------
+
+The methods are
+
+EventsInformation:
+- all_events
+- all_events_include_zeroes
+- biggest_event
+- biggest_events_all <- returns the list of all events that have biggest occurrence
+- events_keys
+- events_range
+- get_event
+- get_items <- returns dict.items(): a list in py2 and an iterator in py3.
+- get_range_of_events
+- total_occurrences
+
+EventsCalculations:
+- full_table_string
+- info
+- mean
+- percentage_axes  <- very fast but only good to 10 decimal places
+- percentage_axes_exact
+- percentage_points
+- percentage_points_exact
+- stats_strings
+- stddev
+
+EventsCalculations.include_zeroes is a property that does
+exactly what it says. EventCalculations owns an EventsInformation. So that
+instantiating EventsCalculations gets you
+two for the price of one. It's accessed with the property
+EventsCalculations.info .
+::
+
+    In[4]: table.add_die(1, dt.StrongDie(dt.Die(3), 2))
+
+    In[5]: calc = dt.EventsCalculations(table, True)
+
+    In[6]: print(calc.full_table_string())
+    2: 1
+    3: 0
+    4: 1
+    5: 0
+    6: 1
+
+    In[7]: calc.include_zeroes = False
+
+    In[8]: print(calc.full_table_string())
+    2: 1
+    4: 1
+    6: 1
+
+    In [10]: calc.info.events_range()
+    Out[10]: (2, 6)
 
 --------------------------
 HOW TO GET ERRORS AND BUGS
 --------------------------
+Every time you instantiate any IntegerEvents, it is checked.  dt.Die(-2).get_dict() returns {}.
 ::
 
-    In [3]: dt.Die(0)
+    In [3]: dt.Die(-2)
     dicetables.baseevents.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
     In [5]: dt.AdditiveEvents({1.0: 2})
@@ -532,6 +631,12 @@ for instance, the dictionary for 2D6 is
     In[24]: nonsense.remove_die(2, dt.Die(6))  <- so here's your error. I hope you're happy.
     ValueError: min() arg is an empty sequence
 
+But, you cannot instantiate a DiceTable with negative values for dice.
+::
+
+    In[11]: dt.DiceTable({1: 1}, [(dt.Die(3), 3), (dt.Die(5), -1)])
+    dicetables.dicetable.DiceRecordError: DiceRecord may not have negative dice. Error at (Die(5), -1)
+
 Calling combine_by_flattened_list can be risky::
 
     In [36]: x = dt.AdditiveEvents({1:1, 2: 5})
@@ -561,28 +666,58 @@ Combining events with themselves is safe::
 =======
 CHANGES
 =======
-The larges change is that DiceTable.__init__() now takes two arguments - a dictionary of {event: occurrences}
+There are several major changes:
+
+- Modules and classes  and methods got renamed. see the dictionary at the bottom. There are new classes
+- DiceTable.__init__() now takes arguments. The class method DiceTable.new() creates an empty table.
+- DiceTable and its parent AdditiveEvents are no longer responsible for obtaining any but the most basic information.
+- All the calculations and information are now done by EventsInformation and EventsCalculations
+- Aside from the above two classes, every other object is now a child of IntegerEvents.
+- Dice classes no longer have "tuple_list()" method. They use the same "get_dict()" method that all IntegerEvents use
+
+The following modules and classes have been renamed.
+
+- longintmath.py: baseevents.py
+- dicestats.py: dieevents.py, dicetable.py
+- tableinfo.py: eventsinfo.py
+- LongIntTable: AdditiveEvents
+
+The following classes have been added:
+
+- baseevents.InvalidEventsError
+- dicetable.DiceRecordError
+- baseevents.IntegerEvents
+- dicetable.RichDiceTable
+- eventsinfo.EventsInformation
+- eventsinfo.EventsCalculations
+
+
+DiceTable.__init__() now takes two arguments - a dictionary of {event: occurrences}
 and a list of [(die, number), ]. to create a new table, call the class method DiceTable.new(). This change allows
 easy creation of a new dice table from data. new_table = DiceTable(old_table.get_dict(), old_table.get_list()) or
-new_table = DiceTable(stored_dict, stored_dice_list).
-
-The following modules have been renamed.
-
-- longintmath: baseevents
-- dicestats: dieevents, dicetable
-- tableinfo: eventsinfo
+new_table = DiceTable(stored_dict, stored_dice_list). To create a DiceTable with no dice, use DiceTable.new().
 
 The base class of DiceTable is now called AdditiveEvents and not LongIntTable. If any IntegerEvents events is
 instantiated in a way that would cause bugs, it raises an error; the same is true for any dice.
 
 AdditiveEvents.combine/remove take any IntegerEvents as an argument whereas LongIntTable.add/remove took a list of
-tuples as an argument.
-
-Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
-which returns a dictionary and not a list of tuples.
+tuples as an argument. the methods for getting basic information from LongIntTable are now in EventsInformation.  mean()
+and stddev() are part of EventsCalculations object. These objects work on ANY kind of IntegerEvents, not just DiceTable.
 
 all of tableinfo was rewritten as objects. although they are deprecated, the following still exist as wrapper
-functions for those objects: format_number, graph_pts, full_table_string, stats.
+functions for those objects:
+
+- events_range
+- format_number
+- full_table_string
+- graph_pts
+- graph_pts_overflow
+- mean
+- percentage_axes
+- percentage_points
+- safe_true_div
+- stats
+- stddev
 
 the new objects are:
 
@@ -590,11 +725,14 @@ the new objects are:
 - EventsInformation
 - EventsCalculations
 
-For output: The string for StrongDie now puts parentheses around the multiplier.
-stats() now shows tiny percentages, and if infinite, show 'Infinity'.
+for details, see their headings in the README.
+
+For output:
+stats() now shows tiny percentages, and if infinite, shows 'Infinity'.
 Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
 
-Several AdditiveEvents class methods were removed to the EventsInformation object.
+Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
+which returns a dictionary and not a list of tuples. The string for StrongDie now puts parentheses around the multiplier.
 
 CONVERSIONS = {
     | 'DiceTable()': 'DiceTable.new()',
@@ -615,18 +753,19 @@ CONVERSIONS = {
     | 'LongIntTable.values_max': 'EventsInformation(event).event_range[0]',
     | 'LongIntTable.values_min': 'EventsInformation(event).event_range[1]',
     | 'LongIntTable.values_range': 'EventsInformation(event).event_range',
-    | 'DiceTable.update_list': 'DiceTable._update_list',
-    | 'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(events).all_events'),
+    | 'DiceTable.update_list': 'GONE (DiceTable owns a DiceRecord object that handles this)',
+    | 'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(ProtoDie).all_events'),
     | 'scinote': ('format_number', 'NumberFormatter.format'),
     | 'full_table_string', 'EventsCalculations(event).full_table_string',
     | 'stats', 'EventsCalculations(event).stats_strings',
+    | 'long_int_div': 'safe_true_div',
     | 'graph_pts': ('graph_pts',
-                    'EventsCalculations(event).percentage_points',
-                    'EventsCalculations(event).percentage_points_exact',
-                    'EventsCalculations(event).percentage_axes',
-                    'EventsCalculations(event).percentage_axes_exact',
-                    'EventsInformation(events).all_events',
-                    'EventsInformation(events).all_events_include_zeroes')
+    |               'EventsCalculations(event).percentage_points',
+    |               'EventsCalculations(event).percentage_points_exact',
+    |               'EventsCalculations(event).percentage_axes',
+    |               'EventsCalculations(event).percentage_axes_exact',
+    |               'EventsInformation(events).all_events',
+    |               'EventsInformation(events).all_events_include_zeroes')
     | }
 
 

@@ -169,7 +169,7 @@ class EventsCalculations(object):
     @staticmethod
     def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
         if not query_values_occurrences:
-            return float('inf'), 0
+            return Decimal('inf'), Decimal('0')
         inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
         pct = Decimal(100.0) / inverse_chance
         return inverse_chance, pct
