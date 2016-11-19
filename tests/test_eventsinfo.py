@@ -131,11 +131,11 @@ class TestEventsInfo(unittest.TestCase):
 
     def test_EventsCalculations_init_defaults_include_zeroes_True(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}))
-        self.assertTrue(test.include_zeroes)
+        self.assertTrue(test._include_zeroes)
 
     def test_EventsCalculations_init_set_include_zeroes_False(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}), False)
-        self.assertFalse(test.include_zeroes)
+        self.assertFalse(test._include_zeroes)
 
     def test_EventsCalculations_mean_normal_case(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}))
@@ -307,68 +307,6 @@ class TestEventsInfo(unittest.TestCase):
         three_sevenths, four_sevenths = calculator.percentage_axes_exact()[1]
         self.assertEqual(three_sevenths, 300./7.)
         self.assertEqual(four_sevenths, 400./7.)
-        
-    def test_format_for_sequence_string_adds_commas(self):
-        self.assertEqual(ti.format_for_sequence_str(10), '10')
-        self.assertEqual(ti.format_for_sequence_str(1000000), '1,000,000')
-
-    def test_format_for_sequence_string_negative_numbers(self):
-        self.assertEqual(ti.format_for_sequence_str(-2), '(-2)')
-        self.assertEqual(ti.format_for_sequence_str(-2000), '(-2,000)')
-
-    def test_format_one_sequence_single_number(self):
-        self.assertEqual(ti.format_one_sequence([1]), '1')
-
-    def test_format_one_sequence_first_and_last_same_number(self):
-        self.assertEqual(ti.format_one_sequence([1, 2, 3, 1]), '1')
-
-    def test_format_one_sequence_first_and_last_different(self):
-        self.assertEqual(ti.format_one_sequence([-1, 3, 2]), '(-1)-2')
-
-    def test_gap_is_larger_than_one_true(self):
-        self.assertTrue(ti.gap_is_larger_than_one([[1, 2, 3], [4, 5]], 7))
-
-    def test_gap_is_larger_than_one_false(self):
-        self.assertFalse(ti.gap_is_larger_than_one([[1, 2, 3], [4, 5]], 5))
-        self.assertFalse(ti.gap_is_larger_than_one([[1, 2, 3], [4, 5]], 6))
-
-    def test_split_at_gaps_larger_than_one_empty_list(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([]), [])
-
-    def test_split_at_gaps_larger_than_one_one_element(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([1]), [[1]])
-
-    def test_split_at_gaps_larger_than_one_same_element(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([1, 1, 1, 1]), [[1, 1, 1, 1]])
-
-    def test_split_at_gaps_larger_than_one_not_large_gaps(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([1, 1, 2, 2, 3]), [[1, 1, 2, 2, 3]])
-
-    def test_split_at_gaps_larger_than_one_all_large_gaps(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([1, 3, 9]), [[1], [3], [9]])
-
-    def test_split_at_gaps_larger_than_one_mixed_case(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([1, 1, 2, 5, 6, 9]), [[1, 1, 2], [5, 6], [9]])
-
-    def test_split_at_gaps_larger_than_one_mixed_case_negative_pos_zero(self):
-        self.assertEqual(ti.split_at_gaps_larger_than_one([-2, 0, 1, 2, 5, 6, 9]), [[-2], [0, 1, 2], [5, 6], [9]])
-
-    def test_list_to_string_returns_single_number(self):
-        self.assertEqual(ti.get_string_for_sequence([1, 1, 1]), '1')
-
-    def test_list_to_string_puts_parentheses_around_negative_numbers(self):
-        self.assertEqual(ti.get_string_for_sequence([-1]), '(-1)')
-
-    def test_list_to_string_returns_proper_output_for_a_run_of_numbers(self):
-        self.assertEqual(ti.get_string_for_sequence([1, 1, 2, 3, 4, 5]), '1-5')
-
-    def test_list_to_string_returns_values_separated_by_commas(self):
-        the_list = [-5, -4, -3, -1, 0, 1, 2, 3, 5]
-        self.assertEqual(ti.get_string_for_sequence(the_list), '(-5)-(-3), (-1)-3, 5')
-
-    def test_list_to_string_returns_numbers_with_commas(self):
-        the_list = [-1234567, 1234567]
-        self.assertEqual(ti.get_string_for_sequence(the_list), '(-1,234,567), 1,234,567')
 
     def test_EventsCalculations_stats_strings_values_not_in_events(self):
         calculator = ti.EventsCalculations(AdditiveEvents({1: 1}))

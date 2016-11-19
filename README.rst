@@ -136,24 +136,24 @@ To get useful information, use EventsInformation object and EventsCalculations o
     11: 0
     12: 1
 
-    In [19]: calc.include_zeroes = False
+    In [19]: without_zeroes = EventsCalculations(table, include_zeroes=False)
 
-    In [20]: print(calc.full_table_string())
+    In [20]: print(without_zeroes.full_table_string())
      6: 1
      9: 2
     12: 1
 
     In [21]: stats_str = "{} occurred {} times out of {} combinations.\nThat's a one in {} chance or {}%"
 
-    In [22]: print(stats_str.format(*calc.stats_strings([1, 2, 5, 8, 9, 10])))
+    In [22]: print(stats_str.format(*without_zeroes.stats_strings([1, 2, 5, 8, 9, 10])))
     1-2, 5, 8-10 occurred 2 times out of 4 combinations.
     That's a one in 2.000 chance or 50.00%
 
-    In [23]: calc.percentage_axes()
+    In [23]: without_zeroes.percentage_axes()
     Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
 
-Please note that these objects do not follow changes to the DiceTable. RichDiceTable owns and
-updates these objects, but uses more memory::
+Please note that these objects do not follow changes to the DiceTable. You can use
+RichDiceTable which keeps a copy of these objects at .info and .calc::
 
     In [3]: table = dt.DiceTable.new()
 
@@ -394,10 +394,10 @@ This allows you to create a DiceTable from stored information or to copy.
 
     In [21]: also_new = dt.RichDiceTable(new.get_list(), [(dt.Die(6), 100)], calc_includes_zeroes=False)
 
-    In [46]: also_new.get_dict() == new.get_dict() == new.get_dict()
+    In [46]: old.get_dict() == new.get_dict() == also_new.get_dict()
     Out[46]: True
 
-    In [47]: new.get_list() == new.get_list() == also_new.get_list()
+    In [47]: old.get_list() == new.get_list() == also_new.get_list()
     Out[47]: True
 
 
@@ -406,11 +406,7 @@ use the class method DiceTable.new() or RichDiceTable.new().
 This creates a table with an empty dice record and the events
 identity {0: 1}.
 
-One thing of note with a RichDiceTable: The boolean calc_includes_zeroes
-determines whether the .calc object includes zeroes (obviously) and
-changing it causes the the object to update. Every time the object is
-updated, it uses this boolean value. If you directly set the boolean on
-the .calc object, it will revert at the next update.
+RichDiceTable.calc_includes_zeroes is as follows.
 ::
 
     In [85]: r_table = dt.RichDiceTable.new()
@@ -424,10 +420,7 @@ the .calc object, it will revert at the next update.
     3: 0
     4: 1
 
-    In [90]: r_table.calc.include_zeroes = False
-
-    In [91]: r_table.calc_includes_zeroes
-    Out[91]: True
+    In [91]: r_table.calc_includes_zeroes = False
 
     In [92]: print(r_table.calc.full_table_string())
     2: 1
@@ -437,18 +430,17 @@ the .calc object, it will revert at the next update.
 
     In [94]: print(r_table.calc.full_table_string())
     4: 1
+    6: 2
+    8: 1
+
+    In [95]: r_table.calc_includes_zeroes = True
+
+    In [96]: print(r_table.calc.full_table_string())
+    4: 1
     5: 0
     6: 2
     7: 0
     8: 1
-
-    In [95]: r_table.calc_includes_zeroes = False
-
-    In [96]: print(r_table.calc.full_table_string())
-    4: 1
-    6: 2
-    8: 1
-
 
 ----------------------------------------
 EventsInformation And EventsCalculations
@@ -479,7 +471,7 @@ EventsCalculations:
 - stats_strings
 - stddev
 
-EventsCalculations.include_zeroes is a property that does
+EventsCalculations.include_zeroes is only settable at instantiation. It does
 exactly what it says. EventCalculations owns an EventsInformation. So that
 instantiating EventsCalculations gets you
 two for the price of one. It's accessed with the property
@@ -510,8 +502,9 @@ EventsCalculations.info .
 --------------------------
 HOW TO GET ERRORS AND BUGS
 --------------------------
-Every time you instantiate any IntegerEvents, it is checked.  dt.Die(-2).get_dict() returns {}.
-::
+Every time you instantiate any IntegerEvents, it is checked.  The get_dict() method returns a dict, and every value
+in get_dict().values() must be >=1. get_dict() may not be empty.
+since dt.Die(-2).get_dict() returns {}::
 
     In [3]: dt.Die(-2)
     dicetables.baseevents.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
@@ -522,7 +515,9 @@ Every time you instantiate any IntegerEvents, it is checked.  dt.Die(-2).get_dic
     In [6]: dt.WeightedDie({1: 1, 2: -5})
     dicetables.baseevents.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
 
-but these are ok, because AdditiveEvents and WeightedDie specifically scrub the zeroes in their get_dict() methods::
+Because AdditiveEvents and WeightedDie specifically
+scrub the zeroes from their get_dict() methods, these will not throw errors.
+::
 
     In [9]: dt.AdditiveEvents({1: 1, 2: 0}).get_dict()
     Out[9]: {1: 1}
@@ -535,8 +530,8 @@ but these are ok, because AdditiveEvents and WeightedDie specifically scrub the 
     In [13]: weird.get_size()
     Out[13]: 2
 
-    In [14]: weird.__repr__()
-    Out[14]: 'WeightedDie({1: 1, 2: 0})'
+    In [14]: weird.get_raw_dict()
+    Out[14]: {1: 1, 2: 0}
 
 Special rule for WeightedDie and ModWeightedDie::
 

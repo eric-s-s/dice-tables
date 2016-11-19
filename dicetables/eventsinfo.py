@@ -5,6 +5,7 @@ from decimal import Decimal
 from math import log10
 
 from dicetables.tools.numberforamtter import NumberFormatter
+from dicetables.tools.listtostring import get_string_from_list_of_ints
 
 
 def safe_true_div(numerator, denominator):
@@ -74,7 +75,11 @@ class EventsCalculations(object):
 
     def __init__(self, events, include_zeroes=True):
         self._info = EventsInformation(events)
-        self.include_zeroes = include_zeroes
+        self._include_zeroes = include_zeroes
+
+    @property
+    def include_zeroes(self):
+        return self._include_zeroes
 
     @property
     def info(self):
@@ -123,7 +128,7 @@ class EventsCalculations(object):
         return [(event, pct_method(occurrence, total_values)) for event, occurrence in self._get_data_set()]
 
     def _get_data_set(self):
-        if self.include_zeroes:
+        if self._include_zeroes:
             return self._info.all_events_include_zeroes()
         else:
             return self._info.all_events()
@@ -153,7 +158,7 @@ class EventsCalculations(object):
 
         inverse_chance_str, pct_str = self._calculate_chance_and_pct(query_values_occurrences, total_occurrences)
 
-        return (get_string_for_sequence(query_values),
+        return (get_string_from_list_of_ints(query_values),
                 formatter.format(query_values_occurrences),
                 formatter.format(total_occurrences),
                 formatter.format(inverse_chance_str),
@@ -183,50 +188,6 @@ def get_fast_pct_number(number, total_values):
 
 def get_exact_pct_number(number, total_values):
     return safe_true_div(100 * number, total_values)
-
-
-def get_string_for_sequence(input_list):
-    input_list.sort()
-    list_of_sequences = split_at_gaps_larger_than_one(input_list)
-    list_of_sequence_strings = format_sequences(list_of_sequences)
-    return ', '.join(list_of_sequence_strings)
-
-
-def split_at_gaps_larger_than_one(sorted_list):
-    list_of_sequences = []
-    for value in sorted_list:
-        if not list_of_sequences or gap_is_larger_than_one(list_of_sequences, value):
-            list_of_sequences.append([value])
-        else:
-            last_group = list_of_sequences[-1]
-            last_group.append(value)
-    return list_of_sequences
-
-
-def gap_is_larger_than_one(list_of_sequences, value):
-    max_gap_size = 1
-    last_value_of_list = list_of_sequences[-1][-1]
-    return value - last_value_of_list > max_gap_size
-
-
-def format_sequences(list_of_sequences):
-    string_list = []
-    for sequence in list_of_sequences:
-        string_list.append(format_one_sequence(sequence))
-    return string_list
-
-
-def format_one_sequence(sequence):
-    first = sequence[0]
-    last = sequence[-1]
-    if first == last:
-        return format_for_sequence_str(first)
-    else:
-        return '{}-{}'.format(format_for_sequence_str(first), format_for_sequence_str(last))
-
-
-def format_for_sequence_str(num):
-    return '({:,})'.format(num) if num < 0 else '{:,}'.format(num)
 
 
 # wrappers functions and deprecated functions

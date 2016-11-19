@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 from dicetables.baseevents import AdditiveEvents
-from dicetables.eventsinfo import EventsCalculations
+from dicetables.eventsinfo import EventsCalculations, EventsInformation
 
 
 class DiceRecordError(ValueError):
@@ -62,10 +62,6 @@ def format_die_info(die, number):
 
 
 class DiceTable(AdditiveEvents):
-    """
-    DiceTable() creates an empty table that dice can be added to and removed from
-    """
-
     def __init__(self, input_dict, dice_list):
         super(DiceTable, self).__init__(input_dict)
         self._record = DiceRecord(dict(dice_list))
@@ -118,20 +114,15 @@ class RichDiceTable(DiceTable):
     def __init__(self, input_dict, dice_list, calc_includes_zeroes=True):
         super(RichDiceTable, self).__init__(input_dict, dice_list)
         self._zeroes_bool = None
-
         self.calc_includes_zeroes = calc_includes_zeroes
-        self._calc = EventsCalculations(self, calc_includes_zeroes)
-
-    def update_info(self):
-        self._calc = EventsCalculations(self, self.calc_includes_zeroes)
 
     @property
     def info(self):
-        return self._calc.info
+        return EventsInformation(self)
 
     @property
     def calc(self):
-        return self._calc
+        return EventsCalculations(self, self.calc_includes_zeroes)
 
     @property
     def calc_includes_zeroes(self):
@@ -140,32 +131,3 @@ class RichDiceTable(DiceTable):
     @calc_includes_zeroes.setter
     def calc_includes_zeroes(self, bool_value):
         self._zeroes_bool = bool(bool_value)
-        self.update_info()
-
-    def add_die(self, number, die):
-        super(RichDiceTable, self).add_die(number, die)
-        self.update_info()
-
-    def remove_die(self, number, die):
-        super(RichDiceTable, self).remove_die(number, die)
-        self.update_info()
-
-    def combine(self, times, events):
-        super(RichDiceTable, self).combine(times, events)
-        self.update_info()
-
-    def combine_by_dictionary(self, times, events):
-        super(RichDiceTable, self).combine_by_dictionary(times, events)
-        self.update_info()
-
-    def combine_by_flattened_list(self, times, events):
-        super(RichDiceTable, self).combine_by_flattened_list(times, events)
-        self.update_info()
-
-    def combine_by_indexed_values(self, times, events):
-        super(RichDiceTable, self).combine_by_indexed_values(times, events)
-        self.update_info()
-
-    def remove(self, times, events):
-        super(RichDiceTable, self).remove(times, events)
-        self.update_info()
