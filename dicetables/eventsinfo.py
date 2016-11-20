@@ -156,7 +156,7 @@ class EventsCalculations(object):
         total_occurrences = self._info.total_occurrences()
         query_values_occurrences = self._get_query_values_occurrences(query_values)
 
-        inverse_chance_str, pct_str = self._calculate_chance_and_pct(query_values_occurrences, total_occurrences)
+        inverse_chance_str, pct_str = _calculate_chance_and_pct(query_values_occurrences, total_occurrences)
 
         return (get_string_from_list_of_ints(query_values),
                 formatter.format(query_values_occurrences),
@@ -171,13 +171,13 @@ class EventsCalculations(object):
             combinations_of_values += self._info.get_event(value)[1]
         return combinations_of_values
 
-    @staticmethod
-    def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
-        if not query_values_occurrences:
-            return Decimal('inf'), Decimal('0')
-        inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
-        pct = Decimal(100.0) / inverse_chance
-        return inverse_chance, pct
+
+def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
+    if not query_values_occurrences:
+        return Decimal('inf'), Decimal('0')
+    inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
+    pct = Decimal(100.0) / inverse_chance
+    return inverse_chance, pct
 
 
 def get_fast_pct_number(number, total_values):

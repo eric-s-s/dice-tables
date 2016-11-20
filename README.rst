@@ -489,7 +489,7 @@ EventsCalculations.info .
     5: 0
     6: 1
 
-    In[7]: calc.include_zeroes = False
+    In[7]: calc = dt.EventsCalculations(table, False)
 
     In[8]: print(calc.full_table_string())
     2: 1

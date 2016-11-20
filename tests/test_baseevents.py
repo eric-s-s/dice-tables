@@ -3,10 +3,10 @@
 from __future__ import absolute_import
 from sys import version_info
 import unittest
-from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier
+from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier, scrub_zeroes
 
 
-class TestLongIntMath(unittest.TestCase):
+class TestBaseEvents(unittest.TestCase):
     def setUp(self):
         self.identity = AdditiveEvents({0: 1})
         self.identity_b = AdditiveEvents({0: 1})
@@ -78,6 +78,12 @@ class TestLongIntMath(unittest.TestCase):
         self.assertRaises(AttributeError, self.checker.verify_get_dict, [(1, 2, 3), (4, 5, 6)])
         self.assertRaises(InvalidEventsError, self.checker.verify_get_dict, {'a': 'b'})
 
+    def test_scrub_zeroes_no_zeroes_dict(self):
+        self.assertEqual(scrub_zeroes({1: 2, 3: 4}), {1: 2, 3: 4})
+
+    def test_scrub_zeroes_zeroes_in_dict(self):
+        self.assertEqual(scrub_zeroes({1: 2, 3: 0, 4: 1, 5: 0}), {1: 2, 4: 1})
+
     #  AdditiveEvents tests
     def test_AdditiveEvents_init_zero_occurrences_dict_raises_error(self):
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1: 0, 2: 0})
@@ -89,6 +95,18 @@ class TestLongIntMath(unittest.TestCase):
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1: 1.0})
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1.0: 1})
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1: -1})
+
+    def test_AdditiveEvents_get_dict(self):
+        self.assertEqual(AdditiveEvents({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
+
+    def test_AdditiveEvents_get_dict_removes_zeroes(self):
+        self.assertEqual(AdditiveEvents({1: 2, 3: 0, 4: 1, 5: 0}).get_dict(), {1: 2, 4: 1})
+
+    def test_AdditiveEvents_get_dict_will_not_mutate_original(self):
+        events = AdditiveEvents({1: 2, 3: 4})
+        dictionary = events.get_dict()
+        dictionary[1] = 100
+        self.assertEqual(AdditiveEvents({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
 
     def test_AdditiveEvents_string_returns_min_to_max(self):
         table = AdditiveEvents({-1: 1, 2: 1, 5: 1})

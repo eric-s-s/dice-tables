@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import unittest
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, ProtoDie
+from dicetables.baseevents import InvalidEventsError
 
 
 class DummyDie(ProtoDie):
@@ -81,7 +82,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertTrue(first < second)
 
     def test_ProtoDie_lt_by_sorted_get_dict(self):
-        first = DummyDie(2, 3, {2: 2}, 'b')
+        first = DummyDie(2, 3, {2: 200, 20: 200}, 'b')
         second = DummyDie(2, 3, {20: 2}, 'b')
         third = DummyDie(2, 3, {20: 20}, 'b')
         self.assertTrue(first < second)
@@ -200,6 +201,10 @@ class TestDiceStats(unittest.TestCase):
         self.assertNotEqual(hash(one_a), hash(not_same_b))
         self.assertNotEqual(hash(one_a), hash(not_same_c))
 
+    def test_Die_init_raises_InvalidEventsError_for_illegal_size(self):
+        self.assertRaises(InvalidEventsError, Die, 0)
+        self.assertRaises(InvalidEventsError, Die, -2)
+
     def test_Die_get_size(self):
         self.assertEqual(Die(6).get_size(), 6)
 
@@ -239,11 +244,18 @@ class TestDiceStats(unittest.TestCase):
     def test_ModDie_multiply_str_neg_mod(self):
         self.assertEqual(ModDie(5, -3).multiply_str(2), '2D5-6')
 
-    def test_WeightedDie_init_raises_value_error_on_zero_key(self):
+    def test_WeightedDie_init_raises_ValueError_on_zero_key(self):
         self.assertRaises(ValueError, WeightedDie, {0: 1, 2: 1})
 
-    def test_WeightedDie_init_raises_value_error_on_negative_key(self):
+    def test_WeightedDie_init_raises_ValueError_on_negative_key(self):
         self.assertRaises(ValueError, WeightedDie, {-5: 1, 2: 1})
+
+    def test_WeightedDie_init_raises_InvalidEvents_error_on_bad_dict(self):
+        self.assertRaises(InvalidEventsError, WeightedDie, {1: -1})
+        self.assertRaises(InvalidEventsError, WeightedDie, {1: 0})
+
+    def test_WeightedDie_init_does_not_raise_error_if_zero_values_in_dict(self):
+        self.assertIsNotNone(WeightedDie({1: 1, 2: 0, 3: 0}))
 
     def test_WeightedDie_get_size(self):
         self.assertEqual(WeightedDie({5: 2, 2: 5}).get_size(), 5)

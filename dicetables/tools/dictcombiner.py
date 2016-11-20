@@ -1,4 +1,15 @@
-"""a class that combines dictionaries of {int: int >=1}"""
+"""
+THIS IS A SPECIFIC TOOL. IT HAS SEVERAL IMPORTANT CONSTRAINTS. USE WITH CAUTION.
+
+if you mutate the __init__ dictionary elsewhere, IT WILL AFFECT IT HERE. (but it will
+not mutate any dictionaries passed to it.)
+    this class is for speed, so there is minimal copying. it is specifically
+    designed to be instantiated once, used and then immediately discarded.
+
+:__init__ dictionary: {int: int>0, ...}
+:variable - times: int >=0
+:variable - dictionary: {int: int>0, ...}
+"""
 from __future__ import absolute_import
 
 from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
