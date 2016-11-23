@@ -728,39 +728,39 @@ Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is n
 
 Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
 which returns a dictionary and not a list of tuples. The string for StrongDie now puts parentheses around the multiplier.
+::
 
-CONVERSIONS = {
-    | 'DiceTable()': 'DiceTable.new()',
-    | 'LongIntTable.add': 'AdditiveEvents.combine',
-    | 'LongIntTable.frequency': 'EventsInformation(event).get_event',
-    | 'LongIntTable.frequency_all': 'EventsInformation(event).all_events',
-    | 'LongIntTable.frequency_highest': 'EventsInformation(event).biggest_event',
-    | 'LongIntTable.frequency_range': 'EventsInformation(event).get_range_of_events',
-    | 'LongIntTable.mean': 'EventsCalculations(event).mean',
-    | 'LongIntTable.merge': 'GONE',
-    | 'LongIntTable.remove': 'AdditiveEvents.remove',
-    | 'LongIntTable.stddev': 'EventsCalculations(event).stddev',
-    | 'LongIntTable.total_frequency': 'EventsInformation(event).total_occurrences',
-    | 'LongIntTable.update_frequency': 'GONE',
-    | 'LongIntTable.update_value_add': 'GONE',
-    | 'LongIntTable.update_value_ow': 'GONE',
-    | 'LongIntTable.values': 'EventsInformation(event).event_keys',
-    | 'LongIntTable.values_max': 'EventsInformation(event).event_range[0]',
-    | 'LongIntTable.values_min': 'EventsInformation(event).event_range[1]',
-    | 'LongIntTable.values_range': 'EventsInformation(event).event_range',
-    | 'DiceTable.update_list': 'GONE (DiceTable owns a DiceRecord object that handles this)',
-    | 'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(ProtoDie).all_events'),
-    | 'scinote': ('format_number', 'NumberFormatter.format'),
-    | 'full_table_string', 'EventsCalculations(event).full_table_string',
-    | 'stats', 'EventsCalculations(event).stats_strings',
-    | 'long_int_div': 'safe_true_div',
-    | 'graph_pts': ('graph_pts',
-    |               'EventsCalculations(event).percentage_points',
-    |               'EventsCalculations(event).percentage_points_exact',
-    |               'EventsCalculations(event).percentage_axes',
-    |               'EventsCalculations(event).percentage_axes_exact',
-    |               'EventsInformation(events).all_events',
-    |               'EventsInformation(events).all_events_include_zeroes')
-    | }
-
+    CONVERSIONS = {
+        'DiceTable()': 'DiceTable.new()',
+        'LongIntTable.add': 'AdditiveEvents.combine',
+        'LongIntTable.frequency': 'EventsInformation(event).get_event',
+        'LongIntTable.frequency_all': 'EventsInformation(event).all_events',
+        'LongIntTable.frequency_highest': 'EventsInformation(event).biggest_event',
+        'LongIntTable.frequency_range': 'EventsInformation(event).get_range_of_events',
+        'LongIntTable.mean': 'EventsCalculations(event).mean',
+        'LongIntTable.merge': 'GONE',
+        'LongIntTable.remove': 'AdditiveEvents.remove',
+        'LongIntTable.stddev': 'EventsCalculations(event).stddev',
+        'LongIntTable.total_frequency': 'EventsInformation(event).total_occurrences',
+        'LongIntTable.update_frequency': 'GONE',
+        'LongIntTable.update_value_add': 'GONE',
+        'LongIntTable.update_value_ow': 'GONE',
+        'LongIntTable.values': 'EventsInformation(event).event_keys',
+        'LongIntTable.values_max': 'EventsInformation(event).event_range[0]',
+        'LongIntTable.values_min': 'EventsInformation(event).event_range[1]',
+        'LongIntTable.values_range': 'EventsInformation(event).event_range',
+        'DiceTable.update_list': 'GONE (DiceTable owns a DiceRecord object that handles this)',
+        'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(ProtoDie).all_events'),
+        'scinote': ('format_number', 'NumberFormatter.format'),
+        'full_table_string', 'EventsCalculations(event).full_table_string',
+        'stats', 'EventsCalculations(event).stats_strings',
+        'long_int_div': 'safe_true_div',
+        'graph_pts': ('graph_pts',
+                      'EventsCalculations(event).percentage_points',
+                      'EventsCalculations(event).percentage_points_exact',
+                      'EventsCalculations(event).percentage_axes',
+                      'EventsCalculations(event).percentage_axes_exact',
+                      'EventsInformation(events).all_events',
+                      'EventsInformation(events).all_events_include_zeroes')
+        }
 

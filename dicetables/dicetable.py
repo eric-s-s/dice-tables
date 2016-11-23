@@ -21,6 +21,12 @@ class DiceRecord(object):
     def get_record(self):
         return self._record.copy()
 
+    def get_list(self):
+        return sorted(self._record.items())
+
+    def get_number(self, query_die):
+        return self._record.get(query_die, 0)
+
     def add_die(self, number, die):
         self._raise_error_for_negative_dice(number, die, 'added neg')
         new = self._record.copy()
@@ -44,16 +50,6 @@ class DiceRecord(object):
         if number < 0:
             raise DiceRecordError(messages[message_key] + ' Error at ({!r}, {})'.format(die, number))
 
-    def __str__(self):
-        str_list = [die.multiply_str(number) for die, number in sorted(self._record.items())]
-        return '\n'.join(str_list)
-
-    def get_details(self):
-        output = ''
-        for die, number in sorted(self._record.items()):
-            output += format_die_info(die, number)
-        return output.rstrip('\n')
-
 
 def format_die_info(die, number):
     weight_info = die.weight_info()
@@ -75,20 +71,24 @@ class DiceTable(AdditiveEvents):
 
         :return: sorted copy of dice list: [(die, number of dice), ...]
         """
-        return sorted(self._record.get_record().items())
+        return self._record.get_list()
 
     def number_of_dice(self, query_die):
-        return self._record.get_record().get(query_die, 0)
+        return self._record.get_number(query_die)
 
     def weights_info(self):
         """
 
         :return: str: complete info for all dice
         """
-        return self._record.get_details()
+        output = ''
+        for die, number in self.get_list():
+            output += format_die_info(die, number)
+        return output.rstrip('\n')
 
     def __str__(self):
-        return self._record.__str__()
+        str_list = [die.multiply_str(number) for die, number in self.get_list()]
+        return '\n'.join(str_list)
 
     def add_die(self, number, die):
         """

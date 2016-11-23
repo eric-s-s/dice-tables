@@ -14,11 +14,6 @@ class TestIndexedValues(unittest.TestCase):
         self.assertEqual(indexed_values.start_index, start_index)
         self.assertEqual(indexed_values.raw_values, values)
 
-    def test_make_start_index_and_list_empty(self):
-        start_index, lst = iv.make_start_index_and_list([])
-        self.assertEqual(start_index, 0)
-        self.assertEqual(lst, [1])
-
     def test_make_start_index_and_list_start_zero(self):
         start_index, lst = iv.make_start_index_and_list(sorted({0: 1, 1: 1}.items()))
         self.assertEqual(start_index, 0)
@@ -34,31 +29,23 @@ class TestIndexedValues(unittest.TestCase):
         self.assertEqual(start_index, -2)
         self.assertEqual(lst, [1, 0, 0, 1])
 
-    def test_generated_indexed_values_empty(self):
-        test = iv.generate_indexed_values([])
-        self.assert_indexed_values(test, 0, [1])
-
-    def test_generate_indexed_values_unsorted_tuples(self):
-        test = iv.generate_indexed_values([(2, 1), (1, 2)])
-        self.assert_indexed_values(test, 1, [2, 1])
-
-    def test_generated_indexed_values_sorted_tuples(self):
+    def test_generated_indexed_values(self):
         test = iv.generate_indexed_values([(1, 1), (2, 2)])
         self.assert_indexed_values(test, 1, [1, 2])
 
-    def test_generate_indexed_values_from_dict_empty(self):
-        test = iv.generate_indexed_values_from_dict({})
-        self.assert_indexed_values(test, 0, [1])
+    def test_generated_indexed_values_gap_in_list(self):
+        test = iv.generate_indexed_values([(1, 1), (3, 2), (5, 5)])
+        self.assert_indexed_values(test, 1, [1, 0, 2, 0, 5])
 
     def test_generate_indexed_values_from_dict(self):
         test = iv.generate_indexed_values_from_dict({1: 1})
         self.assert_indexed_values(test, 1, [1])
 
-    def test_IndexedValues_init_empty(self):
-        test = iv.IndexedValues()
-        self.assert_indexed_values(test, 0, [1])
+    def test_generate_indexed_values_from_dict_gap_in_values(self):
+        test = iv.generate_indexed_values_from_dict({5: 1, 3: 3, 1: 1})
+        self.assert_indexed_values(test, 1, [1, 0, 3, 0, 1])
 
-    def test_IndexedValues_init_non_empty(self):
+    def test_IndexedValues_init(self):
         test = iv.IndexedValues(1, [1, 3])
         self.assert_indexed_values(test, 1, [1, 3])
 
@@ -80,15 +67,19 @@ class TestIndexedValues(unittest.TestCase):
         test = iv.IndexedValues(3, [1, 2, 3])
         self.assertEqual(test.index_range, (3, 5))
 
-    def test_IndexedValues_items(self):
-        test = iv.IndexedValues(1, [1, 0, 3])
-        self.assertEqual(test.get_items(), [(1, 1), (3, 3)])
+    def test_IndexedValues_items_single_value(self):
+        test = iv.IndexedValues(5, [2])
+        self.assertEqual(test.get_items(), [(5, 2)])
 
-    def test_indexedValues_get_within_range(self):
+    def test_IndexedValues_items_does_not_include_zeroes(self):
+        test = iv.IndexedValues(1, [2, 0, 3])
+        self.assertEqual(test.get_items(), [(1, 2), (3, 3)])
+
+    def test_indexedValues_get_value_at_key_within_range(self):
         test = iv.IndexedValues(3, [1, 2, 3])
         self.assertEqual(test.get_value_at_key(4), 2)
 
-    def test_indexedValues_get_out_of_range(self):
+    def test_indexedValues_get_value_at_key_out_of_range(self):
         test = iv.IndexedValues(3, [1, 2, 3])
         self.assertEqual(test.get_value_at_key(2), 0)
         self.assertEqual(test.get_value_at_key(6), 0)
@@ -147,30 +138,30 @@ class TestIndexedValues(unittest.TestCase):
 
     def test_IndexedValues_combine_with_events_list_normal_case(self):
         test = iv.IndexedValues(5, [1, 2, 1])
-        events = dict([(1, 2), (2, 1)])
+        input_dict = {1: 2, 2: 1}
         """
         [2, 4, 2, 0] +
         [0, 1, 2, 1]
         """
-        self.assert_indexed_values(test.combine_with_dictionary(events), 6, [2, 5, 4, 1])
+        self.assert_indexed_values(test.combine_with_dictionary(input_dict), 6, [2, 5, 4, 1])
 
     def test_IndexedValues_combine_with_events_list_gaps_in_list(self):
         test = iv.IndexedValues(5, [1, 2, 1])
-        events = dict([(1, 2), (3, 1)])
+        input_dict = {1: 2, 3: 1}
         """
         [2, 4, 2, 0, 0] +
         [0, 0, 1, 2, 1]
         """
-        self.assert_indexed_values(test.combine_with_dictionary(events), 6, [2, 4, 3, 2, 1])
+        self.assert_indexed_values(test.combine_with_dictionary(input_dict), 6, [2, 4, 3, 2, 1])
 
     def test_IndexedValues_combine_with_events_list_negative_events(self):
         test = iv.IndexedValues(5, [1, 2, 1])
-        events = dict([(-1, 2), (0, 1)])
+        input_dict = {-1: 2, 0: 1}
         """
         [2, 4, 2, 0] +
         [0, 1, 2, 1]
         """
-        self.assert_indexed_values(test.combine_with_dictionary(events), 4, [2, 5, 4, 1])
+        self.assert_indexed_values(test.combine_with_dictionary(input_dict), 4, [2, 5, 4, 1])
 
 
 if __name__ == '__main__':

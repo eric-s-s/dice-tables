@@ -10,10 +10,6 @@ import dicetables.eventsinfo as ti
 
 class TestEventsInfo(unittest.TestCase):
 
-    def assert_list_almost_equal(self, first, second, places=None, delta=None):
-        for index, element in enumerate(first):
-            self.assertAlmostEqual(element, second[index], places=places, delta=delta)
-
     def test_safe_true_div_returns_zero_when_answer_power_below_neg_300ish(self):
         self.assertEqual(ti.safe_true_div(1e+300, 10 ** 1000), 0)
 
@@ -39,23 +35,27 @@ class TestEventsInfo(unittest.TestCase):
         result = ti.safe_true_div(10 ** 1000, 10 ** 1200)
         self.assertAlmostEqual(result, 10 ** -200, delta=10 ** -210)
 
+    def test_EventsInformation_get_items(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 2, 3: 4}))
+        self.assertEqual(test.get_items(), {1: 2, 3: 4}.items())
+
     def test_EventsInformation_event_keys_removes_zero_occurrences(self):
         test = ti.EventsInformation(AdditiveEvents({0: 1, 1: 0}))
         self.assertEqual(test.events_keys(), [0])
 
-    def test_EventsInformation_event_keys_sorts(self):
+    def test_EventsInformation_events_keys_sorts(self):
         test = ti.EventsInformation(AdditiveEvents({2: 1, 1: 1, 3: 1}))
         self.assertEqual(test.events_keys(), [1, 2, 3])
 
-    def test_EventsInformation_event_keys_one_key(self):
+    def test_EventsInformation_events_keys_one_key(self):
         test = ti.EventsInformation(AdditiveEvents({2: 1}))
         self.assertEqual(test.events_keys(), [2])
 
-    def test_EventsInformation_event_range(self):
+    def test_EventsInformation_events_range(self):
         zero_to_two = ti.EventsInformation(AdditiveEvents({0: 2, 1: 1, 2: 5, 4: 0}))
         self.assertEqual(zero_to_two.events_range(), (0, 2))
 
-    def test_EventsInformation_event_range_one_value(self):
+    def test_EventsInformation_events_range_one_value(self):
         zero_to_two = ti.EventsInformation(AdditiveEvents({0: 2}))
         self.assertEqual(zero_to_two.events_range(), (0, 0))
 
@@ -103,7 +103,7 @@ class TestEventsInfo(unittest.TestCase):
 
     def test_EventsInformation_biggest_event_returns_first_biggest_event(self):
         test = ti.EventsInformation(AdditiveEvents({-1: 5, 0: 1, 2: 5}))
-        self.assertEqual(test.biggest_event(), (-1, 5), (2, 5))
+        self.assertEqual(test.biggest_event(), (-1, 5))
 
     def test_EventsInformation_biggest_event_returns_only_biggest_event(self):
         test = ti.EventsInformation(AdditiveEvents({-1: 5, 0: 1, 2: 10}))
@@ -117,7 +117,7 @@ class TestEventsInfo(unittest.TestCase):
         test = ti.EventsInformation(AdditiveEvents({-1: 5, 0: 1, 2: 10}))
         self.assertEqual(test.biggest_events_all(), [(2, 10)])
 
-    def test_EventsInformation_biggest_events_all_multiple_biggest_event_sorted(self):
+    def test_EventsInformation_biggest_events_all_multiple_biggest_events_sorted(self):
         test = ti.EventsInformation(AdditiveEvents({-1: 5, 0: 1, 2: 10, -5: 10, 1: 10}))
         self.assertEqual(test.biggest_events_all(), [(-5, 10), (1, 10), (2, 10)])
 
@@ -125,9 +125,9 @@ class TestEventsInfo(unittest.TestCase):
         test = ti.EventsInformation(AdditiveEvents({1: 2, 3: 4}))
         self.assertEqual(test.total_occurrences(), 2 + 4)
 
-    def test_EventsInformation_get_items(self):
-        test = ti.EventsInformation(AdditiveEvents({1: 2, 3: 4}))
-        self.assertEqual(test.get_items(), {1: 2, 3: 4}.items())
+    def test_EventsInformation_total_event_occurrences_one_event(self):
+        test = ti.EventsInformation(AdditiveEvents({1: 2}))
+        self.assertEqual(test.total_occurrences(), 2)
 
     def test_EventsCalculations_init_defaults_include_zeroes_True(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}))
@@ -184,13 +184,13 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(calculator.full_table_string(),
                          '1: 1\n3: 1\n')
 
-    def test_EventsCalculations_full_table_string_right_justifies_all_values_big_max(self):
+    def test_EventsCalculations_full_table_string_right_justifies_to_pos_number_is_max_len(self):
         events = AdditiveEvents({1: 10, 10: 200, 1000: 3000})
         calculator = ti.EventsCalculations(events, include_zeroes=False)
         self.assertEqual(calculator.full_table_string(),
                          '   1: 10\n  10: 200\n1000: 3,000\n')
 
-    def test_EventsCalculations_full_table_string_right_justifies_all_values_big_min(self):
+    def test_EventsCalculations_full_table_string_right_justifies_to_neg_number_is_max_len(self):
         events = AdditiveEvents({-1000: 2, 1: 10, 10: 200, 1000: 3000})
         calculator = ti.EventsCalculations(events, include_zeroes=False)
         self.assertEqual(calculator.full_table_string(),
@@ -284,7 +284,7 @@ class TestEventsInfo(unittest.TestCase):
         calculator = ti.EventsCalculations(events, False)
         self.assertEqual(calculator.percentage_points_exact(), [(1, 25.0), (3, 75.0)])
 
-    def test_EventsCalculations_percentage_points_exact_is_not_exact(self):
+    def test_EventsCalculations_percentage_points_exact_is_exact(self):
         events = AdditiveEvents({1: 3, 3: 4})
         calculator = ti.EventsCalculations(events, False)
         three_sevenths, four_sevenths = calculator.percentage_points_exact()
@@ -328,16 +328,19 @@ class TestEventsInfo(unittest.TestCase):
         expected = ('1', '1.000e+1000', '1.000e+1002', '100.0', '1.000')
         self.assertEqual(calculator.stats_strings([1]), expected)
 
+    def test_EventsCalculations_stats_strings_pct_less_than_zero(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 9999}))
+        expected = ('1', '1', '10,000', '10,000', '0.01000')
+        self.assertEqual(calculator.stats_strings([1]), expected)
+
+    def test_EventsCalculations_stats_strings_pct_much_less_than_zero(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10**2000}))
+        expected = ('1', '1', '1.000e+2000', '1.000e+2000', '1.000e-1998')
+        self.assertEqual(calculator.stats_strings([1]), expected)
+
     """
     note: the following are wrapper functions. These tests simply confirm that the presets work.
-    For full test see the following.
-        events_range: test_EventsInformation_events_range
-        mean: test_EventsCalculations_mean
-        stddev: test_EventsCalculations_stddev
-        stats: test_EventsCalculations_stats_strings
-        full_table_string: test_EventsCalculations_full_table_string
-        format_number: test_numberformatter.py
-        graph_pts: test_EventsCalculations_percentage, test_EventsInformation_all_events
+    For full test see above and (for format_number) test_numberformatter.py
     """
     def test_events_range(self):
         events = AdditiveEvents({1: 1, 2: 3, 5: 7})
@@ -406,19 +409,20 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(ti.graph_pts(events, include_zeroes=True), [(1, 2, 3), (50.0, 0, 50.0)])
         self.assertEqual(ti.graph_pts(events, include_zeroes=False), [(1, 3), (50.0, 50.0)])
 
-    def test_graph_pts_exact(self):
+    def test_graph_pts_exact_true(self):
         events = AdditiveEvents({1: 3, 2: 4})
-        exact_pct = (300./7., 400./7.)
-        expected_values = (1, 2)
-
         values, pct = ti.graph_pts(events, exact=True)
-        self.assertEqual(expected_values, values)
-        self.assertEqual(exact_pct, pct)
+        self.assertEqual(values, (1, 2))
+        self.assertEqual(pct, (300./7., 400./7.))
 
-        values, pct = ti.graph_pts(events, exact=False)
-        self.assertEqual(expected_values, values)
-        self.assertNotEqual(exact_pct, pct)
-        self.assert_list_almost_equal(exact_pct, pct)
+    def test_graph_pts_exact_false(self):
+        events = AdditiveEvents({1: 3, 2: 4})
+        values, (three_sevenths, four_sevenths) = ti.graph_pts(events, exact=False)
+        self.assertEqual(values, (1, 2))
+        self.assertNotEqual(four_sevenths, 400. / 7.)
+
+        self.assertAlmostEqual(three_sevenths, 300./7., places=10)
+        self.assertAlmostEqual(four_sevenths, 400./7., places=10)
 
     def test_graph_pts_overflow_for_small_numbers(self):
         events = AdditiveEvents({1: 1, 3: 1})
@@ -428,7 +432,7 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.graph_pts_overflow(events, zeroes=False), ([(1, 3), (1, 1)], '1'))
 
-    def test_graph_pts_overflow_include_axes_false(self):
+    def test_graph_pts_overflow_axes_false(self):
         events = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.graph_pts_overflow(events, axes=False), ([(1, 1), (2, 0), (3, 1)], '1'))
 

@@ -90,7 +90,7 @@ class NumberFormatter(object):
     def format_fixed_point(self, number):
         """
 
-        :param number: number < 0
+        :param number: -1 < number < 1
         """
         if self.is_special_case(number):
             return self.get_special_case(number)
@@ -98,6 +98,10 @@ class NumberFormatter(object):
         return self._format_number_and_exponent_to_fixed_point(number, exponent)
 
     def format_commaed(self, number):
+        """
+
+        :param number: number >= 1 or number <= -1
+        """
         if self.is_special_case(number):
             return self.get_special_case(number)
         exponent = self.get_exponent(number)

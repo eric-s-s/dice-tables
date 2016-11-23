@@ -1,10 +1,30 @@
-"""a simulated Counter dict with numpy arrays"""
+"""
+tool for combining dictionaries.
+IndexedValues is a list with a start index.
+"""
 from __future__ import absolute_import
 
 
+def generate_indexed_values(sorted_tuple_list):
+    """
+
+    :param sorted_tuple_list: may not be empty.\n
+        [(int, int>0), ...]
+    """
+    start_val, values = make_start_index_and_list(sorted_tuple_list)
+    return IndexedValues(start_val, values)
+
+
+def generate_indexed_values_from_dict(input_dict):
+    """
+
+    :param input_dict: may not be empty.\n
+        {int: int>0, ...}
+    """
+    return generate_indexed_values(sorted(input_dict.items()))
+
+
 def make_start_index_and_list(sorted_tuple_list):
-    if not sorted_tuple_list:
-        return 0, [1]
     start_val = sorted_tuple_list[0][0]
     end_val = sorted_tuple_list[-1][0]
     out_list = [0] * (end_val - start_val + 1)
@@ -14,23 +34,18 @@ def make_start_index_and_list(sorted_tuple_list):
     return start_val, out_list
 
 
-def generate_indexed_values(tuple_list):
-    tuple_list.sort()
-    start_val, values = make_start_index_and_list(tuple_list)
-    return IndexedValues(start_val, values)
-
-
-def generate_indexed_values_from_dict(input_dict):
-    return generate_indexed_values(list(input_dict.items()))
-
-
 class IndexedValues(object):
-    def __init__(self, start_index=0, values=None):
+    def __init__(self, start_index, sorted_values):
+        """
+
+        :param start_index: int
+        :param sorted_values: may not be empty\n
+            [int>=0, ...] \n
+            values[0] != 0\n
+            values[-1] != 0
+        """
         self._start_index = start_index
-        if not values:
-            self._values = [1]
-        else:
-            self._values = values[:]
+        self._values = sorted_values[:]
 
     @property
     def raw_values(self):
@@ -56,7 +71,8 @@ class IndexedValues(object):
 
     def combine_with_dictionary(self, no_zero_values_dict):
         """
-        :param no_zero_values_dict: MAY NOT BE EMPTY
+        :param no_zero_values_dict: may not be empty\n
+            {int: int>0, ...}
         """
         base_list = self.raw_values
 

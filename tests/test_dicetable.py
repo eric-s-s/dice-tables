@@ -53,6 +53,21 @@ class TestDiceStats(unittest.TestCase):
         dictionary[Die(3)] = 10
         self.assertEqual(record.get_record(), {Die(2): 1, Die(3): 4})
 
+    def test_DiceRecord_get_list_empty(self):
+        self.assertEqual(DiceRecord({}).get_list(), [])
+
+    def test_DiceRecord_get_list_is_sorted(self):
+        record = DiceRecord({Die(3): 4, Die(2): 1})
+        self.assertEqual(record.get_list(), [(Die(2), 1), (Die(3), 4)])
+
+    def test_DiceRecord_get_number_no_die_returns_zero(self):
+        record = DiceRecord({Die(3): 4, Die(2): 1})
+        self.assertEqual(record.get_number(Die(5)), 0)
+
+    def test_DiceRecord_get_number_returns_correct_number(self):
+        record = DiceRecord({Die(3): 4, Die(2): 1})
+        self.assertEqual(record.get_number(Die(3)), 4)
+
     def test_DiceRecord_add_die_raises_error_for_negative_add(self):
         self.assertRaises(DiceRecordError, DiceRecord({}).add_die, -5, Die(1))
 
@@ -96,30 +111,6 @@ class TestDiceStats(unittest.TestCase):
         record = DiceRecord({Die(1): 2})
         self.assert_my_regex(DiceRecordError, 'Removed too many dice from DiceRecord. Error at (Die(2), -17)',
                              record.remove_die, 17, Die(2))
-
-    def test_DiceRecord_str_empty(self):
-        self.assertEqual(DiceRecord({}).__str__(), '')
-
-    def test_DiceRecord_str_one_element(self):
-        self.assertEqual(DiceRecord({Die(1): 2}).__str__(), '2D1')
-
-    def test_DiceRecord_str_many_elements(self):
-        self.assertEqual(DiceRecord({Die(1): 2, Die(3): 4, Die(5): 6}).__str__(), '2D1\n4D3\n6D5')
-
-    def test_DiceRecord_get_details_empty(self):
-        self.assertEqual(DiceRecord({}).get_details(), '')
-
-    def test_DiceRecord_get_details_non_empty(self):
-        record = DiceRecord({Die(4): 2, ModWeightedDie({1: 10, 4: 0}, 2): 5})
-        details = ('2D4\n' +
-                   '    No weights\n\n' +
-                   '5D4+10  W:10\n' +
-                   '    a roll of 1 has a weight of 10\n' +
-                   '    a roll of 2 has a weight of 0\n' +
-                   '    a roll of 3 has a weight of 0\n' +
-                   '    a roll of 4 has a weight of 0')
-
-        self.assertEqual(record.get_details(), details)
 
     def test_DiceTable_init_raises_InvalidEventsError(self):
         self.assertRaises(InvalidEventsError, DiceTable, {1: 0}, [])
@@ -181,7 +172,10 @@ class TestDiceStats(unittest.TestCase):
         table = DiceTable.new()
         self.assertEqual(str(table), '')
 
-    def test_DiceTable_str_returns_appropriate_value(self):
+    def test_DiceTable_str_one_element(self):
+        self.assertEqual(DiceTable({1: 1}, [(Die(1), 2)]).__str__(), '2D1')
+
+    def test_DiceTable_str_many_elements_note_they_are_sorted(self):
         dice_list = [(ModDie(4, -2), 2), (Die(10), 3), (ModWeightedDie({4: 10}, 2), 5)]
         table = DiceTable({1: 1}, dice_list)
         table_str = ('2D4-4\n' +
