@@ -11,10 +11,10 @@ class DiceRecordError(ValueError):
 
 
 class DiceRecord(object):
-    def __init__(self, die_number_dict):
+    def __init__(self, die_number_dict, init_error_msg='init neg'):
         self._record = {}
         for die, number in die_number_dict.items():
-            self._raise_error_for_negative_dice(number, die, 'init neg')
+            self._raise_error_for_negative_dice(number, die, init_error_msg)
             if number:
                 self._record[die] = number
 
@@ -36,10 +36,8 @@ class DiceRecord(object):
     def remove_die(self, number, die):
         self._raise_error_for_negative_dice(number, die, 'removed neg')
         new = self._record.copy()
-        new_count = new.get(die, 0) - number
-        self._raise_error_for_negative_dice(new_count, die, 'removed too many')
-        new[die] = new_count
-        return DiceRecord(new)
+        new[die] = new.get(die, 0) - number
+        return DiceRecord(new, init_error_msg='removed too many')
 
     @staticmethod
     def _raise_error_for_negative_dice(number, die, message_key):
