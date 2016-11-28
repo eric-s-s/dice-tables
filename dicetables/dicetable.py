@@ -88,14 +88,18 @@ class DiceTable(AdditiveEvents):
         str_list = [die.multiply_str(number) for die, number in self.get_list()]
         return '\n'.join(str_list)
 
+    def _get_new_events(self, dictionary):
+        return self.__class__(dictionary, self.get_list())
+
     def add_die(self, number, die):
         """
 
         :param number: int>= 0
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        self._record = self._record.add_die(number, die)
-        self.combine(number, die)
+        new_list = self._record.add_die(number, die).get_list()
+        new_events = self._combiner.combine_by_fastest(number, die.get_dict()).get_dict()
+        return self._get_new_table(new_events, new_list)
 
     def remove_die(self, number, die):
         """
@@ -103,8 +107,12 @@ class DiceTable(AdditiveEvents):
         :param number: 0 <= int <= number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        self._record = self._record.remove_die(number, die)
-        self.remove(number, die)
+        new_list = self._record.remove_die(number, die).get_list()
+        new_events = self._combiner.remove_by_tuple_list(number, die.get_dict()).get_dict()
+        return self._get_new_table(new_events, new_list)
+
+    def _get_new_table(self, new_dict, dice_list):
+        return self.__class__(new_dict, dice_list)
 
 
 class RichDiceTable(DiceTable):
@@ -129,3 +137,9 @@ class RichDiceTable(DiceTable):
     @calc_includes_zeroes.setter
     def calc_includes_zeroes(self, bool_value):
         self._zeroes_bool = bool(bool_value)
+
+    def _get_new_events(self, dictionary):
+        return self.__class__(dictionary, self.get_list(), self.calc_includes_zeroes)
+
+    def _get_new_table(self, new_dict, dice_list):
+        return self.__class__(new_dict, dice_list, self.calc_includes_zeroes)
