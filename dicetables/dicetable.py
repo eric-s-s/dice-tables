@@ -97,7 +97,7 @@ class DiceTable(AdditiveEvents):
         """
         self._create_constructor_dice_iterable(number, die, method_str='add_die')
         self._create_constructor_dict(number, die, method_str='combine')
-        return self._construct_by_dictionary_and_list()
+        return self._construct_by_dictionary_and_dice_iterable()
 
     def remove_die(self, number, die):
         """
@@ -107,7 +107,7 @@ class DiceTable(AdditiveEvents):
         """
         self._create_constructor_dice_iterable(number, die, method_str='remove_die')
         self._create_constructor_dict(number, die, method_str='remove')
-        return self._construct_by_dictionary_and_list()
+        return self._construct_by_dictionary_and_dice_iterable()
 
     def _create_constructor_dice_iterable(self, number, die, method_str):
         methods = {'add_die': self._record.add_die,
@@ -120,7 +120,7 @@ class DiceTable(AdditiveEvents):
         self._reset_constructors()
         return new_dice_table
 
-    def _construct_by_dictionary_and_list(self):
+    def _construct_by_dictionary_and_dice_iterable(self):
         new_dice_table = DiceTable(self._constructor_dict, self._constructor_dice_iterable)
         self._reset_constructors()
         return new_dice_table
@@ -153,14 +153,16 @@ class RichDiceTable(DiceTable):
         return cls({0: 1}, [], True)
 
     def switch_boolean(self):
-        return RichDiceTable(self.get_dict(), self.get_list(), not self.calc_includes_zeroes)
+        return RichDiceTable(self.get_dict(), self._record.get_items(), not self.calc_includes_zeroes)
 
     def _construct_by_dictionary(self):
-        new_rich_dice_table = RichDiceTable(self._constructor_dict, self.get_list(), self.calc_includes_zeroes)
+        new_rich_dice_table = RichDiceTable(self._constructor_dict,
+                                            self._record.get_items(),
+                                            self.calc_includes_zeroes)
         self._reset_constructors()
         return new_rich_dice_table
 
-    def _construct_by_dictionary_and_list(self):
+    def _construct_by_dictionary_and_dice_iterable(self):
         new_rich_dice_table = RichDiceTable(self._constructor_dict,
                                             self._constructor_dice_iterable,
                                             self.calc_includes_zeroes)
