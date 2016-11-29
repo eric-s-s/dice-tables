@@ -59,7 +59,6 @@ class DiceTable(AdditiveEvents):
     def __init__(self, input_dict, dice_list):
         super(DiceTable, self).__init__(input_dict)
         self._record = DiceRecord(dice_list)
-        self._constructor_dice_iterable = []
 
     @classmethod
     def new(cls):
@@ -95,9 +94,9 @@ class DiceTable(AdditiveEvents):
         :param number: int>= 0
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        self._create_constructor_dice_iterable(number, die, method_str='add_die')
-        self._create_constructor_dict(number, die, method_str='combine')
-        return self._construct_by_dictionary_and_dice_iterable()
+        dice_iterable = self._create_constructor_iterable(number, die, method_str='add_die')
+        dictionary = self._create_constructor_dict(number, die, method_str='combine')
+        return self._construct_by_dictionary_and_dice_iterable_error_wrapper(dictionary, dice_iterable)
 
     def remove_die(self, number, die):
         """
@@ -105,29 +104,29 @@ class DiceTable(AdditiveEvents):
         :param number: 0 <= int <= number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        self._create_constructor_dice_iterable(number, die, method_str='remove_die')
-        self._create_constructor_dict(number, die, method_str='remove')
-        return self._construct_by_dictionary_and_dice_iterable()
+        dice_iterable = self._create_constructor_iterable(number, die, method_str='remove_die')
+        dictionary = self._create_constructor_dict(number, die, method_str='remove')
+        return self._construct_by_dictionary_and_dice_iterable_error_wrapper(dictionary, dice_iterable)
 
-    def _create_constructor_dice_iterable(self, number, die, method_str):
+    def _create_constructor_iterable(self, number, die, method_str):
         methods = {'add_die': self._record.add_die,
                    'remove_die': self._record.remove_die}
         new_record = methods[method_str](number, die)
-        self._constructor_dice_iterable = new_record.get_items()
+        return new_record.get_items()
 
-    def _construct_by_dictionary(self):
-        new_dice_table = DiceTable(self._constructor_dict, self._record.get_items())
-        self._reset_constructors()
-        return new_dice_table
+    def _construct_by_dictionary(self, dictionary):
+        return self.__class__(dictionary, self._record.get_items())
 
-    def _construct_by_dictionary_and_dice_iterable(self):
-        new_dice_table = DiceTable(self._constructor_dict, self._constructor_dice_iterable)
-        self._reset_constructors()
-        return new_dice_table
+    def _construct_by_dictionary_and_dice_iterable_error_wrapper(self, dictionary, dice_iterable):
+        try:
+            return self._construct_by_dictionary_and_dice_iterable(dictionary, dice_iterable)
+        except TypeError:
+            msg = ('DiceTable._construct_by_dictionary_and_dice_iterable ' +
+                   'must be overridden to include proper types for new class')
+            raise TypeError(msg)
 
-    def _reset_constructors(self):
-        super(DiceTable, self)._reset_constructors()
-        self._constructor_dice_iterable = []
+    def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
+        return self.__class__(dictionary, dice_iterable)
 
 
 class RichDiceTable(DiceTable):
@@ -155,16 +154,8 @@ class RichDiceTable(DiceTable):
     def switch_boolean(self):
         return RichDiceTable(self.get_dict(), self._record.get_items(), not self.calc_includes_zeroes)
 
-    def _construct_by_dictionary(self):
-        new_rich_dice_table = RichDiceTable(self._constructor_dict,
-                                            self._record.get_items(),
-                                            self.calc_includes_zeroes)
-        self._reset_constructors()
-        return new_rich_dice_table
+    def _construct_by_dictionary(self, dictionary):
+        return self.__class__(dictionary, self._record.get_items(), self.calc_includes_zeroes)
 
-    def _construct_by_dictionary_and_dice_iterable(self):
-        new_rich_dice_table = RichDiceTable(self._constructor_dict,
-                                            self._constructor_dice_iterable,
-                                            self.calc_includes_zeroes)
-        self._reset_constructors()
-        return new_rich_dice_table
+    def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
+        return self.__class__(dictionary, dice_iterable, self.calc_includes_zeroes)

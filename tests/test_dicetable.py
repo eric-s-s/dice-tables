@@ -279,7 +279,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(new.get_list(), [(Die(2), 1)])
 
     def test_RichDiceTable_init_does_DiceTable_init(self):
-        table = RichDiceTable({1: 1}, [])
+        table = RichDiceTable({1: 1}, [], True)
         self.assertEqual(table.get_dict(), {1: 1})
         self.assertEqual(table.get_list(), [])
 
