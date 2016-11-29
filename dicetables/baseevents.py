@@ -67,7 +67,7 @@ class AdditiveEvents(IntegerEvents):
             total occurrences > 0
         """
         self._table = scrub_zeroes(events_dictionary)
-        self._combiner = DictCombiner(self.get_dict())
+        self._constructor_dict = {0: 1}
         super(AdditiveEvents, self).__init__()
 
     def get_dict(self):
@@ -79,8 +79,8 @@ class AdditiveEvents(IntegerEvents):
         return 'table from {} to {}'.format(min_event, max_event)
 
     def combine(self, times, events):
-        dictionary = self._combiner.combine_by_fastest(times, events.get_dict()).get_dict()
-        return self._get_new_events(dictionary)
+        self._create_constructor_dict(times, events, method_str='combine')
+        return self._construct_by_dictionary()
 
     def combine_by_flattened_list(self, times, events):
         """
@@ -88,16 +88,16 @@ class AdditiveEvents(IntegerEvents):
         :WARNING - UNSAFE METHOD: len(flattened_list) = total occurrences of events.
             if this list is too big, it will raise MemoryError or OverflowError
         """
-        dictionary = self._combiner.combine_by_flattened_list(times, events.get_dict()).get_dict()
-        return self._get_new_events(dictionary)
+        self._create_constructor_dict(times, events, method_str='combine_by_flattened_list')
+        return self._construct_by_dictionary()
 
     def combine_by_dictionary(self, times, events):
-        dictionary = self._combiner.combine_by_dictionary(times, events.get_dict()).get_dict()
-        return self._get_new_events(dictionary)
+        self._create_constructor_dict(times, events, method_str='combine_by_dictionary')
+        return self._construct_by_dictionary()
 
     def combine_by_indexed_values(self, times, events):
-        dictionary = self._combiner.combine_by_indexed_values(times, events.get_dict()).get_dict()
-        return self._get_new_events(dictionary)
+        self._create_constructor_dict(times, events, method_str='combine_by_indexed_values')
+        return self._construct_by_dictionary()
 
     def remove(self, times, events):
         """
@@ -105,8 +105,23 @@ class AdditiveEvents(IntegerEvents):
         :WARNING - UNSAFE METHOD: There is no record of what you added to an AdditiveEvents.
             If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
-        dictionary = self._combiner.remove_by_tuple_list(times, events.get_dict()).get_dict()
-        return self._get_new_events(dictionary)
+        self._create_constructor_dict(times, events, method_str='remove')
+        return self._construct_by_dictionary()
 
-    def _get_new_events(self, dictionary):
-        return self.__class__(dictionary)
+    def _create_constructor_dict(self, times, events, method_str):
+        combiner = DictCombiner(self.get_dict())
+        methods = {'combine': combiner.combine_by_fastest,
+                   'combine_by_flattened_list': combiner.combine_by_flattened_list,
+                   'combine_by_dictionary': combiner.combine_by_dictionary,
+                   'combine_by_indexed_values': combiner.combine_by_indexed_values,
+                   'remove': combiner.remove_by_tuple_list}
+        new_combiner = methods[method_str](times, events.get_dict())
+        self._constructor_dict = new_combiner.get_dict()
+
+    def _construct_by_dictionary(self):
+        new_object = AdditiveEvents(self._constructor_dict)
+        self._reset_constructors()
+        return new_object
+
+    def _reset_constructors(self):
+        self._constructor_dict = {0: 1}

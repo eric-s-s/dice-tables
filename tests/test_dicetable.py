@@ -28,87 +28,98 @@ class TestDiceStats(unittest.TestCase):
         error = DiceRecordError()
         self.assertEqual(error.args[0], '')
 
-    def test_DiceRecord_init_empty_list(self):
-        self.assertEqual(DiceRecord({}).get_record(), {})
+    def test_DiceRecord_init_empty_iterator(self):
+        self.assertEqual(DiceRecord({}.items()).get_record(), {})
+
+    def test_DiceRecord_init_different_empty_iterator(self):
+        self.assertEqual(DiceRecord([]).get_record(), {})
 
     def test_DiceRecord_init_list_with_negative_number_raises_error(self):
-        self.assertRaises(DiceRecordError, DiceRecord, {Die(1): -2})
+        self.assertRaises(DiceRecordError, DiceRecord, {Die(1): -2}.items())
 
     def test_DiceRecord_init_error_message(self):
         self.assert_my_regex(DiceRecordError, 'DiceRecord may not have negative dice. Error at (Die(1), -2)',
-                             DiceRecord, {Die(1): -2})
+                             DiceRecord, {Die(1): -2}.items())
 
     def test_DiceRecord_init_does_not_add_zero_values(self):
-        self.assertEqual(DiceRecord({Die(1): 0}).get_record(), {})
+        self.assertEqual(DiceRecord({Die(1): 0}.items()).get_record(), {})
 
-    def test_DiceRecord_init_works_as_expected(self):
-        self.assertEqual(DiceRecord({Die(1): 2, Die(2): 2}).get_record(), {Die(1): 2, Die(2): 2})
+    def test_DiceRecord_init_works_items_iterator(self):
+        self.assertEqual(DiceRecord({Die(1): 2, Die(2): 2}.items()).get_record(), {Die(1): 2, Die(2): 2})
+
+    def test_DiceRecord_init_works_list_iterator(self):
+        self.assertEqual(DiceRecord(iter([(Die(1), 2), (Die(2), 2)])).get_record(), {Die(1): 2, Die(2): 2})
+
+    def test_DiceRecord_init_works_list(self):
+        self.assertEqual(DiceRecord([(Die(1), 2), (Die(2), 2)]).get_record(), {Die(1): 2, Die(2): 2})
 
     def test_DiceRecord_get_record_returns_dictionary(self):
-        self.assertEqual(DiceRecord({Die(3): 4, Die(2): 1}).get_record(), {Die(2): 1, Die(3): 4})
+        self.assertEqual(DiceRecord({Die(3): 4, Die(2): 1}.items()).get_record(), {Die(2): 1, Die(3): 4})
 
     def test_DiceRecord_get_record_does_not_mutate_original(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1})
+        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
         dictionary = record.get_record()
         dictionary[Die(3)] = 10
         self.assertEqual(record.get_record(), {Die(2): 1, Die(3): 4})
 
-    def test_DiceRecord_get_list_empty(self):
-        self.assertEqual(DiceRecord({}).get_list(), [])
+    def test_DiceRecord_get_items_empty(self):
+        self.assertEqual(DiceRecord([]).get_items(), {}.items())
 
-    def test_DiceRecord_get_list_is_sorted(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1})
-        self.assertEqual(record.get_list(), [(Die(2), 1), (Die(3), 4)])
+    def test_DiceRecord_get_list(self):
+        the_items = {Die(3): 4, Die(2): 1}.items()
+        record = DiceRecord(the_items)
+        self.assertEqual(record.get_items(), the_items)
+
 
     def test_DiceRecord_get_number_no_die_returns_zero(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1})
+        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
         self.assertEqual(record.get_number(Die(5)), 0)
 
     def test_DiceRecord_get_number_returns_correct_number(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1})
+        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
         self.assertEqual(record.get_number(Die(3)), 4)
 
     def test_DiceRecord_add_die_raises_error_for_negative_add(self):
-        self.assertRaises(DiceRecordError, DiceRecord({}).add_die, -5, Die(1))
+        self.assertRaises(DiceRecordError, DiceRecord([]).add_die, -5, Die(1))
 
     def test_DiceRecord_add_die_error_message(self):
         self.assert_my_regex(DiceRecordError, 'May not add negative dice to DiceRecord. Error at (Die(1), -5)',
-                             DiceRecord({}).add_die, -5, Die(1))
+                             DiceRecord([]).add_die, -5, Die(1))
 
     def test_DiceRecord_add_die_returns_new_record_with_die_added_to_die_already_there(self):
-        record = DiceRecord({Die(1): 2})
+        record = DiceRecord({Die(1): 2}.items())
         new_record = record.add_die(3, Die(1))
         self.assertEqual(new_record.get_record(), {Die(1): 5})
 
     def test_DiceRecord_add_die_returns_new_record_with_new_die_added(self):
-        record = DiceRecord({Die(1): 2})
+        record = DiceRecord({Die(1): 2}.items())
         new_record = record.add_die(3, Die(2))
         self.assertEqual(new_record.get_record(), {Die(1): 2, Die(2): 3})
 
     def test_DiceRecord_remove_die_raises_error_for_negative_add(self):
-        self.assertRaises(DiceRecordError, DiceRecord({}).remove_die, -5, Die(1))
+        self.assertRaises(DiceRecordError, DiceRecord([]).remove_die, -5, Die(1))
 
     def test_DiceRecord_remove_die_error_message(self):
         self.assert_my_regex(DiceRecordError, 'May not remove negative dice from DiceRecord. Error at (Die(1), -5)',
-                             DiceRecord({}).remove_die, -5, Die(1))
+                             DiceRecord([]).remove_die, -5, Die(1))
 
     def test_DiceRecord_remove_die_returns_correct_new_record(self):
-        record = DiceRecord({Die(1): 2, Die(2): 5})
+        record = DiceRecord({Die(1): 2, Die(2): 5}.items())
         new_record = record.remove_die(3, Die(2))
         self.assertEqual(new_record.get_record(), {Die(1): 2, Die(2): 2})
 
     def test_DiceRecord_remove_die_returns_correct_new_record_all_dice_removed_from_list(self):
-        record = DiceRecord({Die(1): 2, Die(2): 5})
+        record = DiceRecord({Die(1): 2, Die(2): 5}.items())
         new_record = record.remove_die(5, Die(2))
         self.assertEqual(new_record.get_record(), {Die(1): 2})
 
     def test_DiceRecord_remove_die_raises_error_when_too_many_dice_removed_from_list(self):
-        record = DiceRecord({Die(1): 2, Die(2): 5})
+        record = DiceRecord({Die(1): 2, Die(2): 5}.items())
         self.assert_my_regex(DiceRecordError, 'Removed too many dice from DiceRecord. Error at (Die(2), -12)',
                              record.remove_die, 17, Die(2))
 
     def test_DiceRecord_remove_die_raises_error_when_dice_not_in_record_removed_from_list(self):
-        record = DiceRecord({Die(1): 2})
+        record = DiceRecord({Die(1): 2}.items())
         self.assert_my_regex(DiceRecordError, 'Removed too many dice from DiceRecord. Error at (Die(2), -17)',
                              record.remove_die, 17, Die(2))
 
@@ -307,11 +318,6 @@ class TestDiceStats(unittest.TestCase):
         new = table.add_die(1, Die(2))
         self.assertFalse(new.calc.include_zeroes)
 
-    def test_RichDiceTable_set_calc_includes_zeroes_setter_switches_calc_status(self):
-        table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
-        table.calc_includes_zeroes = True
-        self.assertTrue(table.calc.include_zeroes)
-
     def test_RichDiceTable_info_property(self):
         table = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
         self.assertEqual(table.info.all_events(), [(1, 1)])
@@ -340,9 +346,26 @@ class TestDiceStats(unittest.TestCase):
         table = RichDiceTable.new()
         self.assertTrue(table.calc_includes_zeroes)
 
+    def test_RichDiceTable_switch_boolean_switches_calc_includes_zeros(self):
+        table = RichDiceTable({5: 1}, [(Die(5), 100)], calc_includes_zeroes=True)
+        is_false = table.switch_boolean()
+        is_true = is_false.switch_boolean()
+        self.assertFalse(is_false.calc_includes_zeroes)
+        self.assertTrue(is_true.calc_includes_zeroes)
+
+    def test_RichDiceTable_switch_boolean_keeps_events_and_dice_record(self):
+        table = RichDiceTable({5: 1}, [(Die(5), 100)], calc_includes_zeroes=True)
+        is_false = table.switch_boolean()
+        is_true = is_false.switch_boolean()
+
+        self.assertEqual(table.get_list(), is_true.get_list())
+        self.assertEqual(table.get_list(), is_false.get_list())
+        self.assertEqual(table.get_dict(), is_true.get_dict())
+        self.assertEqual(table.get_dict(), is_false.get_dict())
+
     def test_RichDiceTable_add_die(self):
         table = RichDiceTable.new()
-        table.calc_includes_zeroes = False
+        table = table.switch_boolean()
         new = table.add_die(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(2, 1), (4, 1)])
         self.assertEqual(new.calc.percentage_points(), [(2, 50.0), (4, 50.0)])
@@ -350,7 +373,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_RichDiceTable_combine_updates_calc_and_info(self):
         table = RichDiceTable.new()
-        table.calc_includes_zeroes = False
+        table = table.switch_boolean()
         new = table.combine(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(2, 1), (4, 1)])
         self.assertEqual(new.calc.percentage_points(), [(2, 50.0), (4, 50.0)])
@@ -358,7 +381,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_RichDiceTable_combine_by_dictionary(self):
         table = RichDiceTable.new()
-        table.calc_includes_zeroes = False
+        table = table.switch_boolean()
         new = table.combine_by_dictionary(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(2, 1), (4, 1)])
         self.assertEqual(new.calc.percentage_points(), [(2, 50.0), (4, 50.0)])
@@ -366,7 +389,7 @@ class TestDiceStats(unittest.TestCase):
 
     def test_RichDiceTable_combine_by_flattened_list(self):
         table = RichDiceTable.new()
-        table.calc_includes_zeroes = False
+        table = table.switch_boolean()
         new = table.combine_by_flattened_list(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(2, 1), (4, 1)])
         self.assertEqual(new.calc.percentage_points(), [(2, 50.0), (4, 50.0)])
@@ -374,15 +397,14 @@ class TestDiceStats(unittest.TestCase):
 
     def test_RichDiceTable_combine_by_indexed_values(self):
         table = RichDiceTable.new()
-        table.calc_includes_zeroes = False
+        table = table.switch_boolean()
         new = table.combine_by_indexed_values(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(2, 1), (4, 1)])
         self.assertEqual(new.calc.percentage_points(), [(2, 50.0), (4, 50.0)])
         self.assertEqual(new.get_list(), [])
 
     def test_RichDiceTable_remove_die_updates_calc_and_info(self):
-        table = RichDiceTable({2: 1, 4: 1}, [(StrongDie(Die(2), 2), 1)])
-        table.calc_includes_zeroes = False
+        table = RichDiceTable({2: 1, 4: 1}, [(StrongDie(Die(2), 2), 1)], False)
         new = table.remove_die(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(0, 1)])
         self.assertEqual(new.calc.percentage_points(), [(0, 100.0)])
@@ -390,8 +412,7 @@ class TestDiceStats(unittest.TestCase):
         self.assertFalse(new.calc_includes_zeroes)
 
     def test_RichDiceTable_remove(self):
-        table = RichDiceTable({2: 1, 4: 1}, [(StrongDie(Die(2), 2), 1)])
-        table.calc_includes_zeroes = False
+        table = RichDiceTable({2: 1, 4: 1}, [(StrongDie(Die(2), 2), 1)], False)
         new = table.remove(1, StrongDie(Die(2), 2))
         self.assertEqual(new.info.all_events(), [(0, 1)])
         self.assertEqual(new.calc.percentage_points(), [(0, 100.0)])
