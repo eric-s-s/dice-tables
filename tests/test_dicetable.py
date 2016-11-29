@@ -8,6 +8,12 @@ from dicetables.dicetable import DiceTable, DiceRecord, DiceRecordError, RichDic
 from dicetables.baseevents import InvalidEventsError
 
 
+class DiceTableInheritor(DiceTable):
+    def __init__(self, events_dict, dice_iterator, number):
+        self.number = number
+        super(DiceTableInheritor, self).__init__(events_dict, dice_iterator)
+
+
 class TestDiceStats(unittest.TestCase):
 
     def assert_my_regex(self, error_type, regex, func, *args):
@@ -69,7 +75,6 @@ class TestDiceStats(unittest.TestCase):
         the_items = {Die(3): 4, Die(2): 1}.items()
         record = DiceRecord(the_items)
         self.assertEqual(record.get_items(), the_items)
-
 
     def test_DiceRecord_get_number_no_die_returns_zero(self):
         record = DiceRecord({Die(3): 4, Die(2): 1}.items())
