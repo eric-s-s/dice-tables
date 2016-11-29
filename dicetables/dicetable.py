@@ -11,9 +11,9 @@ class DiceRecordError(ValueError):
 
 
 class DiceRecord(object):
-    def __init__(self, die_number_dict, init_error_msg='init neg'):
+    def __init__(self, die_number_iterable, init_error_msg='init neg'):
         self._record = {}
-        for die, number in die_number_dict.items():
+        for die, number in die_number_iterable:
             self._raise_error_for_negative_dice(number, die, init_error_msg)
             if number:
                 self._record[die] = number
@@ -21,8 +21,8 @@ class DiceRecord(object):
     def get_record(self):
         return self._record.copy()
 
-    def get_list(self):
-        return sorted(self._record.items())
+    def get_items(self):
+        return self._record.items()
 
     def get_number(self, query_die):
         return self._record.get(query_die, 0)
@@ -31,13 +31,13 @@ class DiceRecord(object):
         self._raise_error_for_negative_dice(number, die, 'added neg')
         new = self._record.copy()
         new[die] = number + new.get(die, 0)
-        return DiceRecord(new)
+        return DiceRecord(new.items())
 
     def remove_die(self, number, die):
         self._raise_error_for_negative_dice(number, die, 'removed neg')
         new = self._record.copy()
         new[die] = new.get(die, 0) - number
-        return DiceRecord(new, init_error_msg='removed too many')
+        return DiceRecord(new.items(), init_error_msg='removed too many')
 
     @staticmethod
     def _raise_error_for_negative_dice(number, die, message_key):
@@ -58,7 +58,7 @@ def format_die_info(die, number):
 class DiceTable(AdditiveEvents):
     def __init__(self, input_dict, dice_list):
         super(DiceTable, self).__init__(input_dict)
-        self._record = DiceRecord(dict(dice_list))
+        self._record = DiceRecord(dice_list)
 
     @classmethod
     def new(cls):
@@ -69,7 +69,7 @@ class DiceTable(AdditiveEvents):
 
         :return: sorted copy of dice list: [(die, number of dice), ...]
         """
-        return self._record.get_list()
+        return sorted(self._record.get_items())
 
     def number_of_dice(self, query_die):
         return self._record.get_number(query_die)
