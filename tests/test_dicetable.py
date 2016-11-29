@@ -434,7 +434,7 @@ class TestDiceStats(unittest.TestCase):
         self.assert_my_regex(TypeError, msg, test.add_die, 1, Die(2))
         self.assert_my_regex(TypeError, msg, test.remove_die, 1, Die(2))
 
-    def test_DiceTable_subclass_issues_combine(self):
+    def test_DiceTable_subclass_issues_combine_remove(self):
         test = DiceTableInheritor({1: 1}, [(Die(2), 1)], 5)
         msg = 'AdditiveEvents._construct_by_dictionary must be overridden to include proper types for new class'
         self.assert_my_regex(TypeError, msg, test.combine, 1, Die(2))
