@@ -424,5 +424,24 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(new.get_list(), [(StrongDie(Die(2), 2), 1)])
         self.assertFalse(new.calc_includes_zeroes)
 
+    def test_DiceTable_subclass_issues__new(self):
+        self.assertRaises(TypeError, DiceTableInheritor.new)
+
+    def test_DiceTable_subclass_issues_add_die_remove_die(self):
+        test = DiceTableInheritor({1: 1}, [(Die(2), 1)], 5)
+        msg = ('DiceTable._construct_by_dictionary_and_dice_iterable ' +
+               'must be overridden to include proper types for new class')
+        self.assert_my_regex(TypeError, msg, test.add_die, 1, Die(2))
+        self.assert_my_regex(TypeError, msg, test.remove_die, 1, Die(2))
+
+    def test_DiceTable_subclass_issues_combine(self):
+        test = DiceTableInheritor({1: 1}, [(Die(2), 1)], 5)
+        msg = 'AdditiveEvents._construct_by_dictionary must be overridden to include proper types for new class'
+        self.assert_my_regex(TypeError, msg, test.combine, 1, Die(2))
+        self.assert_my_regex(TypeError, msg, test.combine_by_flattened_list, 1, Die(2))
+        self.assert_my_regex(TypeError, msg, test.combine_by_dictionary, 1, Die(2))
+        self.assert_my_regex(TypeError, msg, test.combine_by_indexed_values, 1, Die(2))
+        self.assert_my_regex(TypeError, msg, test.remove, 1, Die(2))
+
 if __name__ == '__main__':
     unittest.main()
