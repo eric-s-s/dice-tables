@@ -464,24 +464,24 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(new.get_list(), [(StrongDie(Die(2), 2), 1)])
         self.assertFalse(new.calc_includes_zeroes)
 
-    def test_DiceTable_inheritor_does_not_override_methods(self):
-        msg = 'must over ride method: _construct_by_dictionary'
-        self.assert_my_regex(TypeError, msg, NoOverRides)
-
-    def test_DiceTable_inheritor_overrides_construct_by_dictionary(self):
-        msg = 'must over ride method: _construct_by_dictionary_and_dice_iterable'
-        self.assert_my_regex(TypeError, msg, HasConstructByDict)
-
-    def test_DiceTable_inheritor_overrides_construct_by_dictionary_and_iterable(self):
-        msg = 'must over ride method: _construct_by_dictionary'
-        self.assert_my_regex(TypeError, msg, HasConstructByDictAndDiceIterable)
-
-    def test_DiceTable_inheritor_overrides_all_methods(self):
-        self.assertIsInstance(HasAll(), DiceTable)
-
-    def test_DiceTable_inheritor_adds_new_method(self):
-        msg = 'must over ride method: oopsy'
-        self.assert_my_regex(TypeError, msg, AddsMethod)
+    # def test_DiceTable_inheritor_does_not_override_methods(self):
+    #     msg = 'must over ride method: _construct_by_dictionary'
+    #     self.assert_my_regex(TypeError, msg, NoOverRides)
+    #
+    # def test_DiceTable_inheritor_overrides_construct_by_dictionary(self):
+    #     msg = 'must over ride method: _construct_by_dictionary_and_dice_iterable'
+    #     self.assert_my_regex(TypeError, msg, HasConstructByDict)
+    #
+    # def test_DiceTable_inheritor_overrides_construct_by_dictionary_and_iterable(self):
+    #     msg = 'must over ride method: _construct_by_dictionary'
+    #     self.assert_my_regex(TypeError, msg, HasConstructByDictAndDiceIterable)
+    #
+    # def test_DiceTable_inheritor_overrides_all_methods(self):
+    #     self.assertIsInstance(HasAll(), DiceTable)
+    #
+    # def test_DiceTable_inheritor_adds_new_method(self):
+    #     msg = 'must over ride method: oopsy'
+    #     self.assert_my_regex(TypeError, msg, AddsMethod)
 
 
 if __name__ == '__main__':

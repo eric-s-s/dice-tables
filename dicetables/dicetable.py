@@ -63,9 +63,8 @@ class DiceTable(AdditiveEvents):
         super(DiceTable, self).__init__(input_dict)
         self._record = DiceRecord(dice_list)
 
-    @classmethod
-    def new(cls):
-        return cls({0: 1}, [])
+    def get_dice_items(self):
+        return self._record.get_items()
 
     def get_list(self):
         """
@@ -120,14 +119,6 @@ class DiceTable(AdditiveEvents):
     def _construct_by_dictionary(self, dictionary):
         return self.__class__(dictionary, self._record.get_items())
 
-    # def _construct_by_dictionary_and_dice_iterable_error_wrapper(self, dictionary, dice_iterable):
-    #     try:
-    #         return self._construct_by_dictionary_and_dice_iterable(dictionary, dice_iterable)
-    #     except TypeError:
-    #         msg = ('DiceTable._construct_by_dictionary_and_dice_iterable ' +
-    #                'must be overridden to include proper types for new class')
-    #         raise TypeError(msg)
-
     def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
         return self.__class__(dictionary, dice_iterable)
 
@@ -150,9 +141,9 @@ class RichDiceTable(DiceTable):
     def calc_includes_zeroes(self):
         return self._zeroes_bool
 
-    @classmethod
-    def new(cls):
-        return cls({0: 1}, [], True)
+    # @classmethod
+    # def new(cls):
+    #     return cls({0: 1}, [], True)
 
     def switch_boolean(self):
         return RichDiceTable(self.get_dict(), self._record.get_items(), not self.calc_includes_zeroes)
