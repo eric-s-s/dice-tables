@@ -8,10 +8,50 @@ from dicetables.dicetable import DiceTable, DiceRecord, DiceRecordError, RichDic
 from dicetables.baseevents import InvalidEventsError
 
 
-class DiceTableInheritor(DiceTable):
-    def __init__(self, events_dict, dice_iterator, number):
-        self.number = number
-        super(DiceTableInheritor, self).__init__(events_dict, dice_iterator)
+class NoOverRides(DiceTable):
+    def __init__(self):
+        super(NoOverRides, self).__init__({0: 1}, [])
+
+
+class HasConstructByDict(DiceTable):
+    def __init__(self):
+        super(HasConstructByDict, self).__init__({0: 1}, [])
+
+    def _construct_by_dictionary(self, dictionary):
+        pass
+
+
+class HasConstructByDictAndDiceIterable(DiceTable):
+    def __init__(self):
+        super(HasConstructByDictAndDiceIterable, self).__init__({0: 1}, [])
+
+    def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
+        pass
+
+
+class HasAll(DiceTable):
+    def __init__(self):
+        super(HasAll, self).__init__({0: 1}, [])
+
+    def _construct_by_dictionary(self, dictionary):
+        pass
+
+    def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
+        pass
+
+
+class AddsMethod(DiceTable):
+
+    must_do = DiceTable.must_do + ['oopsy']
+
+    def __init__(self):
+        super(AddsMethod, self).__init__({0: 1}, [])
+
+    def _construct_by_dictionary(self, dictionary):
+        pass
+
+    def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
+        pass
 
 
 class TestDiceStats(unittest.TestCase):
@@ -424,24 +464,25 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(new.get_list(), [(StrongDie(Die(2), 2), 1)])
         self.assertFalse(new.calc_includes_zeroes)
 
-    def test_DiceTable_subclass_issues__new(self):
-        self.assertRaises(TypeError, DiceTableInheritor.new)
+    def test_DiceTable_inheritor_does_not_override_methods(self):
+        msg = 'must over ride method: _construct_by_dictionary'
+        self.assert_my_regex(TypeError, msg, NoOverRides)
 
-    def test_DiceTable_subclass_issues_add_die_remove_die(self):
-        test = DiceTableInheritor({1: 1}, [(Die(2), 1)], 5)
-        msg = ('DiceTable._construct_by_dictionary_and_dice_iterable ' +
-               'must be overridden to include proper types for new class')
-        self.assert_my_regex(TypeError, msg, test.add_die, 1, Die(2))
-        self.assert_my_regex(TypeError, msg, test.remove_die, 1, Die(2))
+    def test_DiceTable_inheritor_overrides_construct_by_dictionary(self):
+        msg = 'must over ride method: _construct_by_dictionary_and_dice_iterable'
+        self.assert_my_regex(TypeError, msg, HasConstructByDict)
 
-    def test_DiceTable_subclass_issues_combine_remove(self):
-        test = DiceTableInheritor({1: 1}, [(Die(2), 1)], 5)
-        msg = 'AdditiveEvents._construct_by_dictionary must be overridden to include proper types for new class'
-        self.assert_my_regex(TypeError, msg, test.combine, 1, Die(2))
-        self.assert_my_regex(TypeError, msg, test.combine_by_flattened_list, 1, Die(2))
-        self.assert_my_regex(TypeError, msg, test.combine_by_dictionary, 1, Die(2))
-        self.assert_my_regex(TypeError, msg, test.combine_by_indexed_values, 1, Die(2))
-        self.assert_my_regex(TypeError, msg, test.remove, 1, Die(2))
+    def test_DiceTable_inheritor_overrides_construct_by_dictionary_and_iterable(self):
+        msg = 'must over ride method: _construct_by_dictionary'
+        self.assert_my_regex(TypeError, msg, HasConstructByDictAndDiceIterable)
+
+    def test_DiceTable_inheritor_overrides_all_methods(self):
+        self.assertIsInstance(HasAll(), DiceTable)
+
+    def test_DiceTable_inheritor_adds_new_method(self):
+        msg = 'must over ride method: oopsy'
+        self.assert_my_regex(TypeError, msg, AddsMethod)
+
 
 if __name__ == '__main__':
     unittest.main()

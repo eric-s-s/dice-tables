@@ -56,6 +56,9 @@ def format_die_info(die, number):
 
 
 class DiceTable(AdditiveEvents):
+
+    must_do = AdditiveEvents.must_do + ['_construct_by_dictionary_and_dice_iterable']
+
     def __init__(self, input_dict, dice_list):
         super(DiceTable, self).__init__(input_dict)
         self._record = DiceRecord(dice_list)
@@ -96,7 +99,7 @@ class DiceTable(AdditiveEvents):
         """
         dice_iterable = self._create_constructor_iterable(number, die, method_str='add_die')
         dictionary = self._create_constructor_dict(number, die, method_str='combine')
-        return self._construct_by_dictionary_and_dice_iterable_error_wrapper(dictionary, dice_iterable)
+        return self._construct_by_dictionary_and_dice_iterable(dictionary, dice_iterable)
 
     def remove_die(self, number, die):
         """
@@ -106,7 +109,7 @@ class DiceTable(AdditiveEvents):
         """
         dice_iterable = self._create_constructor_iterable(number, die, method_str='remove_die')
         dictionary = self._create_constructor_dict(number, die, method_str='remove')
-        return self._construct_by_dictionary_and_dice_iterable_error_wrapper(dictionary, dice_iterable)
+        return self._construct_by_dictionary_and_dice_iterable(dictionary, dice_iterable)
 
     def _create_constructor_iterable(self, number, die, method_str):
         methods = {'add_die': self._record.add_die,
@@ -117,13 +120,13 @@ class DiceTable(AdditiveEvents):
     def _construct_by_dictionary(self, dictionary):
         return self.__class__(dictionary, self._record.get_items())
 
-    def _construct_by_dictionary_and_dice_iterable_error_wrapper(self, dictionary, dice_iterable):
-        try:
-            return self._construct_by_dictionary_and_dice_iterable(dictionary, dice_iterable)
-        except TypeError:
-            msg = ('DiceTable._construct_by_dictionary_and_dice_iterable ' +
-                   'must be overridden to include proper types for new class')
-            raise TypeError(msg)
+    # def _construct_by_dictionary_and_dice_iterable_error_wrapper(self, dictionary, dice_iterable):
+    #     try:
+    #         return self._construct_by_dictionary_and_dice_iterable(dictionary, dice_iterable)
+    #     except TypeError:
+    #         msg = ('DiceTable._construct_by_dictionary_and_dice_iterable ' +
+    #                'must be overridden to include proper types for new class')
+    #         raise TypeError(msg)
 
     def _construct_by_dictionary_and_dice_iterable(self, dictionary, dice_iterable):
         return self.__class__(dictionary, dice_iterable)

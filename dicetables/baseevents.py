@@ -60,6 +60,8 @@ def scrub_zeroes(dictionary):
 
 class AdditiveEvents(IntegerEvents):
 
+    must_do = ['_construct_by_dictionary']
+
     def __init__(self, events_dictionary):
         """
 
@@ -67,8 +69,15 @@ class AdditiveEvents(IntegerEvents):
             event=int. occurrences=int >=0
             total occurrences > 0
         """
+        self._check_overriders()
         self._table = scrub_zeroes(events_dictionary)
         super(AdditiveEvents, self).__init__()
+
+    @classmethod
+    def _check_overriders(cls):
+        for method in cls.must_do:
+            if method not in cls.__dict__:
+                raise TypeError('must over ride method: {}'.format(method))
 
     def get_dict(self):
         return self._table.copy()
@@ -80,7 +89,7 @@ class AdditiveEvents(IntegerEvents):
 
     def combine(self, times, events):
         dictionary = self._create_constructor_dict(times, events, method_str='combine')
-        return self._construct_by_dictionary_error_wrapper(dictionary)
+        return self._construct_by_dictionary(dictionary)
 
     def combine_by_flattened_list(self, times, events):
         """
@@ -89,15 +98,15 @@ class AdditiveEvents(IntegerEvents):
             if this list is too big, it will raise MemoryError or OverflowError
         """
         dictionary = self._create_constructor_dict(times, events, method_str='combine_by_flattened_list')
-        return self._construct_by_dictionary_error_wrapper(dictionary)
+        return self._construct_by_dictionary(dictionary)
 
     def combine_by_dictionary(self, times, events):
         dictionary = self._create_constructor_dict(times, events, method_str='combine_by_dictionary')
-        return self._construct_by_dictionary_error_wrapper(dictionary)
+        return self._construct_by_dictionary(dictionary)
 
     def combine_by_indexed_values(self, times, events):
         dictionary = self._create_constructor_dict(times, events, method_str='combine_by_indexed_values')
-        return self._construct_by_dictionary_error_wrapper(dictionary)
+        return self._construct_by_dictionary(dictionary)
 
     def remove(self, times, events):
         """
@@ -106,7 +115,7 @@ class AdditiveEvents(IntegerEvents):
             If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
         dictionary = self._create_constructor_dict(times, events, method_str='remove')
-        return self._construct_by_dictionary_error_wrapper(dictionary)
+        return self._construct_by_dictionary(dictionary)
 
     def _create_constructor_dict(self, times, events, method_str):
         combiner = DictCombiner(self.get_dict())
@@ -118,12 +127,12 @@ class AdditiveEvents(IntegerEvents):
         new_combiner = methods[method_str](times, events.get_dict())
         return new_combiner.get_dict()
 
-    def _construct_by_dictionary_error_wrapper(self, dictionary):
-        try:
-            return self._construct_by_dictionary(dictionary)
-        except TypeError:
-            msg = 'AdditiveEvents._construct_by_dictionary must be overridden to include proper types for new class'
-            raise TypeError(msg)
+    # def _construct_by_dictionary_error_wrapper(self, dictionary):
+    #     try:
+    #         return self._construct_by_dictionary(dictionary)
+    #     except TypeError:
+    #         msg = 'AdditiveEvents._construct_by_dictionary must be overridden to include proper types for new class'
+    #         raise TypeError(msg)
 
     def _construct_by_dictionary(self, dictionary):
         return self.__class__(dictionary)
