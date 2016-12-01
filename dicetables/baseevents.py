@@ -43,6 +43,7 @@ class InputVerifier(object):
 
 class IntegerEvents(object):
     def __init__(self):
+        super(IntegerEvents, self).__init__()
         InputVerifier().verify_get_dict(self.get_dict())
 
     def get_dict(self):
@@ -69,14 +70,8 @@ class AdditiveEvents(IntegerEvents):
             event=int. occurrences=int >=0
             total occurrences > 0
         """
-        # self._check_factory()
         self._table = scrub_zeroes(events_dictionary)
         super(AdditiveEvents, self).__init__()
-
-    # @classmethod
-    # def _check_factory(cls):
-    #     if cls.__name__ not in EventsFactory.init_args.keys():
-    #         raise AttributeError('FACOTURY')
 
     @classmethod
     def new(cls):

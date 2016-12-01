@@ -4,10 +4,26 @@ from __future__ import absolute_import
 import unittest
 import warnings
 from sys import version_info
-from dicetables.eventsfactory import EventsFactory, ClassNotInFactoryWarning
+from dicetables.eventsfactory import EventsFactory, ClassNotInFactoryWarning, Getter
 from dicetables.baseevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, RichDiceTable
 from dicetables.dieevents import Die
+
+
+class Dummy(object):
+    def __init__(self, num, dice, dictionary):
+        self.num = num
+        self.dice = dice
+        self.dictionary = dictionary
+
+    def get_num(self):
+        return self.num
+
+    def get_dict(self):
+        return self.dictionary
+
+    def get_dice_items(self):
+        return self.dice
 
 
 class NewDiceTableSameInitNoFactoryUpdate(DiceTable):
@@ -97,6 +113,18 @@ class TestEventsFactory(unittest.TestCase):
             return number
         self.assert_no_warning(func, 5)
 
+    def test_Getter_get_default(self):
+        self.assertEqual(Getter('get_dict', {0: 1}).get_default(), {0: 1})
+
+    def test_Getter_get__object_has_getter_method(self):
+        events = AdditiveEvents({1: 1})
+        self.assertEqual(Getter('get_dict', {0: 1}).get(events), {1: 1})
+
+    def test_Getter_get__object_has_getter_property(self):
+        events = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        getter = Getter('calc_includes_zeroes', True, is_property=True)
+        self.assertEqual(getter.get(events), False)
+
     def test_EventsFactory_has_class_true(self):
         self.assertTrue(EventsFactory().has_class(AdditiveEvents))
 
@@ -116,24 +144,49 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(factory.class_args['bob'], ('dictionary',))
 
     def test_EventsFactory_add_class_raises_AttributeError(self):
-        msg_start = 'in {}\nin method "add_class"\none or more args not in list: ['
-        msg_end = "]\nadd missing args and getters with add_arg method"
-        msg_contains = ['calc_bool', 'dice', 'dictionary']
+        expected_msg = ('in {}\nin method "add_class"\n' +
+                        "one or more args not in list: ['calc_bool', 'dice', 'dictionary']\n" +
+                        "add missing args and getters with add_arg method")
         with self.assertRaises(AttributeError) as cm:
             factory = EventsFactory()
-            msg_start = msg_start.format(factory)
+            expected_msg = expected_msg.format(factory)
             factory.add_class('bob', ('poop',))
         msg = cm.exception.args[0]
-        self.assertTrue(msg.startswith(msg_start))
-        self.assertTrue(msg.endswith(msg_end))
-        for value in msg_contains:
-            self.assertIn(value, msg)
+        self.assertEqual(msg, expected_msg)
 
-    def test_EventsFactory_add_arg(self):
+    def test_EventsFactory_add_arg_not_property_default_val(self):
         factory = EventsFactory()
         factory.add_arg('number', 'get_num', 0)
-        self.assertEqual(factory.getters['number'], 'get_num')
-        self.assertEqual(factory.empty_args['number'], 0)
+        factory.add_class('Dummy', ('number', 'dice', 'dictionary'))
+        new = factory.new(Dummy)
+        self.assertEqual(new.get_num(), 0)
+
+    def test_EventsFactory_add_arg_not_property_held_val(self):
+        factory = EventsFactory()
+        factory.add_arg('number', 'get_num', 0)
+        factory.add_class('Dummy', ('number', 'dice', 'dictionary'))
+        number_five = Dummy(5, [(Die(1), 1)], {1: 1})
+        new = factory.from_dictionary(number_five, {1: 1})
+        self.assertEqual(new.get_num(), 5)
+
+    def test_EventsFactory_add_arg_is_property_default_val(self):
+        factory = EventsFactory()
+        factory.add_arg('number', 'num', 0, is_property=True)
+        factory.add_class('Dummy', ('number', 'dice', 'dictionary'))
+        new = factory.new(Dummy)
+        self.assertEqual(new.num, 0)
+
+    def test_EventsFactory_add_arg_is_property_held_val(self):
+        factory = EventsFactory()
+        factory.add_arg('number', 'num', 0, is_property=True)
+        factory.add_class('Dummy', ('number', 'dice', 'dictionary'))
+        number_five = Dummy(5, [(Die(1), 1)], {1: 1})
+        new = factory.from_dictionary(number_five, {1: 1})
+        self.assertEqual(new.num, 5)
+
+    def test_mro(self):
+        print(Dummy.mro())
+        print(NewDiceTableNewInitFactoryUpdate.mro())
 
     def test_inheritance_no_change_to_factory(self):
         msg = create_warning_message(NewDiceTableSameInitNoFactoryUpdate)

@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 from dicetables.baseevents import AdditiveEvents
 from dicetables.eventsinfo import EventsCalculations, EventsInformation
-from dicetables.eventsfactory import EventsFactory
 
 
 class DiceRecordError(ValueError):
@@ -59,8 +58,8 @@ def format_die_info(die, number):
 class DiceTable(AdditiveEvents):
 
     def __init__(self, input_dict, dice_list):
-        super(DiceTable, self).__init__(input_dict)
         self._record = DiceRecord(dice_list)
+        super(DiceTable, self).__init__(input_dict)
 
     def get_dice_items(self):
         return self._record.get_items()
@@ -119,8 +118,8 @@ class DiceTable(AdditiveEvents):
 class RichDiceTable(DiceTable):
 
     def __init__(self, input_dict, dice_list, calc_includes_zeroes=True):
-        super(RichDiceTable, self).__init__(input_dict, dice_list)
         self._zeroes_bool = calc_includes_zeroes
+        super(RichDiceTable, self).__init__(input_dict, dice_list)
 
     @property
     def info(self):
