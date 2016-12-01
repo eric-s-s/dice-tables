@@ -61,8 +61,6 @@ def scrub_zeroes(dictionary):
 
 class AdditiveEvents(IntegerEvents):
 
-    must_do = ['_construct_by_dictionary']
-
     def __init__(self, events_dictionary):
         """
 
@@ -70,19 +68,19 @@ class AdditiveEvents(IntegerEvents):
             event=int. occurrences=int >=0
             total occurrences > 0
         """
-        # self._check_overriders()
+        # self._check_factory()
         self._table = scrub_zeroes(events_dictionary)
         super(AdditiveEvents, self).__init__()
 
     @classmethod
-    def new(cls):
-        return EventsFactory.new(cls)
+    def _check_factory(cls):
+        if cls.__name__ not in EventsFactory.init_args.keys():
+            raise AttributeError('FACOTURY')
 
     @classmethod
-    def _check_overriders(cls):
-        for method in cls.must_do:
-            if method not in cls.__dict__:
-                raise TypeError('must over ride method: {}'.format(method))
+    def new(cls):
+        cls._check_factory()
+        return EventsFactory.new(cls)
 
     def get_dict(self):
         return self._table.copy()

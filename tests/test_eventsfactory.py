@@ -5,6 +5,7 @@ import unittest
 from dicetables.eventsfactory import EventsFactory
 from dicetables.baseevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, RichDiceTable
+from dicetables.dieevents import Die
 
 
 class TestEventsFactory(unittest.TestCase):
@@ -78,6 +79,21 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [])
         self.assertTrue(new_events.calc_includes_zeroes)
+
+    def test_EventsFactory_from_dict_and_dice_DiceTable(self):
+        events = DiceTable.new()
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, [(Die(2), 2)])
+        self.assertIs(type(new_events), DiceTable)
+        self.assertEqual(new_events.get_dict(), {1: 1})
+        self.assertEqual(new_events.get_list(), [(Die(2), 2)])
+
+    def test_EventsFactory_from_dict__and_dice_RichDiceTable(self):
+        events = RichDiceTable({2: 2}, [], False)
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, [(Die(2), 2)])
+        self.assertIs(type(new_events), RichDiceTable)
+        self.assertEqual(new_events.get_dict(), {1: 1})
+        self.assertEqual(new_events.get_list(), [(Die(2), 2)])
+        self.assertFalse(new_events.calc_includes_zeroes)
 
 
 if __name__ == '__main__':

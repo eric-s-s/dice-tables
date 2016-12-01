@@ -1,7 +1,4 @@
 
-# from dicetables.baseevents import AdditiveEvents
-# from dicetables.dicetable import DiceTable, RichDiceTable
-
 
 class EventsFactory(object):
     """
@@ -21,23 +18,34 @@ class EventsFactory(object):
                  'RichDiceTable': ('dictionary', 'dice', 'calc_bool')}
 
     @classmethod
-    def from_dictionary(cls, events, dictionary):
-        new_args = []
-        new_class = events.__class__
-        for arg_type in cls.init_args[new_class.__name__]:
-            if arg_type == 'dictionary':
-                new_args.append(dictionary)
-            else:
-                getter = events.__getattribute__(cls.getters[arg_type])
-                new_args.append(get_value(getter))
-        return new_class(*new_args)
-
-    @classmethod
     def new(cls, events_class):
         args = []
         for arg_type in cls.init_args[events_class.__name__]:
             args.append(cls.empty_args[arg_type])
         return events_class(*args)
+
+    @classmethod
+    def from_dictionary(cls, events, dictionary):
+        passed_in_values = {'dictionary': dictionary}
+        return cls._make_new_object(events, passed_in_values)
+
+    @classmethod
+    def from_dictionary_and_dice(cls, events, dictionary, dice):
+        passed_in_values = {'dictionary': dictionary, 'dice': dice}
+        return cls._make_new_object(events, passed_in_values)
+
+    @classmethod
+    def _make_new_object(cls, events, passed_in_values):
+        new_args = []
+        new_class = events.__class__
+        for arg_type in cls.init_args[new_class.__name__]:
+            if arg_type in passed_in_values.keys():
+                arg_value = passed_in_values.get(arg_type)
+            else:
+                getter = events.__getattribute__(cls.getters[arg_type])
+                arg_value = get_value(getter)
+            new_args.append(arg_value)
+        return new_class(*new_args)
 
 
 def get_value(getter):
