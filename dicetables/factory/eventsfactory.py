@@ -3,14 +3,6 @@ from dicetables.factory.factoryerrorhandler import EventsFactoryErrorHandler
 from dicetables.factory.factorywarninghandler import EventsFactoryWarningHandler
 
 
-class ClassNotInFactoryWarning(Warning):
-    pass
-
-
-class LoaderError(AttributeError):
-    pass
-
-
 class Getter(object):
     def __init__(self, method_name, default_value, is_property=False):
         self._method_name = method_name
@@ -28,7 +20,7 @@ class Getter(object):
 
     def __str__(self):
         is_property = {True: 'property', False: 'method'}
-        return '{}: "{}", default: {}'.format(is_property[self._is_property], self._method_name, self._default_value)
+        return '{}: "{}", default: {!r}'.format(is_property[self._is_property], self._method_name, self._default_value)
 
     def __eq__(self, other):
         return (self.get_default(), self.__str__()) == (other.get_default(), other.__str__())
@@ -37,22 +29,26 @@ class Getter(object):
         return not self == other
 
 
+class LoaderError(AttributeError):
+    pass
+
+
 class Loader(object):
     def __init__(self, factory):
         self.factory = factory
 
     def load(self, new_class):
-        new_keys = ()
         if 'factory_keys' in new_class.__dict__:
             factory_keys = new_class.factory_keys
         else:
             raise LoaderError
 
+        new_keys = ()
         if 'new_keys' in new_class.__dict__:
             new_keys = new_class.new_keys
 
         for key in new_keys:
-            self.factory.add_getter(key)
+            self.factory.add_getter(*key)
         self.factory.add_class(new_class, factory_keys)
 
 
@@ -110,9 +106,9 @@ class EventsFactory(object):
 
     @staticmethod
     def new(events_class):
-        in_factory = EventsFactory._get_class_in_factory(events_class)
+        in_factory = EventsFactory._get_nearest_factory_class(events_class)
         args = []
-        for arg_type in EventsFactory._class_args[in_factory.__name__]:
+        for arg_type in EventsFactory.get_class_params(in_factory):
             args.append(EventsFactory._getters[arg_type].get_default())
         return EventsFactory._construct(events_class, in_factory, args)
 
@@ -127,11 +123,15 @@ class EventsFactory(object):
         return EventsFactory._construct_from(events, passed_in_values)
 
     @staticmethod
+    def from_params(events, name_value_param_dict):
+        return EventsFactory._construct_from(events, name_value_param_dict)
+
+    @staticmethod
     def _construct_from(events, passed_in_values):
         new_args = []
         constructor_class = events.__class__
-        in_factory = EventsFactory._get_class_in_factory(constructor_class)
-        for arg_type in EventsFactory._class_args[in_factory.__name__]:
+        in_factory = EventsFactory._get_nearest_factory_class(constructor_class)
+        for arg_type in EventsFactory.get_class_params(in_factory):
             if arg_type in passed_in_values.keys():
                 arg_value = passed_in_values[arg_type]
             else:
@@ -144,11 +144,11 @@ class EventsFactory(object):
     def _construct(original_class, in_factory, args):
         try:
             return original_class(*args)
-        except AttributeError:
+        except TypeError:
             return in_factory(*args)
 
     @staticmethod
-    def _get_class_in_factory(events_class):
+    def _get_nearest_factory_class(events_class):
         if not EventsFactory.has_class(events_class):
             try:
                 Loader(EventsFactory).load(events_class)

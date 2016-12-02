@@ -135,4 +135,4 @@ class RichDiceTable(DiceTable):
         return self._zeroes_bool
 
     def switch_boolean(self):
-        return RichDiceTable(self.get_dict(), self._record.get_items(), not self.calc_includes_zeroes)
+        return EventsFactory.from_params(self, {'calc_bool': not self.calc_includes_zeroes})
