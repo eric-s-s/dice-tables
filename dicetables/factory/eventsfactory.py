@@ -30,6 +30,12 @@ class Getter(object):
         is_property = {True: 'property', False: 'method'}
         return '{}: "{}", default: {}'.format(is_property[self._is_property], self._method_name, self._default_value)
 
+    def __eq__(self, other):
+        return (self.get_default(), self.__str__()) == (other.get_default(), other.__str__())
+
+    def __ne__(self, other):
+        return not self == other
+
 
 class Loader(object):
     def __init__(self, factory):
@@ -74,12 +80,21 @@ class EventsFactory(object):
         return all(getter in EventsFactory._getters for getter in new_class_getter_keys)
 
     @staticmethod
+    def get_class_params(events_class_name):
+        return EventsFactory._class_args[events_class_name]
+
+    @staticmethod
     def update_class(class_name, class_args_tuple):
+        if class_name in EventsFactory._class_args and EventsFactory.get_class_params(class_name) != class_args_tuple:
+            EventsFactoryErrorHandler(EventsFactory).raise_error('CLASS OVERWRITE', class_name, class_args_tuple)
         EventsFactory._class_args[class_name] = class_args_tuple
 
     @staticmethod
     def update_getter_key(arg_name, getter_name, empty_value, is_property=False):
-        EventsFactory._getters[arg_name] = Getter(getter_name, empty_value, is_property)
+        new_getter = Getter(getter_name, empty_value, is_property)
+        if EventsFactory.has_getter_key(arg_name) and EventsFactory._getters[arg_name] != new_getter:
+            EventsFactoryErrorHandler(EventsFactory).raise_error('GETTER OVERWRITE', getter_name, new_getter)
+        EventsFactory._getters[arg_name] = new_getter
 
     @staticmethod
     def new(events_class):

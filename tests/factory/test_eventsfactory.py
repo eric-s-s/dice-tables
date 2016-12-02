@@ -166,6 +166,36 @@ class TestEventsFactory(unittest.TestCase):
         expected_string = 'method: "calc_includes_zeroes", default: True'
         self.assertEqual(str(Getter('calc_includes_zeroes', True)), expected_string)
 
+    def test_Getter_eq_true(self):
+        getter1 = Getter('get_num', 0)
+        getter2 = Getter('get_num', 0)
+        self.assertTrue(getter1 == getter2)
+
+    def test_Getter_eq_false_by_default(self):
+        getter1 = Getter('get_num', 0)
+        getter2 = Getter('get_num', '0')
+        self.assertFalse(getter1 == getter2)
+
+    def test_Getter_eq_false_by_property_bool(self):
+        getter1 = Getter('get_num', 0, is_property=True)
+        getter2 = Getter('get_num', 0, is_property=False)
+        self.assertFalse(getter1 == getter2)
+
+    def test_Getter_eq_false_by_name(self):
+        getter1 = Getter('get_number', 0)
+        getter2 = Getter('get_num', 0)
+        self.assertFalse(getter1 == getter2)
+
+    def test_Getter_ne_false(self):
+        getter1 = Getter('get_num', 0)
+        getter2 = Getter('get_num', 0)
+        self.assertFalse(getter1 != getter2)
+
+    def test_Getter_ne_true(self):
+        getter1 = Getter('get_number', 0)
+        getter2 = Getter('get_num', 0)
+        self.assertTrue(getter1 != getter2)
+
     def test_EventsFactory_currents_state(self):
         EventsFactory.reset()
         self.assertEqual(EventsFactory.current_state(), create_factory_string())
@@ -185,6 +215,9 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_has_getter_key_false(self):
         EventsFactory.reset()
         self.assertFalse(EventsFactory.has_getter_key(('dictionary', 'calc_bool', 'not_there')))
+
+    def test_EventsFactory_get_class_params(self):
+        self.assertEqual(EventsFactory.get_class_params('AdditiveEvents'), ('dictionary', ))
 
     def test_EventsFactory_update_class(self):
         EventsFactory.reset()

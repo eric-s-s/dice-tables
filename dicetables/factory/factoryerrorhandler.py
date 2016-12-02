@@ -5,4 +5,5 @@ class EventsFactoryError(AssertionError):
 
 
 class EventsFactoryErrorHandler(object):
-    pass
+    def __init__(self, factory):
+        self._factory = factory
