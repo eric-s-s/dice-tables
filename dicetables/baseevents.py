@@ -4,8 +4,8 @@ from __future__ import absolute_import
 
 from sys import version_info
 
+from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.tools.dictcombiner import DictCombiner
-from dicetables.eventsfactory import EventsFactory
 
 
 class InvalidEventsError(ValueError):
@@ -61,7 +61,6 @@ def scrub_zeroes(dictionary):
 
 
 class AdditiveEvents(IntegerEvents):
-    factory = EventsFactory()
 
     def __init__(self, events_dictionary):
         """
@@ -75,7 +74,7 @@ class AdditiveEvents(IntegerEvents):
 
     @classmethod
     def new(cls):
-        return cls.factory.new(cls)
+        return EventsFactory.new(cls)
 
     def get_dict(self):
         return self._table.copy()
@@ -87,7 +86,7 @@ class AdditiveEvents(IntegerEvents):
 
     def combine(self, times, events):
         dictionary = self._create_constructor_dict(times, events, method_str='combine')
-        return self.factory.from_dictionary(self, dictionary)
+        return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_flattened_list(self, times, events):
         """
@@ -96,15 +95,15 @@ class AdditiveEvents(IntegerEvents):
             if this list is too big, it will raise MemoryError or OverflowError
         """
         dictionary = self._create_constructor_dict(times, events, method_str='combine_by_flattened_list')
-        return self.factory.from_dictionary(self, dictionary)
+        return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_dictionary(self, times, events):
         dictionary = self._create_constructor_dict(times, events, method_str='combine_by_dictionary')
-        return self.factory.from_dictionary(self, dictionary)
+        return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_indexed_values(self, times, events):
         dictionary = self._create_constructor_dict(times, events, method_str='combine_by_indexed_values')
-        return self.factory.from_dictionary(self, dictionary)
+        return EventsFactory.from_dictionary(self, dictionary)
 
     def remove(self, times, events):
         """
@@ -113,7 +112,7 @@ class AdditiveEvents(IntegerEvents):
             If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
         dictionary = self._create_constructor_dict(times, events, method_str='remove')
-        return self.factory.from_dictionary(self, dictionary)
+        return EventsFactory.from_dictionary(self, dictionary)
 
     def _create_constructor_dict(self, times, events, method_str):
         combiner = DictCombiner(self.get_dict())

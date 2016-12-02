@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 from dicetables.baseevents import AdditiveEvents
 from dicetables.eventsinfo import EventsCalculations, EventsInformation
+from dicetables.factory.eventsfactory import EventsFactory
 
 
 class DiceRecordError(ValueError):
@@ -96,7 +97,7 @@ class DiceTable(AdditiveEvents):
         """
         dice_iterable = self._create_constructor_iterable(number, die, method_str='add_die')
         dictionary = self._create_constructor_dict(number, die, method_str='combine')
-        return self.factory.from_dictionary_and_dice(self, dictionary, dice_iterable)
+        return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
     def remove_die(self, number, die):
         """
@@ -106,7 +107,7 @@ class DiceTable(AdditiveEvents):
         """
         dice_iterable = self._create_constructor_iterable(number, die, method_str='remove_die')
         dictionary = self._create_constructor_dict(number, die, method_str='remove')
-        return self.factory.from_dictionary_and_dice(self, dictionary, dice_iterable)
+        return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
     def _create_constructor_iterable(self, number, die, method_str):
         methods = {'add_die': self._record.add_die,
