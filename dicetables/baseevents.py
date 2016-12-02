@@ -71,6 +71,7 @@ class AdditiveEvents(IntegerEvents):
         """
         self._table = scrub_zeroes(events_dictionary)
         super(AdditiveEvents, self).__init__()
+        EventsFactory.check(self.__class__)
 
     @classmethod
     def new(cls):

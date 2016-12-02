@@ -7,7 +7,7 @@ class ClassNotInFactoryWarning(Warning):
     pass
 
 
-class FactoryLoadError(AttributeError):
+class LoaderError(AttributeError):
     pass
 
 
@@ -42,24 +42,18 @@ class Loader(object):
         self.factory = factory
 
     def load(self, new_class):
-        pass
+        new_keys = ()
+        if 'factory_keys' in new_class.__dict__:
+            factory_keys = new_class.factory_keys
+        else:
+            raise LoaderError
 
-    # @staticmethod
-    # def raise_warning(events_class):
-    #     if not EventsFactory.has_class(events_class):
-    #         msg = ('{} not in Factory.  Will attempt to use parent class.\n'.format(events_class) +
-    #                'At the class level, please do -\n' +
-    #                '<parent class>.factory.add_class("CurrentClass", ("parameter kw 1", "parameter kw 2", ..)\n' +
-    #                'or see documentation at https://github.com/eric-s-s/dice-tables')
-    #         warnings.warn(msg, ClassNotInFactoryWarning, stacklevel=2)
-    #
-    # @staticmethod
-    # def _raise_error_for_bad_arg(arg_tuple):
-    #     if any(arg not in EventsFactory.getters for arg in arg_tuple):
-    #         legal_args = sorted(EventsFactory.getters.keys())
-    # msg = ('in {}\nin method "add_class"\none or more args not in list: {}'.format(EventsFactory, legal_args) +
-    #                '\nadd missing args and getters with add_arg method')
-    #         raise AttributeError(msg)
+        if 'new_keys' in new_class.__dict__:
+            new_keys = new_class.new_keys
+
+        for key in new_keys:
+            self.factory.add_getter(key)
+        self.factory.add_class(new_class, factory_keys)
 
 
 class EventsFactory(object):
@@ -76,25 +70,43 @@ class EventsFactory(object):
         return events_class.__name__ in EventsFactory._class_args
 
     @staticmethod
-    def has_getter_key(new_class_getter_keys):
-        return all(getter in EventsFactory._getters for getter in new_class_getter_keys)
+    def has_getter(getter_key):
+        return getter_key in EventsFactory._getters
 
     @staticmethod
-    def get_class_params(events_class_name):
-        return EventsFactory._class_args[events_class_name]
+    def get_class_params(events_class):
+        return EventsFactory._class_args[events_class.__name__]
 
     @staticmethod
-    def update_class(class_name, class_args_tuple):
-        if class_name in EventsFactory._class_args and EventsFactory.get_class_params(class_name) != class_args_tuple:
-            EventsFactoryErrorHandler(EventsFactory).raise_error('CLASS OVERWRITE', class_name, class_args_tuple)
-        EventsFactory._class_args[class_name] = class_args_tuple
+    def get_getter_string(getter_key):
+        return EventsFactory._getters[getter_key].__str__()
 
     @staticmethod
-    def update_getter_key(arg_name, getter_name, empty_value, is_property=False):
+    def add_class(events_class, class_args_tuple):
+        if EventsFactory.has_class(events_class) and EventsFactory.get_class_params(events_class) != class_args_tuple:
+            EventsFactoryErrorHandler(EventsFactory).raise_error('CLASS OVERWRITE', events_class, class_args_tuple)
+        for getter_key in class_args_tuple:
+            if not EventsFactory.has_getter(getter_key):
+                EventsFactoryErrorHandler(EventsFactory).raise_error('MISSING PARAM', events_class, getter_key)
+        EventsFactory._class_args[events_class.__name__] = class_args_tuple
+
+    @staticmethod
+    def add_getter(arg_name, getter_name, empty_value, type_str='method'):
+        is_property = False
+        if type_str == 'property':
+            is_property = True
         new_getter = Getter(getter_name, empty_value, is_property)
-        if EventsFactory.has_getter_key(arg_name) and EventsFactory._getters[arg_name] != new_getter:
+        if EventsFactory.has_getter(arg_name) and EventsFactory._getters[arg_name] != new_getter:
             EventsFactoryErrorHandler(EventsFactory).raise_error('GETTER OVERWRITE', getter_name, new_getter)
         EventsFactory._getters[arg_name] = new_getter
+
+    @staticmethod
+    def check(events_class):
+        if not EventsFactory.has_class(events_class):
+            try:
+                Loader(EventsFactory).load(events_class)
+            except LoaderError:
+                EventsFactoryWarningHandler(EventsFactory).raise_warning('CHECK', events_class)
 
     @staticmethod
     def new(events_class):
@@ -139,18 +151,21 @@ class EventsFactory(object):
     def _get_class_in_factory(events_class):
         if not EventsFactory.has_class(events_class):
             try:
-                EventsFactory._load_new(events_class)
-            except FactoryLoadError:
-                return EventsFactory._get_alternates(events_class)
+                Loader(EventsFactory).load(events_class)
+            except LoaderError:
+                return EventsFactory._walk_mro(events_class)
         return events_class
 
     @staticmethod
-    def _load_new(new_class):
-        pass
-
-    @staticmethod
-    def _get_alternates(failed_class):
-        pass
+    def _walk_mro(failed_class):
+        for parent_class in failed_class.mro():
+            if parent_class == object:
+                EventsFactoryErrorHandler(EventsFactory).raise_error('WTF', failed_class)
+            if EventsFactory.has_class(parent_class):
+                EventsFactoryWarningHandler(EventsFactory).raise_warning('CONSTRUCT', failed_class, parent_class)
+                return parent_class
+        EventsFactoryErrorHandler(EventsFactory).raise_error('WTF', failed_class)
+        return object
 
     @staticmethod
     def reset():
@@ -163,16 +178,4 @@ class EventsFactory(object):
                               'RichDiceTable': ('dictionary', 'dice', 'calc_bool')}
         EventsFactory._getters = default_getters
         EventsFactory._class_args = default_class_args
-
-    @staticmethod
-    def current_state():
-        indent = '    '
-        out_str = 'CLASSES:\n'
-        for key in sorted(EventsFactory._class_args.keys()):
-            out_str += '{}{}: {}\n'.format(indent, key, EventsFactory._class_args[key])
-        out_str += 'GETTERS:\n'
-        for key in sorted(EventsFactory._getters.keys()):
-            out_str += '{}{}: {}\n'.format(indent, key, EventsFactory._getters[key])
-        return out_str.rstrip('\n')
-
 
