@@ -54,18 +54,15 @@ class TestEventsFactory(unittest.TestCase):
     def test_assert_my_regex(self):
         self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
 
-    def assert_warning(self, warning_list, msg_list, func, *args):
+    def assert_warning(self, warning_list, func, *args):
         with warnings.catch_warnings(record=True) as cm:
             warnings.simplefilter("always")
             func(*args)
-        for warn in cm:
-            print(warn.message)
         if len(cm) != len(warning_list):
             self.fail('Wrong number of warnings: {}'.format(len(cm)))
         else:
             for caught in cm:
                 self.assertIn(caught.category, warning_list)
-                self.assertIn(str(caught.message), msg_list)
 
     def assert_no_warning(self, func, *args):
         with warnings.catch_warnings(record=True) as cm:
@@ -78,20 +75,20 @@ class TestEventsFactory(unittest.TestCase):
         def func(number):
             warnings.warn('msg', EventsFactoryWarning, stacklevel=2)
             return number
-        self.assert_warning([EventsFactoryWarning], ['msg'], func, 5)
+        self.assert_warning([EventsFactoryWarning], func, 5)
 
     def test_assert_warning_multiple(self):
         def func(number):
             warnings.warn('msg', EventsFactoryWarning, stacklevel=2)
             warnings.warn('other', SyntaxWarning, stacklevel=2)
             return number
-        self.assert_warning([EventsFactoryWarning, SyntaxWarning], ['msg', 'other'], func, 5)
+        self.assert_warning([EventsFactoryWarning, SyntaxWarning], func, 5)
 
     def test_assert_warning_with_no_warning(self):
         def func(number):
             return number
         with self.assertRaises(AssertionError) as cm:
-            self.assert_warning([EventsFactoryWarning], ['hi'], func, 5)
+            self.assert_warning([EventsFactoryWarning], func, 5)
         self.assertEqual(cm.exception.args[0], 'Wrong number of warnings: 0')
 
     def test_assert_warning_with_too_many_warnings(self):
@@ -100,7 +97,7 @@ class TestEventsFactory(unittest.TestCase):
             warnings.warn('msg', Warning, stacklevel=2)
             return number
         with self.assertRaises(AssertionError) as cm:
-            self.assert_warning([EventsFactoryWarning], ['hi'], func, 5)
+            self.assert_warning([EventsFactoryWarning], func, 5)
         self.assertEqual(cm.exception.args[0], 'Wrong number of warnings: 2')
 
     def test_assert_no_warning_with_no_warning(self):
@@ -342,9 +339,7 @@ class TestEventsFactory(unittest.TestCase):
         self.assertTrue(EventsFactory.has_class(NewDiceTableNewInitUpdate))
 
     def test_EventsFactory_check_raises_warning(self):
-        msg = ("factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>, " +
-               "code: CHECK, params: ['NewDiceTableNewInitNoUpdate']")
-        self.assert_warning([EventsFactoryWarning], [msg], EventsFactory.check, NewDiceTableNewInitNoUpdate)
+        self.assert_warning([EventsFactoryWarning], EventsFactory.check, NewDiceTableNewInitNoUpdate)
 
     def test_EventsFactory_check_error(self):
         class Bob(object):
@@ -360,9 +355,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_check_only_issues_warning_for_totally_unrelated_class(self):
         class Bob(object):
             pass
-        msg = ("factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>, " +
-               "code: CHECK, params: ['Bob']")
-        self.assert_warning([EventsFactoryWarning], [msg], EventsFactory.check, Bob)
+        self.assert_warning([EventsFactoryWarning], EventsFactory.check, Bob)
 
     def test_EventFactory_construction__class_in_defaults(self):
         self.assert_no_warning(EventsFactory.new, AdditiveEvents)
@@ -386,20 +379,14 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(test.number, 0)
 
     def test_EventsFactory_construction__new_class_has_no_update_info_init_did_not_change(self):
-        msg1 = ("factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>, code: CONSTRUCT, " +
-                "params: ['NewDiceTableSameInitNoUpdate', 'DiceTable']")
-        msg2 = ("factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>, " +
-                "code: CHECK, params: ['NewDiceTableSameInitNoUpdate']")
-        self.assert_warning([EventsFactoryWarning, EventsFactoryWarning], [msg1, msg2],
+        self.assert_warning([EventsFactoryWarning, EventsFactoryWarning],
                             EventsFactory.new, NewDiceTableSameInitNoUpdate)
         test = EventsFactory.new(NewDiceTableSameInitNoUpdate)
         self.assertIs(type(test), NewDiceTableSameInitNoUpdate)
         self.assertEqual(test.get_dict(), {0: 1})
 
     def test_EventsFactory_construction__new_class_has_no_update_info_init_did_change(self):
-        msg1 = ("factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>, code: CONSTRUCT, " +
-                "params: ['NewDiceTableNewInitNoUpdate', 'DiceTable']")
-        self.assert_warning([EventsFactoryWarning], [msg1],
+        self.assert_warning([EventsFactoryWarning],
                             EventsFactory.new, NewDiceTableNewInitNoUpdate)
         test = EventsFactory.new(NewDiceTableNewInitNoUpdate)
         self.assertIs(type(test), DiceTable)
