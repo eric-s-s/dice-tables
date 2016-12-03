@@ -433,13 +433,6 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(new.get_list(), [(StrongDie(Die(2), 2), 1)])
         self.assertFalse(new.calc_includes_zeroes)
 
-    # def test_DiceTable_inheritance_issues_new(self):
-    #     table = NewDiceTable.new()
-    #
-    # def test_DiceTable_inheritance_add_die(self):
-    #     table = NewDiceTable({1: 1}, [])
-    #     table.add_die(3, Die(3))
-
 
 if __name__ == '__main__':
     unittest.main()

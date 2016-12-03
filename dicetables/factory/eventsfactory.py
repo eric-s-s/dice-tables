@@ -18,12 +18,22 @@ class Getter(object):
         else:
             return obj.__getattribute__(self._method_name)()
 
+    def get_bool(self):
+        return self._is_property
+
+    def get_name(self):
+        return self._method_name
+
     def __str__(self):
         is_property = {True: 'property', False: 'method'}
         return '{}: "{}", default: {!r}'.format(is_property[self._is_property], self._method_name, self._default_value)
 
     def __eq__(self, other):
-        return (self.get_default(), self.__str__()) == (other.get_default(), other.__str__())
+        try:
+            return ((self.get_default(), self.get_bool(), self.get_name()) ==
+                    (other.get_default(), other.get_bool(), other.get_name()))
+        except AttributeError:
+            return False
 
     def __ne__(self, other):
         return not self == other

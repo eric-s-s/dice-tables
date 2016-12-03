@@ -50,6 +50,8 @@ class ProtoDie(IntegerEvents):
         )
 
     def __eq__(self, other):
+        if not isinstance(other, ProtoDie):
+            return False
         return (
             (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) ==
             (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))

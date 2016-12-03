@@ -157,7 +157,7 @@ class DictCombiner(object):
 def flatten_events_tuples(dictionary):
     flattened_list = []
     for event, freq in dictionary.items():
-        flattened_list = flattened_list + [event] * freq
+        flattened_list += [event] * freq
     return flattened_list
 
 
