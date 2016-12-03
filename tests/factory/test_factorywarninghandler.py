@@ -6,13 +6,19 @@ import unittest
 import warnings
 
 from dicetables.factory.factorywarninghandler import EventsFactoryWarning, EventsFactoryWarningHandler
+from dicetables.factory.eventsfactory import EventsFactory
+from dicetables.baseevents import AdditiveEvents
+from dicetables.dicetable import DiceTable, RichDiceTable
 
 
 class TestEventsFactoryWarningHandler(unittest.TestCase):
+    def setUp(self):
+        EventsFactory.reset()
+
     def assert_my_regex(self, error_type, regex, func, *args):
         with self.assertRaises(error_type) as cm:
             func(*args)
-        error_msg = str(cm.exception)
+        error_msg = cm.exception.args[0]
         self.assertEqual(error_msg, regex)
 
     def test_assert_my_regex(self):
@@ -68,6 +74,76 @@ class TestEventsFactoryWarningHandler(unittest.TestCase):
             warnings.warn('msg', EventsFactoryWarning, stacklevel=2)
             return number
         self.assert_no_warning(func, 5)
+
+    def test_create_warning_message(self):
+        EventsFactory.reset()
+        factory = EventsFactory
+        code = 'CONSTRUCT'
+        action = 'construction'
+        failed_class = EventsFactoryWarningHandler
+        in_factory = AdditiveEvents
+
+        expected = (
+            "\nfactory:  <class 'dicetables.factory.eventsfactory.EventsFactory'>" +
+            'Warning code: CONSTRUCT\n' +
+            'Failed to find/add the following class to the EventsFactory - \n' +
+            'class: {} to the EventsFactory.\n'.format(failed_class) +
+            'closest class is {}.\n'.format(in_factory) +
+            'Will attempt all object construction using its signature\n' +
+            'To rectify this, add a tuple of parameters as a class level variable named "factory_keys"\n'
+            'current factory keywords are: {}\n'.format(factory.get_keys()[1]) +
+            'add new factory keywords as a class level list of tuples named "new_keys"\n' +
+            'Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n'
+            'ex: NewClass(Something):\n' +
+            '        factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
+            '        new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
+            '                    ("other", "label", "", "property")]\n' +
+            '        def __init__(self, ........\n'
+
+        )
+        print(expected)
+        self.assertEqual(create_warning_message(factory, code, failed_class, in_factory), expected)
+
+    def test_FactoryWarningHandler_warning_by_CHECK(self):
+        msg = create_warning_message(EventsFactory, 'CHECK', DiceTable, AdditiveEvents)
+        self.assert_warning(EventsFactoryWarning, msg, EventsFactoryWarningHandler(EventsFactory).raise_warning,
+                            'CHECK', DiceTable, AdditiveEvents)
+
+
+def create_warning_message(factory, code, *classes):
+    failed_class = classes[0]
+
+    intro = (
+        '\nfactory: {}\n'.format(factory) +
+        'Warning code: {}\n'.format(code) +
+        'Failed to find/add the following class to the EventsFactory - \n' +
+        'class: {}\n'.format(failed_class)
+    )
+    if code == 'CONSTRUCT':
+        in_factory = classes[1]
+        middle = (
+            '\nClass found in factory: {}\n'.format(in_factory) +
+            'attempted object construction using its signature. tried to return instance of original class.\n' +
+            'If that had failed, returned instance of the class found in EventsFactory.\n\n'
+        )
+    else:
+        middle = '\nWarning raised while performing check at instantiation\n\n'
+
+    instructions = (
+        'SOLUTION:\n' +
+        '  class variable: factory_keys = (names of factory keys for getters)\n'
+        '  current factory keys are: {}\n'.format(factory.get_keys()[1]) +
+        '  class variable: new_keys = [(info for each key not already in factory)]\n' +
+        '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n'
+        '  ex:\n' +
+        '  NewClass(Something):\n' +
+        '      factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
+        '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
+        '                  ("other", "label", "", "property")]\n\n' +
+        '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +
+        '          ....\n'
+    )
+    return intro + middle + instructions
 
 
 if __name__ == '__main__':

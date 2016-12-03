@@ -88,6 +88,10 @@ class EventsFactory(object):
         return EventsFactory._getters[getter_key].__str__()
 
     @staticmethod
+    def get_keys():
+        return sorted(EventsFactory._class_args.keys()), sorted(EventsFactory._getters.keys())
+
+    @staticmethod
     def add_class(events_class, class_args_tuple):
         if EventsFactory.has_class(events_class) and EventsFactory.get_class_params(events_class) != class_args_tuple:
             EventsFactoryErrorHandler(EventsFactory).raise_error('CLASS OVERWRITE', events_class, class_args_tuple)
@@ -163,14 +167,12 @@ class EventsFactory(object):
             try:
                 Loader(EventsFactory).load(events_class)
             except LoaderError:
-                return EventsFactory._walk_mro(events_class)
+                return EventsFactory._walk_the_mro(events_class)
         return events_class
 
     @staticmethod
-    def _walk_mro(failed_class):
+    def _walk_the_mro(failed_class):
         for parent_class in failed_class.mro():
-            if parent_class == object:
-                EventsFactoryErrorHandler(EventsFactory).raise_error('WTF', failed_class)
             if EventsFactory.has_class(parent_class):
                 EventsFactoryWarningHandler(EventsFactory).raise_warning('CONSTRUCT', failed_class, parent_class)
                 return parent_class

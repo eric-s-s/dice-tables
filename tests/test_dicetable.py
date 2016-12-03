@@ -24,7 +24,7 @@ class TestDiceStats(unittest.TestCase):
     def assert_my_regex(self, error_type, regex, func, *args):
         with self.assertRaises(error_type) as cm:
             func(*args)
-        error_msg = str(cm.exception)
+        error_msg = cm.exception.args[0]
         self.assertEqual(error_msg, regex)
 
     def test_assert_my_regex(self):

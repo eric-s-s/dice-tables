@@ -48,7 +48,7 @@ class TestEventsFactory(unittest.TestCase):
     def assert_my_regex(self, error_type, regex, func, *args):
         with self.assertRaises(error_type) as cm:
             func(*args)
-        error_msg = str(cm.exception)
+        error_msg = cm.exception.args[0]
         self.assertEqual(error_msg, regex)
 
     def test_assert_my_regex(self):
@@ -194,10 +194,15 @@ class TestEventsFactory(unittest.TestCase):
         self.assertRaises(LoaderError, Loader(EventsFactory).load, NewDiceTableSameInitNoUpdate)
 
     def test_Loader_bad_factory_keys_raises_EventsFactoryError(self):
-        class Bob(object):
+        class BadByClassPresentButDifferent(object):
             factory_keys = ('dice', )
-        EventsFactory.add_class(Bob, ('dictionary', ))
-        self.assertRaises(EventsFactoryError, Loader(EventsFactory).load, Bob)
+        EventsFactory.add_class(BadByClassPresentButDifferent, ('dictionary',))
+
+        class BadByBadKeyName(object):
+            factory_keys = ('so very very wrong', )
+
+        self.assertRaises(EventsFactoryError, Loader(EventsFactory).load, BadByClassPresentButDifferent)
+        self.assertRaises(EventsFactoryError, Loader(EventsFactory).load, BadByBadKeyName)
 
     def test_Loader_bad_new_keys_raises_EventsFactoryError(self):
         class Bob(object):
@@ -245,10 +250,9 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_get_class_params(self):
         self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('dictionary', ))
 
-    def test_EventsFactory_get_class_raises_KeyError(self):
+    def test_EventsFactory_get_class_params_raises_KeyError(self):
         class NoClass(object):
             pass
-
         self.assertRaises(KeyError, EventsFactory.get_class_params, NoClass)
 
     def test_EventsFactory_get_getter_string(self):
@@ -258,6 +262,19 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_get_getter_string_raises_KeyError(self):
         self.assertRaises(KeyError, EventsFactory.get_getter_string, 'no_getter')
 
+    def test_EventsFactory_get_keys(self):
+        class X(object):
+            pass
+        classes = ['AdditiveEvents', 'DiceTable', 'RichDiceTable']
+        getters = ['calc_bool', 'dice', 'dictionary']
+        self.assertEqual(EventsFactory.get_keys(), (classes, getters))
+
+        EventsFactory.add_class(X, ('dice', ))
+        EventsFactory.add_getter('z', 'get', 0)
+        classes.append('X')
+        getters.append('z')
+        self.assertEqual(EventsFactory.get_keys(), (classes, getters))
+
     def test_EventsFactory_reset(self):
         class Bob(object):
             pass
@@ -265,19 +282,10 @@ class TestEventsFactory(unittest.TestCase):
         EventsFactory.add_getter('number', 'get_num', 0)
         self.assertTrue(EventsFactory.has_class(Bob))
         self.assertTrue(EventsFactory.has_getter('number'))
-
         EventsFactory.reset()
-        not_there = [Bob, NewDiceTableSameInitNoUpdate, NewDiceTableSameInitUpdate,
-                     NewDiceTableNewInitNoUpdate, NewDiceTableNewInitUpdate]
-        for absent_class in not_there:
-            self.assertFalse(EventsFactory.has_class(absent_class))
-
-        self.assertFalse(EventsFactory.has_getter('number'))
-
-        for preset in [AdditiveEvents, DiceTable, RichDiceTable]:
-            self.assertTrue(EventsFactory.has_class(preset))
-        for getter_key in ['dictionary', 'dice', 'calc_bool']:
-            self.assertTrue(EventsFactory.has_getter(getter_key))
+        default_classes = ['AdditiveEvents', 'DiceTable', 'RichDiceTable']
+        default_getters = ['calc_bool', 'dice', 'dictionary']
+        self.assertEqual(EventsFactory.get_keys(), (default_classes, default_getters))
 
     def test_EventsFactory_add_class(self):
         class Bob(object):
@@ -317,6 +325,7 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_EventsFactory_add_getter_already_not_equal_raises_error(self):
         self.assertRaises(EventsFactoryError, EventsFactory.add_getter, 'dictionary', 'get_dict', {1: 1})
+        self.assertRaises(EventsFactoryError, EventsFactory.add_getter, 'dictionary', 'oops', {0: 1})
 
     def test_EventsFactory_check_no_errors_or_warnings(self):
         self.assert_no_warning(EventsFactory.check, AdditiveEvents)
@@ -396,9 +405,10 @@ class TestEventsFactory(unittest.TestCase):
         self.assertIs(type(test), DiceTable)
         self.assertEqual(test.get_dict(), {0: 1})
 
-    def test_EventsFactory_construction__bad_loader_ignored_if_class_already_in_factory(self):
+    def test_EventsFactory_construction__bad_loader_info_ignored_if_class_already_in_factory(self):
         class Bob(object):
             factory_keys = ('whoopsy-doodle', )
+            new_keys = [('wrong', ), ('very wrong', )]
 
             def __init__(self, num):
                 self.num = num
@@ -409,23 +419,21 @@ class TestEventsFactory(unittest.TestCase):
         self.assertIs(type(test), Bob)
         self.assertEqual(test.num, -5)
 
-    def test_EventsFactory_construction__raises_error_for_totally_unrelated_object_with_no_loader(self):
+    def test_EventsFactory_construction__totally_unrelated_object_with_no_loader_raises_EventsFactoryError(self):
         class Bob(object):
             pass
         self.assertRaises(EventsFactoryError, EventsFactory.new, Bob)
 
-    def test_EventsFactory_construction__raises_error_for_class_not_in_factory_and_bad_loader_keys(self):
+    def test_EventsFactory_construction__new_class_bad_factory_keys_raises_EventsFactoryError(self):
         class BadLoaderKeys(AdditiveEvents):
             factory_keys = ('bad and wrong', )
         self.assertRaises(EventsFactoryError, EventsFactory.new, BadLoaderKeys)
 
-    def test_EventsFactory_construction__raises_error_for_class_not_in_factory_and_bad_new_keys(self):
+    def test_EventsFactory_construction__new_class_bad_new_keys_raises_EventsFactoryError(self):
         class BadLoaderKeys(AdditiveEvents):
             factory_keys = ('dice', )
             new_keys = [('dice', 'get_dice', 5)]
         self.assertRaises(EventsFactoryError, EventsFactory.new, BadLoaderKeys)
-
-#TODO HERE
 
     def test_EventsFactory_new_AdditiveEvents(self):
         new = EventsFactory.new(AdditiveEvents)
@@ -473,7 +481,7 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
 
-    def test_EventsFactory_from_dict__and_dice_RichDiceTable(self):
+    def test_EventsFactory_from_dict_and_dice_RichDiceTable(self):
         events = RichDiceTable({2: 2}, [], False)
         new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, [(Die(2), 2)])
         self.assertIs(type(new_events), RichDiceTable)
@@ -484,12 +492,15 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_from_params(self):
         start_dict = {2: 2}
         new_dict = {1: 1}
+
         start_dice = [(Die(2), 1)]
         new_dice = [(Die(3), 3)]
+
         start_num = 5
         new_num = 10
 
         start = NewDiceTableNewInitUpdate(start_dict, start_dice, start_num)
+
         new_events1 = EventsFactory.from_params(start, {'number': new_num, 'dice': new_dice})
         self.assertEqual(new_events1.get_dict(), start_dict)
         self.assertEqual(new_events1.get_list(), new_dice)
