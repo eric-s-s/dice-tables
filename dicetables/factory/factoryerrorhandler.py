@@ -11,12 +11,13 @@ class EventsFactoryErrorHandler(object):
     def raise_error(self, error_code, *params):
         """
 
-        class overwrite = events, arg tuple
-        missing param = events, getter key
-        getter overwrite = getter key, new getter object
+        class overwrite = events_class, arg tuple
+        missing param = events_class, getter key
+        param overwrite = getter key, new getter object
+        signatures different = events_class
         wtf = events
         """
-        codes = ['CLASS OVERWRITE', 'MISSING PARAM', 'GETTER OVERWRITE', 'WTF']
+        codes = ['CLASS OVERWRITE', 'MISSING GETTER', 'GETTER OVERWRITE', 'WTF', 'SIGNATURES DIFFERENT']
 
         msg = 'code: {}, params: {}, factory: {}'.format(error_code, params, self._factory)
         raise EventsFactoryError(msg)

@@ -97,7 +97,7 @@ class EventsFactory(object):
             EventsFactoryErrorHandler(EventsFactory).raise_error('CLASS OVERWRITE', events_class, class_args_tuple)
         for getter_key in class_args_tuple:
             if not EventsFactory.has_getter(getter_key):
-                EventsFactoryErrorHandler(EventsFactory).raise_error('MISSING PARAM', events_class, getter_key)
+                EventsFactoryErrorHandler(EventsFactory).raise_error('MISSING GETTER', events_class, getter_key)
         EventsFactory._class_args[events_class.__name__] = class_args_tuple
 
     @staticmethod
@@ -158,7 +158,9 @@ class EventsFactory(object):
     def _construct(original_class, in_factory, args):
         try:
             return original_class(*args)
-        except TypeError:
+        except (TypeError, AttributeError):
+            if original_class == in_factory:
+                EventsFactoryErrorHandler(EventsFactory).raise_error('SIGNATURES DIFFERENT', original_class)
             return in_factory(*args)
 
     @staticmethod

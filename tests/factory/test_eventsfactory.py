@@ -45,24 +45,32 @@ class TestEventsFactory(unittest.TestCase):
     def setUp(self):
         EventsFactory.reset()
 
-    def assert_my_regex(self, error_type, regex, func, *args):
-        with self.assertRaises(error_type) as cm:
+    def assert_EventsFactoryError_code(self, error_code, func, *args):
+        with self.assertRaises(EventsFactoryError) as cm:
             func(*args)
         error_msg = cm.exception.args[0]
-        self.assertEqual(error_msg, regex)
+        self.assertIn(error_code, error_msg)
 
-    def test_assert_my_regex(self):
-        self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
+    def test_assert_EventsFactoryError_code(self):
+        def raise_events_factory_error(msg):
+            raise EventsFactoryError(msg)
+        self.assert_EventsFactoryError_code('RAISED', raise_events_factory_error, 'code: RAISED')
 
-    def assert_warning(self, warning_list, func, *args):
+    @unittest.expectedFailure
+    def test_assert_EventsFactoryError_code_wrong_code(self):
+        def raise_events_factory_error(msg):
+            raise EventsFactoryError(msg)
+        self.assert_EventsFactoryError_code('wrong', raise_events_factory_error, 'code: RAISED')
+
+    def assert_EventsFactoryWarning_code(self, code_list, func, *args):
         with warnings.catch_warnings(record=True) as cm:
             warnings.simplefilter("always")
             func(*args)
-        if len(cm) != len(warning_list):
-            self.fail('Wrong number of warnings: {}'.format(len(cm)))
-        else:
-            for caught in cm:
-                self.assertIn(caught.category, warning_list)
+        self.assertEqual(len(cm), len(code_list))
+        for caught in cm:
+            self.assertEqual(caught.category, EventsFactoryWarning)
+            msg = str(caught.message)
+            self.assertTrue(any(code in msg for code in code_list))
 
     def assert_no_warning(self, func, *args):
         with warnings.catch_warnings(record=True) as cm:
@@ -71,34 +79,33 @@ class TestEventsFactory(unittest.TestCase):
         if len(cm) != 0:
             self.fail('number of warnings: {}'.format(len(cm)))
 
-    def test_assert_warning(self):
+    def test_assert_EventsFactoryWarning_code(self):
         def func(number):
-            warnings.warn('msg', EventsFactoryWarning, stacklevel=2)
+            warnings.warn('msg\ncode: TEST', EventsFactoryWarning, stacklevel=2)
             return number
-        self.assert_warning([EventsFactoryWarning], func, 5)
+        self.assert_EventsFactoryWarning_code(['TEST'], func, 5)
 
-    def test_assert_warning_multiple(self):
+    def test_assert_EventsFactoryWarning_code_multiple(self):
         def func(number):
-            warnings.warn('msg', EventsFactoryWarning, stacklevel=2)
-            warnings.warn('other', SyntaxWarning, stacklevel=2)
+            warnings.warn('msg\ncode: TEST', EventsFactoryWarning, stacklevel=2)
+            warnings.warn('other\ncode: TEST2', EventsFactoryWarning, stacklevel=2)
             return number
-        self.assert_warning([EventsFactoryWarning, SyntaxWarning], func, 5)
+        self.assert_EventsFactoryWarning_code(['TEST', 'TEST2'], func, 5)
 
-    def test_assert_warning_with_no_warning(self):
+    @unittest.expectedFailure
+    def test_assert_EventsFactoryWarning_code_with_no_warning(self):
         def func(number):
             return number
-        with self.assertRaises(AssertionError) as cm:
-            self.assert_warning([EventsFactoryWarning], func, 5)
-        self.assertEqual(cm.exception.args[0], 'Wrong number of warnings: 0')
 
-    def test_assert_warning_with_too_many_warnings(self):
+        self.assert_EventsFactoryWarning_code(['TEST'], func, 5)
+
+    @unittest.expectedFailure
+    def test_assert_EventsFactoryWarning_code_with_too_many_warnings(self):
         def func(number):
-            warnings.warn('msg', EventsFactoryWarning, stacklevel=2)
-            warnings.warn('msg', Warning, stacklevel=2)
+            warnings.warn('code: TEST', EventsFactoryWarning, stacklevel=2)
+            warnings.warn('code: OTHER', Warning, stacklevel=2)
             return number
-        with self.assertRaises(AssertionError) as cm:
-            self.assert_warning([EventsFactoryWarning], func, 5)
-        self.assertEqual(cm.exception.args[0], 'Wrong number of warnings: 2')
+        self.assert_EventsFactoryWarning_code(['TEST'], func, 5)
 
     def test_assert_no_warning_with_no_warning(self):
         def func(number):
@@ -198,15 +205,16 @@ class TestEventsFactory(unittest.TestCase):
         class BadByBadKeyName(object):
             factory_keys = ('so very very wrong', )
 
-        self.assertRaises(EventsFactoryError, Loader(EventsFactory).load, BadByClassPresentButDifferent)
-        self.assertRaises(EventsFactoryError, Loader(EventsFactory).load, BadByBadKeyName)
+        self.assert_EventsFactoryError_code('CLASS OVERWRITE',
+                                            Loader(EventsFactory).load, BadByClassPresentButDifferent)
+        self.assert_EventsFactoryError_code('MISSING GETTER',
+                                            Loader(EventsFactory).load, BadByBadKeyName)
 
     def test_Loader_bad_new_keys_raises_EventsFactoryError(self):
         class Bob(object):
             factory_keys = ('dice',)
             new_keys = [('dice', 'get_dice', [1])]
-
-        self.assertRaises(EventsFactoryError, Loader(EventsFactory).load, Bob)
+        self.assert_EventsFactoryError_code('GETTER OVERWRITE', Loader(EventsFactory).load, Bob)
 
     def test_Loader_class_already_present(self):
         class Bob(object):
@@ -300,13 +308,12 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('dictionary',))
 
     def test_EventsFactory_add_class_already_has_class_raises_EventsFactoryError(self):
-        self.assertRaises(EventsFactoryError, EventsFactory.add_class, AdditiveEvents, ('dice', ))
+        self.assert_EventsFactoryError_code('CLASS OVERWRITE', EventsFactory.add_class, AdditiveEvents, ('dice', ))
 
     def test_EventsFactory_add_class_factory_missing_getter_raises_EventsFactoryError(self):
         class Bob(object):
             pass
-
-        self.assertRaises(EventsFactoryError, EventsFactory.add_class, Bob, ('not_there', ))
+        self.assert_EventsFactoryError_code('MISSING GETTER', EventsFactory.add_class, Bob, ('not_there', ))
 
     def test_EventsFactory_add_getter_new_method(self):
         EventsFactory.add_getter('number', 'get_num', 0)
@@ -321,8 +328,10 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(EventsFactory.get_getter_string('dictionary'), 'method: "get_dict", default: {0: 1}')
 
     def test_EventsFactory_add_getter_already_not_equal_raises_error(self):
-        self.assertRaises(EventsFactoryError, EventsFactory.add_getter, 'dictionary', 'get_dict', {1: 1})
-        self.assertRaises(EventsFactoryError, EventsFactory.add_getter, 'dictionary', 'oops', {0: 1})
+        self.assert_EventsFactoryError_code('GETTER OVERWRITE',
+                                            EventsFactory.add_getter, 'dictionary', 'get_dict', {1: 1})
+        self.assert_EventsFactoryError_code('GETTER OVERWRITE',
+                                            EventsFactory.add_getter, 'dictionary', 'oops', {0: 1})
 
     def test_EventsFactory_check_no_errors_or_warnings(self):
         self.assert_no_warning(EventsFactory.check, AdditiveEvents)
@@ -339,12 +348,12 @@ class TestEventsFactory(unittest.TestCase):
         self.assertTrue(EventsFactory.has_class(NewDiceTableNewInitUpdate))
 
     def test_EventsFactory_check_raises_warning(self):
-        self.assert_warning([EventsFactoryWarning], EventsFactory.check, NewDiceTableNewInitNoUpdate)
+        self.assert_EventsFactoryWarning_code(['CHECK'], EventsFactory.check, NewDiceTableNewInitNoUpdate)
 
     def test_EventsFactory_check_error(self):
         class Bob(object):
             factory_keys = ('oops', )
-        self.assertRaises(EventsFactoryError, EventsFactory.check, Bob)
+        self.assert_EventsFactoryError_code('MISSING GETTER', EventsFactory.check, Bob)
 
     def test_EventsFactory_check_never_runs_loader_if_class_found(self):
         class Bob(object):
@@ -355,12 +364,21 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_check_only_issues_warning_for_totally_unrelated_class(self):
         class Bob(object):
             pass
-        self.assert_warning([EventsFactoryWarning], EventsFactory.check, Bob)
+        self.assert_EventsFactoryWarning_code(['CHECK'], EventsFactory.check, Bob)
 
     def test_EventFactory_construction__class_in_defaults(self):
         self.assert_no_warning(EventsFactory.new, AdditiveEvents)
         test = EventsFactory.new(AdditiveEvents)
         self.assertIs(type(test), AdditiveEvents)
+        self.assertEqual(test.get_dict(), {0: 1})
+
+    def test_EventFactory_construction__new_class_added_and_called(self):
+        class Bob(AdditiveEvents):
+            pass
+        EventsFactory.add_class(Bob, ('dictionary', ))
+        self.assert_no_warning(EventsFactory.new, Bob)
+        test = EventsFactory.new(Bob)
+        self.assertIs(type(test), Bob)
         self.assertEqual(test.get_dict(), {0: 1})
 
     def test_EventsFactory_construction__new_class_has_update_info_init_did_not_change(self):
@@ -379,15 +397,13 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(test.number, 0)
 
     def test_EventsFactory_construction__new_class_has_no_update_info_init_did_not_change(self):
-        self.assert_warning([EventsFactoryWarning, EventsFactoryWarning],
-                            EventsFactory.new, NewDiceTableSameInitNoUpdate)
+        self.assert_EventsFactoryWarning_code(['CHECK', 'CONSTRUCT'], EventsFactory.new, NewDiceTableSameInitNoUpdate)
         test = EventsFactory.new(NewDiceTableSameInitNoUpdate)
         self.assertIs(type(test), NewDiceTableSameInitNoUpdate)
         self.assertEqual(test.get_dict(), {0: 1})
 
     def test_EventsFactory_construction__new_class_has_no_update_info_init_did_change(self):
-        self.assert_warning([EventsFactoryWarning],
-                            EventsFactory.new, NewDiceTableNewInitNoUpdate)
+        self.assert_EventsFactoryWarning_code(['CONSTRUCT'], EventsFactory.new, NewDiceTableNewInitNoUpdate)
         test = EventsFactory.new(NewDiceTableNewInitNoUpdate)
         self.assertIs(type(test), DiceTable)
         self.assertEqual(test.get_dict(), {0: 1})
@@ -409,18 +425,42 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_construction__totally_unrelated_object_with_no_loader_raises_EventsFactoryError(self):
         class Bob(object):
             pass
-        self.assertRaises(EventsFactoryError, EventsFactory.new, Bob)
+        self.assert_EventsFactoryError_code('WTF', EventsFactory.new, Bob)
 
     def test_EventsFactory_construction__new_class_bad_factory_keys_raises_EventsFactoryError(self):
         class BadLoaderKeys(AdditiveEvents):
             factory_keys = ('bad and wrong', )
-        self.assertRaises(EventsFactoryError, EventsFactory.new, BadLoaderKeys)
+        self.assert_EventsFactoryError_code('MISSING GETTER', EventsFactory.new, BadLoaderKeys)
 
     def test_EventsFactory_construction__new_class_bad_new_keys_raises_EventsFactoryError(self):
         class BadLoaderKeys(AdditiveEvents):
             factory_keys = ('dice', )
             new_keys = [('dice', 'get_dice', 5)]
-        self.assertRaises(EventsFactoryError, EventsFactory.new, BadLoaderKeys)
+        self.assert_EventsFactoryError_code('GETTER OVERWRITE', EventsFactory.new, BadLoaderKeys)
+
+    def test_EventsFactory_construction__class_present_wrong_signature_wrong_param_EventsFactoryError(self):
+        class Bob(AdditiveEvents):
+            pass
+        EventsFactory.add_class(Bob, ('dice', ))
+        self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
+
+    def test_EventsFactory_construction__class_present_different_signature_too_many_params_EventsFactoryError(self):
+        class Bob(AdditiveEvents):
+            pass
+        EventsFactory.add_class(Bob, ('dictionary', 'dice'))
+        self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
+
+    def test_EventsFactory_construction__class_present_different_signature_too_few_params_EventsFactoryError(self):
+        class Bob(DiceTable):
+            pass
+        EventsFactory.add_class(Bob, ('dictionary', ))
+        self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
+
+    def test_EventsFactory_construction__class_present_wrong_signature_wrong_order_EventsFactoryError(self):
+        class Bob(DiceTable):
+            pass
+        EventsFactory.add_class(Bob, ('dice', 'dictionary'))
+        self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
 
     def test_EventsFactory_new_AdditiveEvents(self):
         new = EventsFactory.new(AdditiveEvents)
