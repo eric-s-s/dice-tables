@@ -542,14 +542,7 @@ class TestEventsFactory(unittest.TestCase):
         self.assertIs(type(new_events2), NewDiceTableNewInitUpdate)
 
 
-def create_warning_message(the_class):
-    msg = ('{} not in Factory.  Will attempt to use parent class.\n'.format(the_class) +
-           'At the class level, please do -\n' +
-           '<parent class>.factory.add_class("CurrentClass", ("parameter kw 1", "parameter kw 2", ..)\n' +
-           'or see documentation at https://github.com/eric-s-s/dice-tables')
-    if version_info[0] < 3:
-        msg = msg.replace('Type', 'Class')
-    return msg
+#TODO check specific errors and do ridiculous cases
 
 
 if __name__ == '__main__':

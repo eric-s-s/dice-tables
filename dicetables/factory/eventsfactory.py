@@ -101,14 +101,14 @@ class EventsFactory(object):
         EventsFactory._class_args[events_class.__name__] = class_args_tuple
 
     @staticmethod
-    def add_getter(arg_name, getter_name, empty_value, type_str='method'):
+    def add_getter(getter_key, getter_method, empty_value, type_str='method'):
         is_property = False
         if type_str == 'property':
             is_property = True
-        new_getter = Getter(getter_name, empty_value, is_property)
-        if EventsFactory.has_getter(arg_name) and EventsFactory._getters[arg_name] != new_getter:
-            EventsFactoryErrorHandler(EventsFactory).raise_error('GETTER OVERWRITE', getter_name, new_getter)
-        EventsFactory._getters[arg_name] = new_getter
+        new_getter = Getter(getter_method, empty_value, is_property)
+        if EventsFactory.has_getter(getter_key) and EventsFactory._getters[getter_key] != new_getter:
+            EventsFactoryErrorHandler(EventsFactory).raise_error('GETTER OVERWRITE', getter_key, new_getter)
+        EventsFactory._getters[getter_key] = new_getter
 
     @staticmethod
     def check(events_class):
