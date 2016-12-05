@@ -58,9 +58,9 @@ def format_die_info(die, number):
 
 class DiceTable(AdditiveEvents):
 
-    def __init__(self, input_dict, dice_list):
+    def __init__(self, events_dict, dice_list, *args, **kwargs):
         self._record = DiceRecord(dice_list)
-        super(DiceTable, self).__init__(input_dict)
+        super(DiceTable, self).__init__(events_dict, *args, **kwargs)
 
     def get_dice_items(self):
         return self._record.get_items()
@@ -118,9 +118,9 @@ class DiceTable(AdditiveEvents):
 
 class RichDiceTable(DiceTable):
 
-    def __init__(self, input_dict, dice_list, calc_includes_zeroes=True):
+    def __init__(self, events_dict, dice_list, calc_includes_zeroes=True, *args, **kwargs):
         self._zeroes_bool = calc_includes_zeroes
-        super(RichDiceTable, self).__init__(input_dict, dice_list)
+        super(RichDiceTable, self).__init__(events_dict, dice_list, *args, **kwargs)
 
     @property
     def info(self):

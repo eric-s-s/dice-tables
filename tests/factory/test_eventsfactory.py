@@ -541,10 +541,237 @@ class TestEventsFactory(unittest.TestCase):
         self.assertIs(type(new_events1), NewDiceTableNewInitUpdate)
         self.assertIs(type(new_events2), NewDiceTableNewInitUpdate)
 
+    def test_Events_Factory_warning_correct_message_raised_CHECK(self):
+        will_warn_insert = 'TestEventsFactory.test_Events_Factory_warning_correct_message_raised_CHECK.<locals>.'
+        if version_info[0] < 3:
+            will_warn_insert = ''
+        will_warn = 'tests.factory.test_eventsfactory.{}WillWarn'.format(will_warn_insert)
+        expected = (
+            'factory: <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Warning code: CHECK\n' +
+            'Failed to find/add the following class to the EventsFactory - \n' +
+            'class: <class \'{}\'>\n'
+            '\n' +
+            'Warning raised while performing check at instantiation\n' +
+            '\n' +
+            'SOLUTION:\n' +
+            '  class variable: factory_keys = (names of factory keys for getters)\n'
+            '  current factory keys are: [\'calc_bool\', \'dice\', \'dictionary\']\n' +
+            '  class variable: new_keys = [(info for each key not already in factory)]\n' +
+            '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n' +
+            'ex:\n' +
+            '  NewClass(Something):\n' +
+            '      factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
+            '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
+            '                  ("other", "label", "", "property")]\n' +
+            '\n' +
+            '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +
+            '          ....\n'
+        )
 
-#TODO check specific errors and do ridiculous cases
+        class WillWarn(DiceTable):
+            pass
+        self.assert_EventsFactoryWarning_code([expected.format(will_warn)], EventsFactory.check, WillWarn)
+
+    def test_Events_Factory_warning_correct_message_CONSTRUCT(self):
+        will_warn_insert = 'TestEventsFactory.test_Events_Factory_warning_correct_message_CONSTRUCT.<locals>.'
+        if version_info[0] < 3:
+            will_warn_insert = ''
+        will_warn = 'tests.factory.test_eventsfactory.{}WillWarn'.format(will_warn_insert)
+
+        expected = (
+            'factory: <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Warning code: CONSTRUCT\n' +
+            'Failed to find/add the following class to the EventsFactory - \n' +
+            'class: <class \'{}\'>\n' +
+            '\n' +
+            'Class found in factory: <class \'dicetables.dicetable.DiceTable\'>\n' +
+            'attempted object construction using its signature. tried to return instance of original class.\n' +
+            'If that had failed, returned instance of the class found in EventsFactory.\n'
+        )
+
+        class WillWarn(DiceTable):
+            pass
+        self.assert_EventsFactoryWarning_code([expected.format(will_warn), 'CHECK'], EventsFactory.new, WillWarn)
+
+    def test_Events_Factory_error_correct_message_CLASS_OVERWRITE(self):
+        expected = (
+            'Error Code: CLASS OVERWRITE\n' +
+            'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Error At:   <class \'dicetables.dicetable.DiceTable\'>\n' +
+            '\n' +
+            'Attempted to add class already in factory but used different factory keys.\n' +
+            'Class: <class \'dicetables.dicetable.DiceTable\'>\n' +
+            'Current Factory Keys: (\'dictionary\', \'dice\')\n' +
+            'Keys Passed In:       (\'dice\',)\n'
+        )
+        self.assert_EventsFactoryError_code(expected, EventsFactory.add_class, DiceTable, ('dice',))
+
+    def test_Events_Factory_error_correct_message_GETTER_OVERWRITE(self):
+        expected = (
+            'Error Code: GETTER OVERWRITE\n' +
+            'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Error At:   Factory Getter Key: \'dice\'\n' +
+            '\n' +
+            'Attempted to add getter key already in factory but used different parameters.\n' +
+            'Key: \'dice\'\n' +
+            'Factory Parameter:    method: "get_dice_items", default: []\n' +
+            'Passed In Parameters: method: "get_dice", default: [(2, Die(6))]\n'
+        )
+
+        class Bob(object):
+            factory_keys = ('dice', )
+            new_keys = [('dice', 'get_dice', [(2, Die(6))], 'method')]
+        self.assert_EventsFactoryError_code(expected, EventsFactory.new, Bob)
+
+    def test_Events_Factory_error_correct_message_MISSING_GETTER(self):
+        bob_insert = 'TestEventsFactory.test_Events_Factory_error_correct_message_MISSING_GETTER.<locals>.'
+        if version_info[0] < 3:
+            bob_insert = ''
+        bob = 'tests.factory.test_eventsfactory.{}Bob'.format(bob_insert)
+        expected = (
+            'Error Code: MISSING GETTER\n' +
+            'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Error At:   <class \'{bob}\'>\n' +
+            '\n' +
+            'Attempted to add class with a getter key not in the factory.\n' +
+            'Class: <class \'{bob}\'>\n' +
+            'Current Factory Keys: [\'calc_bool\', \'dice\', \'dictionary\']\n' +
+            'Key Passed In:        \'foo\'\n'
+        )
+
+        class Bob(object):
+            factory_keys = ('dice', 'foo')
+        self.assert_EventsFactoryError_code(expected.format(bob=bob), EventsFactory.new, Bob)
+
+    def test_Events_Factory_error_correct_message_SIGNATURES_DIFFERENT(self):
+        bob_insert = 'TestEventsFactory.test_Events_Factory_error_correct_message_SIGNATURES_DIFFERENT.<locals>.'
+        if version_info[0] < 3:
+            bob_insert = ''
+        bob = 'tests.factory.test_eventsfactory.{}Bob'.format(bob_insert)
+        expected = (
+            'Error Code: SIGNATURES DIFFERENT\n' +
+            'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Error At:   <class \'{bob}\'>\n' +
+            '\n' +
+            'Attempted to construct a class already present in factory, but with a different signature.\n' +
+            'Class: <class \'{bob}\'>\n' +
+            'Signature In Factory: (\'dictionary\', \'dice\')\n' +
+            'To reset the factory to its base state, use EventsFactory.reset()\n'
+        )
+
+        class Bob(object):
+            def __init__(self, num):
+                self.num = num
+        EventsFactory.add_class(Bob, ('dictionary', 'dice'))
+        self.assert_EventsFactoryError_code(expected.format(bob=bob), EventsFactory.new, Bob)
+
+    def test_Events_Factory_error_correct_message_WTF(self):
+        bob_insert = 'TestEventsFactory.test_Events_Factory_error_correct_message_WTF.<locals>.'
+        if version_info[0] < 3:
+            bob_insert = ''
+        bob = 'tests.factory.test_eventsfactory.{}Bob'.format(bob_insert)
+        expected = (
+            'Error Code: WTF\n' +
+            'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
+            'Error At:   <class \'{bob}\'>\n' +
+            '\n' +
+            'Attempted to construct a class unrelated, in any way, to any class in the factory.\n' +
+            'EventsFactory can currently construct the following classes:\n' +
+            '[\'AdditiveEvents\', \'DiceTable\', \'RichDiceTable\']\n' +
+            'EventsFactory searched the MRO of <class \'{bob}\'>,\n'
+            + 'and found no matches to the classes in the factory.\n'
+        )
+
+        class Bob(object):
+            pass
+        self.assert_EventsFactoryError_code(expected.format(bob=bob), EventsFactory.new, Bob)
+
+    def test_object_of_astonishing_idiocy(self):
+
+        class DoubleTable(DiceTable):
+            factory_keys = ('dictionary', 'second_dic', 'dice', 'dice_first')
+            new_keys = [('second_dic', 'get_dict_alt', {0: 1}, 'method'),
+                        ('dice_first', 'dice_first', True, 'property')]
+
+            def __init__(self, dic1, dic2, dice, dice_dominant=True):
+                self.dice_first = dice_dominant
+                if self.dice_first:
+                    dice_table = dic1
+                    additive = dic2.copy()
+                else:
+                    additive = dic1.copy()
+                    dice_table = dic2
+                self._additive = additive
+                super(DoubleTable, self).__init__(dice_table, dice)
+
+            def get_dict(self):
+                if self.dice_first:
+                    return super(DoubleTable, self).get_dict()
+                return self._additive.copy()
+
+            def get_dict_alt(self):
+                if self.dice_first:
+                    return self._additive.copy()
+                return super(DoubleTable, self).get_dict()
+
+            def get_dict_items(self):
+                return super(DoubleTable, self).get_dice_items()
+
+            def combine(self, times, events):
+                self.dice_first = False
+                return super(DoubleTable, self).combine(times, events)
+
+            def remove(self, times, events):
+                self.dice_first = False
+                return super(DoubleTable, self).remove(times, events)
+
+            def add_die(self, times, die):
+                self.dice_first = True
+                return super(DoubleTable, self).add_die(times, die)
+
+            def remove_die(self, times, die):
+                self.dice_first = True
+                return super(DoubleTable, self).add_die(times, die)
+
+        new = DoubleTable.new()
+        d1 = new.add_die(1, Die(2))
+        self.assertTrue(d1.dice_first)
+        self.assertEqual(d1.get_dict(), {1: 1, 2: 1})
+        self.assertEqual(d1.get_dict_alt(), {0: 1})
+        d1_plus = d1.combine(1, Die(3))
+        self.assertFalse(d1_plus.dice_first)
+        self.assertEqual(d1_plus.get_dict(), {1: 1, 2: 1, 3: 1})
+        self.assertEqual(d1_plus.get_dict_alt(), {1: 1, 2: 1})
+
+    def test_deep_depths_of_dumbness(self):
+        class Counter(object):
+            def __init__(self, count):
+                self.count = count
+                super(Counter, self).__init__()
+
+            def get_next_count(self):
+                return self.count + 1
+
+        class CountActions(DiceTable, Counter):
+            factory_keys = ('dictionary', 'dice', 'count')
+            new_keys = [('count', 'get_next_count', 0, 'method')]
+
+            def __init__(self, dictionary, dice, count):
+                super(CountActions, self).__init__(events_dict=dictionary, dice_list=dice, count=count)
+
+        new = CountActions.new()
+        one = new.add_die(2, Die(2))
+        one.add_die(2, Die(2))
+        two = one.add_die(3, Die(1))
+        self.assertEqual(one.count, 1)
+        self.assertEqual(new.count, 0)
+        self.assertEqual(two.count, 2)
+        self.assertEqual(type(two), CountActions)
+
+        self.assertEqual(one.get_dict(), {2: 1, 3: 2, 4: 1})
+        self.assertEqual(two.get_dict(), {5: 1, 6: 2, 7: 1})
 
 
 if __name__ == '__main__':
     unittest.main()
-

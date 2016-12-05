@@ -15,6 +15,9 @@ class StandInForBadClass(object):
 
 
 class TestEventsFactoryErrorHandler(unittest.TestCase):
+    def setUp(self):
+        EventsFactory.reset()
+
     def assert_events_factory_error_message(self, msg, func, *args):
         with self.assertRaises(EventsFactoryError) as cm:
             func(*args)
@@ -26,7 +29,7 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
             raise EventsFactoryError('hello')
         self.assert_events_factory_error_message('hello', my_func)
 
-    def test_EventsFactoryErrorHandler_CLASS_OVERWRIE(self):
+    def test_EventsFactoryErrorHandler_CLASS_OVERWRITE(self):
         expected = (
             'Error Code: CLASS OVERWRITE\n' +
             'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +

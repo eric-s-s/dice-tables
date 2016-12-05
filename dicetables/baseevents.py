@@ -42,8 +42,8 @@ class InputVerifier(object):
 
 
 class IntegerEvents(object):
-    def __init__(self):
-        super(IntegerEvents, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(IntegerEvents, self).__init__(*args, **kwargs)
         InputVerifier().verify_get_dict(self.get_dict())
 
     def get_dict(self):
@@ -62,15 +62,15 @@ def scrub_zeroes(dictionary):
 
 class AdditiveEvents(IntegerEvents):
 
-    def __init__(self, events_dictionary):
+    def __init__(self, events_dict, *args, **kwargs):
         """
 
-        :param events_dictionary: {event: occurrences}\n
+        :param events_dict: {event: occurrences}\n
             event=int. occurrences=int >=0
             total occurrences > 0
         """
-        self._table = scrub_zeroes(events_dictionary)
-        super(AdditiveEvents, self).__init__()
+        self._table = scrub_zeroes(events_dict)
+        super(AdditiveEvents, self).__init__(*args, **kwargs)
         EventsFactory.check(self.__class__)
 
     @classmethod
@@ -124,5 +124,3 @@ class AdditiveEvents(IntegerEvents):
                    'remove': combiner.remove_by_tuple_list}
         new_combiner = methods[method_str](times, events.get_dict())
         return new_combiner.get_dict()
-
-
