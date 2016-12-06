@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the baseevents.py module"""
 from __future__ import absolute_import
 
 import unittest
@@ -24,7 +23,7 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
         error_msg = cm.exception.args[0]
         self.assertEqual(error_msg, msg)
 
-    def test_assert_my_regex(self):
+    def test_assert_events_factory_error_message(self):
         def my_func():
             raise EventsFactoryError('hello')
         self.assert_events_factory_error_message('hello', my_func)
@@ -116,4 +115,3 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -58,9 +58,9 @@ def format_die_info(die, number):
 
 class DiceTable(AdditiveEvents):
 
-    def __init__(self, events_dict, dice_list, *args, **kwargs):
+    def __init__(self, events_dict, dice_list):
         self._record = DiceRecord(dice_list)
-        super(DiceTable, self).__init__(events_dict, *args, **kwargs)
+        super(DiceTable, self).__init__(events_dict)
 
     def get_dice_items(self):
         return self._record.get_items()
@@ -95,7 +95,7 @@ class DiceTable(AdditiveEvents):
         :param number: int>= 0
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        dice_iterable = self._create_constructor_iterable(number, die, method_str='add_die')
+        dice_iterable = self._create_constructor_dice(number, die, method_str='add_die')
         dictionary = self._create_constructor_dict(number, die, method_str='combine')
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
@@ -105,11 +105,11 @@ class DiceTable(AdditiveEvents):
         :param number: 0 <= int <= number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        dice_iterable = self._create_constructor_iterable(number, die, method_str='remove_die')
+        dice_iterable = self._create_constructor_dice(number, die, method_str='remove_die')
         dictionary = self._create_constructor_dict(number, die, method_str='remove')
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
-    def _create_constructor_iterable(self, number, die, method_str):
+    def _create_constructor_dice(self, number, die, method_str):
         methods = {'add_die': self._record.add_die,
                    'remove_die': self._record.remove_die}
         new_record = methods[method_str](number, die)
@@ -118,9 +118,9 @@ class DiceTable(AdditiveEvents):
 
 class RichDiceTable(DiceTable):
 
-    def __init__(self, events_dict, dice_list, calc_includes_zeroes=True, *args, **kwargs):
+    def __init__(self, events_dict, dice_list, calc_includes_zeroes=True):
         self._zeroes_bool = calc_includes_zeroes
-        super(RichDiceTable, self).__init__(events_dict, dice_list, *args, **kwargs)
+        super(RichDiceTable, self).__init__(events_dict, dice_list)
 
     @property
     def info(self):

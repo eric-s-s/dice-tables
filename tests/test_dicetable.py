@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""unittests for dicetable.py"""
 from __future__ import absolute_import
 
 import unittest

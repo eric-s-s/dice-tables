@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the baseevents.py module"""
 from __future__ import absolute_import
 
 import unittest

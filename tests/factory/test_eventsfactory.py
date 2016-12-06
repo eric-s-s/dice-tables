@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the baseevents.py module"""
 from __future__ import absolute_import
 
 import unittest
@@ -556,17 +555,7 @@ class TestEventsFactory(unittest.TestCase):
             '\n' +
             'SOLUTION:\n' +
             '  class variable: factory_keys = (names of factory keys for getters)\n'
-            '  current factory keys are: [\'calc_bool\', \'dice\', \'dictionary\']\n' +
-            '  class variable: new_keys = [(info for each key not already in factory)]\n' +
-            '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n' +
-            'ex:\n' +
-            '  NewClass(Something):\n' +
-            '      factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
-            '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
-            '                  ("other", "label", "", "property")]\n' +
-            '\n' +
-            '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +
-            '          ....\n'
+            '  current factory keys are: [\'calc_bool\', \'dice\', \'dictionary\']\n'
         )
 
         class WillWarn(DiceTable):
@@ -585,9 +574,7 @@ class TestEventsFactory(unittest.TestCase):
             'Failed to find/add the following class to the EventsFactory - \n' +
             'class: <class \'{}\'>\n' +
             '\n' +
-            'Class found in factory: <class \'dicetables.dicetable.DiceTable\'>\n' +
-            'attempted object construction using its signature. tried to return instance of original class.\n' +
-            'If that had failed, returned instance of the class found in EventsFactory.\n'
+            'Class found in factory: <class \'dicetables.dicetable.DiceTable\'>\n'
         )
 
         class WillWarn(DiceTable):
@@ -692,85 +679,54 @@ class TestEventsFactory(unittest.TestCase):
         class DoubleTable(DiceTable):
             factory_keys = ('dictionary', 'second_dic', 'dice', 'dice_first')
             new_keys = [('second_dic', 'get_dict_alt', {0: 1}, 'method'),
-                        ('dice_first', 'dice_first', True, 'property')]
+                        ('dice_first', 'init_dice_first', True, 'method')]
 
-            def __init__(self, dic1, dic2, dice, dice_dominant=True):
-                self.dice_first = dice_dominant
-                if self.dice_first:
-                    dice_table = dic1
-                    additive = dic2.copy()
+            def __init__(self, dic1, dic2, dice, init_dice_first):
+                if init_dice_first:
+                    dice_dic = dic1
+                    additive = dic2
                 else:
-                    additive = dic1.copy()
-                    dice_table = dic2
-                self._additive = additive
-                super(DoubleTable, self).__init__(dice_table, dice)
+                    dice_dic = dic2
+                    additive = dic1
+                self._dice_first = True
+                self._additive = AdditiveEvents(additive)
+                super(DoubleTable, self).__init__(dice_dic, dice)
 
             def get_dict(self):
-                if self.dice_first:
-                    return super(DoubleTable, self).get_dict()
-                return self._additive.copy()
+                if not self._dice_first:
+                    return self._additive.get_dict()
+                return super(DoubleTable, self).get_dict()
 
             def get_dict_alt(self):
-                if self.dice_first:
-                    return self._additive.copy()
-                return super(DoubleTable, self).get_dict()
+                if not self._dice_first:
+                    return super(DoubleTable, self).get_dict()
+                return self._additive.get_dict()
 
             def get_dict_items(self):
                 return super(DoubleTable, self).get_dice_items()
 
+            def init_dice_first(self):
+                answer = self._dice_first
+                self._dice_first = True
+                return answer
+
             def combine(self, times, events):
-                self.dice_first = False
+                self._dice_first = False
                 return super(DoubleTable, self).combine(times, events)
 
             def remove(self, times, events):
-                self.dice_first = False
+                self._dice_first = False
                 return super(DoubleTable, self).remove(times, events)
-
-            def add_die(self, times, die):
-                self.dice_first = True
-                return super(DoubleTable, self).add_die(times, die)
-
-            def remove_die(self, times, die):
-                self.dice_first = True
-                return super(DoubleTable, self).add_die(times, die)
 
         new = DoubleTable.new()
         d1 = new.add_die(1, Die(2))
-        self.assertTrue(d1.dice_first)
+        self.assertTrue(d1._dice_first)
         self.assertEqual(d1.get_dict(), {1: 1, 2: 1})
         self.assertEqual(d1.get_dict_alt(), {0: 1})
         d1_plus = d1.combine(1, Die(3))
-        self.assertFalse(d1_plus.dice_first)
-        self.assertEqual(d1_plus.get_dict(), {1: 1, 2: 1, 3: 1})
-        self.assertEqual(d1_plus.get_dict_alt(), {1: 1, 2: 1})
-
-    def test_deep_depths_of_dumbness(self):
-        class Counter(object):
-            def __init__(self, count):
-                self.count = count
-                super(Counter, self).__init__()
-
-            def get_next_count(self):
-                return self.count + 1
-
-        class CountActions(DiceTable, Counter):
-            factory_keys = ('dictionary', 'dice', 'count')
-            new_keys = [('count', 'get_next_count', 0, 'method')]
-
-            def __init__(self, dictionary, dice, count):
-                super(CountActions, self).__init__(events_dict=dictionary, dice_list=dice, count=count)
-
-        new = CountActions.new()
-        one = new.add_die(2, Die(2))
-        one.add_die(2, Die(2))
-        two = one.add_die(3, Die(1))
-        self.assertEqual(one.count, 1)
-        self.assertEqual(new.count, 0)
-        self.assertEqual(two.count, 2)
-        self.assertEqual(type(two), CountActions)
-
-        self.assertEqual(one.get_dict(), {2: 1, 3: 2, 4: 1})
-        self.assertEqual(two.get_dict(), {5: 1, 6: 2, 7: 1})
+        self.assertTrue(d1_plus._dice_first)
+        self.assertEqual(d1_plus.get_dict(), {1: 1, 2: 1})
+        self.assertEqual(d1_plus.get_dict_alt(), {1: 1, 2: 1, 3: 1})
 
 
 if __name__ == '__main__':

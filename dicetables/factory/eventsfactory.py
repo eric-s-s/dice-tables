@@ -92,13 +92,21 @@ class EventsFactory(object):
         return sorted(EventsFactory._class_args.keys()), sorted(EventsFactory._getters.keys())
 
     @staticmethod
-    def add_class(events_class, class_args_tuple):
+    def add_class(events_class, getter_key_words):
+        EventsFactory._check_against_factory_classes(events_class, getter_key_words)
+        EventsFactory._check_for_missing_getters(events_class, getter_key_words)
+        EventsFactory._class_args[events_class.__name__] = getter_key_words
+
+    @staticmethod
+    def _check_against_factory_classes(events_class, class_args_tuple):
         if EventsFactory.has_class(events_class) and EventsFactory.get_class_params(events_class) != class_args_tuple:
             EventsFactoryErrorHandler(EventsFactory).raise_error('CLASS OVERWRITE', events_class, class_args_tuple)
+
+    @staticmethod
+    def _check_for_missing_getters(events_class, class_args_tuple):
         for getter_key in class_args_tuple:
             if not EventsFactory.has_getter(getter_key):
                 EventsFactoryErrorHandler(EventsFactory).raise_error('MISSING GETTER', events_class, getter_key)
-        EventsFactory._class_args[events_class.__name__] = class_args_tuple
 
     @staticmethod
     def add_getter(getter_key, getter_method, empty_value, type_str='method'):
@@ -106,9 +114,13 @@ class EventsFactory(object):
         if type_str == 'property':
             is_property = True
         new_getter = Getter(getter_method, empty_value, is_property)
+        EventsFactory._check_against_factory_getters(getter_key, new_getter)
+        EventsFactory._getters[getter_key] = new_getter
+
+    @staticmethod
+    def _check_against_factory_getters(getter_key, new_getter):
         if EventsFactory.has_getter(getter_key) and EventsFactory._getters[getter_key] != new_getter:
             EventsFactoryErrorHandler(EventsFactory).raise_error('GETTER OVERWRITE', getter_key, new_getter)
-        EventsFactory._getters[getter_key] = new_getter
 
     @staticmethod
     def check(events_class):
@@ -121,10 +133,15 @@ class EventsFactory(object):
     @staticmethod
     def new(events_class):
         in_factory = EventsFactory._get_nearest_factory_class(events_class)
+        args = EventsFactory._get_default_args(in_factory)
+        return EventsFactory._construct(events_class, in_factory, args)
+
+    @staticmethod
+    def _get_default_args(in_factory):
         args = []
         for arg_type in EventsFactory.get_class_params(in_factory):
             args.append(EventsFactory._getters[arg_type].get_default())
-        return EventsFactory._construct(events_class, in_factory, args)
+        return args
 
     @staticmethod
     def from_dictionary(events, dictionary):
@@ -142,17 +159,22 @@ class EventsFactory(object):
 
     @staticmethod
     def _construct_from(events, passed_in_values):
-        new_args = []
+
         constructor_class = events.__class__
         in_factory = EventsFactory._get_nearest_factory_class(constructor_class)
+        args = EventsFactory._get_args(events, in_factory, passed_in_values)
+        return EventsFactory._construct(constructor_class, in_factory, args)
+
+    @staticmethod
+    def _get_args(events, in_factory, passed_in_values):
+        new_args = []
         for arg_type in EventsFactory.get_class_params(in_factory):
             if arg_type in passed_in_values.keys():
                 arg_value = passed_in_values[arg_type]
             else:
                 arg_value = EventsFactory._getters[arg_type].get(events)
-
             new_args.append(arg_value)
-        return EventsFactory._construct(constructor_class, in_factory, new_args)
+        return new_args
 
     @staticmethod
     def _construct(original_class, in_factory, args):
@@ -192,4 +214,3 @@ class EventsFactory(object):
                               'RichDiceTable': ('dictionary', 'dice', 'calc_bool')}
         EventsFactory._getters = default_getters
         EventsFactory._class_args = default_class_args
-

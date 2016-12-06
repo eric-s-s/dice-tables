@@ -9,14 +9,6 @@ class EventsFactoryErrorHandler(object):
         self._factory = factory
 
     def raise_error(self, error_code, *params):
-        """
-
-        class overwrite = events_class, arg tuple
-        missing param = events_class, getter key
-        param overwrite = getter key, new getter object
-        signatures different = events_class
-        wtf = events
-        """
         msg_header = self.create_header(error_code, params[0])
         msg_body = self.create_error_body(error_code, params)
         raise EventsFactoryError(msg_header + msg_body)

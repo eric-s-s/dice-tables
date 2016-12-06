@@ -42,8 +42,8 @@ class InputVerifier(object):
 
 
 class IntegerEvents(object):
-    def __init__(self, *args, **kwargs):
-        super(IntegerEvents, self).__init__(*args, **kwargs)
+    def __init__(self, ):
+        super(IntegerEvents, self).__init__()
         InputVerifier().verify_get_dict(self.get_dict())
 
     def get_dict(self):
@@ -62,7 +62,7 @@ def scrub_zeroes(dictionary):
 
 class AdditiveEvents(IntegerEvents):
 
-    def __init__(self, events_dict, *args, **kwargs):
+    def __init__(self, events_dict):
         """
 
         :param events_dict: {event: occurrences}\n
@@ -70,7 +70,7 @@ class AdditiveEvents(IntegerEvents):
             total occurrences > 0
         """
         self._table = scrub_zeroes(events_dict)
-        super(AdditiveEvents, self).__init__(*args, **kwargs)
+        super(AdditiveEvents, self).__init__()
         EventsFactory.check(self.__class__)
 
     @classmethod
