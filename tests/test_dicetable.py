@@ -39,10 +39,10 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(error.args[0], '')
 
     def test_DiceRecord_init_empty_iterator(self):
-        self.assertEqual(DiceRecord({}.items()).get_record(), {})
+        self.assertEqual(DiceRecord({}.items()).get_items(), {}.items())
 
     def test_DiceRecord_init_different_empty_iterator(self):
-        self.assertEqual(DiceRecord([]).get_record(), {})
+        self.assertEqual(DiceRecord([]).get_items(), {}.items())
 
     def test_DiceRecord_init_list_with_negative_number_raises_error(self):
         self.assertRaises(DiceRecordError, DiceRecord, {Die(1): -2}.items())
@@ -52,25 +52,16 @@ class TestDiceStats(unittest.TestCase):
                              DiceRecord, {Die(1): -2}.items())
 
     def test_DiceRecord_init_does_not_add_zero_values(self):
-        self.assertEqual(DiceRecord({Die(1): 0}.items()).get_record(), {})
+        self.assertEqual(DiceRecord({Die(1): 0}.items()).get_items(), {}.items())
 
     def test_DiceRecord_init_works_items_iterator(self):
-        self.assertEqual(DiceRecord({Die(1): 2, Die(2): 2}.items()).get_record(), {Die(1): 2, Die(2): 2})
+        self.assertEqual(DiceRecord({Die(1): 2, Die(2): 2}.items()).get_items(), {Die(1): 2, Die(2): 2}.items())
 
     def test_DiceRecord_init_works_list_iterator(self):
-        self.assertEqual(DiceRecord(iter([(Die(1), 2), (Die(2), 2)])).get_record(), {Die(1): 2, Die(2): 2})
+        self.assertEqual(DiceRecord(iter([(Die(1), 2), (Die(2), 2)])).get_items(), {Die(1): 2, Die(2): 2}.items())
 
     def test_DiceRecord_init_works_list(self):
-        self.assertEqual(DiceRecord([(Die(1), 2), (Die(2), 2)]).get_record(), {Die(1): 2, Die(2): 2})
-
-    def test_DiceRecord_get_record_returns_dictionary(self):
-        self.assertEqual(DiceRecord({Die(3): 4, Die(2): 1}.items()).get_record(), {Die(2): 1, Die(3): 4})
-
-    def test_DiceRecord_get_record_does_not_mutate_original(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
-        dictionary = record.get_record()
-        dictionary[Die(3)] = 10
-        self.assertEqual(record.get_record(), {Die(2): 1, Die(3): 4})
+        self.assertEqual(DiceRecord([(Die(1), 2), (Die(2), 2)]).get_items(), {Die(1): 2, Die(2): 2}.items())
 
     def test_DiceRecord_get_items_empty(self):
         self.assertEqual(DiceRecord([]).get_items(), {}.items())
@@ -98,12 +89,12 @@ class TestDiceStats(unittest.TestCase):
     def test_DiceRecord_add_die_returns_new_record_with_die_added_to_die_already_there(self):
         record = DiceRecord({Die(1): 2}.items())
         new_record = record.add_die(3, Die(1))
-        self.assertEqual(new_record.get_record(), {Die(1): 5})
+        self.assertEqual(new_record.get_items(), {Die(1): 5}.items())
 
     def test_DiceRecord_add_die_returns_new_record_with_new_die_added(self):
         record = DiceRecord({Die(1): 2}.items())
         new_record = record.add_die(3, Die(2))
-        self.assertEqual(new_record.get_record(), {Die(1): 2, Die(2): 3})
+        self.assertEqual(new_record.get_items(), {Die(1): 2, Die(2): 3}.items())
 
     def test_DiceRecord_remove_die_raises_error_for_negative_add(self):
         self.assertRaises(DiceRecordError, DiceRecord([]).remove_die, -5, Die(1))
@@ -115,12 +106,12 @@ class TestDiceStats(unittest.TestCase):
     def test_DiceRecord_remove_die_returns_correct_new_record(self):
         record = DiceRecord({Die(1): 2, Die(2): 5}.items())
         new_record = record.remove_die(3, Die(2))
-        self.assertEqual(new_record.get_record(), {Die(1): 2, Die(2): 2})
+        self.assertEqual(new_record.get_items(), {Die(1): 2, Die(2): 2}.items())
 
     def test_DiceRecord_remove_die_returns_correct_new_record_all_dice_removed_from_list(self):
         record = DiceRecord({Die(1): 2, Die(2): 5}.items())
         new_record = record.remove_die(5, Die(2))
-        self.assertEqual(new_record.get_record(), {Die(1): 2})
+        self.assertEqual(new_record.get_items(), {Die(1): 2}.items())
 
     def test_DiceRecord_remove_die_raises_error_when_too_many_dice_removed_from_list(self):
         record = DiceRecord({Die(1): 2, Die(2): 5}.items())
@@ -131,6 +122,11 @@ class TestDiceStats(unittest.TestCase):
         record = DiceRecord({Die(1): 2}.items())
         self.assert_my_regex(DiceRecordError, 'Removed too many dice from DiceRecord. Error at (Die(2), -17)',
                              record.remove_die, 17, Die(2))
+
+    def test_DiceRecord_remove_die_works_when_zero_dice_that_are_not_in_list_are_removed(self):
+        record = DiceRecord({Die(1): 2}.items())
+        new = record.remove_die(0, Die(100))
+        self.assertEqual(new.get_items(), {Die(1): 2}.items())
 
     def test_DiceTable_init_raises_InvalidEventsError(self):
         self.assertRaises(InvalidEventsError, DiceTable, {1: 0}, [])

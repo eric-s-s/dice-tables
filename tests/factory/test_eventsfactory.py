@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import unittest
 import warnings
 from sys import version_info
+from itertools import cycle
 
 from dicetables.baseevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, RichDiceTable
@@ -728,6 +729,54 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(d1_plus.get_dict(), {1: 1, 2: 1})
         self.assertEqual(d1_plus.get_dict_alt(), {1: 1, 2: 1, 3: 1})
 
+    def test_deep_depths_of_dumbness(self):
+        class DetachableDiceTable(DiceTable):
+            factory_keys = ('dictionary', 'dice')
+            lyrics = cycle((
+                'I woke up this morning with a bad hangover and my {} was missing again.',
+                'I can leave it home, when I think it\'s gonna get me in trouble,',
+                'I really don\'t like being without my {} for too long. It makes me feel like less of a man,',
+                'I saw my {} lying on a blanket next to a broken toaster oven. Some guy was selling it.',
+                'I had to buy it off him. He wanted twenty-two bucks, but I talked him down to seventeen.',
+                'People sometimes tell me I should get it permanently attached, but I don\'t know.',
+                'Even though sometimes it\'s a pain in the ass, I like having a detachable {}.'
+            ))
+
+            def __init__(self, events_dict, dice_list):
+                super(DetachableDiceTable, self).__init__(events_dict, dice_list)
+
+            def detach(self, die):
+                awesome_lyric = next(self.__class__.lyrics).format(die)
+                times = self.number_of_dice(die)
+                less_of_a_table = self.remove_die(times, die)
+                detached = self.new().add_die(times, die)
+                return awesome_lyric, detached, less_of_a_table
+
+        new = DetachableDiceTable.new()
+        two_d3 = new.add_die(2, Die(3))
+        two_d3_three_d4 = two_d3.add_die(3, Die(4))
+        two_d3_three_d4_four_d5 = two_d3_three_d4.add_die(4, Die(5))
+        msg, detached_1, left = two_d3_three_d4_four_d5.detach(Die(5))
+        self.assertEqual(msg, 'I woke up this morning with a bad hangover and my D5 was missing again.')
+        self.assertIsInstance(detached_1, DetachableDiceTable)
+        self.assertEqual(detached_1.get_dict(), DiceTable.new().add_die(4, Die(5)).get_dict())
+        self.assertEqual(left.get_dict(), two_d3_three_d4.get_dict())
+        msg2, empty, detached_2 = detached_1.detach(Die(100))
+        self.assertEqual(msg2, 'I can leave it home, when I think it\'s gonna get me in trouble,')
+        self.assertIsInstance(detached_2, DetachableDiceTable)
+        self.assertEqual(detached_1.get_dict(), detached_2.get_dict())
+        self.assertEqual(str(detached_1), '4D5')
+        self.assertEqual(empty.get_dict(), {0: 1})
+
+    def test_dangerous_inheritance(self):
+        class NewFactory(EventsFactory):
+            pass
+
+        class Bob(object):
+            pass
+
+        NewFactory.add_class(Bob, ('dice', ))
+        self.assertTrue(EventsFactory.has_class(Bob))
 
 if __name__ == '__main__':
     unittest.main()

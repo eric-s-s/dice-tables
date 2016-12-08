@@ -1,5 +1,7 @@
-#dicetables
+#dicetables v2.0
 ###a module for statistics of die rolls and other events
+CHANGED IN THIS VERSION: all children of AdditiveEvents are now immutable. See "CHANGES" for details
+
 This module uses DiceTable and AdditiveEvents to combine
 dice and other events that can be added together. It is used to
 figure out the probability of events occurring.  For instance, if you
@@ -35,9 +37,9 @@ In [1]: import dicetables as dt
 
 In [2]: table = dt.DiceTable.new()
 
-In [3]: table.add_die(1, dt.Die(2))
+In [3]: table = table.add_die(1, dt.Die(2))
 
-In [4]: table.add_die(1, dt.Die(3))
+In [4]: table = table.add_die(1, dt.Die(3))
 
 In [5]: table.get_dict()
 Out[5]: {2: 1, 3: 2, 4: 2, 5: 1}
@@ -50,9 +52,9 @@ Here are basic table functions
 In [5]: str(table)
 Out[5]: '1D2\n1D3'
 
-In [6]: table.add_die(100, dt.Die(2))
+In [6]: table = table.add_die(100, dt.Die(2))
 
-In [7]: table.remove_die(99, dt.Die(2))
+In [7]: table = table.remove_die(99, dt.Die(2))
 
 In [17]: print(table)
 2D2
@@ -79,7 +81,7 @@ To get useful information, use EventsInformation object and EventsCalculations o
 
 ```
 In [1]: table = dt.DiceTable.new()
-In [2]: table.add_die(2, dt.StrongDie(dt.Die(2), 3))
+In [2]: table = table.add_die(2, dt.StrongDie(dt.Die(2), 3))
 
 In [3]: table.get_dict()
 Out[3]: {6: 1, 9: 2, 12: 1}
@@ -162,7 +164,7 @@ Out[7]: (0, 0)
 In [8]: calc.mean()
 Out[8]: 0.0
 
-In [9]: table.add_die(100, dt.Die(6))
+In [9]: table = table.add_die(100, dt.Die(6))
 
 In [10]: info.events_range()
 Out[10]: (0, 0)
@@ -181,7 +183,7 @@ Out[13]: (0, 0)
 In [14]: r_table.calc.mean()
 Out[14]: 0.0
 
-In [15]: r_table.add_die(100, dt.Die(6))
+In [15]: r_table = r_table.add_die(100, dt.Die(6))
 
 In [16]: r_table.info.events_range()
 Out[16]: (100, 600)
@@ -341,13 +343,13 @@ record of it.
 ```
 In [31]: first = dt.DiceTable.new()
 
-In [32]: first.add_die(20, dt.Die(6))
+In [32]: first = first.add_die(20, dt.Die(6))
 
-In [33]: first.add_die(7, dt.Die(9))
+In [33]: first = first.add_die(7, dt.Die(9))
 
 In [34]: second = dt.DiceTable.new()
 
-In [35]: second.combine(1, first)
+In [35]: second = second.combine(1, first)
 
 In [36]: second.get_dict() == first.get_dict()
 Out[36]: True
@@ -360,9 +362,9 @@ In [41]: print(first)
 7D9
 10D10
 
-In [42]: first.combine_by_dictionary(2, dt.Die(1234))
+In [42]: first = first.combine_by_dictionary(2, dt.Die(1234))
 
-In [43]: first.combine_by_indexed_values(2, dt.AdditiveEvents({1: 2, 3: 4})
+In [43]: first = first.combine_by_indexed_values(2, dt.AdditiveEvents({1: 2, 3: 4})
 
 In [44]: print(first)
 20D6
@@ -378,7 +380,7 @@ This allows you to create a DiceTable from stored information or to copy.
 ```
 In [14]: old = dt.DiceTable.new()
 
-In [16]: old.add_die(100, dt.Die(6))
+In [16]: old = old.add_die(100, dt.Die(6))
 
 In [17]: events_record = old.get_dict()
 
@@ -399,7 +401,7 @@ Out[47]: True
 ```
 
 To get an identity table,
-use the class method DiceTable.new() or RichDiceTable.new().
+use the class method AdditiveEvents.new(), DiceTable.new() or RichDiceTable.new().
 This creates a table with an empty dice record and the events
 identity {0: 1}.  
 
@@ -411,25 +413,25 @@ In [91]: r_table.calc_includes_zeroes = True
 
 In [88]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
 
-In [89]: print(r_table.calc.full_table_string())
+In [89]: r_table = print(r_table.calc.full_table_string())
 2: 1
 3: 0
 4: 1
 
-In [91]: r_table.calc_includes_zeroes = False
+In [91]: r_table = r_table.switch_boolean()
 
 In [92]: print(r_table.calc.full_table_string())
 2: 1
 4: 1
 
-In [93]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+In [93]: r_table = r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
 
 In [94]: print(r_table.calc.full_table_string())
 4: 1
 6: 2
 8: 1
 
-In [95]: r_table.calc_includes_zeroes = True
+In [95]: r_table = r_table.switch_boolean()
 
 In [96]: print(r_table.calc.full_table_string())
 4: 1
@@ -543,9 +545,9 @@ StrongDie also has a weird case that can be unpredictable.  Basically, don't mul
 ```
 In [43]: table = dt.DiceTable()
 
-In [44]: table.add_die(1, dt.Die(6))
+In [44]: table = table.add_die(1, dt.Die(6))
 
-In [45]: table.add_die(100, dt.StrongDie(dt.Die(100), 0))
+In [45]: table = table.add_die(100, dt.StrongDie(dt.Die(100), 0))
 
 In [46]: table.get_dict()
 
@@ -555,7 +557,7 @@ In [47]: print(table)
 1D6
 (100D100)X(0)
 
-In [48]: table.add_die(2, dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)) <- this rolls zero with weight 4
+In [48]: table = table.add_die(2, dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)) <- this rolls zero with weight 4
 
 In [49]: print(table)
 (2D3-2  W:6)X(0)
@@ -573,27 +575,27 @@ it may or may not raise an error, but it's guaranteed buggy.
 ```
 In [19]: table = dt.DiceTable()
 
-In [20]: table.add_die(1, dt.Die(6))
+In [20]: table = table.add_die(1, dt.Die(6))
 
-In [21]: table.remove_die(4, dt.Die(6))
+In [21]: table = table.remove_die(4, dt.Die(6))
 dicetables.dicetable.DiceRecordError: Removed too many dice from DiceRecord. Error at (Die(6), -3)
 
-In [22]: table.remove_die(1, dt.Die(10))
+In [22]: table = table.remove_die(1, dt.Die(10))
 dicetables.dicetable.DiceRecordError: Removed too many dice from DiceRecord. Error at (Die(10), -1)
 
-In [26]: table.add_die(-3, dt.Die(6))
+In [26]: table = table.add_die(-3, dt.Die(6))
 dicetables.dicetable.DiceRecordError: May not add negative dice to DiceRecord. Error at (Die(6), -3)
 
-In [27]: table.remove_die(-3, dt.Die(6))
+In [27]: table = table.remove_die(-3, dt.Die(6))
 dicetables.dicetable.DiceRecordError: May not remove negative dice from DiceRecord. Error at (Die(6), -3)
 
 In [30]: table.get_dict()
 Out[30]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
-In [31]: table.remove(10, dt.Die(2))
+In [31]: table = table.remove(10, dt.Die(2))
 ValueError: min() arg is an empty sequence <-didn't know this would happen, but at least failed loudly
 
-In [32]: table.remove(2, dt.Die(2))
+In [32]: table = table.remove(2, dt.Die(2))
 
 In [33]: table.get_dict()
 Out[33]: {-1: 1, 1: 1} <-bad. this is a random answer
@@ -614,7 +616,7 @@ In[22]: nonsense = dt.DiceTable({1: 1}, [(dt.Die(6), 2)]) <- BAD DATA!!!!
 In[23]: print(nonsense)  <- the dice record says it has 2D6, but the events dictionary is WRONG
 2D6
 
-In[24]: nonsense.remove_die(2, dt.Die(6))  <- so here's your error. I hope you're happy.
+In[24]: nonsense = nonsense.remove_die(2, dt.Die(6))  <- so here's your error. I hope you're happy.
 ValueError: min() arg is an empty sequence
 ```
 But, you cannot instantiate a DiceTable with negative values for dice.
@@ -627,31 +629,31 @@ Calling combine_by_flattened_list can be risky:
 ```
 In [36]: x = dt.AdditiveEvents({1:1, 2: 5})
 
-In [37]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
+In [37]: x = x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
 
-In [39]: x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
+In [39]: x = x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
 MemoryError
 
-In [42]: x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
+In [42]: x = x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
 OverflowError: cannot fit 'int' into an index-sized integer
 ```
 Combining events with themselves is safe:
 ```
 In [51]: x = dt.AdditiveEvents({1: 1, 2: 1})
 
-In [52]: x.combine(1, x)
+In [52]: x = x.combine(1, x)
 
 In [53]: x.get_dict()
 Out[53]: {2: 1, 3: 2, 4: 1}
 
-In [54]: x.combine(1, x)
+In [54]: x = x.combine(1, x)
 
 In [55]: x.get_dict()
 Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1} 
 ```
 
 #CHANGES
-
+###from version 0.4.6 to version 1.0
 There are several major changes:
 
 - Modules and classes  and methods got renamed. see the dictionary at the bottom. There are new classes
@@ -754,4 +756,10 @@ CONVERSIONS = {'DiceTable()': 'DiceTable.new()',
                              'EventsInformation(events).all_events',
                              'EventsInformation(events).all_events_include_zeroes')}
 ```
+###from version 1.0 to version 2.0
+```
+in [12]: new = dt.AdditiveEvents.new()
 
+in [12]: new.combine(2, dt.AdditiveEvents({1: 1, 2: 5}))
+Out[13]: <dicetables.baseevents.AdditiveEvents at 0x5e73828>
+```

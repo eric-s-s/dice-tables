@@ -42,7 +42,7 @@ class InputVerifier(object):
 
 
 class IntegerEvents(object):
-    def __init__(self, ):
+    def __init__(self):
         super(IntegerEvents, self).__init__()
         InputVerifier().verify_get_dict(self.get_dict())
 
@@ -57,7 +57,7 @@ class IntegerEvents(object):
 
 
 def scrub_zeroes(dictionary):
-    return dict(item for item in dictionary.items() if item[1])
+    return {key: val for key, val in dictionary.items() if val}
 
 
 class AdditiveEvents(IntegerEvents):
