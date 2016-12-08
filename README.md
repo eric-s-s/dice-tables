@@ -1,4 +1,4 @@
-#dicetables
+#dicetables v1.0
 ###a module for statistics of die rolls and other events
 This module uses DiceTable and AdditiveEvents to combine
 dice and other events that can be added together. It is used to
