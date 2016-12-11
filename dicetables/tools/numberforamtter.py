@@ -54,6 +54,49 @@ class NumberFormatter(object):
     def min_fixed_pt_exp(self, value):
         self._min_fixed_pt_exp = min(0, int(value))
 
+    def format(self, number):
+        if self.is_special_case(number):
+            return self.get_special_case(number)
+        exponent = self.get_exponent(number)
+        if 0 > exponent >= self.min_fixed_pt_exp:
+            return self._format_number_and_exponent_to_fixed_point(number, exponent)
+        elif 0 <= exponent <= self.max_comma_exp:
+            return self._format_number_and_exponent_to_commas(number, exponent)
+        else:
+            return self._format_number_and_exponent_to_exponent(number, exponent)
+
+    def format_fixed_point(self, number):
+        """
+
+        :param number: -1 < number < 1
+        """
+        if self.is_special_case(number):
+            return self.get_special_case(number)
+        exponent = self.get_exponent(number)
+        return self._format_number_and_exponent_to_fixed_point(number, exponent)
+
+    def format_commaed(self, number):
+        """
+
+        :param number: number >= 1 or number <= -1
+        """
+        if self.is_special_case(number):
+            return self.get_special_case(number)
+        exponent = self.get_exponent(number)
+        return self._format_number_and_exponent_to_commas(number, exponent)
+
+    def format_exponent(self, number):
+        if self.is_special_case(number):
+            return self.get_special_case(number)
+        exponent = self.get_exponent(number)
+        return self._format_number_and_exponent_to_exponent(number, exponent)
+
+    def is_special_case(self, number):
+        return number in self._special_cases
+
+    def get_special_case(self, number):
+        return self._special_cases[number]
+
     def get_exponent(self, number):
         if is_int(number):
             return int(log10(abs(number)))
@@ -86,49 +129,6 @@ class NumberFormatter(object):
             mantissa /= 10.0
             exponent += 1
         return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
-
-    def format_fixed_point(self, number):
-        """
-
-        :param number: -1 < number < 1
-        """
-        if self.is_special_case(number):
-            return self.get_special_case(number)
-        exponent = self.get_exponent(number)
-        return self._format_number_and_exponent_to_fixed_point(number, exponent)
-
-    def format_commaed(self, number):
-        """
-
-        :param number: number >= 1 or number <= -1
-        """
-        if self.is_special_case(number):
-            return self.get_special_case(number)
-        exponent = self.get_exponent(number)
-        return self._format_number_and_exponent_to_commas(number, exponent)
-
-    def format_exponent(self, number):
-        if self.is_special_case(number):
-            return self.get_special_case(number)
-        exponent = self.get_exponent(number)
-        return self._format_number_and_exponent_to_exponent(number, exponent)
-
-    def format(self, number):
-        if self.is_special_case(number):
-            return self.get_special_case(number)
-        exponent = self.get_exponent(number)
-        if 0 > exponent >= self.min_fixed_pt_exp:
-            return self._format_number_and_exponent_to_fixed_point(number, exponent)
-        elif 0 <= exponent <= self.max_comma_exp:
-            return self._format_number_and_exponent_to_commas(number, exponent)
-        else:
-            return self._format_number_and_exponent_to_exponent(number, exponent)
-
-    def is_special_case(self, number):
-        return number in self._special_cases
-
-    def get_special_case(self, number):
-        return self._special_cases[number]
 
 
 def remove_extra_zero_from_single_digit_exponent(answer):

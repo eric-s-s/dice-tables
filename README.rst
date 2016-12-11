@@ -12,9 +12,6 @@ figure out the probability of events occurring.  For instance, if you
 roll 100 six-sided dice, the chance of rolling any number between 100
 and 300 is 0.15 percent.
 
-There are many changes from the previous version, and they will
-be listed in "CHANGES" at the bottom of this README.
-
 contents:
 
 - THE BASICS
