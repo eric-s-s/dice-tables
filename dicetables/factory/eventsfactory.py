@@ -1,6 +1,6 @@
 
-from dicetables.factory.factoryerrorhandler import EventsFactoryErrorHandler
-from dicetables.factory.factorywarninghandler import EventsFactoryWarningHandler
+from dicetables.factory.errorhandler import EventsFactoryErrorHandler
+from dicetables.factory.warninghandler import EventsFactoryWarningHandler
 from dicetables.factory.factorytools import StaticDict, Getter
 
 

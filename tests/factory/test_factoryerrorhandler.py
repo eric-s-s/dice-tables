@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from dicetables.factory.factoryerrorhandler import EventsFactoryError, EventsFactoryErrorHandler
+from dicetables.factory.errorhandler import EventsFactoryError, EventsFactoryErrorHandler
 from dicetables.dicetable import DiceTable
 from dicetables.dieevents import Die
 from dicetables.factory.eventsfactory import EventsFactory, Getter

@@ -10,8 +10,8 @@ from dicetables.baseevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, RichDiceTable
 from dicetables.dieevents import Die
 from dicetables.factory.eventsfactory import EventsFactory, Loader, LoaderError
-from dicetables.factory.factoryerrorhandler import EventsFactoryError
-from dicetables.factory.factorywarninghandler import EventsFactoryWarning
+from dicetables.factory.errorhandler import EventsFactoryError
+from dicetables.factory.warninghandler import EventsFactoryWarning
 
 
 class NewDiceTableSameInitNoUpdate(DiceTable):

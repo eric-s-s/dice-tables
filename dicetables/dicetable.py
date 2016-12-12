@@ -1,14 +1,69 @@
 """for all things dicey."""
 from __future__ import absolute_import
+from sys import version_info
 
 from dicetables.baseevents import AdditiveEvents
 from dicetables.eventsinfo import EventsCalculations, EventsInformation
 from dicetables.factory.eventsfactory import EventsFactory
+from dicetables.dieevents import ProtoDie
 
 
 class DiceRecordError(ValueError):
     def __init__(self, message='', *args, **kwargs):
         super(DiceRecordError, self).__init__(message, *args, **kwargs)
+
+
+class RecordVerifier(object):
+    @staticmethod
+    def check_types(die_input):
+        int_types = int
+        if version_info[0] < 3:
+            int_types = (int, long)
+        if any(not isinstance(die, ProtoDie) or not isinstance(num, int_types) for die, num in die_input.items()):
+            raise DiceRecordError('bad types')
+
+    @staticmethod
+    def check_negative(die_input):
+        if any(num < 0 for num in die_input.values()):
+            raise DiceRecordError('no negatives')
+
+    @staticmethod
+    def scrub(die_input):
+        new = die_input.copy()
+        for key, val in die_input.items():
+            if not val:
+                del new[key]
+        return new
+
+    @staticmethod
+    def check_input(num):
+        if num < 0:
+            raise DiceRecordError('no negative numbers')
+
+
+class DiceRecord2(object):
+    def __init__(self, dic):
+        RecordVerifier.check_types(dic)
+        RecordVerifier.check_negative(dic)
+        self._record = RecordVerifier.scrub(dic)
+
+    def get_copy(self):
+        return self._record.copy()
+
+    def get_number(self, query_die):
+        return self._record.get(query_die, 0)
+
+    def add_die(self, number, die):
+        RecordVerifier.check_input(number)
+        new = self._record.copy()
+        new[die] = number + new.get(die, 0)
+        return DiceRecord(new)
+
+    def remove_die(self, number, die):
+        RecordVerifier.check_input(number)
+        new = self._record.copy()
+        new[die] = new.get(die, 0) - number
+        return DiceRecord(new)
 
 
 class DiceRecord(object):

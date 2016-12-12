@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import unittest
 import warnings
 
-from dicetables.factory.factorywarninghandler import EventsFactoryWarning, EventsFactoryWarningHandler
+from dicetables.factory.warninghandler import EventsFactoryWarning, EventsFactoryWarningHandler
 from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.baseevents import AdditiveEvents
 from dicetables.dicetable import DiceTable
@@ -52,7 +52,7 @@ class TestEventsFactoryWarningHandler(unittest.TestCase):
             'factory: <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
             'Warning code: CHECK\n' +
             'Failed to find/add the following class to the EventsFactory - \n' +
-            'class: <class \'dicetables.factory.factorywarninghandler.EventsFactoryWarningHandler\'>\n'
+            'class: <class \'dicetables.factory.warninghandler.EventsFactoryWarningHandler\'>\n'
         )
         self.assertEqual(create_message_header('CHECK', EventsFactory, EventsFactoryWarningHandler), expected)
 
@@ -166,4 +166,3 @@ def create_instructions(factory):
 
 if __name__ == '__main__':
     unittest.main()
-
