@@ -502,8 +502,66 @@ In [10]: calc.info.events_range()
 Out[10]: (2, 6)
 ```
 ###Inheritance
+If you inherit from any child of AdditiveEvents and you do not load the new information
+into EventsFactory, it will complain and give you instructions. The EventsFactory will try to create
+your new class and if it fails, will return the closest related type::
+```
+In[9]: class A(dt.DiceTable):
+  ...:     pass
+  ...:
+In[10]: A.new()
+E:\work\dice_tables\dicetables\baseevents.py:74: EventsFactoryWarning:
+factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>
+Warning code: CONSTRUCT
+Failed to find/add the following class to the EventsFactory -
+class: <class '__main__.A'>
+..... blah blah blah.....
 
+Out[10]: <__main__.A at 0x4c25400>  <-- you got lucky. it's your class
 
+In[11]: class B(dt.DiceTable):
+  ...:     def __init__(self, name, number, events_dict, dice_data):
+  ...:         self.name = name
+  ...:         self.num = number
+  ...:
+In[12]: B.new()
+E:\work\dice_tables\dicetables\baseevents.py:74: EventsFactoryWarning:
+factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>
+Warning code: CONSTRUCT
+Failed to find/add the following class to the EventsFactory -
+class: <class '__main__.B'>
+..... blah blah blah.....
+Out[12]: <dicetables.dicetable.DiceTable at 0x4c23f28>  <-- Oops. EventsFactory can't figure out how to make one.
+```
+Now I will try again, but I will give the factory the info it needs.  
+The factory knows how to get 'dictionary', 'dice'  
+and 'calc_bool'. If you need it to get anything else, you need tuples of  
+(\<key name\>, \<getter name\>, \<default value\>, 'property' or 'method')  
+```
+In[6]: class B(dt.DiceTable):
+  ...:     factory_keys = ('name', 'number', 'dictionary', 'dice')
+  ...:     new_keys = (('name', 'name', '', 'property'), ('number', 'get_num', 0, 'method'))
+  ...:     def __init__(self, name, number, events_dict, dice_data):
+  ...:         self.name = name
+  ...:         self._num = number
+  ...:     def get_num(self):
+  ...:         return self._num
+  ...:
+In[7]: B.new()
+Out[7]: <__main__.B at 0x4ca94a8>
+
+In[8]: class C(dt.DiceTable):
+  ...:     factory_keys = ('dictionary', 'dice')
+  ...:     def fancy_add_die(self, times, die):
+  ...:         new = self.add_die(times, die)
+  ...:         return 'so fancy', new
+  ...:     
+In[9]: x = C.new().fancy_add_die(2, dt.Die(3))
+In[10]: x[1].get_dict()
+Out[10]: {2: 1, 3: 2, 4: 3, 5: 2, 6: 1}
+In[11]: x
+Out[11]: ('so fancy', <__main__.C at 0x5eb4d68>) <-- notice it returned C and not DiceTable
+```
 ###HOW TO GET ERRORS AND BUGS
 Every time you instantiate any IntegerEvents, it is checked.  The get_dict() method returns a dict, and every value
 in get_dict().values() must be >=1. get_dict() may not be empty. 
