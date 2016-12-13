@@ -15,6 +15,7 @@ contents:
 - AdditiveEvents And IntegerEvents
 - DiceTable And RichDiceTable 
 - EventsInformation And EventsCalculations
+- Inheritance
 - HOW TO GET ERRORS AND BUGS
 - CHANGES
 
@@ -32,20 +33,27 @@ you get the following combinations.
 ```
 In [1]: import dicetables as dt
 
-In [2]: table = dt.DiceTable.new()
+In [2]: new = dt.DiceTable.new()
 
-In [3]: table = table.add_die(1, dt.Die(2))
+In [3]: table = new.add_die(1, dt.Die(2))
 
-In [4]: table = table.add_die(1, dt.Die(3))
+In [4]: table2 = table.add_die(1, dt.Die(3))
 
-In [5]: table.get_dict()
+In [5]: table2.get_dict()
 Out[5]: {2: 1, 3: 2, 4: 2, 5: 1}
 
+In [6]: table.get_dict()
+out[6]: {1: 1, 2: 1}
+
+In [7]: new.get_dict()
+out[7]: {0: 1}
 ```
 
 Here are basic table functions
 
 ```
+In [4]: table = dt.DiceTable.new().add_die(1, dt.Die(2)).add_die(1, dt.Die(3))
+
 In [5]: str(table)
 Out[5]: '1D2\n1D3'
 
@@ -58,7 +66,7 @@ In [17]: print(table)
 1D3
 
 In [20]: table.get_list()
-Out[20]: [(Die(2), 2), (Die(3), 1)]
+Out[20]: [(Die(2), 2), (Die(3), 1)]  <-- sorted according to die
 
 In [22]: table.number_of_dice(dt.Die(10))
 Out[22]: 0
@@ -146,8 +154,7 @@ That's a one in 2.000 chance or 50.00%
 In [23]: without_zeroes.percentage_axes()
 Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
 ```
-Please note that these objects do not follow changes to the DiceTable. You can use
-RichDiceTable which keeps a copy of these objects at .info and .calc
+RichDiceTable keeps a copy of these objects at .info and .calc
 ```
 In [3]: table = dt.DiceTable.new()
 
@@ -374,6 +381,9 @@ Out[45]: False
 ###DiceTable and RichDiceTable
 You can instantiate any DiceTable or RichDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
+Please note that the "dice_data" method is ambiguously name on purpose. It's 
+function is to get correct input to instantiate a new DiceTable, whatever that
+happens to be. To get consistent output, use "get_list".
 ```
 In [14]: old = dt.DiceTable.new()
 
@@ -381,14 +391,14 @@ In [16]: old = old.add_die(100, dt.Die(6))
 
 In [17]: events_record = old.get_dict()
 
-In [18]: dice_record = old.get_list()
+In [18]: dice_record = old.dice_data()
 
 In [19]: new = dt.DiceTable(events_record, dice_record)
 
 In [20]: print(new)
 100D6
 
-In [21]: also_new = dt.RichDiceTable(new.get_list(), [(dt.Die(6), 100)], calc_includes_zeroes=False)
+In [21]: also_new = dt.RichDiceTable(new.get_list(), {dt.Die(6): 100}, calc_includes_zeroes=False)
 
 In [46]: old.get_dict() == new.get_dict() == also_new.get_dict()
 Out[46]: True
@@ -465,7 +475,7 @@ EventsCalculations:
 - stddev 
 
 EventsCalculations.include_zeroes is only settable at instantiation. It does
-exactly what it says. EventCalculations owns an EventsInformation. So that
+exactly what it says. EventCalculations owns an EventsInformation. So
 instantiating EventsCalculations gets you
 two for the price of one. It's accessed with the property
 EventsCalculations.info .
@@ -491,6 +501,9 @@ In[8]: print(calc.full_table_string())
 In [10]: calc.info.events_range()
 Out[10]: (2, 6)
 ```
+###Inheritance
+
+
 ###HOW TO GET ERRORS AND BUGS
 Every time you instantiate any IntegerEvents, it is checked.  The get_dict() method returns a dict, and every value
 in get_dict().values() must be >=1. get_dict() may not be empty. 
@@ -499,13 +512,13 @@ since dt.Die(-2).get_dict() returns {}:
 ```
 
 In [3]: dt.Die(-2)
-dicetables.baseevents.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
+dicetables.tools.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
 In [5]: dt.AdditiveEvents({1.0: 2})
-dicetables.baseevents.InvalidEventsError: all values must be ints
+dicetables.tools.eventerrors.InvalidEventsError: all values must be ints
 
 In [6]: dt.WeightedDie({1: 1, 2: -5})
-dicetables.baseevents.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
+dicetables.tools.eventerrors.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
 ```
 Because AdditiveEvents and WeightedDie specifically
 scrub the zeroes from their get_dict() methods, these will not throw errors.
@@ -570,21 +583,19 @@ If you remove or combine with a negative number, nothing should happen.
 If you use "remove" to remove what you haven't added,
 it may or may not raise an error, but it's guaranteed buggy.
 ```
-In [19]: table = dt.DiceTable()
-
-In [20]: table = table.add_die(1, dt.Die(6))
+In [19]: table = dt.DiceTable.new().add_die(1, dt.Die(6))
 
 In [21]: table = table.remove_die(4, dt.Die(6))
-dicetables.dicetable.DiceRecordError: Removed too many dice from DiceRecord. Error at (Die(6), -3)
+dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(6): -3
 
 In [22]: table = table.remove_die(1, dt.Die(10))
-dicetables.dicetable.DiceRecordError: Removed too many dice from DiceRecord. Error at (Die(10), -1)
+dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(10): -1
 
 In [26]: table = table.add_die(-3, dt.Die(6))
-dicetables.dicetable.DiceRecordError: May not add negative dice to DiceRecord. Error at (Die(6), -3)
+dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
 
 In [27]: table = table.remove_die(-3, dt.Die(6))
-dicetables.dicetable.DiceRecordError: May not remove negative dice from DiceRecord. Error at (Die(6), -3)
+dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
 
 In [30]: table.get_dict()
 Out[30]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
@@ -608,7 +619,7 @@ for instance, the dictionary for 2D6 is
 
 {2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1}
 ```
-In[22]: nonsense = dt.DiceTable({1: 1}, [(dt.Die(6), 2)]) <- BAD DATA!!!!
+In[22]: nonsense = dt.DiceTable({1: 1}, {dt.Die(6): 2}) <- BAD DATA!!!!
 
 In[23]: print(nonsense)  <- the dice record says it has 2D6, but the events dictionary is WRONG
 2D6
@@ -618,9 +629,11 @@ ValueError: min() arg is an empty sequence
 ```
 But, you cannot instantiate a DiceTable with negative values for dice.
 ```
-In[11]: dt.DiceTable({1: 1}, [(dt.Die(3), 3), (dt.Die(5), -1)])
-dicetables.dicetable.DiceRecordError: DiceRecord may not have negative dice. Error at (Die(5), -1)
+In[11]: dt.DiceTable({1: 1}, {dt.Die(3): 3, dt.Die(5): -1})
+dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(5): -1
 
+In[12]: dt.DiceTable({1: 1}, {'a': 2.0})
+dicetables.tools.eventerrors.DiceRecordError: input must be {ProtoDie: int, ...}
 ```
 Calling combine_by_flattened_list can be risky:
 ```

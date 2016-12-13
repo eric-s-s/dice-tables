@@ -3,14 +3,10 @@ from __future__ import absolute_import
 from sys import version_info
 
 from dicetables.baseevents import AdditiveEvents
-from dicetables.eventsinfo import EventsCalculations, EventsInformation
+from dicetables.eventsinfo import EventsCalculations
 from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.dieevents import ProtoDie
-
-
-class DiceRecordError(ValueError):
-    def __init__(self, message='', *args, **kwargs):
-        super(DiceRecordError, self).__init__(message, *args, **kwargs)
+from dicetables.tools.eventerrors import DiceRecordError
 
 
 class RecordVerifier(object):
@@ -20,103 +16,64 @@ class RecordVerifier(object):
         if version_info[0] < 3:
             int_types = (int, long)
         if any(not isinstance(die, ProtoDie) or not isinstance(num, int_types) for die, num in die_input.items()):
-            raise DiceRecordError('bad types')
+            raise DiceRecordError('input must be {ProtoDie: int, ...}')
 
     @staticmethod
     def check_negative(die_input):
-        if any(num < 0 for num in die_input.values()):
-            raise DiceRecordError('no negatives')
-
-    @staticmethod
-    def scrub(die_input):
-        new = die_input.copy()
         for key, val in die_input.items():
-            if not val:
-                del new[key]
-        return new
+            if val < 0:
+                raise DiceRecordError('Tried to create a DiceRecord with a negative value at {!r}: {}'.format(key, val))
 
     @staticmethod
-    def check_input(num):
+    def check_number(num):
         if num < 0:
-            raise DiceRecordError('no negative numbers')
+            raise DiceRecordError('Tried to add_die or remove_die with a negative number.')
 
 
-class DiceRecord2(object):
-    def __init__(self, dic):
-        RecordVerifier.check_types(dic)
-        RecordVerifier.check_negative(dic)
-        self._record = RecordVerifier.scrub(dic)
+def scrub_zeroes(input_dict):
+    return {key: val for key, val in input_dict.items() if val}
 
-    def get_copy(self):
+
+class DiceRecord(object):
+    def __init__(self, dice_number_dict):
+        RecordVerifier.check_types(dice_number_dict)
+        RecordVerifier.check_negative(dice_number_dict)
+        self._record = scrub_zeroes(dice_number_dict)
+
+    def get_dict(self):
         return self._record.copy()
 
     def get_number(self, query_die):
         return self._record.get(query_die, 0)
 
     def add_die(self, number, die):
-        RecordVerifier.check_input(number)
+        RecordVerifier.check_number(number)
         new = self._record.copy()
         new[die] = number + new.get(die, 0)
         return DiceRecord(new)
 
     def remove_die(self, number, die):
-        RecordVerifier.check_input(number)
+        RecordVerifier.check_number(number)
         new = self._record.copy()
         new[die] = new.get(die, 0) - number
         return DiceRecord(new)
-
-
-class DiceRecord(object):
-    def __init__(self, die_number_iterable, init_error_msg='init neg'):
-        self._record = {}
-        for die, number in die_number_iterable:
-            self._raise_error_for_negative_dice(number, die, init_error_msg)
-            if number:
-                self._record[die] = number
-
-    def get_items(self):
-        return self._record.items()
-
-    def get_number(self, query_die):
-        return self._record.get(query_die, 0)
-
-    def add_die(self, number, die):
-        self._raise_error_for_negative_dice(number, die, 'added neg')
-        new = self._record.copy()
-        new[die] = number + new.get(die, 0)
-        return DiceRecord(new.items())
-
-    def remove_die(self, number, die):
-        self._raise_error_for_negative_dice(number, die, 'removed neg')
-        new = self._record.copy()
-        new[die] = new.get(die, 0) - number
-        return DiceRecord(new.items(), init_error_msg='removed too many')
-
-    @staticmethod
-    def _raise_error_for_negative_dice(number, die, message_key):
-        messages = {'init neg': 'DiceRecord may not have negative dice.',
-                    'added neg': 'May not add negative dice to DiceRecord.',
-                    'removed neg': 'May not remove negative dice from DiceRecord.',
-                    'removed too many': 'Removed too many dice from DiceRecord.'}
-        if number < 0:
-            raise DiceRecordError(messages[message_key] + ' Error at ({!r}, {})'.format(die, number))
 
 
 class DiceTable(AdditiveEvents):
 
-    def __init__(self, events_dict, dice_list):
-        self._record = DiceRecord(dice_list)
+    def __init__(self, events_dict, dice_number_dict):
+        self._record = DiceRecord(dice_number_dict)
         super(DiceTable, self).__init__(events_dict)
 
-    def get_dice_items(self):
-        return self._record.get_items()
+    def dice_data(self):
+        return self._record.get_dict()
 
     def get_list(self):
         """
 
         :return: sorted copy of dice list: [(die, number of dice), ...]
         """
-        return sorted(self._record.get_items())
+        return sorted(self._record.get_dict().items())
 
     def number_of_dice(self, query_die):
         return self._record.get_number(query_die)
@@ -159,7 +116,7 @@ class DiceTable(AdditiveEvents):
         methods = {'add_die': self._record.add_die,
                    'remove_die': self._record.remove_die}
         new_record = methods[method_str](number, die)
-        return new_record.get_items()
+        return new_record.get_dict()
 
 
 def format_die_info(die, number):
@@ -170,8 +127,8 @@ def format_die_info(die, number):
 
 class RichDiceTable(DiceTable):
 
-    def __init__(self, events_dict, dice_list, calc_includes_zeroes=True):
-        super(RichDiceTable, self).__init__(events_dict, dice_list)
+    def __init__(self, events_dict, dice_number_dict, calc_includes_zeroes=True):
+        super(RichDiceTable, self).__init__(events_dict, dice_number_dict)
         self._calc = EventsCalculations(self, calc_includes_zeroes)
 
     @property

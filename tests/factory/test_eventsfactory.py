@@ -435,14 +435,14 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_EventsFactory_from_dict_and_dice_DiceTable(self):
         events = DiceTable.new()
-        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, [(Die(2), 2)])
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
         self.assertIs(type(new_events), DiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
 
     def test_EventsFactory_from_dict_and_dice_RichDiceTable(self):
-        events = RichDiceTable({2: 2}, [], False)
-        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, [(Die(2), 2)])
+        events = RichDiceTable({2: 2}, {}, False)
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
         self.assertIs(type(new_events), RichDiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
@@ -452,8 +452,8 @@ class TestEventsFactory(unittest.TestCase):
         start_dict = {2: 2}
         new_dict = {1: 1}
 
-        start_dice = [(Die(2), 1)]
-        new_dice = [(Die(3), 3)]
+        start_dice = {Die(2): 1}
+        new_dice = {Die(3): 3}
 
         start_num = 5
         new_num = 10
@@ -462,12 +462,12 @@ class TestEventsFactory(unittest.TestCase):
 
         new_events1 = EventsFactory.from_params(start, {'number': new_num, 'dice': new_dice})
         self.assertEqual(new_events1.get_dict(), start_dict)
-        self.assertEqual(new_events1.get_list(), new_dice)
+        self.assertEqual(new_events1.dice_data(), new_dice)
         self.assertEqual(new_events1.number, new_num)
 
         new_events2 = EventsFactory.from_params(start, {'dictionary': new_dict})
         self.assertEqual(new_events2.get_dict(), new_dict)
-        self.assertEqual(new_events2.get_list(), start_dice)
+        self.assertEqual(new_events2.dice_data(), start_dice)
         self.assertEqual(new_events2.number, start_num)
 
         self.assertIs(type(new_events1), NewDiceTableNewInitUpdate)
@@ -525,7 +525,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_Events_Factory_error_correct_message_GETTER_OVERWRITE(self):
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
         getter_key = '\'dice\''
-        getter_string = 'method: "get_dice_items", default: []'
+        getter_string = 'method: "dice_data", default: {}'
         new_getter_string = 'method: "get_dice", default: [(2, Die(6))]'
         expected = (factory_name, getter_key, getter_string, new_getter_string)
 
@@ -637,7 +637,7 @@ class TestEventsFactory(unittest.TestCase):
                 return self._additive.get_dict()
 
             def get_dict_items(self):
-                return super(DoubleTable, self).get_dice_items()
+                return super(DoubleTable, self).get_dice_dict()
 
             def init_dice_first(self):
                 answer = self._dice_first
@@ -675,8 +675,8 @@ class TestEventsFactory(unittest.TestCase):
                 'Even though sometimes it\'s a pain in the ass, I like having a detachable {}.'
             ))
 
-            def __init__(self, events_dict, dice_list):
-                super(DetachableDiceTable, self).__init__(events_dict, dice_list)
+            def __init__(self, events_dict, dice_number_dict):
+                super(DetachableDiceTable, self).__init__(events_dict, dice_number_dict)
 
             def detach(self, die):
                 awesome_lyric = next(self.__class__.lyrics).format(die)

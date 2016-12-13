@@ -113,7 +113,7 @@ class TestFactoryTools(unittest.TestCase):
         self.assertEqual(Getter('get_dict', {0: 1}).get(events), {1: 1})
 
     def test_Getter_get__object_has_getter_property(self):
-        events = RichDiceTable({1: 1}, [], calc_includes_zeroes=False)
+        events = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         getter = Getter('calc_includes_zeroes', True, is_property=True)
         self.assertEqual(getter.get(events), False)
 

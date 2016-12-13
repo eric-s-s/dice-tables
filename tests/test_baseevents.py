@@ -2,12 +2,12 @@
 from __future__ import absolute_import
 from sys import version_info
 import unittest
-from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier, scrub_zeroes
+from dicetables.baseevents import AdditiveEvents, InvalidEventsError, EventsVerifier, scrub_zeroes
 
 
 class TestBaseEvents(unittest.TestCase):
     def setUp(self):
-        self.checker = InputVerifier()
+        self.checker = EventsVerifier()
         self.types_error = 'all values must be ints'
         if version_info[0] < 3:
             self.types_error += ' or longs'

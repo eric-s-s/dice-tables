@@ -2,6 +2,7 @@
 from dicetables.factory.errorhandler import EventsFactoryErrorHandler
 from dicetables.factory.warninghandler import EventsFactoryWarningHandler
 from dicetables.factory.factorytools import StaticDict, Getter
+from dicetables.tools.eventerrors import InvalidEventsError, DiceRecordError
 
 
 class LoaderError(AttributeError):
@@ -30,7 +31,7 @@ class Loader(object):
 class EventsFactory(object):
 
     __default_getters = {'dictionary': Getter('get_dict', {0: 1}),
-                         'dice': Getter('get_dice_items', []),
+                         'dice': Getter('dice_data', {}),
                          'calc_bool': Getter('calc_includes_zeroes', True, is_property=True)}
 
     __default_class_args = {'AdditiveEvents': ('dictionary',),
@@ -154,7 +155,7 @@ class EventsFactory(object):
     def _construct(cls, original_class, in_factory, args):
         try:
             return original_class(*args)
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError, DiceRecordError, InvalidEventsError):
             if original_class == in_factory:
                 EventsFactoryErrorHandler(cls).raise_error('SIGNATURES DIFFERENT', original_class)
             return in_factory(*args)

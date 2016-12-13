@@ -6,14 +6,10 @@ from sys import version_info
 
 from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.tools.dictcombiner import DictCombiner
+from dicetables.tools.eventerrors import InvalidEventsError
 
 
-class InvalidEventsError(ValueError):
-    def __init__(self, message='', *args, **kwargs):
-        super(InvalidEventsError, self).__init__(message, *args, **kwargs)
-        
-
-class InputVerifier(object):
+class EventsVerifier(object):
     def __init__(self):
         self._int_tuple = (int,)
         self._type_str = 'ints'
@@ -44,7 +40,7 @@ class InputVerifier(object):
 class IntegerEvents(object):
     def __init__(self):
         super(IntegerEvents, self).__init__()
-        InputVerifier().verify_get_dict(self.get_dict())
+        EventsVerifier().verify_get_dict(self.get_dict())
 
     def get_dict(self):
         """
