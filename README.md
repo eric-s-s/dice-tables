@@ -10,8 +10,8 @@ and 300 is 0.15 percent.
 
 contents:
 
-- THE BASICS
-- Die Classes
+- [THE BASICS][]
+- [Die Classes]#die-classes
 - AdditiveEvents And IntegerEvents
 - DiceTable And RichDiceTable 
 - EventsInformation And EventsCalculations

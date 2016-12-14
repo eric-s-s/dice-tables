@@ -15,13 +15,13 @@ and 300 is 0.15 percent.
 contents:
 
 - `THE BASICS`_
-- Die Classes
-- AdditiveEvents And IntegerEvents
-- DiceTable And RichDiceTable
-- EventsInformation And EventsCalculations
-- Inheritance
-- HOW TO GET ERRORS AND BUGS
-- CHANGES
+- `Die Classes`_
+- `AdditiveEvents And IntegerEvents`_
+- `DiceTable And RichDiceTable`_
+- `EventsInformation And EventsCalculations`_
+- `Inheritance`_
+- `HOW TO GET ERRORS AND BUGS`_
+- `CHANGES`_
 
 ----------
 THE BASICS
@@ -209,6 +209,7 @@ You may also access this functionality with wrapper functions:
 - full_table_string
 - percentage_points
 - percentage_axe
+
 ::
 
     In [43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
@@ -544,6 +545,7 @@ your new class and if it fails, will return the closest related type::
 | The factory knows how to get 'dictionary', 'dice'
 | and 'calc_bool'. If you need it to get anything else, you need tuples of
 | (<key name>, <getter name>, <default value>, 'property' or 'method')
+
 ::
 
     In[6]: class B(dt.DiceTable):
