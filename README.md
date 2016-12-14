@@ -9,15 +9,15 @@ roll 100 six-sided dice, the chance of rolling any number between 100
 and 300 is 0.15 percent.
 
 contents:
-
+<a name="top"></a>
 - [THE BASICS](#basics)
-- [Die Classes](#classes)
-- AdditiveEvents And IntegerEvents
-- DiceTable And RichDiceTable 
-- EventsInformation And EventsCalculations
-- Inheritance
-- HOW TO GET ERRORS AND BUGS
-- CHANGES
+- [Die Classes](#die)
+- [AdditiveEvents And IntegerEvents](#additive)
+- [DiceTable And RichDiceTable](#dicetable) 
+- [EventsInformation And EventsCalculations](#eventsinformation)
+- [Inheritance](#inheritance)
+- [HOW TO GET ERRORS AND BUGS](#bugs)
+- [CHANGES](#changes)
 
 ###<a name="basics"></a>THE BASICS
 
@@ -230,7 +230,8 @@ That's all of the basic implementation. The rest of this is details
 about base classes, details of the die classes, what causes errors and
 the changes from the previous version.
 
-###<a name="classes"></a>Die Classes
+[Top](#top)
+###<a name="die"></a>Die Classes
 All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
 They all require implementations of get_size(), get_weight(), weight_info(),
 multiply_str(number), __str__(), __repr__() and get_dict() <-required for 
@@ -332,7 +333,8 @@ equal weight. dt.StrongDie(dt.Die(4), -1) is a 4 sided die that rolls -1, -2, -3
     - .get_multiplier()
     - .get_input_die()
 
-###AdditiveEvents And IntegerEvents
+[Top](#top)
+###<a name="additive"></a>AdditiveEvents And IntegerEvents
 All tables and dice inherit from IntegerEvents. All subclasses of 
 IntegerEvents need the method get_dict() which returns 
 {event: occurrences, ...} for each NON-ZERO occurrence.  When you
@@ -378,7 +380,8 @@ In [44]: print(first)
 In [45]: second.get_dict() == first.get_dict()
 Out[45]: False
 ```
-###DiceTable and RichDiceTable
+[Top](#top)
+###<a name="dicetable"></a>DiceTable and RichDiceTable
 You can instantiate any DiceTable or RichDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
 Please note that the "dice_data" method is ambiguously named on purpose. It's 
@@ -447,7 +450,8 @@ In [96]: print(r_table.calc.full_table_string())
 7: 0
 8: 1
 ```
-###EventsInformation And EventsCalculations
+[Top](#top)
+###<a name="eventsinformation"></a>EventsInformation And EventsCalculations
 
 The methods are
 
@@ -501,7 +505,8 @@ In[8]: print(calc.full_table_string())
 In [10]: calc.info.events_range()
 Out[10]: (2, 6)
 ```
-###Inheritance
+[Top](#top)
+###<a name="inheritance"></a>Inheritance
 If you inherit from any child of AdditiveEvents and you do not load the new information
 into EventsFactory, it will complain and give you instructions. The EventsFactory will try to create
 your new class and if it fails, will return the closest related type::
@@ -562,7 +567,8 @@ Out[10]: {2: 1, 3: 2, 4: 3, 5: 2, 6: 1}
 In[11]: x
 Out[11]: ('so fancy', <__main__.C at 0x5eb4d68>) <-- notice it returned C and not DiceTable
 ```
-###HOW TO GET ERRORS AND BUGS
+[Top](#top)
+###<a name="bugs"></a>HOW TO GET ERRORS AND BUGS
 Every time you instantiate any IntegerEvents, it is checked.  The get_dict() method returns a dict, and every value
 in get_dict().values() must be >=1. get_dict() may not be empty. 
 since dt.Die(-2).get_dict() returns {}:
@@ -719,8 +725,8 @@ In [54]: x = x.combine(1, x)
 In [55]: x.get_dict()
 Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1} 
 ```
-
-#CHANGES
+[Top](#top)
+#<a name="changes"></a>CHANGES
 ###from version 0.4.6 to version 1.0
 There are several major changes:
 
@@ -824,6 +830,7 @@ CONVERSIONS = {'DiceTable()': 'DiceTable.new()',
                              'EventsInformation(events).all_events',
                              'EventsInformation(events).all_events_include_zeroes')}
 ```
+[Top](#top)
 ###from version 1.0 to version 2.0
 ```
 in [12]: new = dt.AdditiveEvents.new()

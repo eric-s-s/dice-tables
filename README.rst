@@ -23,6 +23,8 @@ contents:
 - `HOW TO GET ERRORS AND BUGS`_
 - `CHANGES`_
 
+.. _Top:
+
 ----------
 THE BASICS
 ----------
@@ -235,6 +237,8 @@ Finally, here are all the kinds of dice you can add
 That's all of the basic implementation. The rest of this is details about base classes, details of the
 die classes, details of dicetable classes, what causes errors and the changes from the previous version.
 
+Top_
+
 -----------
 Die Classes
 -----------
@@ -332,6 +336,8 @@ StrongDie
     - .get_multiplier()
     - .get_input_die()
 
+Top_
+
 --------------------------------
 AdditiveEvents And IntegerEvents
 --------------------------------
@@ -376,6 +382,8 @@ but there's no record of it::
 
     In [45]: second.get_dict() == first.get_dict()
     Out[45]: False
+
+Top_
 
 ---------------------------
 DiceTable And RichDiceTable
@@ -450,6 +458,8 @@ RichDiceTable.calc_includes_zeroes is as follows.
     7: 0
     8: 1
 
+Top_
+
 ----------------------------------------
 EventsInformation And EventsCalculations
 ----------------------------------------
@@ -506,6 +516,8 @@ EventsCalculations.info .
 
     In [10]: calc.info.events_range()
     Out[10]: (2, 6)
+
+Top_
 
 -----------
 Inheritance
@@ -571,6 +583,8 @@ your new class and if it fails, will return the closest related type::
     Out[10]: {2: 1, 3: 2, 4: 3, 5: 2, 6: 1}
     In[11]: x
     Out[11]: ('so fancy', <__main__.C at 0x5eb4d68>)  <-- notice it returned C and not DiceTable
+
+Top_
 
 --------------------------
 HOW TO GET ERRORS AND BUGS
@@ -733,6 +747,8 @@ Combining events with themselves is safe::
     In [55]: x.get_dict()
     Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1}
 
+Top_
+
 =======
 CHANGES
 =======
@@ -842,6 +858,8 @@ which returns a dictionary and not a list of tuples. The string for StrongDie no
                       'EventsInformation(events).all_events_include_zeroes')
         }
 
+
+Top_
 
 -------------------------------
 from version 1.0 to version 2.0
