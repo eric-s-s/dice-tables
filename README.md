@@ -10,8 +10,8 @@ and 300 is 0.15 percent.
 
 contents:
 
-- [THE BASICS][]
-- [Die Classes]#die-classes
+- [THE BASICS](#basics)
+- [Die Classes](#classes)
 - AdditiveEvents And IntegerEvents
 - DiceTable And RichDiceTable 
 - EventsInformation And EventsCalculations
@@ -19,7 +19,7 @@ contents:
 - HOW TO GET ERRORS AND BUGS
 - CHANGES
 
-###THE BASICS
+###<a name="basics"></a>THE BASICS
 
 Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,  
 you get the following combinations.  
@@ -230,7 +230,7 @@ That's all of the basic implementation. The rest of this is details
 about base classes, details of the die classes, what causes errors and
 the changes from the previous version.
 
-###Die Classes
+###<a name="classes"></a>Die Classes
 All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
 They all require implementations of get_size(), get_weight(), weight_info(),
 multiply_str(number), __str__(), __repr__() and get_dict() <-required for 
