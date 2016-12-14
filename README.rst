@@ -14,7 +14,7 @@ and 300 is 0.15 percent.
 
 contents:
 
-- THE BASICS
+- `THE BASICS`_
 - Die Classes
 - AdditiveEvents And IntegerEvents
 - DiceTable And RichDiceTable
@@ -26,9 +26,6 @@ contents:
 ----------
 THE BASICS
 ----------
-DiceTable is the main object for adding and removing dice. It
-
-
 | Here's a quick bit of math.  if you combine a 2-sided die and a 3-sided die,
 | you get the following combinations.
 | (1,1) / (1, 2) (2, 1) / (2, 2), (1, 3) / (2, 3):
@@ -44,14 +41,14 @@ DiceTable is the main object for adding and removing dice. It
 
     In [2]: new = dt.DiceTable.new()
 
-    In [3]: table = new.add_die(1, dt.Die(2))
+    In [3]: one_two_sided = new.add_die(1, dt.Die(2))
 
-    In [4]: table2 = table.add_die(1, dt.Die(3))
+    In [4]: one_two_sided_one_three_sided = one_two_sided.add_die(1, dt.Die(3))
 
-    In [5]: table2.get_dict()
+    In [5]: one_two_sided_one_three_sided.get_dict()
     Out[5]: {2: 1, 3: 2, 4: 2, 5: 1}
 
-    In [6]: table.get_dict()
+    In [6]: one_two_sided.get_dict()
     out[6]: {1: 1, 2: 1}
 
     In [7]: new.get_dict()
@@ -384,7 +381,7 @@ DiceTable And RichDiceTable
 ---------------------------
 You can instantiate any DiceTable or RichDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
-Please note that the "dice_data" method is ambiguously name on purpose. It's
+Please note that the "dice_data" method is ambiguously named on purpose. It's
 function is to get correct input to instantiate a new DiceTable, whatever that
 happens to be. To get consistent output, use "get_list".
 ::
