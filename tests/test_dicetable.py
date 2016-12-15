@@ -78,6 +78,12 @@ class TestDiceStats(unittest.TestCase):
         record = DiceRecord(dice_dict)
         self.assertEqual(record.get_dict(), dice_dict)
 
+    def test_DiceRecord_get_dict_cannot_mutate_DiceRecord(self):
+        record = DiceRecord({Die(3): 4, Die(2): 1})
+        dice_dict = record.get_dict()
+        dice_dict[Die(3)] = 'oh nos!'
+        self.assertEqual(record.get_dict(), {Die(3): 4, Die(2): 1})
+
     def test_DiceRecord_get_number_no_die_returns_zero(self):
         record = DiceRecord({Die(3): 4, Die(2): 1})
         self.assertEqual(record.get_number(Die(5)), 0)
@@ -146,7 +152,7 @@ class TestDiceStats(unittest.TestCase):
     def test_DiceTable_init_raises_InvalidEventsError(self):
         self.assertRaises(InvalidEventsError, DiceTable, {1: 0}, {})
 
-    def test_DiceTable_init_raises_DiceRecordError_for_negative_dice_numbers(self):
+    def test_DiceTable_init_raises_DiceRecordError(self):
         self.assertRaises(DiceRecordError, DiceTable, {1: 1}, {Die(2): -1})
 
     def test_DiceTable_init_works_as_expected(self):
@@ -154,7 +160,16 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(table.get_list(), [(Die(1), 2), (Die(3), 4)])
         self.assertEqual(table.get_dict(), {1: 2, 3: 4})
 
-    def test_DiceTable_class_method__new_returns_DiceTable_with_identity_dict_empty_dice_list(self):
+    def test_DiceTable_mutating_init_values_does_not_affect_table(self):
+        events = {1: 1}
+        dice = {Die(1): 1}
+        table = DiceTable(events, dice)
+        events[1] = 'poop'
+        dice[Die(1)] = 'super poop'
+        self.assertEqual(table.get_dict(), {1: 1})
+        self.assertEqual(table.get_list(), [(Die(1), 1)])
+
+    def test_DiceTable__class_method__new_returns_DiceTable_with_identity_dict_empty_dice_list(self):
         table = DiceTable.new()
         self.assertEqual(table.get_dict(), {0: 1})
         self.assertEqual(table.get_list(), [])
@@ -167,6 +182,15 @@ class TestDiceStats(unittest.TestCase):
     def test_DiceTable_dice_data(self):
         dice_items = {Die(1): 1, Die(2): 2}
         self.assertEqual(DiceTable({1: 1}, dice_items).dice_data(), dice_items)
+
+    def test_DiceTable_dice_data_empty(self):
+        self.assertEqual(DiceTable({1: 1}, {}).dice_data(), {})
+
+    def test_DiceTable_dice_data_will_not_mutate_DiceTable(self):
+        table = DiceTable({1: 1}, {Die(1): 1, Die(2): 2})
+        dice_data = table.dice_data()
+        dice_data[Die(1)] = 'fail'
+        self.assertEqual(table.dice_data(), {Die(1): 1, Die(2): 2})
 
     def test_DiceTable_get_list_empty_record(self):
         table = DiceTable({1: 1}, {})
@@ -239,19 +263,17 @@ class TestDiceStats(unittest.TestCase):
         self.assertEqual(new.get_list(), [(Die(1), 2), (Die(2), 10)])
 
     def test_DiceTable_add_die_adds_correct_dice(self):
-        table = DiceTable.new()
-        new = table.add_die(2, Die(4))
-        self.assertEqual(new.get_list(), [(Die(4), 2)])
+        two_d_four = DiceTable.new().add_die(2, Die(4))
+        self.assertEqual(two_d_four.get_list(), [(Die(4), 2)])
         events_dict = {2: 1, 3: 2, 4: 3, 5: 4, 6: 3, 7: 2, 8: 1}
-        self.assertEqual(new.get_dict(), events_dict)
+        self.assertEqual(two_d_four.get_dict(), events_dict)
 
     def test_DiceTable_remove_die_raise_error_for_negative_add(self):
         table = DiceTable.new()
         self.assertRaises(DiceRecordError, table.remove_die, -2, Die(5))
 
     def test_DiceTable_remove_die_removes_correct_dice(self):
-        table = DiceTable.new()
-        five_d_four = table.add_die(5, Die(4))
+        five_d_four = DiceTable.new().add_die(5, Die(4))
         two_d_four = five_d_four.remove_die(3, Die(4))
         self.assertEqual(two_d_four.get_list(), [(Die(4), 2)])
         events_dict = {2: 1, 3: 2, 4: 3, 5: 4, 6: 3, 7: 2, 8: 1}
@@ -263,6 +285,11 @@ class TestDiceStats(unittest.TestCase):
         no_dice = two_d_four.remove_die(2, Die(4))
         self.assertEqual(no_dice.get_list(), [])
         self.assertEqual(no_dice.get_dict(), {0: 1})
+
+    def test_DiceTable_remove_die_can_remove_zero_dice_not_in_table(self):
+        identity = DiceTable.new().remove_die(0, Die(100))
+        self.assertEqual(identity.get_dict(), {0: 1})
+        self.assertEqual(identity.get_list(), [])
 
     def test_DiceTable_remove_die_raises_error_if_Die_not_in_table(self):
         self.assertRaises(DiceRecordError, DiceTable.new().remove_die, 1, Die(4))
@@ -315,7 +342,7 @@ class TestDiceStats(unittest.TestCase):
         table = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         self.assertFalse(table.calc_includes_zeroes)
 
-    def test_RichDiceTable_init_does_has_correct_calc(self):
+    def test_RichDiceTable_calc_property(self):
         table = RichDiceTable({1: 1}, {})
         self.assertEqual(table.calc.percentage_points(), [(1, 100.0)])
 
@@ -327,17 +354,12 @@ class TestDiceStats(unittest.TestCase):
         table = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         self.assertFalse(table.calc.include_zeroes)
 
-    def test_RichDiceTable_update_resets_calc(self):
-        table = RichDiceTable({1: 1}, {})
-        new = table.add_die(1, Die(2))
-        self.assertEqual(new.calc.percentage_points(), [(2, 50.0), (3, 50.0)])
-
-    def test_RichDiceTable_update_keeps_include_zeroes_info_true(self):
+    def test_RichDiceTable_action_keeps_include_zeroes_info_true(self):
         table = RichDiceTable({1: 1}, {}, calc_includes_zeroes=True)
         new = table.add_die(1, Die(2))
         self.assertTrue(new.calc.include_zeroes)
 
-    def test_RichDiceTable_update_keeps_include_zeroes_info_false(self):
+    def test_RichDiceTable_action_keeps_include_zeroes_info_false(self):
         table = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         new = table.add_die(1, Die(2))
         self.assertFalse(new.calc.include_zeroes)
@@ -346,12 +368,6 @@ class TestDiceStats(unittest.TestCase):
         table = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         self.assertEqual(table.info.all_events(), [(1, 1)])
         self.assertEqual(table.info.events_range(), (1, 1))
-
-    def test_RichDiceTable_info_property_updates(self):
-        table = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
-        self.assertEqual(table.info.all_events(), [(1, 1)])
-        new = table.add_die(1, Die(2))
-        self.assertEqual(new.info.all_events(), [(2, 1), (3, 1)])
 
     def test_RichDiceTable_class_method__new_get_dict(self):
         table = RichDiceTable.new()

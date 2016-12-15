@@ -65,7 +65,7 @@ class DictCombiner(object):
         new_indexed_values = generate_indexed_values_from_dict(self._dict)
         for _ in range(times):
             new_indexed_values = new_indexed_values.combine_with_dictionary(dictionary)
-        return DictCombiner(dict(new_indexed_values.get_items()))
+        return DictCombiner(new_indexed_values.get_dict())
 
     def combine_by_fastest(self, times, dictionary):
         """

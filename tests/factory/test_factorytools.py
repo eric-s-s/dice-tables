@@ -108,14 +108,14 @@ class TestFactoryTools(unittest.TestCase):
         dic[2] = 7
         self.assertEqual(getter.get_default(), {0: 1})
 
-    def test_Getter_get__object_has_getter_method(self):
+    def test_Getter_get_from__object_has_getter_method(self):
         events = AdditiveEvents({1: 1})
-        self.assertEqual(Getter('get_dict', {0: 1}).get(events), {1: 1})
+        self.assertEqual(Getter('get_dict', {0: 1}).get_from(events), {1: 1})
 
-    def test_Getter_get__object_has_getter_property(self):
+    def test_Getter_get_from__object_has_getter_property(self):
         events = RichDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         getter = Getter('calc_includes_zeroes', True, is_property=True)
-        self.assertEqual(getter.get(events), False)
+        self.assertEqual(getter.get_from(events), False)
 
     def test_Getter_get_bool_true(self):
         self.assertTrue(Getter('a', 1, is_property=True).get_bool())
@@ -191,4 +191,3 @@ class TestFactoryTools(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -106,19 +106,6 @@ class EventsFactory(object):
                 EventsFactoryWarningHandler(cls).raise_warning('CHECK', events_class)
 
     @classmethod
-    def new(cls, events_class):
-        in_factory = cls._get_nearest_factory_class(events_class)
-        args = cls._get_default_args(in_factory)
-        return cls._construct(events_class, in_factory, args)
-
-    @classmethod
-    def _get_default_args(cls, in_factory):
-        args = []
-        for arg_type in cls.get_class_params(in_factory):
-            args.append(cls._getters.get(arg_type).get_default())
-        return args
-
-    @classmethod
     def from_dictionary(cls, events, dictionary):
         passed_in_values = {'dictionary': dictionary}
         return cls._construct_from(events, passed_in_values)
@@ -134,31 +121,16 @@ class EventsFactory(object):
 
     @classmethod
     def _construct_from(cls, events, passed_in_values):
-
         constructor_class = events.__class__
-        in_factory = cls._get_nearest_factory_class(constructor_class)
-        args = cls._get_args(events, in_factory, passed_in_values)
-        return cls._construct(constructor_class, in_factory, args)
+        factory_class = cls._get_nearest_factory_class(constructor_class)
+        args = cls._get_args(events, factory_class, passed_in_values)
+        return cls._construct(constructor_class, factory_class, args)
 
     @classmethod
-    def _get_args(cls, events, in_factory, passed_in_values):
-        new_args = []
-        for arg_type in cls.get_class_params(in_factory):
-            if arg_type in passed_in_values.keys():
-                arg_value = passed_in_values[arg_type]
-            else:
-                arg_value = cls._getters.get(arg_type).get(events)
-            new_args.append(arg_value)
-        return new_args
-
-    @classmethod
-    def _construct(cls, original_class, in_factory, args):
-        try:
-            return original_class(*args)
-        except (TypeError, AttributeError, DiceRecordError, InvalidEventsError):
-            if original_class == in_factory:
-                EventsFactoryErrorHandler(cls).raise_error('SIGNATURES DIFFERENT', original_class)
-            return in_factory(*args)
+    def new(cls, events_class):
+        factory_class = cls._get_nearest_factory_class(events_class)
+        args = cls._get_default_args(factory_class)
+        return cls._construct(events_class, factory_class, args)
 
     @classmethod
     def _get_nearest_factory_class(cls, events_class):
@@ -177,3 +149,32 @@ class EventsFactory(object):
                 return parent_class
         EventsFactoryErrorHandler(cls).raise_error('WTF', failed_class)
         return object
+
+    @classmethod
+    def _get_default_args(cls, in_factory):
+        args = []
+        for getter_key in cls.get_class_params(in_factory):
+            getter = cls._getters.get(getter_key)
+            args.append(getter.get_default())
+        return args
+
+    @classmethod
+    def _get_args(cls, events, factory_class, passed_in_values):
+        new_args = []
+        for getter_key in cls.get_class_params(factory_class):
+            if getter_key in passed_in_values.keys():
+                arg_value = passed_in_values[getter_key]
+            else:
+                getter = cls._getters.get(getter_key)
+                arg_value = getter.get_from(events)
+            new_args.append(arg_value)
+        return new_args
+
+    @classmethod
+    def _construct(cls, original_class, factory_class, args):
+        try:
+            return original_class(*args)
+        except (TypeError, AttributeError, DiceRecordError, InvalidEventsError):
+            if original_class == factory_class:
+                EventsFactoryErrorHandler(cls).raise_error('SIGNATURES DIFFERENT', original_class)
+            return factory_class(*args)

@@ -5,14 +5,6 @@ from math import log10
 from sys import version_info
 
 
-def is_int(number):
-    if version_info[0] < 3:
-        int_types = (int, long)
-    else:
-        int_types = (int,)
-    return isinstance(number, int_types)
-
-
 class NumberFormatter(object):
     def __init__(self, shown_digits=4, max_comma_exp=6, min_fixed_pt_exp=-3):
         """
@@ -129,6 +121,14 @@ class NumberFormatter(object):
             mantissa /= 10.0
             exponent += 1
         return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
+
+
+def is_int(number):
+    if version_info[0] < 3:
+        int_types = (int, long)
+    else:
+        int_types = (int,)
+    return isinstance(number, int_types)
 
 
 def remove_extra_zero_from_single_digit_exponent(answer):

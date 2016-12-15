@@ -154,31 +154,9 @@ That's a one in 2.000 chance or 50.00%
 In [23]: without_zeroes.percentage_axes()
 Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
 ```
-RichDiceTable keeps a copy of these objects at .info and .calc
+RichDiceTable which keeps a copy of these objects at .info and .calc
+calc_includes_zeros defaults to True
 ```
-In [3]: table = dt.DiceTable.new()
-
-In [5]: info = dt.EventsInformation(table)
-
-In [6]: calc = dt.EventsCalculations(table)
-
-In [7]: info.events_range()
-Out[7]: (0, 0)
-
-In [8]: calc.mean()
-Out[8]: 0.0
-
-In [9]: table = table.add_die(100, dt.Die(6))
-
-In [10]: info.events_range()
-Out[10]: (0, 0)
-
-In [11]: calc.mean()
-Out[11]: 0.0
-
-In [20]: dt.EventsInformation(table).events_range()
-Out[20]: (100, 600)
-
 In [12]: r_table = dt.RichDiceTable.new()
 
 In [13]: r_table.info.events_range()
@@ -340,47 +318,52 @@ IntegerEvents need the method get_dict() which returns
 {event: occurrences, ...} for each NON-ZERO occurrence.  When you
 instantiate any subclass, it checks to make sure you're get_dict() is legal.
 
-AdditiveEvents is the parent of DiceTable. You can add and remove events 
-using the ".combine" method which tries to pick the fastest combining
-algorithm. You can pick it yourself by calling ".combine_by_\<algorithm\>".
-You can combine and remove DiceTable, AdditiveEvents, Die or any other
-IntegerEvents with the "combine" and "remove" methods, but there's no
-record of it.
+Any of the classes that take a dictionary of events as input scrub the zero
+occurrences out of the dictionary for you. 
 ```
-In [31]: first = dt.DiceTable.new()
+In [19]: dt.DiceTable({1: 1, 2:0}, {}).get_dict()
+Out[19]: {1: 1}
 
-In [32]: first = first.add_die(20, dt.Die(6))
+In [20]: dt.AdditiveEvents({1: 2, 3: 0, 4: 1}).get_dict()
+Out[20]: {1: 2, 4: 1}
 
-In [33]: first = first.add_die(7, dt.Die(9))
-
-In [34]: second = dt.DiceTable.new()
-
-In [35]: second = second.combine(1, first)
-
-In [36]: second.get_dict() == first.get_dict()
-Out[36]: True
-
-In [37]: second.get_list()
-Out[37]: []
-
-In [41]: print(first)
-20D6
-7D9
-10D10
-
-In [42]: first = first.combine_by_dictionary(2, dt.Die(1234))
-
-In [43]: first = first.combine_by_indexed_values(2, dt.AdditiveEvents({1: 2, 3: 4})
-
-In [44]: print(first)
-20D6
-7D9
-10D10
-
-In [45]: second.get_dict() == first.get_dict()
-Out[45]: False
+In [21]: dt.ModWeightedDie({1: 2, 3: 0, 4: 1}, -5).get_dict()
+Out[21]: {-4: 2, -1: 1}
 ```
-[Top](#top)
+AdditiveEvents is the parent of DiceTable. It has the class method new() which returns the identity. This method is
+inherited by its children. You can add and remove events using the ".combine" method which tries
+to pick the fastest combining algorithm. You can pick it yourself by calling ".combine_by_<algorithm>". You can
+combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,
+but there's no record of it.
+```
+In [32]: three_d_two = dt.AdditiveEvents.new().combine_by_dictionary(3, dt.Die(2))
+
+In [33]: also_three_d_two = dt.AdditiveEvents({3: 1, 4: 3, 5: 3, 6: 1})
+
+In [34]: still_three_d_two = dt.AdditiveEvents.new().combine(3, dt.AdditiveEvents({1: 1, 2: 1})
+
+In [35]: three_d_two.get_dict() == also_three_d_two.get_dict() == still_three_d_two.get_dict()
+Out[35]: True
+
+In [36]: identity = three_d_two.remove(3, dt.Die(2))
+
+In [37]: identity.get_dict() == dt.AdditiveEvents.new().get_dict()
+Out[37]: True
+
+In [41]: print(three_d_two)
+table from 3 to 6
+
+In [42]: twenty_one_d_two = three_d_two.combine_by_indexed_values(6, three_d_two)
+
+In [43]: twenty_one_d_two_five_d_four = twenty_one_d_two.combine_by_flattened_list(5, dt.Die(4))
+
+In [44]: new = twenty_one_d_two_five_d_four.remove(21, dt.Die(2)).get_dict()
+
+In [45]: dt.DiceTable.new().add_die(5, dt.Die(4)).get_dict() == new.get_dict()
+Out[45]: True
+```
+Since DiceTable is the child of AdditiveEvents, it can do all this combining and removing, but it won't be recorded
+in the dice record.[Top](#top)
 ###<a name="dicetable"></a>DiceTable and RichDiceTable
 You can instantiate any DiceTable or RichDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
@@ -409,28 +392,28 @@ Out[46]: True
 In [47]: old.get_list() == new.get_list() == also_new.get_list()
 Out[47]: True
 ```
-
-To get an identity table,
-use the class method AdditiveEvents.new(), DiceTable.new() or RichDiceTable.new().
-This creates a table with an empty dice record and the events
-identity {0: 1}.  
-
-RichDiceTable.calc_includes_zeroes is as follows.
+RichDiceTable.calc_includes_zeroes defaults to True. It is as follows.
 ```
 In [85]: r_table = dt.RichDiceTable.new()
 
-In [91]: r_table.calc_includes_zeroes = True
+In [86]: r_table.calc_includes_zeroes = True
 
-In [88]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+In [87]: r_table = r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
 
-In [89]: r_table = print(r_table.calc.full_table_string())
+In [88]: print(r_table.calc.full_table_string())
 2: 1
 3: 0
 4: 1
 
-In [91]: r_table = r_table.switch_boolean()
+In [89]: r_table = r_table.switch_boolean()
 
-In [92]: print(r_table.calc.full_table_string())
+In [90]: the_same = dt.RichDiceTable({2: 1, 4: 1}, r_table.dice_data(), False)
+
+In [91]: print(r_table.calc.full_table_string())
+2: 1
+4: 1
+
+In [92]: print(the_same.calc.full_table_string())
 2: 1
 4: 1
 
@@ -471,13 +454,48 @@ EventsCalculations:
 - full_table_string
 - info
 - mean
-- percentage_axes  <- very fast but only good to 10 decimal places
+- percentage_axes  
+    - very fast but only good to 10 decimal places
 - percentage_axes_exact
-- percentage_points
+- percentage_points  
+    - very fast but only good to 10 decimal places
 - percentage_points_exact
 - stats_strings 
-- stddev 
+    - takes a list of events values you want information for
+    - returns 
+        - string of those events
+        - number of times those events occurred in the table
+        - total number of occurrences of all events in the table
+        - the inverse chance of those events occurring: a 1 in (number) chance
+        - the percent chance of those events occurring: (number)% chance
+- stddev  
+    - defaults to 4 decimal places, but can be increased or decreased
+```
+In[34]: table = dt.DiceTable.new().add_die(1000, dt.Die(6))
 
+In[35]: calc = dt.EventsCalculations(table)
+
+In[36]: calc.stddev(7)
+Out[36]: 54.0061725
+
+In[37]: calc.mean()
+Out[37]: 3500.0
+
+In[38]: calc.stats_strings([3500])
+Out[38]: ('3,500', '1.046e+776', '1.417e+778', '135.4', '0.7386') 
+(yes, that is correct. out of 5000 possible rolls, 3500 has a 0.7% chance of occurring)
+
+In[41]: calc.stats_strings(list(range(1000, 3001)) + list(range(4000, 10000)))
+
+Out[41]: 
+('1,000-3,000, 4,000-9,999',
+ '2.183e+758',
+ '1.417e+778',
+ '6.490e+19',
+ '1.541e-18')
+
+(this is also correct; rolls not in the middle 1000 collectively have a much smaller chance than the mean.)
+```
 EventsCalculations.include_zeroes is only settable at instantiation. It does
 exactly what it says. EventCalculations owns an EventsInformation. So
 instantiating EventsCalculations gets you
@@ -643,7 +661,10 @@ Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's jus
 ```
 "remove_die" and "add_die" are safe. They raise an error if you
 remove too many dice or add or remove a negative number.
-If you remove or combine with a negative number, nothing should happen.
+
+If you "remove" or "combine" with a negative number, nothing should happen,
+but i make no guarantees.
+
 If you use "remove" to remove what you haven't added,
 it may or may not raise an error, but it's guaranteed buggy.
 ```
@@ -660,6 +681,11 @@ dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die wit
 
 In [27]: table = table.remove_die(-3, dt.Die(6))
 dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
+
+In [28]: table.get_dict()
+Out[28]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
+
+In [29]: table = table.combine(-100, dt.Die(10000))
 
 In [30]: table.get_dict()
 Out[30]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
@@ -679,7 +705,7 @@ Out[35]: {} <-very bad. this is an illegal answer.
 ```
 Since you can instantiate a DiceTable with any legal input,
 you can make a table with utter nonsense. It will work horribly.
-for instance, the dictionary for 2D6 is
+for instance, the dictionary for 2D6 is:
 
 {2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1}
 ```
@@ -692,6 +718,7 @@ In[24]: nonsense = nonsense.remove_die(2, dt.Die(6))  <- so here's your error. I
 ValueError: min() arg is an empty sequence
 ```
 But, you cannot instantiate a DiceTable with negative values for dice.
+And you cannot instantiate a DiceTable with non-sense values for dice.
 ```
 In[11]: dt.DiceTable({1: 1}, {dt.Die(3): 3, dt.Die(5): -1})
 dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(5): -1
@@ -818,12 +845,11 @@ CONVERSIONS = {'DiceTable()': 'DiceTable.new()',
                'LongIntTable.values_range': 'EventsInformation(event).event_range',
                'DiceTable.update_list': 'GONE (DiceTable owns a DiceRecord object that handles this)',
                'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(ProtoDie).all_events'),
-               'scinote': ('format_number', 'NumberFormatter.format'),
+               'scinote': 'NumberFormatter.format',
                'full_table_string', 'EventsCalculations(event).full_table_string',
                'stats', 'EventsCalculations(event).stats_strings',
                'long_int_div': 'safe_true_div',
-               'graph_pts': ('graph_pts',
-                             'EventsCalculations(event).percentage_points',
+               'graph_pts': ('EventsCalculations(event).percentage_points',
                              'EventsCalculations(event).percentage_points_exact',
                              'EventsCalculations(event).percentage_axes',
                              'EventsCalculations(event).percentage_axes_exact',
@@ -832,9 +858,18 @@ CONVERSIONS = {'DiceTable()': 'DiceTable.new()',
 ```
 [Top](#top)
 ###from version 1.0 to version 2.0
+There should only be two API changes from version 1.0 to 2.0
+- all children of AdditiveEvents are immutable. This can have some 
+interesting inheritance effects. see [inheritance](#inheritanc).
+- DiceTable does not take a list of \[(die, number), ...\]. It now take 
+a dictionary of {die: number}.
+- Removed wrapper functions: graph_pts, graph_pts_overflow, format_number
 ```
 in [12]: new = dt.AdditiveEvents.new()
 
 in [12]: new.combine(2, dt.AdditiveEvents({1: 1, 2: 5}))
 Out[13]: <dicetables.baseevents.AdditiveEvents at 0x5e73828>
+
+In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, {dt.Die(3): 1})
+Out[14]: <dicetables.dicetable.DiceTable at 0x5eddef0>
 ```

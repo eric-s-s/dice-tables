@@ -46,7 +46,7 @@ class Getter(object):
         else:
             return self._default_value
 
-    def get(self, obj):
+    def get_from(self, obj):
         if self._is_property:
             return obj.__getattribute__(self._method_name)
         else:

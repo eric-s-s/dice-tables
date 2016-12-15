@@ -266,6 +266,14 @@ class TestTableInfo(unittest.TestCase):
         self.assertEqual(ten_digits.format(nine_digit_number), '9,999,999.990')
         self.assertEqual(eight_digits.format(nine_digit_number), '1.0000000e+7')
 
+    def test_NumberFormatter_format_ints(self):
+        self.assert_format_number(-3, '-3')
+        self.assert_format_number(1000, '1,000')
+        self.assert_format_number(-9999999, '-9,999,999')
+        self.assert_format_number(10000000, '1.000e+7')
+        self.assert_format_number(-99999999, '-1.000e+8')
+        self.assert_format_number(123451*10**1000, '1.235e+1005')
+
     def test_NumberFormatter_is_special_case_zero(self):
         self.assertTrue(NumberFormatter().is_special_case(0))
         self.assertTrue(NumberFormatter().is_special_case(0.0))

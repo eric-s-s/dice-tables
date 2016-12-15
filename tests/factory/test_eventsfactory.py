@@ -227,7 +227,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_add_class(self):
         class Bob(object):
             pass
-
+        self.assertFalse(EventsFactory.has_class(Bob))
         EventsFactory.add_class(Bob, ('dictionary',))
         self.assertTrue(EventsFactory.has_class(Bob))
         self.assertEqual(EventsFactory.get_class_params(Bob), ('dictionary',))
@@ -583,7 +583,7 @@ class TestEventsFactory(unittest.TestCase):
         longer point to same thing.
         so B(A).  A.num = 5 changes B.num to 5.  B.num = 7 does not change A.num.  A.num = 3 no longer changes B.num
         because it was re-assigned.
-        I used StaticDict with EventsFactory so that changes to child dict does not
+        I used StaticDict with EventsFactory so that changes to child dict do not
         mutate parent dict.
         """
         class A(EventsFactory):
@@ -635,9 +635,6 @@ class TestEventsFactory(unittest.TestCase):
                 if not self._dice_first:
                     return super(DoubleTable, self).get_dict()
                 return self._additive.get_dict()
-
-            def get_dict_items(self):
-                return super(DoubleTable, self).get_dice_dict()
 
             def init_dice_first(self):
                 answer = self._dice_first

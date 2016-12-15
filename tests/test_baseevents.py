@@ -25,7 +25,6 @@ class TestBaseEvents(unittest.TestCase):
     def test_assert_my_regex(self):
         self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
 
-    #  InputVerifier tests
     def test_InvalidEventsError_empty(self):
         error = InvalidEventsError()
         self.assertEqual(str(error), '')
@@ -79,7 +78,6 @@ class TestBaseEvents(unittest.TestCase):
     def test_scrub_zeroes_zeroes_in_dict(self):
         self.assertEqual(scrub_zeroes({1: 2, 3: 0, 4: 1, 5: 0}), {1: 2, 4: 1})
 
-    #  AdditiveEvents tests
     def test_AdditiveEvents__class_method__new(self):
         self.assertEqual(AdditiveEvents.new().get_dict(), {0: 1})
 
@@ -105,6 +103,12 @@ class TestBaseEvents(unittest.TestCase):
         dictionary = events.get_dict()
         dictionary[1] = 100
         self.assertEqual(AdditiveEvents({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
+
+    def test_AdditiveEvents_input_dict_mutation_has_no_effect(self):
+        input_dict = {1: 1}
+        events = AdditiveEvents(input_dict)
+        input_dict[1] = 'banana'
+        self.assertEqual(events.get_dict(), {1: 1})
 
     def test_AdditiveEvents_string_returns_min_to_max(self):
         table = AdditiveEvents({-1: 1, 2: 1, 5: 1})
