@@ -36,7 +36,7 @@ class DummyDie(ProtoDie):
         return "OyVei! you're too thin. Es, bubelah."
 
 
-class TestDiceStats(unittest.TestCase):
+class TestDieEvents(unittest.TestCase):
 
     # rich comparison testing
     def test_ProtoDie_equality_true(self):

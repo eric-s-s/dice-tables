@@ -18,7 +18,7 @@ class NumberedDiceTable(DiceTable):
         self.number = number
 
 
-class TestDiceStats(unittest.TestCase):
+class TestDiceTable(unittest.TestCase):
 
     def assert_my_regex(self, error_type, regex, func, *args):
         with self.assertRaises(error_type) as cm:

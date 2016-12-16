@@ -94,6 +94,12 @@ class TestFactoryTools(unittest.TestCase):
         new = StaticDict({1: 2})
         self.assertIs(type(new.delete(1)), StaticDict)
 
+    def test_Getter_init_copies_if_possible(self):
+        new = {}
+        getter = Getter('hi', new)
+        new[1] = 2
+        self.assertEqual(getter.get_default(), {})
+
     def test_Getter_get_default(self):
         self.assertEqual(Getter('get_dict', {0: 1}).get_default(), {0: 1})
 

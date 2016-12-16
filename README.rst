@@ -341,30 +341,30 @@ to pick the fastest combining algorithm. You can pick it yourself by calling ".c
 combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,
 but there's no record of it::
 
-    In [32]: three_d_two = dt.AdditiveEvents.new().combine_by_dictionary(3, dt.Die(2))
+    In [32]: three_D2 = dt.AdditiveEvents.new().combine_by_dictionary(3, dt.Die(2))
 
-    In [33]: also_three_d_two = dt.AdditiveEvents({3: 1, 4: 3, 5: 3, 6: 1})
+    In [33]: also_three_D2 = dt.AdditiveEvents({3: 1, 4: 3, 5: 3, 6: 1})
 
-    In [34]: still_three_d_two = dt.AdditiveEvents.new().combine(3, dt.AdditiveEvents({1: 1, 2: 1})
+    In [34]: still_three_D2 = dt.AdditiveEvents.new().combine(3, dt.AdditiveEvents({1: 1, 2: 1})
 
-    In [35]: three_d_two.get_dict() == also_three_d_two.get_dict() == still_three_d_two.get_dict()
+    In [35]: three_D2.get_dict() == also_three_D2.get_dict() == still_three_D2.get_dict()
     Out[35]: True
 
-    In [36]: identity = three_d_two.remove(3, dt.Die(2))
+    In [36]: identity = three_D2.remove(3, dt.Die(2))
 
     In [37]: identity.get_dict() == dt.AdditiveEvents.new().get_dict()
     Out[37]: True
 
-    In [41]: print(three_d_two)
+    In [41]: print(three_D2)
     table from 3 to 6
 
-    In [42]: twenty_one_d_two = three_d_two.combine_by_indexed_values(6, three_d_two)
+    In [42]: twenty_one_D2 = three_D2.combine_by_indexed_values(6, three_D2)
 
-    In [43]: twenty_one_d_two_five_d_four = twenty_one_d_two.combine_by_flattened_list(5, dt.Die(4))
+    In [43]: twenty_one_D2_five_D4 = twenty_one_D2.combine_by_flattened_list(5, dt.Die(4))
 
-    In [44]: new = twenty_one_d_two_five_d_four.remove(21, dt.Die(2)).get_dict()
+    In [44]: five_D4 = twenty_one_D2_five_D4.remove(21, dt.Die(2))
 
-    In [45]: dt.DiceTable.new().add_die(5, dt.Die(4)).get_dict() == new.get_dict()
+    In [45]: dt.DiceTable.new().add_die(5, dt.Die(4)).get_dict() == five_D4.get_dict()
     Out[45]: True
 
 Since DiceTable is the child of AdditiveEvents, it can do all this combining and removing, but it won't be recorded
@@ -455,40 +455,41 @@ EventsInformation And EventsCalculations
 The methods are
 
 EventsInformation:
-- all_events
-- all_events_include_zeroes
-- biggest_event
-- biggest_events_all <- returns the list of all events that have biggest occurrence
-- events_keys
-- events_range
-- get_event
-- get_items <- returns dict.items(): a list in py2 and an iterator in py3.
-- get_range_of_events
-- total_occurrences
+
+* all_events
+* all_events_include_zeroes
+* biggest_event
+* biggest_events_all <- returns the list of all events that have biggest occurrence
+* events_keys
+* events_range
+* get_event
+* get_items <- returns dict.items(): a list in py2 and an iterator in py3.
+* get_range_of_events
+* total_occurrences
 
 EventsCalculations:
 
-- full_table_string
-- info
-- mean
-- percentage_axes
-    - very fast but only good to 10 decimal places
+* full_table_string
+* info
+* mean
+* percentage_axes
+    * very fast but only good to 10 decimal places
 
-- percentage_axes_exact
-- percentage_points
-    - very fast but only good to 10 decimal places
+* percentage_axes_exact
+* percentage_points
+    * very fast but only good to 10 decimal places
 
-- percentage_points_exact
-- stats_strings
-    - takes a list of events values you want information for
-    - returns
-        - string of those events
-        - number of times those events occurred in the table
-        - total number of occurrences of all events in the table
-        - the inverse chance of those events occurring: a 1 in (number) chance
-        - the percent chance of those events occurring: (number)% chance
-- stddev
-    - defaults to 4 decimal places, but can be increased or decreased
+* percentage_points_exact
+* stats_strings
+    * takes a list of events values you want information for
+    * returns
+        * string of those events
+        * number of times those events occurred in the table
+        * total number of occurrences of all events in the table
+        * the inverse chance of those events occurring: a 1 in (number) chance
+        * the percent chance of those events occurring: (number)% chance
+* stddev
+    * defaults to 4 decimal places, but can be increased or decreased
 
 ::
 
@@ -768,20 +769,6 @@ Calling combine_by_flattened_list can be risky::
 
     In [42]: x = x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
     OverflowError: cannot fit 'int' into an index-sized integer
-
-Combining events with themselves is safe::
-
-    In [51]: x = dt.AdditiveEvents({1: 1, 2: 1})
-
-    In [52]: x = x.combine(1, x)
-
-    In [53]: x.get_dict()
-    Out[53]: {2: 1, 3: 2, 4: 1}
-
-    In [54]: x = x.combine(1, x)
-
-    In [55]: x.get_dict()
-    Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1}
 
 Top_
 

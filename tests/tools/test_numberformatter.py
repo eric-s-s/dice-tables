@@ -8,7 +8,7 @@ from decimal import Decimal
 from dicetables.tools.numberforamtter import NumberFormatter, remove_extra_zero_from_single_digit_exponent
 
 
-class TestTableInfo(unittest.TestCase):
+class TestNumberFormatter(unittest.TestCase):
 
     def assert_format_number(self, number, number_str):
         self.assertEqual(NumberFormatter().format(number), number_str)
