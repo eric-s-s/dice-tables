@@ -740,20 +740,6 @@ MemoryError
 In [42]: x = x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
 OverflowError: cannot fit 'int' into an index-sized integer
 ```
-Combining events with themselves is safe:
-```
-In [51]: x = dt.AdditiveEvents({1: 1, 2: 1})
-
-In [52]: x = x.combine(1, x)
-
-In [53]: x.get_dict()
-Out[53]: {2: 1, 3: 2, 4: 1}
-
-In [54]: x = x.combine(1, x)
-
-In [55]: x.get_dict()
-Out[55]: {4: 1, 5: 4, 6: 6, 7: 4, 8: 1} 
-```
 [Top](#top)
 #<a name="changes"></a>CHANGES
 ###from version 0.4.6 to version 1.0
