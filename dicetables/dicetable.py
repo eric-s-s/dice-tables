@@ -8,14 +8,16 @@ from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.dieevents import ProtoDie
 from dicetables.tools.eventerrors import DiceRecordError
 
+if version_info[0] < 3:
+    from dicetables.tools.py2funcs import is_int
+else:
+    from dicetables.tools.py3funcs import is_int
+
 
 class RecordVerifier(object):
     @staticmethod
     def check_types(die_input):
-        int_types = int
-        if version_info[0] < 3:
-            int_types = (int, long)
-        if any(not isinstance(die, ProtoDie) or not isinstance(num, int_types) for die, num in die_input.items()):
+        if any(not isinstance(die, ProtoDie) or not is_int(num) for die, num in die_input.items()):
             raise DiceRecordError('input must be {ProtoDie: int, ...}')
 
     @staticmethod
@@ -46,13 +48,13 @@ class DiceRecord(object):
     def get_number(self, query_die):
         return self._record.get(query_die, 0)
 
-    def add_die(self, number, die):
+    def add_die(self, die, number):
         RecordVerifier.check_number(number)
         new = self._record.copy()
         new[die] = number + new.get(die, 0)
         return DiceRecord(new)
 
-    def remove_die(self, number, die):
+    def remove_die(self, die, number):
         RecordVerifier.check_number(number)
         new = self._record.copy()
         new[die] = new.get(die, 0) - number
@@ -92,30 +94,30 @@ class DiceTable(AdditiveEvents):
         str_list = [die.multiply_str(number) for die, number in self.get_list()]
         return '\n'.join(str_list)
 
-    def add_die(self, number, die):
+    def add_die(self, die, times=1):
         """
 
-        :param number: int>= 0
+        :param times: int>= 0
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        dice_iterable = self._create_constructor_dice(number, die, method_str='add_die')
-        dictionary = self._create_constructor_dict(number, die, method_str='combine')
+        dice_iterable = self._create_constructor_dice(die, times, method_str='add_die')
+        dictionary = self._create_constructor_dict(die, times, method_str='combine')
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
-    def remove_die(self, number, die):
+    def remove_die(self, die, times=1):
         """
 
-        :param number: 0 <= int <= number of "die" in table
+        :param times: 0 <= int <= number of "die" in table
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
-        dice_iterable = self._create_constructor_dice(number, die, method_str='remove_die')
-        dictionary = self._create_constructor_dict(number, die, method_str='remove')
+        dice_iterable = self._create_constructor_dice(die, times, method_str='remove_die')
+        dictionary = self._create_constructor_dict(die, times, method_str='remove')
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
-    def _create_constructor_dice(self, number, die, method_str):
+    def _create_constructor_dice(self, die, number, method_str):
         methods = {'add_die': self._record.add_die,
                    'remove_die': self._record.remove_die}
-        new_record = methods[method_str](number, die)
+        new_record = methods[method_str](die, number)
         return new_record.get_dict()
 
 

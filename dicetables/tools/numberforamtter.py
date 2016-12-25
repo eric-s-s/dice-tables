@@ -4,6 +4,11 @@ from __future__ import absolute_import
 from math import log10
 from sys import version_info
 
+if version_info[0] < 3:
+    from dicetables.tools.py2funcs import is_int
+else:
+    from dicetables.tools.py3funcs import is_int
+
 
 class NumberFormatter(object):
     def __init__(self, shown_digits=4, max_comma_exp=6, min_fixed_pt_exp=-3):
@@ -123,12 +128,12 @@ class NumberFormatter(object):
         return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
 
 
-def is_int(number):
-    if version_info[0] < 3:
-        int_types = (int, long)
-    else:
-        int_types = (int,)
-    return isinstance(number, int_types)
+# def is_int(number):
+#     if version_info[0] < 3:
+#         int_types = (int, long)
+#     else:
+#         int_types = (int,)
+#     return isinstance(number, int_types)
 
 
 def remove_extra_zero_from_single_digit_exponent(answer):

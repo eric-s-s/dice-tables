@@ -23,11 +23,11 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
     to_be_combined = dict(events_tuples)
 
     indexed_values_start = time.clock()
-    combiner.combine_by_indexed_values(combine_times, to_be_combined)
+    combiner.combine_by_indexed_values(to_be_combined, combine_times)
     indexed_values_time = time.clock() - indexed_values_start
 
     control_start = time.clock()
-    control_events_action(combine_times, to_be_combined)
+    control_events_action(to_be_combined, combine_times)
     control_time = time.clock() - control_start
     return control_time, indexed_values_time
 

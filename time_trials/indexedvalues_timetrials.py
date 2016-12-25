@@ -168,10 +168,10 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
     events_for_indexed_values = base.AdditiveEvents(input_dict)
     events_to_add = base.AdditiveEvents(dict(events_tuples))
     indexed_values_start = time.clock()
-    events_for_indexed_values.combine_by_indexed_values(combine_times, events_to_add)
+    events_for_indexed_values.combine_by_indexed_values(events_to_add, combine_times)
     indexed_values_time = time.clock() - indexed_values_start
     control_start = time.clock()
-    control_events_action(combine_times, events_to_add)
+    control_events_action(events_to_add, combine_times)
     control_time = time.clock() - control_start
     return control_time, indexed_values_time
 

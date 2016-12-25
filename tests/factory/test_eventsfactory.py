@@ -641,20 +641,20 @@ class TestEventsFactory(unittest.TestCase):
                 self._dice_first = True
                 return answer
 
-            def combine(self, times, events):
+            def combine(self, events, times):
                 self._dice_first = False
-                return super(DoubleTable, self).combine(times, events)
+                return super(DoubleTable, self).combine(events, times)
 
-            def remove(self, times, events):
+            def remove(self, events, times):
                 self._dice_first = False
-                return super(DoubleTable, self).remove(times, events)
+                return super(DoubleTable, self).remove(events, times)
 
         new = DoubleTable.new()
-        d1 = new.add_die(1, Die(2))
+        d1 = new.add_die(Die(2), 1)
         self.assertTrue(d1._dice_first)
         self.assertEqual(d1.get_dict(), {1: 1, 2: 1})
         self.assertEqual(d1.get_dict_alt(), {0: 1})
-        d1_plus = d1.combine(1, Die(3))
+        d1_plus = d1.combine(Die(3), 1)
         self.assertTrue(d1_plus._dice_first)
         self.assertEqual(d1_plus.get_dict(), {1: 1, 2: 1})
         self.assertEqual(d1_plus.get_dict_alt(), {1: 1, 2: 1, 3: 1})
@@ -678,18 +678,18 @@ class TestEventsFactory(unittest.TestCase):
             def detach(self, die):
                 awesome_lyric = next(self.__class__.lyrics).format(die)
                 times = self.number_of_dice(die)
-                less_of_a_table = self.remove_die(times, die)
-                detached = self.new().add_die(times, die)
+                less_of_a_table = self.remove_die(die, times)
+                detached = self.new().add_die(die, times)
                 return awesome_lyric, detached, less_of_a_table
 
         new = DetachableDiceTable.new()
-        two_d3 = new.add_die(2, Die(3))
-        two_d3_three_d4 = two_d3.add_die(3, Die(4))
-        two_d3_three_d4_four_d5 = two_d3_three_d4.add_die(4, Die(5))
+        two_d3 = new.add_die(Die(3), 2)
+        two_d3_three_d4 = two_d3.add_die(Die(4), 3)
+        two_d3_three_d4_four_d5 = two_d3_three_d4.add_die(Die(5), 4)
         msg, detached_1, left = two_d3_three_d4_four_d5.detach(Die(5))
         self.assertEqual(msg, 'I woke up this morning with a bad hangover and my D5 was missing again.')
         self.assertIsInstance(detached_1, DetachableDiceTable)
-        self.assertEqual(detached_1.get_dict(), DiceTable.new().add_die(4, Die(5)).get_dict())
+        self.assertEqual(detached_1.get_dict(), DiceTable.new().add_die(Die(5), 4).get_dict())
         self.assertEqual(left.get_dict(), two_d3_three_d4.get_dict())
         msg2, empty, detached_2 = detached_1.detach(Die(100))
         self.assertEqual(msg2, 'I can leave it home, when I think it\'s gonna get me in trouble,')

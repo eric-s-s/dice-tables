@@ -43,9 +43,9 @@ THE BASICS
 
     In [2]: new = dt.DiceTable.new()
 
-    In [3]: one_two_sided = new.add_die(1, dt.Die(2))
+    In [3]: one_two_sided = new.add_die(dt.Die(2), times=1)
 
-    In [4]: one_two_sided_one_three_sided = one_two_sided.add_die(1, dt.Die(3))
+    In [4]: one_two_sided_one_three_sided = one_two_sided.add_die(dt.Die(3), 1)
 
     In [5]: one_two_sided_one_three_sided.get_dict()
     Out[5]: {2: 1, 3: 2, 4: 2, 5: 1}
@@ -56,16 +56,16 @@ THE BASICS
     In [7]: new.get_dict()
     out[7]: {0: 1}
 
-Here are basic table functions::
+Here are basic table functions. note that times added defaults to one.::
 
-    In [4]: table = dt.DiceTable.new().add_die(1, dt.Die(2)).add_die(1, dt.Die(3))
+    In [4]: table = dt.DiceTable.new().add_die(dt.Die(2)).add_die(dt.Die(3))
 
     In [5]: str(table)
     Out[5]: '1D2\n1D3'
 
-    In [6]: table = table.add_die(100, dt.Die(2))
+    In [6]: table = table.add_die(dt.Die(2), 100)
 
-    In [7]: table = table.remove_die(99, dt.Die(2))
+    In [7]: table = table.remove_die(dt.Die(2), 99)
 
     In [17]: print(table)
     2D2
