@@ -1,6 +1,12 @@
 ###############
 dicetables v1.0
 ###############
+(version 1.0 is an intermediate version. it breaks the old API but has speed and
+modularity improvements. version 2.0 is a much bigger break from version 0.4.6 and
+there was no attempt to keep it with the old API. if i find improvements in speed
+for version 2.x, i should be able to apply them to 1.x as well, so this should be
+get the occasional update.)
+
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
