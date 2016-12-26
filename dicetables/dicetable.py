@@ -48,16 +48,16 @@ class DiceRecord(object):
     def get_number(self, query_die):
         return self._record.get(query_die, 0)
 
-    def add_die(self, die, number):
-        RecordVerifier.check_number(number)
+    def add_die(self, die, times):
+        RecordVerifier.check_number(times)
         new = self._record.copy()
-        new[die] = number + new.get(die, 0)
+        new[die] = times + new.get(die, 0)
         return DiceRecord(new)
 
-    def remove_die(self, die, number):
-        RecordVerifier.check_number(number)
+    def remove_die(self, die, times):
+        RecordVerifier.check_number(times)
         new = self._record.copy()
-        new[die] = new.get(die, 0) - number
+        new[die] = new.get(die, 0) - times
         return DiceRecord(new)
 
 
@@ -114,10 +114,10 @@ class DiceTable(AdditiveEvents):
         dictionary = self._create_constructor_dict(die, times, method_str='remove')
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
-    def _create_constructor_dice(self, die, number, method_str):
+    def _create_constructor_dice(self, die, times, method_str):
         methods = {'add_die': self._record.add_die,
                    'remove_die': self._record.remove_die}
-        new_record = methods[method_str](die, number)
+        new_record = methods[method_str](die, times)
         return new_record.get_dict()
 
 

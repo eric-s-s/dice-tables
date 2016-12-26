@@ -90,7 +90,7 @@ Here are basic table functions. note that times added defaults to one.::
 To get useful information, use EventsInformation object and EventsCalculations object::
 
     In [1]: table = dt.DiceTable.new()
-    In [2]: table = table.add_die(2, dt.StrongDie(dt.Die(2), 3))
+    In [2]: table = table.add_die(dt.StrongDie(dt.Die(2), 3), 2)
 
     In [3]: table.get_dict()
     Out[3]: {6: 1, 9: 2, 12: 1}
@@ -168,7 +168,7 @@ RichDiceTable which keeps a copy of these objects at .info and .calc calc_includ
     In [14]: r_table.calc.mean()
     Out[14]: 0.0
 
-    In [15]: r_table = r_table.add_die(100, dt.Die(6))
+    In [15]: r_table = r_table.add_die(dt.Die(6), 100)
 
     In [16]: r_table.info.events_range()
     Out[16]: (100, 600)
@@ -341,16 +341,16 @@ to pick the fastest combining algorithm. You can pick it yourself by calling ".c
 combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,
 but there's no record of it::
 
-    In [32]: three_D2 = dt.AdditiveEvents.new().combine_by_dictionary(3, dt.Die(2))
+    In [32]: three_D2 = dt.AdditiveEvents.new().combine_by_dictionary(dt.Die(2), 3)
 
     In [33]: also_three_D2 = dt.AdditiveEvents({3: 1, 4: 3, 5: 3, 6: 1})
 
-    In [34]: still_three_D2 = dt.AdditiveEvents.new().combine(3, dt.AdditiveEvents({1: 1, 2: 1})
+    In [34]: still_three_D2 = dt.AdditiveEvents.new().combine(dt.AdditiveEvents({1: 1, 2: 1}), 3)
 
     In [35]: three_D2.get_dict() == also_three_D2.get_dict() == still_three_D2.get_dict()
     Out[35]: True
 
-    In [36]: identity = three_D2.remove(3, dt.Die(2))
+    In [36]: identity = three_D2.remove(dt.Die(2), 3)
 
     In [37]: identity.get_dict() == dt.AdditiveEvents.new().get_dict()
     Out[37]: True
@@ -358,13 +358,13 @@ but there's no record of it::
     In [41]: print(three_D2)
     table from 3 to 6
 
-    In [42]: twenty_one_D2 = three_D2.combine_by_indexed_values(6, three_D2)
+    In [42]: twenty_one_D2 = three_D2.combine_by_indexed_values(three_D2, 6)
 
-    In [43]: twenty_one_D2_five_D4 = twenty_one_D2.combine_by_flattened_list(5, dt.Die(4))
+    In [43]: twenty_one_D2_five_D4 = twenty_one_D2.combine_by_flattened_list(dt.Die(4), 5)
 
-    In [44]: five_D4 = twenty_one_D2_five_D4.remove(21, dt.Die(2))
+    In [44]: five_D4 = twenty_one_D2_five_D4.remove(dt.Die(2), 21)
 
-    In [45]: dt.DiceTable.new().add_die(5, dt.Die(4)).get_dict() == five_D4.get_dict()
+    In [45]: dt.DiceTable.new().add_die(dt.Die(4), 5).get_dict() == five_D4.get_dict()
     Out[45]: True
 
 Since DiceTable is the child of AdditiveEvents, it can do all this combining and removing, but it won't be recorded
@@ -384,7 +384,7 @@ happens to be. To get consistent output, use "get_list".
 
     In [14]: old = dt.DiceTable.new()
 
-    In [16]: old = old.add_die(100, dt.Die(6))
+    In [16]: old = old.add_die(dt.Die(6), 100)
 
     In [17]: events_record = old.get_dict()
 
@@ -411,7 +411,7 @@ RichDiceTable.calc_includes_zeroes defaults to True. It is as follows.
 
     In [86]: r_table.calc_includes_zeroes = True
 
-    In [87]: r_table = r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+    In [87]: r_table = r_table.add_die(dt.StrongDie(dt.Die(2), 2))
 
     In [88]: print(r_table.calc.full_table_string())
     2: 1
@@ -493,7 +493,7 @@ EventsCalculations:
 
 ::
 
-    In[34]: table = dt.DiceTable.new().add_die(1000, dt.Die(6))
+    In[34]: table = dt.DiceTable.new().add_die(dt.Die(6), 1000)
 
     In[35]: calc = dt.EventsCalculations(table)
 
@@ -525,7 +525,7 @@ two for the price of one. It's accessed with the property
 EventsCalculations.info .
 ::
 
-    In[4]: table.add_die(1, dt.StrongDie(dt.Die(3), 2))
+    In[4]: table.add_die(dt.StrongDie(dt.Die(3), 2))
 
     In[5]: calc = dt.EventsCalculations(table, True)
 
@@ -595,6 +595,7 @@ your new class and if it fails, will return the closest related type::
       ...:     def __init__(self, name, number, events_dict, dice_data):
       ...:         self.name = name
       ...:         self._num = number
+      ...:         super(B, self).__init__(events_dict, dice_data)
       ...:     def get_num(self):
       ...:         return self._num
       ...:
@@ -603,15 +604,40 @@ your new class and if it fails, will return the closest related type::
 
     In[8]: class C(dt.DiceTable):
       ...:     factory_keys = ('dictionary', 'dice')
-      ...:     def fancy_add_die(self, times, die):
-      ...:         new = self.add_die(times, die)
+      ...:     def fancy_add_die(self, die, times):
+      ...:         new = self.add_die(die, times)
       ...:         return 'so fancy', new
       ...:
-    In[9]: x = C.new().fancy_add_die(2, dt.Die(3))
+    In[9]: x = C.new().fancy_add_die(dt.Die(3), 2)
     In[10]: x[1].get_dict()
     Out[10]: {2: 1, 3: 2, 4: 3, 5: 2, 6: 1}
     In[11]: x
     Out[11]: ('so fancy', <__main__.C at 0x5eb4d68>)  <-- notice it returned C and not DiceTable
+
+The other way to do this is to directly add the class to the EventsFactory::
+
+    In[49]: factory = dt.factory.eventsfactory.EventsFactory
+
+    In[50]: factory.add_getter('number', 'get_num', 0, 'method')
+
+    In[51]: class A(dt.DiceTable):
+       ...:     def __init__(self, number, events_dict, dice):
+       ...:         self._num = number
+       ...:         super(A, self).__init__(events_dict, dice)
+       ...:     def get_num(self):
+       ...:         return self._num
+       ...:
+
+    In[53]: factory.add_class(A, ('number', 'dictionary', 'dice'))
+
+    In[55]: A.new()
+    Out[55]: <__main__.A at 0x5f951d0>
+
+    In[63]: factory.reset()
+
+    In[64]: factory.has_class(A)
+    Out[64]: False
+
 
 Top_
 
@@ -664,11 +690,9 @@ Here's how to add 0 one time (which does nothing, btw)::
 
 StrongDie also has a weird case that can be unpredictable.  Basically, don't multiply by zero::
 
-    In [43]: table = dt.DiceTable.new()
+    In [44]: table = dt.DiceTable.new().add_die(dt.Die(6))
 
-    In [44]: table = table.add_die(1, dt.Die(6))
-
-    In [45]: table = table.add_die(100, dt.StrongDie(dt.Die(100), 0))
+    In [45]: table = table.add_die(dt.StrongDie(dt.Die(100), 0), 100)
 
     In [46]: table.get_dict()
 
@@ -678,15 +702,17 @@ StrongDie also has a weird case that can be unpredictable.  Basically, don't mul
     1D6
     (100D100)X(0)
 
-    In [48]: table = table.add_die(2, dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)) <- this rolls zero with weight 4
+    In [48]: stupid_die = dt.StrongDie(dt.ModWeightedDie({1: 2, 3: 4}, -1), 0)
 
-    In [49]: print(table)
+    In [49]: table = table.add_die(stupid_die, 2) <- this rolls zero with weight 4
+
+    In [50]: print(table)
     (2D3-2  W:6)X(0)
     1D6
     (100D100)X(0)
 
-    In [50]: table.get_dict()
-    Out[50]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's just stupid.
+    In [51]: table.get_dict()
+    Out[51]: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16} <- this is correct, it's just stupid.
 
 
 "remove_die" and "add_die" are safe. They raise an error if you
@@ -698,40 +724,51 @@ but i make no guarantees.
 If you use "remove" to remove what you haven't added,
 it may or may not raise an error, but it's guaranteed buggy::
 
-    In [19]: table = dt.DiceTable.new().add_die(1, dt.Die(6))
+    In [19]: table = dt.DiceTable.new().add_die(dt.Die(6))
 
-    In [21]: table = table.remove_die(4, dt.Die(6))
+    In [21]: table = table.remove_die(dt.Die(6), 4)
     dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(6): -3
 
-    In [22]: table = table.remove_die(1, dt.Die(10))
+    In [22]: table = table.remove_die(dt.Die(10))
     dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(10): -1
 
-    In [26]: table = table.add_die(-3, dt.Die(6))
+    In [26]: table = table.add_die(dt.Die(6), -3)
     dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
 
-    In [27]: table = table.remove_die(-3, dt.Die(6))
+    In [27]: table = table.remove_die(dt.Die(6), -3)
     dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
 
     In [28]: table.get_dict()
     Out[28]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
-    In [29]: table = table.combine(-100, dt.Die(10000))
+    In [29]: table = table.combine(dt.Die(10000), -100)
 
     In [30]: table.get_dict()
     Out[30]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 
-    In [31]: table = table.remove(10, dt.Die(2))
+    In [31]: table = table.remove(dt.Die(2), 10)
     ValueError: min() arg is an empty sequence <-didn't know this would happen, but at least failed loudly
 
-    In [32]: table = table.remove(2, dt.Die(2))
+    In [32]: table = table.remove(dt.Die(2), 2)
 
     In [33]: table.get_dict()
     Out[33]: {-1: 1, 1: 1} <-bad. this is a random answer
 
-    In [34]: table = table.remove(1, dt.AdditiveEvents({-5: 100}))
+    (I know why you're about to get wacky and inaccurate errors, and I could fix the bug, except ...
+     YOU SHOULD NEVER EVER DO THIS!!!!)
+    In [34]: table = table.remove(dt.AdditiveEvents({-5: 100}))
+    dicetables.tools.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
-    In [35]: table.get_dict()
-    Out[35]: {} <-very bad. this is an illegal answer.
+    During handling of the above exception, another exception occurred:
+
+    dicetables.factory.errorhandler.EventsFactoryError: Error Code: SIGNATURES DIFFERENT
+    Factory:    <class 'dicetables.factory.eventsfactory.EventsFactory'>
+    Error At:   <class 'dicetables.dicetable.DiceTable'>
+    Attempted to construct a class already present in factory, but with a different signature.
+    Class: <class 'dicetables.dicetable.DiceTable'>
+    Signature In Factory: ('dictionary', 'dice')
+    To reset the factory to its base state, use EventsFactory.reset()
+
 
 Since you can instantiate a DiceTable with any legal input,
 you can make a table with utter nonsense. It will work horribly.
@@ -745,7 +782,7 @@ for instance, the dictionary for 2D6 is:
     In[23]: print(nonsense)  <- the dice record says it has 2D6, but the events dictionary is WRONG
     2D6
 
-    In[24]: nonsense = nonsense.remove_die(2, dt.Die(6))  <- so here's your error. I hope you're happy.
+    In[24]: nonsense = nonsense.remove_die(dt.Die(6), 2)  <- so here's your error. I hope you're happy.
     ValueError: min() arg is an empty sequence
 
 But, you cannot instantiate a DiceTable with negative values for dice.
@@ -762,12 +799,12 @@ Calling combine_by_flattened_list can be risky::
 
     In [36]: x = dt.AdditiveEvents({1:1, 2: 5})
 
-    In [37]: x = x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4}))
+    In [37]: x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4}), 5)
 
-    In [39]: x = x.combine_by_flattened_list(5, dt.AdditiveEvents({1: 2, 3: 4*10**10}))
+    In [39]: x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4*10**10}), 5)
     MemoryError
 
-    In [42]: x = x.combine_by_flattened_list(1, dt.AdditiveEvents({1: 2, 3: 4*10**700}))
+    In [42]: x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4*10**700}))
     OverflowError: cannot fit 'int' into an index-sized integer
 
 Top_
@@ -778,7 +815,13 @@ CHANGES
 ---------------------------------
 from version 0.4.6 to version 1.0
 ---------------------------------
-There are several major changes:
+There are several major changes. An important side-effect of these changes is that dicetables is now
+much more modular and ready for change.  It is now possible to speed up the algorithms and push those
+changes without further affecting the API.  (speeds have already been doubled for large adds).
+
+Version 1.0 is just an intermediary to allow some of the useful changes without breaking the API too badly.
+If any really astounding changes happen, I will try to adapt them to the 1.X versions too, but any further work will
+be done on 2.X versions.
 
 - Modules and classes  and methods got renamed. see the dictionary at the bottom. There are new classes
 - DiceTable.__init__() now takes arguments. The class method DiceTable.new() creates an empty table.
@@ -886,19 +929,28 @@ Top_
 -------------------------------
 from version 1.0 to version 2.0
 -------------------------------
-There should only be two API changes from version 1.0 to 2.0
+"When you break the rules, break 'em good and hard" - Gytha Ogg
+
+There are 3 large changes. They affect speed slightly for the worse in the microseconds range (small numbers of adds)
+and double the speed in the large adds range.
+
+- add_die, remove_die, all combines and remove now follow the signature add_die(die, times=1).
+  it's better writing and allows for easily adding/removing one time without confusion.  Since
+  the changes are so drastic, one more couldn't hurt.
 
 - all children of AdditiveEvents are immutable. This can have some interesting
   inheritance effects. See Inheritance_.
 
-- DiceTable does not take a list of [(die, number), ...]. It now take a dictionary of {die: number}.
+- DiceTable does not take a list of [(die, number), ...]. It now takes a dictionary of {die: number}.
+  To get the correct data to build a new table, use DiceTable.get_dict() and DiceTable.dice_data() .
+
 - Removed wrapper functions: graph_pts, graph_pts_overflow, format_number
 
 ::
 
     in [12]: new = dt.AdditiveEvents.new()
 
-    in [12]: new.combine(2, dt.AdditiveEvents({1: 1, 2: 5}))
+    in [12]: new.combine(dt.AdditiveEvents({1: 1, 2: 5}), 2)
     Out[13]: <dicetables.baseevents.AdditiveEvents at 0x5e73828>
 
     In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, {dt.Die(3): 1})
