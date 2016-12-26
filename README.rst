@@ -395,7 +395,7 @@ happens to be. To get consistent output, use "get_list".
     In [20]: print(new)
     100D6
 
-    In [21]: also_new = dt.RichDiceTable(new.get_list(), {dt.Die(6): 100}, calc_includes_zeroes=False)
+    In [21]: also_new = dt.RichDiceTable(new.get_dict(), {dt.Die(6): 100}, calc_includes_zeroes=False)
 
     In [46]: old.get_dict() == new.get_dict() == also_new.get_dict()
     Out[46]: True
