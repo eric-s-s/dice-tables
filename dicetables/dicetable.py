@@ -127,10 +127,10 @@ def format_die_info(die, number):
     return adjusted_info
 
 
-class RichDiceTable(DiceTable):
+class DetailedDiceTable(DiceTable):
 
     def __init__(self, events_dict, dice_number_dict, calc_includes_zeroes=True):
-        super(RichDiceTable, self).__init__(events_dict, dice_number_dict)
+        super(DetailedDiceTable, self).__init__(events_dict, dice_number_dict)
         self._calc = EventsCalculations(self, calc_includes_zeroes)
 
     @property

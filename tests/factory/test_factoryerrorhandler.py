@@ -103,7 +103,7 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
             '\n' +
             'Attempted to construct a class unrelated, in any way, to any class in the factory.\n' +
             'EventsFactory can currently construct the following classes:\n' +
-            '[\'AdditiveEvents\', \'DiceTable\', \'RichDiceTable\']\n' +
+            '[\'AdditiveEvents\', \'DetailedDiceTable\', \'DiceTable\']\n' +
             'EventsFactory searched the MRO of <class \'tests.factory.test_factoryerrorhandler.StandInForBadClass\'>,\n'
             + 'and found no matches to the classes in the factory.\n'
         )

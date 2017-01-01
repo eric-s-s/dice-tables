@@ -7,7 +7,7 @@ from sys import version_info
 from itertools import cycle
 
 from dicetables.baseevents import AdditiveEvents
-from dicetables.dicetable import DiceTable, RichDiceTable
+from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die
 from dicetables.factory.eventsfactory import EventsFactory, Loader, LoaderError
 from dicetables.factory.errorhandler import EventsFactoryError
@@ -202,7 +202,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_get_keys(self):
         class X(object):
             pass
-        classes = ['AdditiveEvents', 'DiceTable', 'RichDiceTable']
+        classes = ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable']
         getters = ['calc_bool', 'dice', 'dictionary']
         self.assertEqual(EventsFactory.get_keys(), (classes, getters))
 
@@ -220,7 +220,7 @@ class TestEventsFactory(unittest.TestCase):
         self.assertTrue(EventsFactory.has_class(Bob))
         self.assertTrue(EventsFactory.has_getter('number'))
         EventsFactory.reset()
-        default_classes = ['AdditiveEvents', 'DiceTable', 'RichDiceTable']
+        default_classes = ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable']
         default_getters = ['calc_bool', 'dice', 'dictionary']
         self.assertEqual(EventsFactory.get_keys(), (default_classes, default_getters))
 
@@ -405,9 +405,9 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(new.get_dict(), {0: 1})
         self.assertEqual(new.get_list(), [])
 
-    def test_EventsFactory_new_RichDiceTable(self):
-        new = EventsFactory.new(RichDiceTable)
-        self.assertIs(type(new), RichDiceTable)
+    def test_EventsFactory_new_DetailedDiceTable(self):
+        new = EventsFactory.new(DetailedDiceTable)
+        self.assertIs(type(new), DetailedDiceTable)
         self.assertEqual(new.get_dict(), {0: 1})
         self.assertEqual(new.get_list(), [])
         self.assertTrue(new.calc_includes_zeroes)
@@ -425,10 +425,10 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [])
 
-    def test_EventsFactory_from_dict_RichDiceTable(self):
-        events = RichDiceTable.new()
+    def test_EventsFactory_from_dict_DetailedDiceTable(self):
+        events = DetailedDiceTable.new()
         new_events = EventsFactory.from_dictionary(events, {1: 1})
-        self.assertIs(type(new_events), RichDiceTable)
+        self.assertIs(type(new_events), DetailedDiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [])
         self.assertTrue(new_events.calc_includes_zeroes)
@@ -440,10 +440,10 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
 
-    def test_EventsFactory_from_dict_and_dice_RichDiceTable(self):
-        events = RichDiceTable({2: 2}, {}, False)
+    def test_EventsFactory_from_dict_and_dice_DetailedDiceTable(self):
+        events = DetailedDiceTable({2: 2}, {}, False)
         new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
-        self.assertIs(type(new_events), RichDiceTable)
+        self.assertIs(type(new_events), DetailedDiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
         self.assertFalse(new_events.calc_includes_zeroes)
@@ -569,7 +569,7 @@ class TestEventsFactory(unittest.TestCase):
             bob_insert = ''
         bob = 'tests.factory.test_eventsfactory.{}Bob'.format(bob_insert)
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
-        factory_classes = '[\'AdditiveEvents\', \'DiceTable\', \'RichDiceTable\']'
+        factory_classes = '[\'AdditiveEvents\', \'DetailedDiceTable\', \'DiceTable\']'
         expected = (bob, factory_name, factory_classes)
 
         class Bob(object):
@@ -598,13 +598,13 @@ class TestEventsFactory(unittest.TestCase):
         self.assertIs(EventsFactory._class_args, C._class_args)
         self.assertIs(B._getters, A._getters)
         B.add_class(int, ('dice', ))
-        self.assertEqual(EventsFactory.get_keys()[0], ['AdditiveEvents', 'DiceTable', 'RichDiceTable'])
-        self.assertEqual(C.get_keys()[0], ['AdditiveEvents', 'DiceTable', 'RichDiceTable', 'int'])
+        self.assertEqual(EventsFactory.get_keys()[0], ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable'])
+        self.assertEqual(C.get_keys()[0], ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable', 'int'])
         EventsFactory.reset()
         self.assertIs(EventsFactory._getters, A._getters)
         A.reset()
         self.assertIsNot(EventsFactory._getters, A._getters)
-        self.assertEqual(B.get_keys()[0], ['AdditiveEvents', 'DiceTable', 'RichDiceTable', 'int'])
+        self.assertEqual(B.get_keys()[0], ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable', 'int'])
         C.reset()
         self.assertIsNot(B._getters, C._getters)
 
@@ -641,11 +641,11 @@ class TestEventsFactory(unittest.TestCase):
                 self._dice_first = True
                 return answer
 
-            def combine(self, events, times):
+            def combine(self, events, times=1):
                 self._dice_first = False
                 return super(DoubleTable, self).combine(events, times)
 
-            def remove(self, events, times):
+            def remove(self, events, times=1):
                 self._dice_first = False
                 return super(DoubleTable, self).remove(events, times)
 

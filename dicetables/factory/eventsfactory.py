@@ -36,7 +36,7 @@ class EventsFactory(object):
 
     __default_class_args = {'AdditiveEvents': ('dictionary',),
                             'DiceTable': ('dictionary', 'dice'),
-                            'RichDiceTable': ('dictionary', 'dice', 'calc_bool')}
+                            'DetailedDiceTable': ('dictionary', 'dice', 'calc_bool')}
 
     _getters = StaticDict(__default_getters)
     _class_args = StaticDict(__default_class_args)
