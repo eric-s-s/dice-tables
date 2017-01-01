@@ -107,10 +107,10 @@ class DiceTable(AdditiveEvents):
         self.remove(number, die)
 
 
-class RichDiceTable(DiceTable):
+class DetailedDiceTable(DiceTable):
 
     def __init__(self, input_dict, dice_list, calc_includes_zeroes=True):
-        super(RichDiceTable, self).__init__(input_dict, dice_list)
+        super(DetailedDiceTable, self).__init__(input_dict, dice_list)
         self._zeroes_bool = None
         self.calc_includes_zeroes = calc_includes_zeroes
 

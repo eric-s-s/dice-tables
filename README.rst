@@ -24,7 +24,7 @@ contents:
 - THE BASICS
 - Die Classes
 - AdditiveEvents And IntegerEvents
-- DiceTable And RichDiceTable
+- DiceTable And DetailedDiceTable
 - EventsInformation And EventsCalculations
 - HOW TO GET ERRORS AND BUGS
 - CHANGES
@@ -159,7 +159,7 @@ To get useful information, use EventsInformation object and EventsCalculations o
     Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
 
 Please note that these objects do not follow changes to the DiceTable. You can use
-RichDiceTable which keeps a copy of these objects at .info and .calc::
+DetailedDiceTable which keeps a copy of these objects at .info and .calc::
 
     In [3]: table = dt.DiceTable.new()
 
@@ -184,20 +184,20 @@ RichDiceTable which keeps a copy of these objects at .info and .calc::
     In [20]: dt.EventsInformation(table).events_range()
     Out[20]: (100, 600)
 
-    In [12]: r_table = dt.RichDiceTable.new()
+    In [12]: d_table = dt.DetailedDiceTable.new()
 
-    In [13]: r_table.info.events_range()
+    In [13]: d_table.info.events_range()
     Out[13]: (0, 0)
 
-    In [14]: r_table.calc.mean()
+    In [14]: d_table.calc.mean()
     Out[14]: 0.0
 
-    In [15]: r_table.add_die(100, dt.Die(6))
+    In [15]: d_table.add_die(100, dt.Die(6))
 
-    In [16]: r_table.info.events_range()
+    In [16]: d_table.info.events_range()
     Out[16]: (100, 600)
 
-    In [17]: r_table.calc.mean()
+    In [17]: d_table.calc.mean()
     Out[17]: 350.0
 
 
@@ -379,9 +379,9 @@ but there's no record of it::
     Out[45]: False
 
 ---------------------------
-DiceTable And RichDiceTable
+DiceTable And DetailedDiceTable
 ---------------------------
-You can instantiate any DiceTable or RichDiceTable with any data you like.
+You can instantiate any DiceTable or DetailedDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
 ::
 
@@ -398,7 +398,7 @@ This allows you to create a DiceTable from stored information or to copy.
     In [20]: print(new)
     100D6
 
-    In [21]: also_new = dt.RichDiceTable(new.get_list(), [(dt.Die(6), 100)], calc_includes_zeroes=False)
+    In [21]: also_new = dt.DetailedDiceTable(new.get_list(), [(dt.Die(6), 100)], calc_includes_zeroes=False)
 
     In [46]: old.get_dict() == new.get_dict() == also_new.get_dict()
     Out[46]: True
@@ -408,40 +408,40 @@ This allows you to create a DiceTable from stored information or to copy.
 
 
 To get an identity table,
-use the class method DiceTable.new() or RichDiceTable.new().
+use the class method DiceTable.new() or DetailedDiceTable.new().
 This creates a table with an empty dice record and the events
 identity {0: 1}.
 
-RichDiceTable.calc_includes_zeroes is as follows.
+DetailedDiceTable.calc_includes_zeroes is as follows.
 ::
 
-    In [85]: r_table = dt.RichDiceTable.new()
+    In [85]: d_table = dt.DetailedDiceTable.new()
 
-    In [91]: r_table.calc_includes_zeroes = True
+    In [91]: d_table.calc_includes_zeroes = True
 
-    In [88]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+    In [88]: d_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
 
-    In [89]: print(r_table.calc.full_table_string())
+    In [89]: print(d_table.calc.full_table_string())
     2: 1
     3: 0
     4: 1
 
-    In [91]: r_table.calc_includes_zeroes = False
+    In [91]: d_table.calc_includes_zeroes = False
 
-    In [92]: print(r_table.calc.full_table_string())
+    In [92]: print(d_table.calc.full_table_string())
     2: 1
     4: 1
 
-    In [93]: r_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+    In [93]: d_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
 
-    In [94]: print(r_table.calc.full_table_string())
+    In [94]: print(d_table.calc.full_table_string())
     4: 1
     6: 2
     8: 1
 
-    In [95]: r_table.calc_includes_zeroes = True
+    In [95]: d_table.calc_includes_zeroes = True
 
-    In [96]: print(r_table.calc.full_table_string())
+    In [96]: print(d_table.calc.full_table_string())
     4: 1
     5: 0
     6: 2
@@ -688,7 +688,7 @@ The following classes have been added:
 - baseevents.InvalidEventsError
 - dicetable.DiceRecordError
 - baseevents.IntegerEvents
-- dicetable.RichDiceTable
+- dicetable.DetailedDiceTable
 - eventsinfo.EventsInformation
 - eventsinfo.EventsCalculations
 
