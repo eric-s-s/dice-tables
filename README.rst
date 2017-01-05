@@ -211,6 +211,7 @@ You may also access this functionality with wrapper functions:
 - full_table_string
 - percentage_points
 - percentage_axe
+
 ::
 
     In [43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
@@ -378,9 +379,10 @@ but there's no record of it::
     In [45]: second.get_dict() == first.get_dict()
     Out[45]: False
 
----------------------------
+
+-------------------------------
 DiceTable And DetailedDiceTable
----------------------------
+-------------------------------
 You can instantiate any DiceTable or DetailedDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
 ::
