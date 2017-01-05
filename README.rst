@@ -372,9 +372,9 @@ in the dice record.
 
 Top_
 
----------------------------
+-------------------------------
 DiceTable And DetailedDiceTable
----------------------------
+-------------------------------
 You can instantiate any DiceTable or DetailedDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
 Please note that the "dice_data" method is ambiguously named on purpose. It's
