@@ -6,7 +6,7 @@ def readme():
 
 setup(name='dicetables',
       version='2.0.1',
-      description='dice statistics module',
+      description='get all combinations for any set of dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
       url='http://github.com/eric-s-s/dice-tables',

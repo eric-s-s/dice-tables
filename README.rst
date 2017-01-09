@@ -22,6 +22,8 @@ contents:
 - `Inheritance`_
 - `HOW TO GET ERRORS AND BUGS`_
 - `CHANGES`_
+    - `0.4_to_1.0`_
+    - `1.0_to_2.0`_
 
 .. _Top:
 
@@ -812,9 +814,17 @@ Top_
 =======
 CHANGES
 =======
+
+0.4_to_1.0_
+
+1.0_to_2.0_
+
 ---------------------------------
 from version 0.4.6 to version 1.0
 ---------------------------------
+
+.. _0.4_to_1.0:
+
 There are several major changes. An important side-effect of these changes is that dicetables is now
 much more modular and ready for change.  It is now possible to speed up the algorithms and push those
 changes without further affecting the API.  (speeds have already been doubled for large adds).
@@ -929,14 +939,16 @@ Top_
 -------------------------------
 from version 1.0 to version 2.0
 -------------------------------
-"When you break the rules, break 'em good and hard" - Gytha Ogg
+
+.. _1.0_to_2.0:
 
 There are 3 large changes. They affect speed slightly for the worse in the microseconds range (small numbers of adds)
 and double the speed in the large adds range.
 
 - add_die, remove_die, all combines and remove now follow the signature add_die(die, times=1).
-  it's better writing and allows for easily adding/removing one time without confusion.  Since
-  the changes are so drastic, one more couldn't hurt.
+  It takes care of inconsistencies in the API: all output was (events, times) and now input is the same.
+  It allows for easily adding/removing one time without confusion.  Since
+  the other changes were so drastic, one more couldn't hurt.
 
 - all children of AdditiveEvents are immutable. This can have some interesting
   inheritance effects. See Inheritance_.
