@@ -1,36 +1,30 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the baseevents.py module"""
 from __future__ import absolute_import
 from sys import version_info
 import unittest
-from dicetables.baseevents import AdditiveEvents, InvalidEventsError, InputVerifier, scrub_zeroes
+from dicetables.baseevents import AdditiveEvents, InvalidEventsError, EventsVerifier, scrub_zeroes
 
 
 class TestBaseEvents(unittest.TestCase):
     def setUp(self):
-        self.identity = AdditiveEvents({0: 1})
-        self.identity_b = AdditiveEvents({0: 1})
-        self.checker = InputVerifier()
+        self.checker = EventsVerifier()
         self.types_error = 'all values must be ints'
         if version_info[0] < 3:
             self.types_error += ' or longs'
 
     def tearDown(self):
-        del self.identity
-        del self.identity_b
         del self.checker
         del self.types_error
 
     def assert_my_regex(self, error_type, regex, func, *args):
         with self.assertRaises(error_type) as cm:
             func(*args)
-        error_msg = str(cm.exception)
+        error_msg = cm.exception.args[0]
         self.assertEqual(error_msg, regex)
 
     def test_assert_my_regex(self):
         self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
 
-    #  InputVerifier tests
     def test_InvalidEventsError_empty(self):
         error = InvalidEventsError()
         self.assertEqual(str(error), '')
@@ -84,7 +78,9 @@ class TestBaseEvents(unittest.TestCase):
     def test_scrub_zeroes_zeroes_in_dict(self):
         self.assertEqual(scrub_zeroes({1: 2, 3: 0, 4: 1, 5: 0}), {1: 2, 4: 1})
 
-    #  AdditiveEvents tests
+    def test_AdditiveEvents__class_method__new(self):
+        self.assertEqual(AdditiveEvents.new().get_dict(), {0: 1})
+
     def test_AdditiveEvents_init_zero_occurrences_dict_raises_error(self):
         self.assertRaises(InvalidEventsError, AdditiveEvents, {1: 0, 2: 0})
 
@@ -108,6 +104,12 @@ class TestBaseEvents(unittest.TestCase):
         dictionary[1] = 100
         self.assertEqual(AdditiveEvents({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
 
+    def test_AdditiveEvents_input_dict_mutation_has_no_effect(self):
+        input_dict = {1: 1}
+        events = AdditiveEvents(input_dict)
+        input_dict[1] = 'banana'
+        self.assertEqual(events.get_dict(), {1: 1})
+
     def test_AdditiveEvents_string_returns_min_to_max(self):
         table = AdditiveEvents({-1: 1, 2: 1, 5: 1})
         self.assertEqual(str(table), 'table from -1 to 5')
@@ -117,95 +119,120 @@ class TestBaseEvents(unittest.TestCase):
         self.assertEqual(str(table), 'table from -1 to 1')
 
     def test_AdditiveEvents_combine_negative_times_does_nothing(self):
-        identity = AdditiveEvents({0: 1})
-        identity.combine(-1, AdditiveEvents({1: 1}))
-        self.assertEqual(identity.get_dict(), {0: 1})
+        new = AdditiveEvents.new().combine(AdditiveEvents({1: 1}), -1)
+        self.assertEqual(new.get_dict(), {0: 1})
 
     def test_AdditiveEvents_combine_by_dictionary(self):
         to_combine = AdditiveEvents({1: 2, 2: 2})
-        self.identity.combine_by_dictionary(1, to_combine)
-        self.assertEqual(self.identity.get_dict(), to_combine.get_dict())
+        new = AdditiveEvents.new().combine_by_dictionary(to_combine, 1)
+        self.assertEqual(new.get_dict(), to_combine.get_dict())
 
     def test_AdditiveEvents_combine_by_flattened_list(self):
         to_combine = AdditiveEvents({1: 1, 2: 2})
-        self.identity.combine_by_flattened_list(1, to_combine)
-        self.assertEqual(self.identity.get_dict(), to_combine.get_dict())
+        new = AdditiveEvents.new().combine_by_flattened_list(to_combine, 1)
+        self.assertEqual(new.get_dict(), to_combine.get_dict())
 
     def test_AdditiveEvents_combine_by_indexed_values(self):
         to_combine = AdditiveEvents({1: 1, 2: 2})
-        self.identity.combine_by_indexed_values(1, to_combine)
-        self.assertEqual(self.identity.get_dict(), to_combine.get_dict())
+        new = AdditiveEvents.new().combine_by_indexed_values(to_combine, 1)
+        self.assertEqual(new.get_dict(), to_combine.get_dict())
 
     def test_AdditiveEvents_combine(self):
         to_combine = AdditiveEvents({1: 1, 2: 2})
-        self.identity.combine(1, to_combine)
-        self.assertEqual(self.identity.get_dict(), to_combine.get_dict())
+        new = AdditiveEvents.new().combine(to_combine, 1)
+        self.assertEqual(new.get_dict(), to_combine.get_dict())
 
     def test_AdditiveEvents_combine_works_with_low_total_occurrences_events(self):
         low_ratio_events = AdditiveEvents({1: 1, 2: 1})
-        self.identity.combine(1, low_ratio_events)
-        self.assertEqual(self.identity.get_dict(), low_ratio_events.get_dict())
+        new = AdditiveEvents.new().combine(low_ratio_events, 1)
+        self.assertEqual(new.get_dict(), low_ratio_events.get_dict())
 
     def test_AdditiveEvents_combine_works_with_high_total_occurrences_events(self):
         high_ratio_dict = {1: 10 ** 1000, 2: 10 ** 1000}
-        self.identity.combine(1, AdditiveEvents(high_ratio_dict))
-        self.assertEqual(self.identity.get_dict(), high_ratio_dict)
+        new = AdditiveEvents.new().combine(AdditiveEvents(high_ratio_dict), 1)
+        self.assertEqual(new.get_dict(), high_ratio_dict)
 
     def test_AdditiveEvents_one_multiple_combine_is_multiple_single_combines(self):
         to_add = AdditiveEvents({1: 2, 3: 4})
-        self.identity.combine(1, to_add)
-        self.identity.combine(1, to_add)
-        self.identity_b.combine(2, to_add)
-        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
+        one = AdditiveEvents.new().combine(to_add, 1)
+        two = one.combine(to_add, 1)
+        two_alt = AdditiveEvents.new().combine(to_add, 2)
+        self.assertEqual(two.get_dict(), two_alt.get_dict())
 
     def test_AdditiveEvents_combine_combines_correctly(self):
         to_add = AdditiveEvents({1: 2, 2: 2})
-        self.identity.combine(2, to_add)
-        self.assertEqual(self.identity.get_dict(), {2: 4, 3: 8, 4: 4})
+        new = AdditiveEvents.new().combine(to_add, 2)
+        self.assertEqual(new.get_dict(), {2: 4, 3: 8, 4: 4})
 
     def test_AdditiveEvents_combine_works_with_long_large_number_list(self):
         silly_dict = dict.fromkeys(range(-1000, 1000), 10 ** 1000)
         to_add = AdditiveEvents(silly_dict)
-        self.identity.combine(1, to_add)
-        self.assertEqual(self.identity.get_dict(), silly_dict)
+        new = AdditiveEvents.new().combine(to_add, 1)
+        self.assertEqual(new.get_dict(), silly_dict)
 
     def test_AdditiveEvents_remove_removes_correctly(self):
         arbitrary_events = AdditiveEvents({-5: 3, 4: 10, 7: 1})
-        self.identity.combine(5, arbitrary_events)
-        self.identity_b.combine(10, arbitrary_events)
-        self.identity_b.remove(5, arbitrary_events)
-        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
+        five_a = AdditiveEvents.new().combine(arbitrary_events, 5)
+        ten_b = AdditiveEvents.new().combine(arbitrary_events, 10)
+        five_b = ten_b.remove(arbitrary_events, 5)
+        self.assertEqual(five_a.get_dict(), five_b.get_dict())
 
     def test_AdditiveEvents_remove_works_for_large_numbers(self):
         arbitrary_large_events = AdditiveEvents({-5: 10 ** 500, 0: 5 * 10 ** 700, 3: 2 ** 1000})
-        self.identity.combine(1, arbitrary_large_events)
-        self.identity_b.combine(2, arbitrary_large_events)
-        self.identity_b.remove(1, arbitrary_large_events)
-        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
+        one_large = AdditiveEvents.new().combine(arbitrary_large_events, 1)
+        two_large = AdditiveEvents.new().combine(arbitrary_large_events, 2)
+        alt_one_large = two_large.remove(arbitrary_large_events, 1)
+        self.assertEqual(one_large.get_dict(), alt_one_large.get_dict())
 
     def test_AdditiveEvents_combine_works_regardless_of_order(self):
         arbitrary_a = AdditiveEvents({1: 2, 3: 10 ** 456})
         arbitrary_b = AdditiveEvents({-1: 2, 0: 5})
-        self.identity.combine(1, arbitrary_a)
-        self.identity.combine(2, arbitrary_b)
-        self.identity_b.combine(2, arbitrary_b)
-        self.identity_b.combine(1, arbitrary_a)
-        self.assertEqual(self.identity.get_dict(),
-                         self.identity_b.get_dict())
+        one_a = AdditiveEvents.new().combine(arbitrary_a, 1)
+        one_a_two_b = one_a.combine(arbitrary_b, 2)
+        two_b = AdditiveEvents.new().combine(arbitrary_b, 2)
+        two_b_one_a = two_b.combine(arbitrary_a, 1)
+        self.assertEqual(one_a_two_b.get_dict(),
+                         two_b_one_a.get_dict())
 
     def test_AdditiveEvents_remove_removes_same_regardless_of_order(self):
         arbitrary_a = AdditiveEvents({-1: 2, 3: 5})
         arbitrary_b = AdditiveEvents({0: 9, 100: 4})
-        self.identity.combine(5, arbitrary_a)
-        self.identity.combine(5, arbitrary_b)
-        self.identity.remove(3, arbitrary_a)
-        self.identity.remove(3, arbitrary_b)
-        self.identity.remove(1, arbitrary_b)
-        self.identity.remove(1, arbitrary_a)
+        five_a = AdditiveEvents.new().combine(arbitrary_a, 5)
+        five_a_five_b = five_a.combine(arbitrary_b, 5)
+        two_a_five_b = five_a_five_b.remove(arbitrary_a, 3)
+        two_a_two_b = two_a_five_b.remove(arbitrary_b, 3)
+        two_a_one_b = two_a_two_b.remove(arbitrary_b, 1)
+        one_a_one_b = two_a_one_b.remove(arbitrary_a, 1)
 
-        self.identity_b.combine(1, arbitrary_b)
-        self.identity_b.combine(1, arbitrary_a)
-        self.assertEqual(self.identity.get_dict(), self.identity_b.get_dict())
+        one_b = AdditiveEvents.new().combine(arbitrary_b, 1)
+        one_b_one_a = one_b.combine(arbitrary_a, 1)
+        self.assertEqual(one_a_one_b.get_dict(), one_b_one_a.get_dict())
+
+    def test_AdditiveEvents_combine_defaults_to_one_time(self):
+        to_use = AdditiveEvents({1: 2})
+        test = AdditiveEvents.new().combine(to_use)
+        self.assertEqual(test.get_dict(), {1: 2})
+
+    def test_AdditiveEvents_combine_by_dictionary_defaults_to_one_time(self):
+        to_use = AdditiveEvents({1: 2})
+        test = AdditiveEvents.new().combine_by_dictionary(to_use)
+        self.assertEqual(test.get_dict(), {1: 2})
+
+    def test_AdditiveEvents_combine_by_indexed_values_defaults_to_one_time(self):
+        to_use = AdditiveEvents({1: 2})
+        test = AdditiveEvents.new().combine_by_indexed_values(to_use)
+        self.assertEqual(test.get_dict(), {1: 2})
+
+    def test_AdditiveEvents_combine_by_flattened_list_defaults_to_one_time(self):
+        to_use = AdditiveEvents({1: 2})
+        test = AdditiveEvents.new().combine_by_flattened_list(to_use)
+        self.assertEqual(test.get_dict(), {1: 2})
+
+    def test_AdditiveEvents_remove_defaults_to_one_time(self):
+        to_use = AdditiveEvents({1: 2})
+        test = AdditiveEvents({1: 2}).remove(to_use)
+        self.assertEqual(test.get_dict(), {0: 1})
+
 
 
 if __name__ == '__main__':

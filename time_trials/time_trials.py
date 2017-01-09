@@ -24,16 +24,17 @@ def combine_trial(times, new_events, method, the_object):
                    'dictionary': the_object.combine_by_dictionary,
                    'indexed_values': the_object.combine_by_indexed_values,
                    'flattened_list': the_object.combine_by_flattened_list}
-    method_dict[method](times, new_events)
+    method_dict[method](new_events, times)
     result = time.clock() - start
     return result
 
 
 def print_combine_trial(times, new_events, method, the_object):
     result = combine_trial(times, new_events, method, the_object)
-    start, stop = new_events.event_range
-    first = new_events.get_event(start)
-    last = new_events.get_event(stop)
+    info = dt.EventsInformation(new_events)
+    start, stop = info.events_range()
+    first = info.get_event(start)
+    last = info.get_event(stop)
     print('added [{} ... {}]  {} times using {}.  time: {:.3e}'.format(first,
                                                                        last,
                                                                        times,
@@ -106,23 +107,23 @@ def fastest_vs_tuple_indexed_ui():
         number_of_adds = get_answer('how many times to combine?', 1, 2000)
 
         print('\n get_fastest_method')
-        print(time_trial_output(1, 'get_fastest', show_fastest_method_speed.get_fastest_combine_method, 1,
-                                flat_events.get_dict()))
+        print(time_trial_output(1, 'get_fastest', show_fastest_method_speed.get_fastest_combine_method,
+                                flat_events.get_dict(), 1))
         print('\nFASTEST with one occurrence')
         print_combine_trial(number_of_adds, flat_events, 'fastest', flattened_list_fastest)
-        print(flattened_list_fastest.event_range)
+        print(dt.EventsInformation(flattened_list_fastest).events_range())
 
         print('\nFLATTENED_LIST with one occurrence')
         print_combine_trial(number_of_adds, flat_events, 'flattened_list', flattened_list_control)
-        print(flattened_list_control.event_range)
+        print(dt.EventsInformation(flattened_list_control).events_range())
 
         print('\n\nFASTEST with many occurrence')
         print_combine_trial(number_of_adds, tuple_events, 'fastest', tuple_list_fastest)
-        print(tuple_list_fastest.event_range)
+        print(dt.EventsInformation(tuple_list_fastest).events_range())
 
         print('\nTUPLE_LIST with many occurrence')
         print_combine_trial(number_of_adds, tuple_events, 'dictionary', tuple_list_control)
-        print(tuple_list_control.event_range)
+        print(dt.EventsInformation(tuple_list_control).events_range())
 
 
 if __name__ == '__main__':

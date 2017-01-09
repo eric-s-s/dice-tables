@@ -50,6 +50,8 @@ class ProtoDie(IntegerEvents):
         )
 
     def __eq__(self, other):
+        if not isinstance(other, ProtoDie):
+            return False
         return (
             (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) ==
             (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))
@@ -91,7 +93,7 @@ class Die(ProtoDie):
         return dict.fromkeys(range(1, self._die_size + 1), 1)
 
     def weight_info(self):
-        return str(self) + '\n    No weights'
+        return '{}\n    No weights'.format(self)
 
     def multiply_str(self, number):
         return '{}{}'.format(number, self)
@@ -171,7 +173,7 @@ class WeightedDie(ProtoDie):
         return sum(self._raw_dic.values())
 
     def get_dict(self):
-        return dict(item for item in self._raw_dic.items() if item[1])
+        return {key: value for key, value in self._raw_dic.items() if value}
 
     def weight_info(self):
         max_roll_str_len = len(str(self.get_size()))
@@ -211,8 +213,7 @@ class ModWeightedDie(WeightedDie):
         return self._mod
 
     def get_dict(self):
-        return dict((roll + self._mod, weight)
-                    for roll, weight in self.get_raw_dict().items() if weight)
+        return {roll + self._mod: weight for roll, weight in self.get_raw_dict().items() if weight}
 
     def multiply_str(self, number):
         return '{}D{}{:+}  W:{}'.format(number, self.get_size(),
@@ -256,8 +257,7 @@ class StrongDie(ProtoDie):
         return self._original
 
     def get_dict(self):
-        return dict((roll * self._multiplier, weight)
-                    for roll, weight in self._original.get_dict().items())
+        return {roll * self._multiplier: weight for roll, weight in self._original.get_dict().items()}
 
     def weight_info(self):
         return self._original.weight_info().replace(str(self._original), str(self))

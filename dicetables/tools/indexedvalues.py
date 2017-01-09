@@ -59,8 +59,8 @@ class IndexedValues(object):
     def index_range(self):
         return self.start_index, len(self.raw_values) + self.start_index - 1
 
-    def get_items(self):
-        return [(index + self.start_index, value) for index, value in enumerate(self.raw_values) if value]
+    def get_dict(self):
+        return {index + self.start_index: value for index, value in enumerate(self.raw_values) if value}
 
     def get_value_at_key(self, key):
         index = key - self.start_index

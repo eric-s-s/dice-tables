@@ -67,13 +67,13 @@ class TestIndexedValues(unittest.TestCase):
         test = iv.IndexedValues(3, [1, 2, 3])
         self.assertEqual(test.index_range, (3, 5))
 
-    def test_IndexedValues_items_single_value(self):
+    def test_IndexedValues_get_dict_single_value(self):
         test = iv.IndexedValues(5, [2])
-        self.assertEqual(test.get_items(), [(5, 2)])
+        self.assertEqual(test.get_dict(), {5: 2})
 
-    def test_IndexedValues_items_does_not_include_zeroes(self):
+    def test_IndexedValues_get_dict_does_not_include_zeroes(self):
         test = iv.IndexedValues(1, [2, 0, 3])
-        self.assertEqual(test.get_items(), [(1, 2), (3, 3)])
+        self.assertEqual(test.get_dict(), {1: 2, 3: 3})
 
     def test_indexedValues_get_value_at_key_within_range(self):
         test = iv.IndexedValues(3, [1, 2, 3])
@@ -87,19 +87,19 @@ class TestIndexedValues(unittest.TestCase):
     def test_IndexedValues_change_list_len_with_zeroes_max_size_offset_zero(self):
         self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 3, 0), [1, 2, 3])
 
-    def test_IndexedValues_change_list_len_with_zeroes_other_case_offset_zero(self):
+    def test_change_list_len_with_zeroes_other_case_offset_zero(self):
         self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 5, 0), [1, 2, 3, 0, 0])
 
-    def test_IndexedValues_change_list_len_with_zeroes_no_adds(self):
+    def test_change_list_len_with_zeroes_no_adds(self):
         self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 3, 0), [1, 2, 3])
 
-    def test_IndexedValues_change_list_len_with_zeroes_offset_and_zeros_is_total_size(self):
+    def test_change_list_len_with_zeroes_offset_and_zeros_is_total_size(self):
         self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 5, 2), [0, 0, 1, 2, 3])
 
-    def test_IndexedValues_change_list_len_with_zeroes_offset_and_zeros_lt_total_size(self):
+    def test_change_list_len_with_zeroes_offset_and_zeros_lt_total_size(self):
         self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 10, 2), [0, 0, 1, 2, 3, 0, 0, 0, 0, 0])
 
-    def test_IndexedValues_equalize_len_demonstration(self):
+    def test_equalize_len_demonstration(self):
         lower = [1, 2, 3, 4, 5, 6]
         higher = [1, 2, 3]
         diff_in_start_indices = 2

@@ -25,7 +25,7 @@ class DictCombiner(object):
     def get_dict(self):
         return self._dict.copy()
 
-    def combine_by_flattened_list(self, times, dictionary):
+    def combine_by_flattened_list(self, dictionary, times):
         """
         :dictionary: {int: int>0, ...}
         """
@@ -42,7 +42,7 @@ class DictCombiner(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_dictionary(self, times, dictionary):
+    def combine_by_dictionary(self, dictionary, times):
         """
         :dictionary: {int: int>0, ...}
         """
@@ -58,27 +58,27 @@ class DictCombiner(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + frequency * current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_indexed_values(self, times, dictionary):
+    def combine_by_indexed_values(self, dictionary, times):
         """
         :dictionary: {int: int>0, ...}
         """
         new_indexed_values = generate_indexed_values_from_dict(self._dict)
         for _ in range(times):
             new_indexed_values = new_indexed_values.combine_with_dictionary(dictionary)
-        return DictCombiner(dict(new_indexed_values.get_items()))
+        return DictCombiner(new_indexed_values.get_dict())
 
-    def combine_by_fastest(self, times, dictionary):
+    def combine_by_fastest(self, dictionary, times):
         """
         :dictionary: {int: int>0, ...}
         """
         method_dict = {'dictionary': self.combine_by_dictionary,
                        'flattened_list': self.combine_by_flattened_list,
                        'indexed_values': self.combine_by_indexed_values}
-        method = self.get_fastest_combine_method(times, dictionary)
+        method = self.get_fastest_combine_method(dictionary, times)
 
-        return method_dict[method](times, dictionary)
+        return method_dict[method](dictionary, times)
 
-    def get_fastest_combine_method(self, times, dictionary):
+    def get_fastest_combine_method(self, dictionary, times):
         """
         :dictionary: {int: int>0, ...}
         """
@@ -109,7 +109,7 @@ class DictCombiner(object):
         else:
             return 'indexed_values'
 
-    def remove_by_tuple_list(self, times, dictionary):
+    def remove_by_tuple_list(self, dictionary, times):
         """
         :dictionary: {int: int>0, ...}
         """
@@ -157,7 +157,7 @@ class DictCombiner(object):
 def flatten_events_tuples(dictionary):
     flattened_list = []
     for event, freq in dictionary.items():
-        flattened_list = flattened_list + [event] * freq
+        flattened_list += [event] * freq
     return flattened_list
 
 

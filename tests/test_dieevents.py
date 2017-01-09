@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""unittests for dicetable.py"""
 from __future__ import absolute_import
 
 import unittest
@@ -37,12 +36,21 @@ class DummyDie(ProtoDie):
         return "OyVei! you're too thin. Es, bubelah."
 
 
-class TestDiceStats(unittest.TestCase):
+class TestDieEvents(unittest.TestCase):
 
     # rich comparison testing
     def test_ProtoDie_equality_true(self):
         first = DummyDie(2, 3, {2: 2}, 'b')
         second = DummyDie(2, 3, {2: 2}, 'b')
+        self.assertTrue(first == second)
+
+    def test_ProtoDie_equality_true_if_different_types_eval_the_same(self):
+        class NewDummyDie(DummyDie):
+            def __init__(self, size, weight, dictionary, repr_str):
+                super(NewDummyDie, self).__init__(size, weight, dictionary, repr_str)
+
+        first = DummyDie(2, 3, {2: 2}, 'b')
+        second = NewDummyDie(2, 3, {2: 2}, 'b')
         self.assertTrue(first == second)
 
     def test_ProtoDie_equality_false_by_size(self):
@@ -64,6 +72,9 @@ class TestDiceStats(unittest.TestCase):
         first = DummyDie(2, 3, {2: 2}, 'b')
         second = DummyDie(2, 3, {2: 2}, 'different repr')
         self.assertFalse(first == second)
+
+    def test_ProtoDie_equality_false_by_not_a_proto_die(self):
+        self.assertFalse(DummyDie(2, 3, {2: 2}, 'b') == 2)
 
     def test_lt_false_if_equal(self):
         first = DummyDie(2, 3, {2: 2}, 'a')

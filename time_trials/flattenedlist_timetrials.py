@@ -74,12 +74,12 @@ def one_time_trial(events, num_adds, start_dict_size=1):
 
     id_table_a = base.AdditiveEvents(start_dict)
     start_a = time.clock()
-    id_table_a.combine_by_flattened_list(num_adds, to_combine)
+    id_table_a.combine_by_flattened_list(to_combine, num_adds)
     flattened_list_time = time.clock() - start_a
 
     id_table_b = base.AdditiveEvents(start_dict)
     start_b = time.clock()
-    id_table_b.combine_by_dictionary(num_adds, to_combine)
+    id_table_b.combine_by_dictionary(to_combine, num_adds)
     tuple_time = time.clock() - start_b
 
     return occurrences_to_events_ratio, tuple_time, flattened_list_time

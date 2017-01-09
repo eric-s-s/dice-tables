@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-"""tests for the eventsinfo.py module"""
 
 from __future__ import absolute_import
 
@@ -131,11 +130,11 @@ class TestEventsInfo(unittest.TestCase):
 
     def test_EventsCalculations_init_defaults_include_zeroes_True(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}))
-        self.assertTrue(test._include_zeroes)
+        self.assertTrue(test.include_zeroes)
 
     def test_EventsCalculations_init_set_include_zeroes_False(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}), False)
-        self.assertFalse(test._include_zeroes)
+        self.assertFalse(test.include_zeroes)
 
     def test_EventsCalculations_mean_normal_case(self):
         test = ti.EventsCalculations(AdditiveEvents({-1: 5, 1: 5}))
@@ -385,66 +384,6 @@ class TestEventsInfo(unittest.TestCase):
     def test_full_table_string_include_zeroes_false(self):
         events = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.full_table_string(events, False), '1: 1\n3: 1\n')
-
-    def test_format_number_works_as_expected(self):
-        self.assertEqual(ti.format_number(123456.78), '123,457')
-        self.assertEqual(ti.format_number(123456.78, digits_shown=7), '123,456.8')
-        self.assertEqual(ti.format_number(123456.78, digits_shown=7, max_comma_exp=4), '1.234568e+5')
-        self.assertEqual(ti.format_number(0.0000123), '1.230e-5')
-        self.assertEqual(ti.format_number(0.0000123, min_fixed_pt_exp=-6), '0.00001230')
-        self.assertEqual(ti.format_number(123456 * 10 ** 1000), '1.235e+1005')
-
-    def test_graph_pts_axes(self):
-        events = AdditiveEvents({1: 1, 2: 1})
-        self.assertEqual(ti.graph_pts(events, axes=True), [(1, 2), (50.0, 50.0)])
-        self.assertEqual(ti.graph_pts(events, axes=False), [(1, 50.0), (2, 50.0)])
-
-    def test_graph_pts_percent(self):
-        events = AdditiveEvents({1: 1, 2: 1})
-        self.assertEqual(ti.graph_pts(events, percent=True), [(1, 2), (50.0, 50.0)])
-        self.assertEqual(ti.graph_pts(events, percent=False), [(1, 2), (1, 1)])
-
-    def test_graph_pts_include_zeroes(self):
-        events = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.graph_pts(events, include_zeroes=True), [(1, 2, 3), (50.0, 0, 50.0)])
-        self.assertEqual(ti.graph_pts(events, include_zeroes=False), [(1, 3), (50.0, 50.0)])
-
-    def test_graph_pts_exact_true(self):
-        events = AdditiveEvents({1: 3, 2: 4})
-        values, pct = ti.graph_pts(events, exact=True)
-        self.assertEqual(values, (1, 2))
-        self.assertEqual(pct, (300./7., 400./7.))
-
-    def test_graph_pts_exact_false(self):
-        events = AdditiveEvents({1: 3, 2: 4})
-        values, (three_sevenths, four_sevenths) = ti.graph_pts(events, exact=False)
-        self.assertEqual(values, (1, 2))
-        self.assertNotEqual(four_sevenths, 400. / 7.)
-
-        self.assertAlmostEqual(three_sevenths, 300./7., places=10)
-        self.assertAlmostEqual(four_sevenths, 400./7., places=10)
-
-    def test_graph_pts_overflow_for_small_numbers(self):
-        events = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.graph_pts_overflow(events), ([(1, 2, 3), (1, 0, 1)], '1'))
-
-    def test_graph_pts_overflow_include_zeroes_false(self):
-        events = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.graph_pts_overflow(events, zeroes=False), ([(1, 3), (1, 1)], '1'))
-
-    def test_graph_pts_overflow_axes_false(self):
-        events = AdditiveEvents({1: 1, 3: 1})
-        self.assertEqual(ti.graph_pts_overflow(events, axes=False), ([(1, 1), (2, 0), (3, 1)], '1'))
-
-    def test_graph_pts_overflow_for_large_numbers(self):
-        events = AdditiveEvents({1: 10 ** 200, 2: 1})
-        self.assertEqual(ti.graph_pts_overflow(events),
-                         ([(1, 2), (10 ** 200, 1)], '1'))
-
-    def test_graph_pts_overflow_for_very_large_numbers(self):
-        events = AdditiveEvents({1: 10 ** 2000, 2: 1})
-        self.assertEqual(ti.graph_pts_overflow(events),
-                         ([(1, 2), (10 ** 4, 0)], '1.0e+1996'))
 
 
 if __name__ == '__main__':
