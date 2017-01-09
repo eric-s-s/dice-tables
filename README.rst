@@ -1,6 +1,7 @@
 ###############
 dicetables v2.0
 ###############
+
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
@@ -160,7 +161,7 @@ To get useful information, use EventsInformation object and EventsCalculations o
     In [23]: without_zeroes.percentage_axes()
     Out[23]: [(6, 9, 12), (25.0, 50.0, 25.0)]
 
-DetailedDiceTable which keeps a copy of these objects at .info and .calc calc_includes_zeros defaults to True::
+DetailedDiceTable keeps a copy of these objects at .info and .calc calc_includes_zeros defaults to True::
 
     In [12]: d_table = dt.DetailedDiceTable.new()
 
@@ -177,7 +178,6 @@ DetailedDiceTable which keeps a copy of these objects at .info and .calc calc_in
 
     In [17]: d_table.calc.mean()
     Out[17]: 350.0
-
 
 
 You may also access this functionality with wrapper functions:
@@ -416,6 +416,7 @@ DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
     In [87]: d_table = d_table.add_die(dt.StrongDie(dt.Die(2), 2))
 
     In [88]: print(d_table.calc.full_table_string())
+
     2: 1
     3: 0
     4: 1
@@ -433,6 +434,7 @@ DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
     4: 1
 
     In [93]: d_table = d_table.add_die(1, dt.StrongDie(dt.Die(2), 2))
+
 
     In [94]: print(d_table.calc.full_table_string())
     4: 1

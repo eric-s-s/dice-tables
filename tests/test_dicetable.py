@@ -85,11 +85,11 @@ class TestDiceTable(unittest.TestCase):
         self.assertEqual(record.get_dict(), {Die(3): 4, Die(2): 1})
 
     def test_DiceRecord_get_number_no_die_returns_zero(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1})
+        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
         self.assertEqual(record.get_number(Die(5)), 0)
 
     def test_DiceRecord_get_number_returns_correct_number(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1})
+        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
         self.assertEqual(record.get_number(Die(3)), 4)
 
     def test_DiceRecord_add_die_raises_error_for_negative_add(self):
@@ -345,19 +345,11 @@ class TestDiceTable(unittest.TestCase):
         self.assertEqual(table.get_dict(), {1: 1})
         self.assertEqual(table.get_list(), [])
 
-    def test_DetailedDiceTable_init_calc_includes_zeroes_defaults_True(self):
-        table = DetailedDiceTable({1: 1}, {})
-        self.assertTrue(table.calc_includes_zeroes)
-
-    def test_DetailedDiceTable_init_calc_includes_zeroes_set_to_False(self):
-        table = DetailedDiceTable({1: 1}, {}, calc_includes_zeroes=False)
-        self.assertFalse(table.calc_includes_zeroes)
-
     def test_DetailedDiceTable_calc_property(self):
         table = DetailedDiceTable({1: 1}, {})
         self.assertEqual(table.calc.percentage_points(), [(1, 100.0)])
 
-    def test_DetailedDiceTable_calc_defaults_to_include_zeros(self):
+    def test_DetailedDiceTable_init_calc_defaults_to_include_zeros(self):
         table = DetailedDiceTable({1: 1}, {})
         self.assertTrue(table.calc.include_zeroes)
 
@@ -374,7 +366,7 @@ class TestDiceTable(unittest.TestCase):
         table = DetailedDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         new = table.add_die(Die(2), 1)
         self.assertFalse(new.calc.include_zeroes)
-
+    
     def test_DetailedDiceTable_info_property(self):
         table = DetailedDiceTable({1: 1}, {}, calc_includes_zeroes=False)
         self.assertEqual(table.info.all_events(), [(1, 1)])
@@ -470,6 +462,6 @@ class TestDiceTable(unittest.TestCase):
         self.assertEqual(new.get_list(), [(StrongDie(Die(2), 2), 1)])
         self.assertFalse(new.calc_includes_zeroes)
 
-
+        
 if __name__ == '__main__':
     unittest.main()

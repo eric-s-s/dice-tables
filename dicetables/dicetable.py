@@ -62,7 +62,6 @@ class DiceRecord(object):
 
 
 class DiceTable(AdditiveEvents):
-
     def __init__(self, events_dict, dice_number_dict):
         self._record = DiceRecord(dice_number_dict)
         super(DiceTable, self).__init__(events_dict)
@@ -128,7 +127,6 @@ def format_die_info(die, number):
 
 
 class DetailedDiceTable(DiceTable):
-
     def __init__(self, events_dict, dice_number_dict, calc_includes_zeroes=True):
         super(DetailedDiceTable, self).__init__(events_dict, dice_number_dict)
         self._calc = EventsCalculations(self, calc_includes_zeroes)
