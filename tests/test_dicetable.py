@@ -85,11 +85,11 @@ class TestDiceTable(unittest.TestCase):
         self.assertEqual(record.get_dict(), {Die(3): 4, Die(2): 1})
 
     def test_DiceRecord_get_number_no_die_returns_zero(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
+        record = DiceRecord({Die(3): 4, Die(2): 1})
         self.assertEqual(record.get_number(Die(5)), 0)
 
     def test_DiceRecord_get_number_returns_correct_number(self):
-        record = DiceRecord({Die(3): 4, Die(2): 1}.items())
+        record = DiceRecord({Die(3): 4, Die(2): 1})
         self.assertEqual(record.get_number(Die(3)), 4)
 
     def test_DiceRecord_add_die_raises_error_for_negative_add(self):
