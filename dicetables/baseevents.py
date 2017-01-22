@@ -83,7 +83,7 @@ class AdditiveEvents(IntegerEvents):
         return 'table from {} to {}'.format(min_event, max_event)
 
     def combine(self, events, times=1):
-        dictionary = self._create_constructor_dict(events, times, method_str='combine')
+        dictionary = EventsDictCreator(self, events).create_using_combine_by_fastest(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_flattened_list(self, events, times=1):
@@ -92,15 +92,15 @@ class AdditiveEvents(IntegerEvents):
         :WARNING - UNSAFE METHOD: len(flattened_list) = total occurrences of events.
             if this list is too big, it will raise MemoryError or OverflowError
         """
-        dictionary = self._create_constructor_dict(events, times, method_str='combine_by_flattened_list')
+        dictionary = EventsDictCreator(self, events).create_using_combine_by_flattened_list(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_dictionary(self, events, times=1):
-        dictionary = self._create_constructor_dict(events, times, method_str='combine_by_dictionary')
+        dictionary = EventsDictCreator(self, events).create_using_combine_by_dictionary(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_indexed_values(self, events, times=1):
-        dictionary = self._create_constructor_dict(events, times, method_str='combine_by_indexed_values')
+        dictionary = EventsDictCreator(self, events).create_using_combine_by_indexed_values(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
     def remove(self, events, times=1):
@@ -109,15 +109,31 @@ class AdditiveEvents(IntegerEvents):
         :WARNING - UNSAFE METHOD: There is no record of what you added to an AdditiveEvents.
             If you remove what you haven't added, no error will be raised, but you will have bugs.
         """
-        dictionary = self._create_constructor_dict(events, times, method_str='remove')
+        dictionary = EventsDictCreator(self, events).create_using_remove_by_tuple_list(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
-    def _create_constructor_dict(self, events, times, method_str):
-        combiner = DictCombiner(self.get_dict())
-        methods = {'combine': combiner.combine_by_fastest,
-                   'combine_by_flattened_list': combiner.combine_by_flattened_list,
-                   'combine_by_dictionary': combiner.combine_by_dictionary,
-                   'combine_by_indexed_values': combiner.combine_by_indexed_values,
-                   'remove': combiner.remove_by_tuple_list}
-        new_combiner = methods[method_str](events.get_dict(), times)
-        return new_combiner.get_dict()
+
+class EventsDictCreator(object):
+    def __init__(self, primary_events, events_to_combine_with):
+        self.combiner = DictCombiner(primary_events.get_dict())
+        self.to_combine_with = events_to_combine_with.get_dict()
+
+    def create_using_combine_by_fastest(self, times_to_combine):
+        new_dict_combiner = self.combiner.combine_by_fastest(self.to_combine_with, times_to_combine)
+        return new_dict_combiner.get_dict()
+
+    def create_using_combine_by_dictionary(self, times_to_combine):
+        new_dict_combiner = self.combiner.combine_by_dictionary(self.to_combine_with, times_to_combine)
+        return new_dict_combiner.get_dict()
+
+    def create_using_combine_by_flattened_list(self, times_to_combine):
+        new_dict_combiner = self.combiner.combine_by_flattened_list(self.to_combine_with, times_to_combine)
+        return new_dict_combiner.get_dict()
+
+    def create_using_combine_by_indexed_values(self, times_to_combine):
+        new_dict_combiner = self.combiner.combine_by_indexed_values(self.to_combine_with, times_to_combine)
+        return new_dict_combiner.get_dict()
+
+    def create_using_remove_by_tuple_list(self, times_to_remove):
+        new_dict_combiner = self.combiner.remove_by_tuple_list(self.to_combine_with, times_to_remove)
+        return new_dict_combiner.get_dict()

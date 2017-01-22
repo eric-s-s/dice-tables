@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from sys import version_info
 import unittest
-from dicetables.baseevents import AdditiveEvents, InvalidEventsError, EventsVerifier, scrub_zeroes
+from dicetables.baseevents import AdditiveEvents, InvalidEventsError, EventsVerifier, scrub_zeroes, EventsDictCreator
 
 
 class TestBaseEvents(unittest.TestCase):
@@ -233,6 +233,35 @@ class TestBaseEvents(unittest.TestCase):
         test = AdditiveEvents({1: 2}).remove(to_use)
         self.assertEqual(test.get_dict(), {0: 1})
 
+    def test_EventsDictCreator_create_using_combine_by_fastest(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_fastest(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_combine_by_dictionary(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_dictionary(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_combine_by_indexed_values(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_indexed_values(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_combine_by_flattened_list(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_flattened_list(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_remove_by_tuple_list(self):
+        primary = AdditiveEvents({2: 1, 3: 4, 4: 4})
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_remove_by_tuple_list(2), {0: 1})
 
 
 if __name__ == '__main__':

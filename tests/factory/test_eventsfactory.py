@@ -613,7 +613,7 @@ class TestEventsFactory(unittest.TestCase):
         class DoubleTable(DiceTable):
             factory_keys = ('dictionary', 'second_dic', 'dice', 'dice_first')
             new_keys = [('second_dic', 'get_dict_alt', {0: 1}, 'method'),
-                        ('dice_first', 'init_dice_first', True, 'method')]
+                        ('dice_first', 'get_dice_first_val', True, 'method')]
 
             def __init__(self, dic1, dic2, dice, init_dice_first):
                 if init_dice_first:
@@ -636,7 +636,7 @@ class TestEventsFactory(unittest.TestCase):
                     return super(DoubleTable, self).get_dict()
                 return self._additive.get_dict()
 
-            def init_dice_first(self):
+            def get_dice_first_val(self):
                 answer = self._dice_first
                 self._dice_first = True
                 return answer

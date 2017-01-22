@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from sys import version_info
 
-from dicetables.baseevents import AdditiveEvents
+from dicetables.baseevents import AdditiveEvents, EventsDictCreator
 from dicetables.eventsinfo import EventsCalculations
 from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.dieevents import ProtoDie
@@ -100,7 +100,7 @@ class DiceTable(AdditiveEvents):
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
         dice_iterable = self._create_constructor_dice(die, times, method_str='add_die')
-        dictionary = self._create_constructor_dict(die, times, method_str='combine')
+        dictionary = EventsDictCreator(self, die).create_using_combine_by_fastest(times)
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
     def remove_die(self, die, times=1):
@@ -110,7 +110,7 @@ class DiceTable(AdditiveEvents):
         :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
         dice_iterable = self._create_constructor_dice(die, times, method_str='remove_die')
-        dictionary = self._create_constructor_dict(die, times, method_str='remove')
+        dictionary = EventsDictCreator(self, die).create_using_remove_by_tuple_list(times)
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_iterable)
 
     def _create_constructor_dice(self, die, times, method_str):
