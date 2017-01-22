@@ -30,13 +30,13 @@ class Loader(object):
 
 class EventsFactory(object):
 
-    __default_getters = {'dictionary': Getter('get_dict', {0: 1}),
-                         'dice': Getter('dice_data', DiceRecord.new()),
-                         'calc_bool': Getter('calc_includes_zeroes', True, is_property=True)}
+    __default_getters = {'get_dict': Getter('get_dict', {0: 1}),
+                         'dice_data': Getter('dice_data', DiceRecord.new()),
+                         'calc_includes_zeroes': Getter('calc_includes_zeroes', True, is_property=True)}
 
-    __default_class_args = {'AdditiveEvents': ('dictionary',),
-                            'DiceTable': ('dictionary', 'dice'),
-                            'DetailedDiceTable': ('dictionary', 'dice', 'calc_bool')}
+    __default_class_args = {'AdditiveEvents': ('get_dict',),
+                            'DiceTable': ('get_dict', 'dice_data'),
+                            'DetailedDiceTable': ('get_dict', 'dice_data', 'calc_includes_zeroes')}
 
     _getters = StaticDict(__default_getters)
     _class_args = StaticDict(__default_class_args)
@@ -84,13 +84,13 @@ class EventsFactory(object):
                 EventsFactoryErrorHandler(cls).raise_error('MISSING GETTER', events_class, getter_key)
 
     @classmethod
-    def add_getter(cls, getter_key, getter_method, empty_value, type_str='method'):
+    def add_getter(cls, getter_name, empty_value, type_str='method'):
         is_property = False
         if type_str == 'property':
             is_property = True
-        new_getter = Getter(getter_method, empty_value, is_property)
-        cls._check_against_factory_getters(getter_key, new_getter)
-        cls._getters = cls._getters.set(getter_key, new_getter)
+        new_getter = Getter(getter_name, empty_value, is_property)
+        cls._check_against_factory_getters(getter_name, new_getter)
+        cls._getters = cls._getters.set(getter_name, new_getter)
 
     @classmethod
     def _check_against_factory_getters(cls, getter_key, new_getter):
@@ -107,12 +107,12 @@ class EventsFactory(object):
 
     @classmethod
     def from_dictionary(cls, events, dictionary):
-        passed_in_values = {'dictionary': dictionary}
+        passed_in_values = {'get_dict': dictionary}
         return cls._construct_from(events, passed_in_values)
 
     @classmethod
     def from_dictionary_and_dice(cls, events, dictionary, dice):
-        passed_in_values = {'dictionary': dictionary, 'dice': dice}
+        passed_in_values = {'get_dict': dictionary, 'dice_data': dice}
         return cls._construct_from(events, passed_in_values)
 
     @classmethod

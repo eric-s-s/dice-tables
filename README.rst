@@ -1,11 +1,25 @@
-###############
-dicetables v2.0
-###############
+#################
+dicetables v2.1.0
+#################
+=========
+CHANGELOG
+=========
+- DiceTable signature changed.  DiceTable({1: 1, 2: 1}, DiceRecord({Die(2): 1})
+    - DiceTable.dice_data() now returns DiceRecord obj.
+    - DiceRecord
+        - signature DiceRecord({die: number})
+        - is immutable
+        - can compare with __eq__ and __ne__ only
+- Factory getter keys = ['calc_includes_zeroes', 'dice_data', 'get_dict']
+    - adding new getter no longer needs getter key.  now is (<getter_name>, <default>, 'property' or 'method')
+    - Factory.add_getter(<getter_name>, <default>, 'property' or 'method')
+    - or as class variable: new_keys = [(<getter_name>, <default>, 'property' or 'method'), ...] see inheritance_
+
 
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
-CHANGED IN THIS VERSION: all children of AdditiveEvents are now immutable. See "CHANGES" for details
+
 
 This module uses DiceTable and AdditiveEvents to combine
 dice and other events that can be added together. It is used to
@@ -220,9 +234,10 @@ Top_
 -----------
 Die Classes
 -----------
-All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
-They all require implementations of get_size(), get_weight(), weight_info(),
-multiply_str(number), __str__(), __repr__() and get_dict() <-required for any IntegerEvents.
+All dice are subclasses of dicetables.eventsbases.protodie.ProtoDie, which is a subclass of
+dicetables.eventsbases.integerevents.IntegerEvents. They all require implementations of
+get_size(), get_weight(), weight_info(), multiply_str(number), __str__(), __repr__() and
+get_dict() (the final one is a requirement of all IntegerEvents).
 
 They are all immutable , hashable and rich-comparable. Multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
@@ -319,7 +334,7 @@ Top_
 --------------------------------
 AdditiveEvents And IntegerEvents
 --------------------------------
-All tables and dice inherit from IntegerEvents.  All subclasses of IntegerEvents need the method
+All tables and dice inherit from dicetables.eventsbases.IntegerEvents.  All subclasses of IntegerEvents need the method
 get_dict() which returns {event: occurrences, ...} for each NON-ZERO occurrence.  When you instantiate
 any subclass, it checks to make sure you're get_dict() is legal.
 
@@ -589,15 +604,15 @@ your new class and if it fails, will return the closest related type::
     Out[12]: <dicetables.dicetable.DiceTable at 0x4c23f28>  <-- Oops. EventsFactory can't figure out how to make one.
 
 | Now I will try again, but I will give the factory the info it needs.
-| The factory knows how to get 'dictionary', 'dice'
-| and 'calc_bool'. If you need it to get anything else, you need tuples of
-| (<key name>, <getter name>, <default value>, 'property' or 'method')
+| The factory knows how to get 'get_dict', 'dice_data'
+| and 'calc_includes_zeroes'. If you need it to get anything else, you need tuples of
+| (<getter name>, <default value>, 'property' or 'method')
 
 ::
 
     In[6]: class B(dt.DiceTable):
-      ...:     factory_keys = ('name', 'number', 'dictionary', 'dice')
-      ...:     new_keys = (('name', 'name', '', 'property'), ('number', 'get_num', 0, 'method'))
+      ...:     factory_keys = ('name', 'get_num', 'get_dict', 'dice_data')
+      ...:     new_keys = (('name', '', 'property'), ('get_num', 0, 'method'))
       ...:     def __init__(self, name, number, events_dict, dice_data):
       ...:         self.name = name
       ...:         self._num = number
@@ -609,7 +624,7 @@ your new class and if it fails, will return the closest related type::
     Out[7]: <__main__.B at 0x4ca94a8>
 
     In[8]: class C(dt.DiceTable):
-      ...:     factory_keys = ('dictionary', 'dice')
+      ...:     factory_keys = ('get_dict', 'dice_data')
       ...:     def fancy_add_die(self, die, times):
       ...:         new = self.add_die(die, times)
       ...:         return 'so fancy', new
@@ -624,7 +639,7 @@ The other way to do this is to directly add the class to the EventsFactory::
 
     In[49]: factory = dt.factory.eventsfactory.EventsFactory
 
-    In[50]: factory.add_getter('number', 'get_num', 0, 'method')
+    In[50]: factory.add_getter('get_num', 0, 'method')
 
     In[51]: class A(dt.DiceTable):
        ...:     def __init__(self, number, events_dict, dice):
@@ -634,7 +649,7 @@ The other way to do this is to directly add the class to the EventsFactory::
        ...:         return self._num
        ...:
 
-    In[53]: factory.add_class(A, ('number', 'dictionary', 'dice'))
+    In[53]: factory.add_class(A, ('get_num', 'get_dict', 'dice_data'))
 
     In[55]: A.new()
     Out[55]: <__main__.A at 0x5f951d0>
@@ -969,6 +984,6 @@ and double the speed in the large adds range.
     in [12]: new.combine(dt.AdditiveEvents({1: 1, 2: 5}), 2)
     Out[13]: <dicetables.baseevents.AdditiveEvents at 0x5e73828>
 
-    In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, {dt.Die(3): 1})
+    In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, dt.DiceRecord({dt.Die(3): 1}))
     Out[14]: <dicetables.dicetable.DiceTable at 0x5eddef0>
 

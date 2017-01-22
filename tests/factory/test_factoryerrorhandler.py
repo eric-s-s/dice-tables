@@ -36,30 +36,30 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
             '\n' +
             'Attempted to add class already in factory but used different factory keys.\n' +
             'Class: <class \'dicetables.dicetable.DiceTable\'>\n' +
-            'Current Factory Keys: (\'dictionary\', \'dice\')\n' +
-            'Keys Passed In:       (\'dice\',)\n'
+            'Current Factory Keys: (\'get_dict\', \'dice_data\')\n' +
+            'Keys Passed In:       (\'dice_data\',)\n'
         )
         self.assert_events_factory_error_message(expected,
                                                  EventsFactoryErrorHandler(EventsFactory).raise_error,
                                                  'CLASS OVERWRITE',
                                                  DiceTable,
-                                                 ('dice', ))
+                                                 ('dice_data', ))
 
     def test_EventsFactoryErrorHandler_GETTER_OVERWRITE(self):
         expected = (
             'Error Code: GETTER OVERWRITE\n' +
             'Factory:    <class \'dicetables.factory.eventsfactory.EventsFactory\'>\n' +
-            'Error At:   Factory Getter Key: \'dice\'\n' +
+            'Error At:   Factory Getter Key: \'dice_data\'\n' +
             '\n' +
             'Attempted to add getter key already in factory but used different parameters.\n' +
-            'Key: \'dice\'\n' +
+            'Key: \'dice_data\'\n' +
             'Factory Parameter:    method: "dice_data", default: DiceRecord({})\n' +
             'Passed In Parameters: method: "get_dice", default: [(2, Die(6))]\n'
         )
         self.assert_events_factory_error_message(expected,
                                                  EventsFactoryErrorHandler(EventsFactory).raise_error,
                                                  'GETTER OVERWRITE',
-                                                 'dice',
+                                                 'dice_data',
                                                  Getter('get_dice', [(2, Die(6))]))
 
     def test_EventsFactoryErrorHandler_MISSING_GETTER(self):
@@ -70,7 +70,7 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
             '\n' +
             'Attempted to add class with a getter key not in the factory.\n' +
             'Class: <class \'tests.factory.test_factoryerrorhandler.StandInForBadClass\'>\n' +
-            'Current Factory Keys: [\'calc_bool\', \'dice\', \'dictionary\']\n' +
+            'Current Factory Keys: [\'calc_includes_zeroes\', \'dice_data\', \'get_dict\']\n' +
             'Key Passed In:        \'foo\'\n'
         )
         self.assert_events_factory_error_message(expected,
@@ -87,7 +87,7 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
             '\n' +
             'Attempted to construct a class already present in factory, but with a different signature.\n' +
             'Class: <class \'dicetables.dicetable.DiceTable\'>\n' +
-            'Signature In Factory: (\'dictionary\', \'dice\')\n' +
+            'Signature In Factory: (\'get_dict\', \'dice_data\')\n' +
             'To reset the factory to its base state, use EventsFactory.reset()\n'
         )
         self.assert_events_factory_error_message(expected,

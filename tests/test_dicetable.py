@@ -3,20 +3,10 @@ from __future__ import absolute_import
 
 import unittest
 
-from dicetables.dicetable import DiceTable, DiceRecord, DetailedDiceTable
+from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die, ModWeightedDie, ModDie, StrongDie
 from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
-
-
-class NewDiceTable(DiceTable):
-    def __init__(self, events_dic, dice):
-        super(NewDiceTable, self).__init__(events_dic, dice)
-
-
-class NumberedDiceTable(DiceTable):
-    def __init__(self, events_dic, dice, number):
-        super(NumberedDiceTable, self).__init__(events_dic, dice)
-        self.number = number
+from dicetables.dicerecord import DiceRecord
 
 
 class TestDiceTable(unittest.TestCase):
@@ -34,7 +24,9 @@ class TestDiceTable(unittest.TestCase):
         dice = DiceRecord({Die(1): 1})
         table = DiceTable(events, dice)
         events[1] = 'poop'
-        dice.get_dict()[Die(1)] = 'super poop'
+        dice.add_die(Die(3), 3)
+        dice.remove_die(Die(1), 1)
+        dice.get_dict()[Die(1)] = 'still does not work'
         self.assertEqual(table.get_dict(), {1: 1})
         self.assertEqual(table.get_list(), [(Die(1), 1)])
 
@@ -56,12 +48,14 @@ class TestDiceTable(unittest.TestCase):
         self.assertEqual(DiceTable({1: 1}, DiceRecord.new()).dice_data(), DiceRecord.new())
 
     def test_DiceTable_dice_data_will_not_mutate_DiceTable(self):
-        init_record = DiceRecord({Die(1): 1, Die(2): 2})
-        will_not_alter = DiceRecord({Die(1): 1, Die(2): 2})
-        table = DiceTable({1: 1}, init_record)
+        table = DiceTable({1: 1}, DiceRecord({Die(1): 1, Die(2): 2}))
         dice_data = table.dice_data()
-        init_record = dice_data.add_die(Die(100), 10)
-        self.assertEqual(table.dice_data(), will_not_alter)
+        dice_data.add_die(Die(100), 10)
+        dice_data.remove_die(Die(2), 1)
+        dice_data.get_dict()['new'] = 5
+
+        expected = DiceRecord({Die(1): 1, Die(2): 2})
+        self.assertEqual(table.dice_data(), expected)
 
     def test_DiceTable_get_list_empty_record(self):
         table = DiceTable({1: 1}, DiceRecord.new())

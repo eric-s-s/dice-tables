@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from dicetables.dicetable import DiceRecord
+from dicetables.dicerecord import DiceRecord
 from dicetables.dieevents import Die
 from dicetables.eventsbases.eventerrors import DiceRecordError
 
@@ -166,8 +166,8 @@ class TestDiceTable(unittest.TestCase):
 
     def test_DiceRecord__repr__(self):
         record = DiceRecord({Die(2): 2, Die(3): 5})
-        dict_repr = repr({Die(2): 2, Die(3): 5})
-        self.assertEqual(repr(record), 'DiceRecord(' + dict_repr + ')')
+        possible_reprs = ('DiceRecord({Die(2): 2, Die(3): 5})', 'DiceRecord({Die(3): 5, Die(2): 2})')
+        self.assertIn(repr(record), possible_reprs)
 
 if __name__ == '__main__':
     unittest.main()

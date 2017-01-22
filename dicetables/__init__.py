@@ -4,7 +4,6 @@ from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie
 from dicetables.dicerecord import DiceRecord
-from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.eventsbases.eventerrors import DiceRecordError, InvalidEventsError
 from dicetables.eventsinfo import (EventsCalculations, EventsInformation,
                                    events_range, mean, stddev, percentage_points, percentage_axes, stats,
