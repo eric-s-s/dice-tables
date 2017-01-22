@@ -11,7 +11,7 @@ from os import getcwd
 from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
-import dicetables.baseevents as base
+import dicetables.additiveevents as base
 
 
 WELCOME_TXT = 'hi'

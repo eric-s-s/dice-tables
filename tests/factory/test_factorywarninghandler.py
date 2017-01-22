@@ -6,7 +6,7 @@ import warnings
 
 from dicetables.factory.warninghandler import EventsFactoryWarning, EventsFactoryWarningHandler
 from dicetables.factory.eventsfactory import EventsFactory
-from dicetables.baseevents import AdditiveEvents
+from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicetable import DiceTable
 
 
@@ -59,7 +59,7 @@ class TestEventsFactoryWarningHandler(unittest.TestCase):
     def test_create_error_code_body_CONSTRUCT(self):
         expected = (
             '\n' +
-            'Class found in factory: <class \'dicetables.baseevents.AdditiveEvents\'>\n' +
+            'Class found in factory: <class \'dicetables.additiveevents.AdditiveEvents\'>\n' +
             'attempted object construction using its signature. tried to return instance of original class.\n' +
             'If that had failed, returned instance of the class found in EventsFactory.\n' +
             '\n'

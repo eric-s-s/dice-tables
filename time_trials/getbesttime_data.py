@@ -5,7 +5,7 @@ this module generates a txt file to get dictionaries.  it take a WHILE to run.
 from __future__ import print_function
 
 import time
-from dicetables.baseevents import DictCombiner
+from dicetables.additiveevents import DictCombiner
 
 
 def get_input_dict(input_dict_size, use_exponential_occurrences):

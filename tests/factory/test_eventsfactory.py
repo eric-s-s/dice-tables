@@ -6,9 +6,10 @@ import warnings
 from sys import version_info
 from itertools import cycle
 
-from dicetables.baseevents import AdditiveEvents
+from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die
+from dicetables.dicerecord import DiceRecord
 from dicetables.factory.eventsfactory import EventsFactory, Loader, LoaderError
 from dicetables.factory.errorhandler import EventsFactoryError
 from dicetables.factory.warninghandler import EventsFactoryWarning
@@ -435,14 +436,14 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_EventsFactory_from_dict_and_dice_DiceTable(self):
         events = DiceTable.new()
-        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, DiceRecord({Die(2): 2}))
         self.assertIs(type(new_events), DiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
 
     def test_EventsFactory_from_dict_and_dice_DetailedDiceTable(self):
-        events = DetailedDiceTable({2: 2}, {}, False)
-        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
+        events = DetailedDiceTable({2: 2}, DiceRecord.new(), False)
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, DiceRecord({Die(2): 2}))
         self.assertIs(type(new_events), DetailedDiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
@@ -452,8 +453,8 @@ class TestEventsFactory(unittest.TestCase):
         start_dict = {2: 2}
         new_dict = {1: 1}
 
-        start_dice = {Die(2): 1}
-        new_dice = {Die(3): 3}
+        start_dice = DiceRecord({Die(2): 1})
+        new_dice = DiceRecord({Die(3): 3})
 
         start_num = 5
         new_num = 10
@@ -525,7 +526,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_Events_Factory_error_correct_message_GETTER_OVERWRITE(self):
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
         getter_key = '\'dice\''
-        getter_string = 'method: "dice_data", default: {}'
+        getter_string = 'method: "dice_data", default: DiceRecord({})'
         new_getter_string = 'method: "get_dice", default: [(2, Die(6))]'
         expected = (factory_name, getter_key, getter_string, new_getter_string)
 

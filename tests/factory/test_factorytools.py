@@ -4,7 +4,8 @@ from __future__ import absolute_import
 import unittest
 from dicetables.factory.factorytools import StaticDict, Getter
 from dicetables.dicetable import DetailedDiceTable
-from dicetables.baseevents import AdditiveEvents
+from dicetables.additiveevents import AdditiveEvents
+from dicetables.dicerecord import DiceRecord
 
 
 class TestFactoryTools(unittest.TestCase):
@@ -119,7 +120,7 @@ class TestFactoryTools(unittest.TestCase):
         self.assertEqual(Getter('get_dict', {0: 1}).get_from(events), {1: 1})
 
     def test_Getter_get_from__object_has_getter_property(self):
-        events = DetailedDiceTable({1: 1}, {}, calc_includes_zeroes=False)
+        events = DetailedDiceTable({1: 1}, DiceRecord.new(), calc_includes_zeroes=False)
         getter = Getter('calc_includes_zeroes', True, is_property=True)
         self.assertEqual(getter.get_from(events), False)
 

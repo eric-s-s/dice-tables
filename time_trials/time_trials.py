@@ -8,7 +8,7 @@ import time
 from decimal import Decimal
 
 import dicetables as dt
-import dicetables.baseevents as be
+import dicetables.additiveevents as be
 
 
 def time_trial(times, func, *args):

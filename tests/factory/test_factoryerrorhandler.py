@@ -53,7 +53,7 @@ class TestEventsFactoryErrorHandler(unittest.TestCase):
             '\n' +
             'Attempted to add getter key already in factory but used different parameters.\n' +
             'Key: \'dice\'\n' +
-            'Factory Parameter:    method: "dice_data", default: {}\n' +
+            'Factory Parameter:    method: "dice_data", default: DiceRecord({})\n' +
             'Passed In Parameters: method: "get_dice", default: [(2, Die(6))]\n'
         )
         self.assert_events_factory_error_message(expected,

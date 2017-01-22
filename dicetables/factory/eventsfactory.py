@@ -1,8 +1,8 @@
-
+from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
 from dicetables.factory.errorhandler import EventsFactoryErrorHandler
-from dicetables.factory.warninghandler import EventsFactoryWarningHandler
 from dicetables.factory.factorytools import StaticDict, Getter
-from dicetables.tools.eventerrors import InvalidEventsError, DiceRecordError
+from dicetables.factory.warninghandler import EventsFactoryWarningHandler
+from dicetables.dicerecord import DiceRecord
 
 
 class LoaderError(AttributeError):
@@ -31,7 +31,7 @@ class Loader(object):
 class EventsFactory(object):
 
     __default_getters = {'dictionary': Getter('get_dict', {0: 1}),
-                         'dice': Getter('dice_data', {}),
+                         'dice': Getter('dice_data', DiceRecord.new()),
                          'calc_bool': Getter('calc_includes_zeroes', True, is_property=True)}
 
     __default_class_args = {'AdditiveEvents': ('dictionary',),
