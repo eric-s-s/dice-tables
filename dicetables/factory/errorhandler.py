@@ -7,11 +7,58 @@ class EventsFactoryError(AssertionError):
 class EventsFactoryErrorHandler(object):
     def __init__(self, factory):
         self._factory = factory
+        self._format_kwargs = {}
 
     def raise_error(self, error_code, *params):
+        self.create_format_kwargs(error_code, params)
         msg_header = self.create_header(error_code, params[0])
-        msg_body = self.create_error_body(error_code, params)
+        msg_body = self.create_error_body(error_code)
         raise EventsFactoryError(msg_header + msg_body)
+
+    def create_format_kwargs(self, error_code, params):
+        """
+        param_keys = {
+            'CLASS OVERWRITE': ('events_class', 'class_keys', 'class_args_tuple'),
+            'MISSING GETTER': ('events_class', 'current_getters', 'getter_key'),
+            'GETTER OVERWRITE': ('getter_key', 'factory_getter', 'new_getter'),
+            'SIGNATURES DIFFERENT': ('events_class', 'signature_in_factory'),
+            'WTF': ('events_class', 'factory_classes')
+        }
+        """
+        self._assign_parameters(error_code, params)
+        self._assign_additional_kwargs(error_code)
+
+    def _assign_parameters(self, error_code, params):
+        param_values = {
+            'CLASS OVERWRITE': ('events_class', 'class_args_tuple'),
+            'MISSING GETTER': ('events_class', 'getter_key'),
+            'GETTER OVERWRITE': ('getter_key', 'new_getter'),
+            'SIGNATURES DIFFERENT': ('events_class',),
+            'WTF': ('events_class',),
+        }
+        for index, key_name in enumerate(param_values[error_code]):
+            self._format_kwargs[key_name] = params[index]
+
+    def _assign_additional_kwargs(self, error_code):
+        additional_params = {
+            'CLASS OVERWRITE': 'class_keys',
+            'MISSING GETTER': 'current_getters',
+            'GETTER OVERWRITE': 'factory_getter',
+            'SIGNATURES DIFFERENT': 'class_keys',
+            'WTF': 'factory_classes'
+        }
+        new_key = additional_params[error_code]
+        new_value = None
+        if new_key == 'class_keys':
+            new_value = self._factory.get_class_params(self._format_kwargs['events_class'])
+        elif new_key == 'factory_getter':
+            new_value = self._factory.get_getter_string(self._format_kwargs['getter_key'])
+        elif new_key == 'factory_classes':
+            new_value = self._factory.get_keys()[0]
+        elif new_key == 'current_getters':
+            new_value = self._factory.get_keys()[1]
+
+        self._format_kwargs[new_key] = new_value
 
     def create_header(self, error_code, bad_param):
         msg_start = 'Error Code: {}\nFactory:    {}\nError At:   '.format(error_code, self._factory)
@@ -22,28 +69,11 @@ class EventsFactoryErrorHandler(object):
 
         return msg_start + msg_end
 
-    def create_error_body(self, error_code, params):
-
+    def create_error_body(self, error_code):
         explanation = get_explanation(error_code)
         format_str = get_format_string(error_code)
-        kwargs_dict = self._get_kwargs_dict(format_str, params)
-        param_details = format_str.format(**kwargs_dict)
+        param_details = format_str.format(**self._format_kwargs)
         return explanation + param_details
-
-    def _get_kwargs_dict(self, format_str, params):
-        kwargs_dict = {'class_keys': self._factory.get_class_params,
-                       'getter': self._factory.get_getter_string,
-                       'signature': self._factory.get_class_params,
-                       'classes': self._factory.get_keys()[0],
-                       'getters': self._factory.get_keys()[1]
-                       }
-        out_put_dict = {'params': params}
-        for key_word, value in kwargs_dict.items():
-            if '{{{}}}'.format(key_word) in format_str:
-                if key_word in ('class_keys', 'getter', 'signature'):
-                    value = value(params[0])
-                out_put_dict[key_word] = value
-        return out_put_dict
 
 
 def get_explanation(error_code):
@@ -72,18 +102,18 @@ def get_format_string(error_code):
 
 def get_lines(line_keys):
     lines = {
-        'class': 'Class: {params[0]}\n',
+        'class': 'Class: {events_class}\n',
         'factory class keys': 'Current Factory Keys: {class_keys}\n',
-        'input class keys': 'Keys Passed In:       {params[1]}\n',
-        'missing getter': 'Key Passed In:        {params[1]!r}\n',
-        'getter key': 'Key: {params[0]!r}\n',
-        'factory getter info': 'Factory Parameter:    {getter}\n',
-        'input getter info': 'Passed In Parameters: {params[1]}\n',
-        'class signature': 'Signature In Factory: {signature}\n',
+        'input class keys': 'Keys Passed In:       {class_args_tuple}\n',
+        'missing getter': 'Key Passed In:        {getter_key!r}\n',
+        'getter key': 'Key: {getter_key!r}\n',
+        'factory getter info': 'Factory Parameter:    {factory_getter}\n',
+        'input getter info': 'Passed In Parameters: {new_getter}\n',
+        'class signature': 'Signature In Factory: {class_keys}\n',
         'reset': 'To reset the factory to its base state, use EventsFactory.reset()\n',
-        'factory getters': 'Current Factory Keys: {getters}\n',
-        'factory classes': 'EventsFactory can currently construct the following classes:\n{classes}\n',
-        'searched MRO': ('EventsFactory searched the MRO of {params[0]},\n' +
+        'factory getters': 'Current Factory Keys: {current_getters}\n',
+        'factory classes': 'EventsFactory can currently construct the following classes:\n{factory_classes}\n',
+        'searched MRO': ('EventsFactory searched the MRO of {events_class},\n' +
                          'and found no matches to the classes in the factory.\n')
     }
     out_str = ''

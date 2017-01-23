@@ -196,9 +196,15 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_get_class_params(self):
         self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('get_dict', ))
 
+    def test_EventsFactory_get_class_params_no_class(self):
+        self.assertIsNone(EventsFactory.get_class_params(int))
+
     def test_EventsFactory_get_getter_string(self):
         get_dict = 'method: "get_dict", default: {0: 1}'
         self.assertEqual(EventsFactory.get_getter_string('get_dict'), get_dict)
+
+    def test_EventsFactory_get_getter_string_no_getters(self):
+        self.assertEqual(EventsFactory.get_getter_string('not_there'), 'None')
 
     def test_EventsFactory_get_keys(self):
         class X(object):
@@ -262,9 +268,9 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_EventsFactory_add_getter_already_not_equal_raises_error(self):
         self.assert_EventsFactoryError_code('GETTER OVERWRITE',
-                                            EventsFactory.add_getter, 'get_dict', 'get_dict', {1: 1})
+                                            EventsFactory.add_getter, 'get_dict', {1: 1})
         self.assert_EventsFactoryError_code('GETTER OVERWRITE',
-                                            EventsFactory.add_getter, 'get_dict', 'oops', {0: 1})
+                                            EventsFactory.add_getter, 'get_dict', {0: 1}, 'property')
 
     def test_EventsFactory_check_no_errors_or_warnings(self):
         self.assert_no_warning(EventsFactory.check, AdditiveEvents)
@@ -368,7 +374,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_construction__new_class_bad_new_keys_raises_EventsFactoryError(self):
         class BadLoaderKeys(AdditiveEvents):
             factory_keys = ('dice_data', )
-            new_keys = [('dice_data', 'get_dice', 5)]
+            new_keys = [('dice_data', 5)]
         self.assert_EventsFactoryError_code('GETTER OVERWRITE', EventsFactory.new, BadLoaderKeys)
 
     def test_EventsFactory_construction__class_present_wrong_signature_wrong_param_EventsFactoryError(self):

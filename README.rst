@@ -428,7 +428,8 @@ DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
 
     In [85]: d_table = dt.DetailedDiceTable.new()
 
-    In [86]: d_table.calc_includes_zeroes = True
+    In [86]: d_table.calc_includes_zeroes
+    out[86]: True
 
     In [87]: d_table = d_table.add_die(dt.StrongDie(dt.Die(2), 2))
 
@@ -787,7 +788,7 @@ it may or may not raise an error, but it's guaranteed buggy::
     Error At:   <class 'dicetables.dicetable.DiceTable'>
     Attempted to construct a class already present in factory, but with a different signature.
     Class: <class 'dicetables.dicetable.DiceTable'>
-    Signature In Factory: ('dictionary', 'dice')
+    Signature In Factory: ('get_dict', 'dice_data')
     To reset the factory to its base state, use EventsFactory.reset()
 
 

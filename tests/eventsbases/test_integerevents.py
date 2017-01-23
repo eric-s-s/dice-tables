@@ -66,6 +66,9 @@ class TestIntegerEvents(unittest.TestCase):
         self.assertRaises(InvalidEventsError, self.checker.verify_get_dict, {'a': 'b'})
 
     def test_IntegerEvents_checks_get_dict_at_init(self):
+        """
+        IntegerEvents.__init__ does not raise error.  IntegerEvents.get_dict does raise error.
+        """
         self.assertRaises(NotImplementedError, IntegerEvents)
 
     def test_IntegerEvents_init_error_message(self):

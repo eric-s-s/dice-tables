@@ -128,15 +128,7 @@ class NumberFormatter(object):
         return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
 
 
-# def is_int(number):
-#     if version_info[0] < 3:
-#         int_types = (int, long)
-#     else:
-#         int_types = (int,)
-#     return isinstance(number, int_types)
-
-
 def remove_extra_zero_from_single_digit_exponent(answer):
-    if answer[-2] == '0':
+    if answer[-2] == '0' and answer[-3] in ('-', '+'):
         return answer[:-2] + answer[-1:]
     return answer

@@ -151,6 +151,15 @@ class TestNumberFormatter(unittest.TestCase):
         self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.23e-5'), '1.23e-5')
         self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.23e+6'), '1.23e+6')
         self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e+0'), '1.00e+0')
+        self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e+10'), '1.00e+10')
+
+    def test_remove_extra_zero_from_exponent_safe_for_others(self):
+        self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e+10'), '1.00e+10')
+        self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e+100'), '1.00e+100')
+        self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e-10'), '1.00e-10')
+        self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e-100'), '1.00e-100')
+        self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e+000'), '1.00e+000')
+
 
     def test_NumberFormatter_format_as_exponent_not_remove_extra_zero(self):
         formatter = NumberFormatter()
@@ -272,6 +281,8 @@ class TestNumberFormatter(unittest.TestCase):
         self.assert_format_number(-9999999, '-9,999,999')
         self.assert_format_number(10000000, '1.000e+7')
         self.assert_format_number(-99999999, '-1.000e+8')
+        self.assert_format_number(999999999, '1.000e+9')
+        self.assert_format_number(9999999999, '1.000e+10')
         self.assert_format_number(123451*10**1000, '1.235e+1005')
 
     def test_NumberFormatter_is_special_case_zero(self):

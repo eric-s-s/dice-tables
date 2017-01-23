@@ -8,7 +8,7 @@ from dicetables.dieevents import Die
 from dicetables.eventsbases.eventerrors import DiceRecordError
 
 
-class TestDiceTable(unittest.TestCase):
+class TestDiceRecord(unittest.TestCase):
 
     def assert_my_regex(self, error_type, regex, func, *args):
         with self.assertRaises(error_type) as cm:
@@ -93,6 +93,12 @@ class TestDiceTable(unittest.TestCase):
         record = DiceRecord({Die(1): 2})
         new_record = record.add_die(Die(2), 3)
         self.assertEqual(new_record.get_dict(), {Die(1): 2, Die(2): 3})
+
+    def test_DiceRecord_add_die_zero_times_returns_identical_record(self):
+        record = DiceRecord({Die(1): 2})
+        new_record = record.add_die(Die(2), 0)
+        self.assertEqual(record, new_record)
+        self.assertIsNot(record, new_record)
 
     def test_DiceRecord_remove_die_raises_error_for_negative_remove(self):
         self.assertRaises(DiceRecordError, DiceRecord({}).remove_die, Die(1), -5)
