@@ -1,5 +1,6 @@
-""" this module contains the class LongIntTable and longintmath that the table
-needs to deal with it's BFN"""
+"""
+AdditiveEvents is the general case for DiceTable - an IntegerEvents that can combine with other IntegerEvents.
+"""
 from __future__ import absolute_import
 
 

@@ -1,4 +1,10 @@
-"""fancy number formatting"""
+"""
+fast consistent and programmable object to convert all number types to strings.
+
+- gives consistent rounding and output between int, float and Decimal.
+- can do exponential notation for ints over 10**310 significantly faster than Decimal
+- can be set to automatically change from fixed to commaed to exponential notation at specified cutoffs.
+"""
 from __future__ import absolute_import
 
 from math import log10

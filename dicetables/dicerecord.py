@@ -1,3 +1,6 @@
+"""
+An immutable record of dice added to and removed from DiceTable
+"""
 from sys import version_info
 
 from dicetables.eventsbases.protodie import ProtoDie

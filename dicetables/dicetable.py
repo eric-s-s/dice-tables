@@ -1,4 +1,6 @@
-"""for all things dicey."""
+"""
+DiceTable and DetailedDiceTable compute combination of Die events
+"""
 from __future__ import absolute_import
 
 

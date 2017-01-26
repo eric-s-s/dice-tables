@@ -1,3 +1,7 @@
+"""
+All the descendants of ProtoDie.  These are IntegerEvents that represent different types of dice.
+"""
+
 from dicetables.eventsbases.protodie import ProtoDie
 
 

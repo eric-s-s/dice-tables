@@ -1,4 +1,7 @@
 """
+DictCombiner combines dictionary of {event value: occurrences} and returns a DictCombiner.  Retrieve the result with
+the "get_dict()" method.
+
 THIS IS A SPECIFIC TOOL. IT HAS SEVERAL IMPORTANT CONSTRAINTS. USE WITH CAUTION.
 
 if you mutate the __init__ dictionary elsewhere, IT WILL AFFECT IT HERE. (but it will

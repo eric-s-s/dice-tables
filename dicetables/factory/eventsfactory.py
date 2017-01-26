@@ -1,3 +1,6 @@
+"""
+A factory class for creating instances of AdditiveEvent and its descendants.
+"""
 from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
 from dicetables.factory.errorhandler import EventsFactoryErrorHandler
 from dicetables.factory.factorytools import StaticDict, Getter

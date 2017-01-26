@@ -1,3 +1,6 @@
+"""
+The abstract class for sets of events that can be represented by integers.
+"""
 from __future__ import absolute_import
 
 from sys import version_info
