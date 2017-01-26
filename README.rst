@@ -1,11 +1,25 @@
-###############
-dicetables v2.0
-###############
+#################
+dicetables v2.1.0
+#################
+=========
+CHANGELOG
+=========
+- DiceTable signature changed.  DiceTable({1: 1, 2: 1}, DiceRecord({Die(2): 1})
+    - DiceTable.dice_data() now returns DiceRecord obj.
+    - DiceRecord
+        - signature DiceRecord({die: number})
+        - is immutable
+        - can compare with __eq__ and __ne__ only
+- Factory getter keys = ['calc_includes_zeroes', 'dice_data', 'get_dict']
+    - adding new getter no longer needs getter key.  now is (<getter_name>, <default>, 'property' or 'method')
+    - Factory.add_getter(<getter_name>, <default>, 'property' or 'method')
+    - or as class variable: new_keys = [(<getter_name>, <default>, 'property' or 'method'), ...] see inheritance_
+
 
 =====================================================
 a module for statistics of die rolls and other events
 =====================================================
-CHANGED IN THIS VERSION: all children of AdditiveEvents are now immutable. See "CHANGES" for details
+
 
 This module uses DiceTable and AdditiveEvents to combine
 dice and other events that can be added together. It is used to
@@ -220,9 +234,10 @@ Top_
 -----------
 Die Classes
 -----------
-All dice are subclasses of ProtoDie, which is a subclass of IntegerEvents.
-They all require implementations of get_size(), get_weight(), weight_info(),
-multiply_str(number), __str__(), __repr__() and get_dict() <-required for any IntegerEvents.
+All dice are subclasses of dicetables.eventsbases.protodie.ProtoDie, which is a subclass of
+dicetables.eventsbases.integerevents.IntegerEvents. They all require implementations of
+get_size(), get_weight(), weight_info(), multiply_str(number), __str__(), __repr__() and
+get_dict() (the final one is a requirement of all IntegerEvents).
 
 They are all immutable , hashable and rich-comparable. Multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
@@ -319,7 +334,7 @@ Top_
 --------------------------------
 AdditiveEvents And IntegerEvents
 --------------------------------
-All tables and dice inherit from IntegerEvents.  All subclasses of IntegerEvents need the method
+All tables and dice inherit from dicetables.eventsbases.IntegerEvents.  All subclasses of IntegerEvents need the method
 get_dict() which returns {event: occurrences, ...} for each NON-ZERO occurrence.  When you instantiate
 any subclass, it checks to make sure you're get_dict() is legal.
 
@@ -397,7 +412,9 @@ happens to be. To get consistent output, use "get_list".
     In [20]: print(new)
     100D6
 
-    In [21]: also_new = dt.DetailedDiceTable(new.get_dict(), {dt.Die(6): 100}, calc_includes_zeroes=False)
+    In [21]: record = dt.DiceRecord({dt.Die(6): 100})
+
+    In [22]: also_new = dt.DetailedDiceTable(new.get_dict(), record, calc_includes_zeroes=False)
 
     In [46]: old.get_dict() == new.get_dict() == also_new.get_dict()
     Out[46]: True
@@ -411,7 +428,8 @@ DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
 
     In [85]: d_table = dt.DetailedDiceTable.new()
 
-    In [86]: d_table.calc_includes_zeroes = True
+    In [86]: d_table.calc_includes_zeroes
+    out[86]: True
 
     In [87]: d_table = d_table.add_die(dt.StrongDie(dt.Die(2), 2))
 
@@ -587,15 +605,15 @@ your new class and if it fails, will return the closest related type::
     Out[12]: <dicetables.dicetable.DiceTable at 0x4c23f28>  <-- Oops. EventsFactory can't figure out how to make one.
 
 | Now I will try again, but I will give the factory the info it needs.
-| The factory knows how to get 'dictionary', 'dice'
-| and 'calc_bool'. If you need it to get anything else, you need tuples of
-| (<key name>, <getter name>, <default value>, 'property' or 'method')
+| The factory knows how to get 'get_dict', 'dice_data'
+| and 'calc_includes_zeroes'. If you need it to get anything else, you need tuples of
+| (<getter name>, <default value>, 'property' or 'method')
 
 ::
 
     In[6]: class B(dt.DiceTable):
-      ...:     factory_keys = ('name', 'number', 'dictionary', 'dice')
-      ...:     new_keys = (('name', 'name', '', 'property'), ('number', 'get_num', 0, 'method'))
+      ...:     factory_keys = ('name', 'get_num', 'get_dict', 'dice_data')
+      ...:     new_keys = (('name', '', 'property'), ('get_num', 0, 'method'))
       ...:     def __init__(self, name, number, events_dict, dice_data):
       ...:         self.name = name
       ...:         self._num = number
@@ -607,7 +625,7 @@ your new class and if it fails, will return the closest related type::
     Out[7]: <__main__.B at 0x4ca94a8>
 
     In[8]: class C(dt.DiceTable):
-      ...:     factory_keys = ('dictionary', 'dice')
+      ...:     factory_keys = ('get_dict', 'dice_data')
       ...:     def fancy_add_die(self, die, times):
       ...:         new = self.add_die(die, times)
       ...:         return 'so fancy', new
@@ -622,7 +640,7 @@ The other way to do this is to directly add the class to the EventsFactory::
 
     In[49]: factory = dt.factory.eventsfactory.EventsFactory
 
-    In[50]: factory.add_getter('number', 'get_num', 0, 'method')
+    In[50]: factory.add_getter('get_num', 0, 'method')
 
     In[51]: class A(dt.DiceTable):
        ...:     def __init__(self, number, events_dict, dice):
@@ -632,7 +650,7 @@ The other way to do this is to directly add the class to the EventsFactory::
        ...:         return self._num
        ...:
 
-    In[53]: factory.add_class(A, ('number', 'dictionary', 'dice'))
+    In[53]: factory.add_class(A, ('get_num', 'get_dict', 'dice_data'))
 
     In[55]: A.new()
     Out[55]: <__main__.A at 0x5f951d0>
@@ -653,13 +671,13 @@ in get_dict().values() must be >=1. get_dict() may not be empty.
 since dt.Die(-2).get_dict() returns {}::
 
     In [3]: dt.Die(-2)
-    dicetables.tools.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
+    dicetables.eventsbases.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
     In [5]: dt.AdditiveEvents({1.0: 2})
-    dicetables.tools.eventerrors.InvalidEventsError: all values must be ints
+    dicetables.eventsbases.eventerrors.InvalidEventsError: all values must be ints
 
     In [6]: dt.WeightedDie({1: 1, 2: -5})
-    dicetables.tools.eventerrors.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
+    dicetables.eventsbases.eventerrors.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
 
 Because AdditiveEvents and WeightedDie specifically
 scrub the zeroes from their get_dict() methods, these will not throw errors.
@@ -731,16 +749,16 @@ it may or may not raise an error, but it's guaranteed buggy::
     In [19]: table = dt.DiceTable.new().add_die(dt.Die(6))
 
     In [21]: table = table.remove_die(dt.Die(6), 4)
-    dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(6): -3
+    dicetables.eventsbases.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(6): -3
 
     In [22]: table = table.remove_die(dt.Die(10))
-    dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(10): -1
+    dicetables.eventsbases.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(10): -1
 
     In [26]: table = table.add_die(dt.Die(6), -3)
-    dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
+    dicetables.eventsbases.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
 
     In [27]: table = table.remove_die(dt.Die(6), -3)
-    dicetables.tools.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
+    dicetables.eventsbases.eventerrors.DiceRecordError: Tried to add_die or remove_die with a negative number.
 
     In [28]: table.get_dict()
     Out[28]: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
@@ -761,7 +779,7 @@ it may or may not raise an error, but it's guaranteed buggy::
     (I know why you're about to get wacky and inaccurate errors, and I could fix the bug, except ...
      YOU SHOULD NEVER EVER DO THIS!!!!)
     In [34]: table = table.remove(dt.AdditiveEvents({-5: 100}))
-    dicetables.tools.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
+    dicetables.eventsbases.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
     During handling of the above exception, another exception occurred:
 
@@ -770,7 +788,7 @@ it may or may not raise an error, but it's guaranteed buggy::
     Error At:   <class 'dicetables.dicetable.DiceTable'>
     Attempted to construct a class already present in factory, but with a different signature.
     Class: <class 'dicetables.dicetable.DiceTable'>
-    Signature In Factory: ('dictionary', 'dice')
+    Signature In Factory: ('get_dict', 'dice_data')
     To reset the factory to its base state, use EventsFactory.reset()
 
 
@@ -781,7 +799,7 @@ for instance, the dictionary for 2D6 is:
 {2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1}
 ::
 
-    In[22]: nonsense = dt.DiceTable({1: 1}, {dt.Die(6): 2}) <- BAD DATA!!!!
+    In[22]: nonsense = dt.DiceTable({1: 1}, dt.DiceRecord({dt.Die(6): 2})) <- BAD DATA!!!!
 
     In[23]: print(nonsense)  <- the dice record says it has 2D6, but the events dictionary is WRONG
     2D6
@@ -793,11 +811,11 @@ But, you cannot instantiate a DiceTable with negative values for dice.
 And you cannot instantiate a DiceTable with non-sense values for dice.
 ::
 
-    In[11]: dt.DiceTable({1: 1}, {dt.Die(3): 3, dt.Die(5): -1})
-    dicetables.tools.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(5): -1
+    In[11]: dt.DiceTable({1: 1}, dt.DiceRecord({dt.Die(3): 3, dt.Die(5): -1}))
+    dicetables.eventsbases.eventerrors.DiceRecordError: Tried to create a DiceRecord with a negative value at Die(5): -1
 
-    In[12]: dt.DiceTable({1: 1}, {'a': 2.0})
-    dicetables.tools.eventerrors.DiceRecordError: input must be {ProtoDie: int, ...}
+    In[12]: dt.DiceTable({1: 1}, dt.DiceRecord({'a': 2.0}))
+    dicetables.eventsbases.eventerrors.DiceRecordError: input must be {ProtoDie: int, ...}
 
 Calling combine_by_flattened_list can be risky::
 
@@ -955,7 +973,7 @@ and double the speed in the large adds range.
 - all children of AdditiveEvents are immutable. This can have some interesting
   inheritance effects. See Inheritance_.
 
-- DiceTable does not take a list of [(die, number), ...]. It now takes a dictionary of {die: number}.
+- DiceTable does not take a list of [(die, number), ...]. It now takes DiceRecord({die: number}).
   To get the correct data to build a new table, use DiceTable.get_dict() and DiceTable.dice_data() .
 
 - Removed wrapper functions: graph_pts, graph_pts_overflow, format_number
@@ -967,6 +985,6 @@ and double the speed in the large adds range.
     in [12]: new.combine(dt.AdditiveEvents({1: 1, 2: 5}), 2)
     Out[13]: <dicetables.baseevents.AdditiveEvents at 0x5e73828>
 
-    In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, {dt.Die(3): 1})
+    In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, dt.DiceRecord({dt.Die(3): 1}))
     Out[14]: <dicetables.dicetable.DiceTable at 0x5eddef0>
 

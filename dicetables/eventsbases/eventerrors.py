@@ -1,5 +1,6 @@
-"""These are tested in dicetables.baseevents and dicetables.dicetable . They are here so that modules can
-access them without needing to import the above mentioned modules."""
+"""
+Errors raised at instantiation of IntegerEvents and DiceRecord
+"""
 
 
 class InvalidEventsError(ValueError):

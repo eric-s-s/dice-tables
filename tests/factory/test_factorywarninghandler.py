@@ -6,7 +6,7 @@ import warnings
 
 from dicetables.factory.warninghandler import EventsFactoryWarning, EventsFactoryWarningHandler
 from dicetables.factory.eventsfactory import EventsFactory
-from dicetables.baseevents import AdditiveEvents
+from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicetable import DiceTable
 
 
@@ -59,7 +59,7 @@ class TestEventsFactoryWarningHandler(unittest.TestCase):
     def test_create_error_code_body_CONSTRUCT(self):
         expected = (
             '\n' +
-            'Class found in factory: <class \'dicetables.baseevents.AdditiveEvents\'>\n' +
+            'Class found in factory: <class \'dicetables.additiveevents.AdditiveEvents\'>\n' +
             'attempted object construction using its signature. tried to return instance of original class.\n' +
             'If that had failed, returned instance of the class found in EventsFactory.\n' +
             '\n'
@@ -76,12 +76,12 @@ class TestEventsFactoryWarningHandler(unittest.TestCase):
         expected = (
             'SOLUTION:\n' +
             '  class variable: factory_keys = (names of factory keys for getters)\n'
-            '  current factory keys are: [\'calc_bool\', \'dice\', \'dictionary\']\n' +
+            '  current factory keys are: [\'calc_includes_zeroes\', \'dice_data\', \'get_dict\']\n' +
             '  class variable: new_keys = [(info for each key not already in factory)]\n' +
             '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n' +
             'ex:\n' +
             '  NewClass(Something):\n' +
-            '      factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
+            '      factory_keys = ("dice_data", "get_dict", "thingy", "other")\n' +
             '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
             '                  ("other", "label", "", "property")]\n' +
             '\n' +
@@ -155,7 +155,7 @@ def create_instructions(factory):
         '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n'
         'ex:\n' +
         '  NewClass(Something):\n' +
-        '      factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
+        '      factory_keys = ("dice_data", "get_dict", "thingy", "other")\n' +
         '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
         '                  ("other", "label", "", "property")]\n\n' +
         '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +

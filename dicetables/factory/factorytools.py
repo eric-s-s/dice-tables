@@ -1,3 +1,8 @@
+"""
+StaticDict is an immutable dictionary.
+Getter is an object that remembers how to retrieve a parameter for a certain class or classes.
+"""
+
 
 class StaticDict(object):
     def __init__(self, dictionary):

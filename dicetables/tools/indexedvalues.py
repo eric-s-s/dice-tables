@@ -1,6 +1,6 @@
 """
 tool for combining dictionaries.
-IndexedValues is a list with a start index.
+IndexedValues is a list with a start index.  It is for simulating dictionaries of {int: int>0}
 """
 from __future__ import absolute_import
 

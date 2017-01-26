@@ -1,4 +1,17 @@
-"""functions for getting useful info from tables, ie. plot pts or stats"""
+"""
+For getting and computing details for any IntegerEvents, including:
+
+- points/axes for graphing, both raw and pct
+    - pct can be computed quickly up to 10 decimal places or more exactly and slowly using Decimal
+    - can include all the zero values between the lowest and highest non-zero events in an IntegerEvents
+- stddev and mean
+- string of all numbers in events in human readable form
+- strings for the percent chance of any subset of events within an events
+
+Can be accessed through objects or wrapper functions.
+"""
+
+
 from __future__ import absolute_import
 
 from decimal import Decimal
@@ -190,7 +203,7 @@ def get_exact_pct_number(number, total_values):
     return safe_true_div(100 * number, total_values)
 
 
-# wrappers functions and deprecated functions
+# wrappers functions
 
 def events_range(events):
     return EventsInformation(events).events_range()

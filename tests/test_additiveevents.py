@@ -1,76 +1,13 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 from __future__ import absolute_import
-from sys import version_info
+
 import unittest
-from dicetables.baseevents import AdditiveEvents, InvalidEventsError, EventsVerifier, scrub_zeroes
+
+from dicetables.additiveevents import AdditiveEvents, scrub_zeroes, EventsDictCreator
+from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
-class TestBaseEvents(unittest.TestCase):
-    def setUp(self):
-        self.checker = EventsVerifier()
-        self.types_error = 'all values must be ints'
-        if version_info[0] < 3:
-            self.types_error += ' or longs'
-
-    def tearDown(self):
-        del self.checker
-        del self.types_error
-
-    def assert_my_regex(self, error_type, regex, func, *args):
-        with self.assertRaises(error_type) as cm:
-            func(*args)
-        error_msg = cm.exception.args[0]
-        self.assertEqual(error_msg, regex)
-
-    def test_assert_my_regex(self):
-        self.assert_my_regex(ValueError, "invalid literal for int() with base 10: 'a'", int, 'a')
-
-    def test_InvalidEventsError_empty(self):
-        error = InvalidEventsError()
-        self.assertEqual(str(error), '')
-        self.assertEqual(error.args[0], '')
-
-    def test_InvalidEventsError_non_empty(self):
-        error = InvalidEventsError('message')
-        self.assertEqual(str(error), 'message')
-        self.assertEqual(error.args[0], 'message')
-
-    def test_EventsVerifier_verify_get_dict_pass(self):
-        self.assertIsNone(self.checker.verify_get_dict({1: 1}))
-
-    def test_EventsVerifier_verify_get_dict_empty(self):
-        self.assert_my_regex(InvalidEventsError,
-                             'events may not be empty. a good alternative is the identity - {0: 1}.',
-                             self.checker.verify_get_dict, {})
-
-    def test_EventsVerifier_verify_get_dict_zero_occurrences(self):
-        self.assert_my_regex(InvalidEventsError,
-                             'no negative or zero occurrences in Events.get_dict()',
-                             self.checker.verify_get_dict, {1: 0, 2: 0})
-
-    def test_EventsVerifier_verify_get_dict_negative_occurrences(self):
-        self.assert_my_regex(InvalidEventsError, 'no negative or zero occurrences in Events.get_dict()',
-                             self.checker.verify_get_dict, {1: -1})
-
-    def test_EventsVerifier_verify_get_dict_non_int_occurrences(self):
-        self.assert_my_regex(InvalidEventsError, self.types_error,
-                             self.checker.verify_get_dict, {1: 1.0})
-
-    def test_EventsVerifier_verify_get_dict_non_int_event(self):
-        self.assert_my_regex(InvalidEventsError, self.types_error,
-                             self.checker.verify_get_dict, {1.0: 1})
-
-    def test_EventsVerifier_is_all_ints_pass(self):
-        self.assertTrue(self.checker.is_all_ints([10 ** value for value in range(500)]))
-
-    def test_EventsVerifier_all_ints_fail(self):
-        self.assertFalse(self.checker.is_all_ints([1.0, 1, 1, 1, 1, 1]))
-
-    def test_EventsVerifier_does_not_work_if_does_not_follow_minimum_requirements(self):
-        self.assertRaises(AttributeError, self.checker.verify_get_dict, 'a')
-        self.assertRaises(AttributeError, self.checker.verify_get_dict, [1, 2, 3])
-        self.assertRaises(AttributeError, self.checker.verify_get_dict, [(1, 2, 3), (4, 5, 6)])
-        self.assertRaises(InvalidEventsError, self.checker.verify_get_dict, {'a': 'b'})
+class TestAdditiveEvents(unittest.TestCase):
 
     def test_scrub_zeroes_no_zeroes_dict(self):
         self.assertEqual(scrub_zeroes({1: 2, 3: 4}), {1: 2, 3: 4})
@@ -233,6 +170,35 @@ class TestBaseEvents(unittest.TestCase):
         test = AdditiveEvents({1: 2}).remove(to_use)
         self.assertEqual(test.get_dict(), {0: 1})
 
+    def test_EventsDictCreator_create_using_combine_by_fastest(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_fastest(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_combine_by_dictionary(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_dictionary(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_combine_by_indexed_values(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_indexed_values(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_combine_by_flattened_list(self):
+        primary = AdditiveEvents.new()
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_combine_by_flattened_list(2), {2: 1, 3: 4, 4: 4})
+
+    def test_EventsDictCreator_create_using_remove_by_tuple_list(self):
+        primary = AdditiveEvents({2: 1, 3: 4, 4: 4})
+        to_combine_with = AdditiveEvents({1: 1, 2: 2})
+        to_test = EventsDictCreator(primary, to_combine_with)
+        self.assertEqual(to_test.create_using_remove_by_tuple_list(2), {0: 1})
 
 
 if __name__ == '__main__':

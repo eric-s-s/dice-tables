@@ -7,8 +7,9 @@ from __future__ import print_function
 import time
 from decimal import Decimal
 
-import dicetables as dt
-import dicetables.baseevents as be
+from dicetables.additiveevents import AdditiveEvents
+from dicetables.tools.dictcombiner import DictCombiner
+from dicetables.eventsinfo import EventsInformation
 
 
 def time_trial(times, func, *args):
@@ -31,7 +32,7 @@ def combine_trial(times, new_events, method, the_object):
 
 def print_combine_trial(times, new_events, method, the_object):
     result = combine_trial(times, new_events, method, the_object)
-    info = dt.EventsInformation(new_events)
+    info = EventsInformation(new_events)
     start, stop = info.events_range()
     first = info.get_event(start)
     last = info.get_event(stop)
@@ -92,17 +93,17 @@ def fastest_vs_tuple_indexed_ui():
         start_dict_size = get_answer('pick a start size for AdditiveEvents', 1, 1000)
         start_dict = dict([(event, 2 ** (event % 100)) for event in range(start_dict_size)])
 
-        show_fastest_method_speed = be.DictCombiner(start_dict)
-        flattened_list_control = be.AdditiveEvents(start_dict)
-        flattened_list_fastest = be.AdditiveEvents(start_dict)
-        tuple_list_control = be.AdditiveEvents(start_dict)
-        tuple_list_fastest = be.AdditiveEvents(start_dict)
+        show_fastest_method_speed = DictCombiner(start_dict)
+        flattened_list_control = AdditiveEvents(start_dict)
+        flattened_list_fastest = AdditiveEvents(start_dict)
+        tuple_list_control = AdditiveEvents(start_dict)
+        tuple_list_fastest = AdditiveEvents(start_dict)
 
         added_events_size = get_answer('how long is new events to combine', 2, 1000)
         added_event_occurrences = get_answer('how many occurrences per event', 2, 10 ** 300)
         gaps = get_answer('how many spaces between value', 0, 2)
-        flat_events = dt.AdditiveEvents(dict.fromkeys(range(0, added_events_size, gaps + 1), 1))
-        tuple_events = dt.AdditiveEvents(dict.fromkeys(range(0, added_events_size, gaps + 1), added_event_occurrences))
+        flat_events = AdditiveEvents(dict.fromkeys(range(0, added_events_size, gaps + 1), 1))
+        tuple_events = AdditiveEvents(dict.fromkeys(range(0, added_events_size, gaps + 1), added_event_occurrences))
 
         number_of_adds = get_answer('how many times to combine?', 1, 2000)
 
@@ -111,19 +112,19 @@ def fastest_vs_tuple_indexed_ui():
                                 flat_events.get_dict(), 1))
         print('\nFASTEST with one occurrence')
         print_combine_trial(number_of_adds, flat_events, 'fastest', flattened_list_fastest)
-        print(dt.EventsInformation(flattened_list_fastest).events_range())
+        print(EventsInformation(flattened_list_fastest).events_range())
 
         print('\nFLATTENED_LIST with one occurrence')
         print_combine_trial(number_of_adds, flat_events, 'flattened_list', flattened_list_control)
-        print(dt.EventsInformation(flattened_list_control).events_range())
+        print(EventsInformation(flattened_list_control).events_range())
 
         print('\n\nFASTEST with many occurrence')
         print_combine_trial(number_of_adds, tuple_events, 'fastest', tuple_list_fastest)
-        print(dt.EventsInformation(tuple_list_fastest).events_range())
+        print(EventsInformation(tuple_list_fastest).events_range())
 
         print('\nTUPLE_LIST with many occurrence')
         print_combine_trial(number_of_adds, tuple_events, 'dictionary', tuple_list_control)
-        print(dt.EventsInformation(tuple_list_control).events_range())
+        print(EventsInformation(tuple_list_control).events_range())
 
 
 if __name__ == '__main__':

@@ -11,8 +11,7 @@ from os import getcwd
 from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
-import dicetables.baseevents as base
-
+from dicetables.additiveevents import AdditiveEvents
 
 WELCOME_TXT = 'hi'
 
@@ -165,8 +164,8 @@ def get_input_dict(input_dict_size, use_exponential_occurrences):
 def get_control_and_indexed_values_times(combine_times, events_tuples, input_dict):
     control_events_action = get_control_action(input_dict, events_tuples)
 
-    events_for_indexed_values = base.AdditiveEvents(input_dict)
-    events_to_add = base.AdditiveEvents(dict(events_tuples))
+    events_for_indexed_values = AdditiveEvents(input_dict)
+    events_to_add = AdditiveEvents(dict(events_tuples))
     indexed_values_start = time.clock()
     events_for_indexed_values.combine_by_indexed_values(events_to_add, combine_times)
     indexed_values_time = time.clock() - indexed_values_start
@@ -177,7 +176,7 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
 
 
 def get_control_action(input_dict, events_tuples):
-    control_events = base.AdditiveEvents(input_dict)
+    control_events = AdditiveEvents(input_dict)
     control_method_str = get_control_method_str(events_tuples)
     control_method_dict = {'tuple_list': control_events.combine_by_dictionary,
                            'flattened_list': control_events.combine_by_flattened_list}

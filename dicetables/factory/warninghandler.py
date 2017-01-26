@@ -52,7 +52,7 @@ class EventsFactoryWarningHandler(object):
             '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n'
             'ex:\n' +
             '  NewClass(Something):\n' +
-            '      factory_keys = ("dictionary", "dice", "thingy", "other")\n' +
+            '      factory_keys = ("dice_data", "get_dict", "thingy", "other")\n' +
             '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
             '                  ("other", "label", "", "property")]\n\n' +
             '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +

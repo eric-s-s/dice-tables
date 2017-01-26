@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='dicetables',
-      version='2.0.1',
+      version='2.1.0',
       description='get all combinations for any set of dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
@@ -24,7 +24,7 @@ setup(name='dicetables',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
       ],
-      packages=['dicetables', 'dicetables.tools', 'dicetables.factory'],
+      packages=['dicetables', 'dicetables.tools', 'dicetables.factory', 'dicetables.eventsbases'],
       test_suite='nose.collector',
       tests_require=['nose'],
       include_package_data=True,

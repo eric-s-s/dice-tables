@@ -6,9 +6,10 @@ import warnings
 from sys import version_info
 from itertools import cycle
 
-from dicetables.baseevents import AdditiveEvents
+from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die
+from dicetables.dicerecord import DiceRecord
 from dicetables.factory.eventsfactory import EventsFactory, Loader, LoaderError
 from dicetables.factory.errorhandler import EventsFactoryError
 from dicetables.factory.warninghandler import EventsFactoryWarning
@@ -20,7 +21,7 @@ class NewDiceTableSameInitNoUpdate(DiceTable):
 
 
 class NewDiceTableSameInitUpdate(DiceTable):
-    factory_keys = ('dictionary', 'dice')
+    factory_keys = ('get_dict', 'dice_data')
 
     def __init__(self, event_dic, dice):
         super(NewDiceTableSameInitUpdate, self).__init__(event_dic, dice)
@@ -33,8 +34,8 @@ class NewDiceTableNewInitNoUpdate(DiceTable):
 
 
 class NewDiceTableNewInitUpdate(DiceTable):
-    factory_keys = ('dictionary', 'dice', 'number')
-    new_keys = [('number', 'number', 0, 'property')]
+    factory_keys = ('get_dict', 'dice_data', 'number')
+    new_keys = [('number', 0, 'property')]
 
     def __init__(self, event_dic, dice, number):
         self.number = number
@@ -139,8 +140,8 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_Loader_bad_factory_keys_raises_EventsFactoryError(self):
         class BadByClassPresentButDifferent(object):
-            factory_keys = ('dice', )
-        EventsFactory.add_class(BadByClassPresentButDifferent, ('dictionary',))
+            factory_keys = ('dice_data', )
+        EventsFactory.add_class(BadByClassPresentButDifferent, ('get_dict',))
 
         class BadByBadKeyName(object):
             factory_keys = ('so very very wrong', )
@@ -152,21 +153,21 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_Loader_bad_new_keys_raises_EventsFactoryError(self):
         class Bob(object):
-            factory_keys = ('dice',)
-            new_keys = [('dice', 'get_dice', [1])]
+            factory_keys = ('dice_data',)
+            new_keys = [('dice_data', 'get_dice', [1])]
         self.assert_EventsFactoryError_code('GETTER OVERWRITE', Loader(EventsFactory).load, Bob)
 
     def test_Loader_class_already_present(self):
         class Bob(object):
-            factory_keys = ('dice',)
-        EventsFactory.add_class(Bob, ('dice', ))
+            factory_keys = ('dice_data',)
+        EventsFactory.add_class(Bob, ('dice_data', ))
         self.assertTrue(EventsFactory.has_class(Bob))
         self.assertIsNone(Loader(EventsFactory).load(Bob))
         self.assertTrue(EventsFactory.has_class(Bob))
 
     def test_Loader_no_new_keys(self):
         class Bob(object):
-            factory_keys = ('dice',)
+            factory_keys = ('dice_data',)
         self.assertFalse(EventsFactory.has_class(Bob))
         Loader(EventsFactory).load(Bob)
         self.assertTrue(EventsFactory.has_class(Bob))
@@ -174,10 +175,10 @@ class TestEventsFactory(unittest.TestCase):
     def test_Loader_new_keys(self):
         class Bob(object):
             factory_keys = ('my_method', 'my_property')
-            new_keys = [('my_method', 'get_method', 5), ('my_property', 'my_property', 'a', 'property')]
+            new_keys = [('my_method', 5), ('my_property', 'a', 'property')]
         Loader(EventsFactory).load(Bob)
         self.assertTrue(EventsFactory.get_class_params(Bob), ('my_method', 'my_property'))
-        self.assertEqual(EventsFactory.get_getter_string('my_method'), 'method: "get_method", default: 5')
+        self.assertEqual(EventsFactory.get_getter_string('my_method'), 'method: "my_method", default: 5')
         self.assertEqual(EventsFactory.get_getter_string('my_property'), 'property: "my_property", default: \'a\'')
 
     def test_EventsFactory_has_class_true(self):
@@ -187,26 +188,32 @@ class TestEventsFactory(unittest.TestCase):
         self.assertFalse(EventsFactory.has_class(float))
 
     def test_EventsFactory_has_getter_true(self):
-        self.assertTrue(EventsFactory.has_getter('dictionary'))
+        self.assertTrue(EventsFactory.has_getter('get_dict'))
 
     def test_EventsFactory_has_getter_false(self):
         self.assertFalse(EventsFactory.has_getter('not_there'))
 
     def test_EventsFactory_get_class_params(self):
-        self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('dictionary', ))
+        self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('get_dict', ))
+
+    def test_EventsFactory_get_class_params_no_class(self):
+        self.assertIsNone(EventsFactory.get_class_params(int))
 
     def test_EventsFactory_get_getter_string(self):
         get_dict = 'method: "get_dict", default: {0: 1}'
-        self.assertEqual(EventsFactory.get_getter_string('dictionary'), get_dict)
+        self.assertEqual(EventsFactory.get_getter_string('get_dict'), get_dict)
+
+    def test_EventsFactory_get_getter_string_no_getters(self):
+        self.assertEqual(EventsFactory.get_getter_string('not_there'), 'None')
 
     def test_EventsFactory_get_keys(self):
         class X(object):
             pass
         classes = ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable']
-        getters = ['calc_bool', 'dice', 'dictionary']
+        getters = ['calc_includes_zeroes', 'dice_data', 'get_dict']
         self.assertEqual(EventsFactory.get_keys(), (classes, getters))
 
-        EventsFactory.add_class(X, ('dice', ))
+        EventsFactory.add_class(X, ('dice_data', ))
         EventsFactory.add_getter('z', 'get', 0)
         classes.append('X')
         getters.append('z')
@@ -215,32 +222,32 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_reset(self):
         class Bob(object):
             pass
-        EventsFactory.add_class(Bob, ('dictionary',))
+        EventsFactory.add_class(Bob, ('get_dict',))
         EventsFactory.add_getter('number', 'get_num', 0)
         self.assertTrue(EventsFactory.has_class(Bob))
         self.assertTrue(EventsFactory.has_getter('number'))
         EventsFactory.reset()
         default_classes = ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable']
-        default_getters = ['calc_bool', 'dice', 'dictionary']
+        default_getters = ['calc_includes_zeroes', 'dice_data', 'get_dict']
         self.assertEqual(EventsFactory.get_keys(), (default_classes, default_getters))
 
     def test_EventsFactory_add_class(self):
         class Bob(object):
             pass
         self.assertFalse(EventsFactory.has_class(Bob))
-        EventsFactory.add_class(Bob, ('dictionary',))
+        EventsFactory.add_class(Bob, ('get_dict',))
         self.assertTrue(EventsFactory.has_class(Bob))
-        self.assertEqual(EventsFactory.get_class_params(Bob), ('dictionary',))
+        self.assertEqual(EventsFactory.get_class_params(Bob), ('get_dict',))
 
     def test_EventsFactory_add_class_already_has_class_does_not_change(self):
         self.assertTrue(EventsFactory.has_class(AdditiveEvents))
-        self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('dictionary', ))
-        EventsFactory.add_class(AdditiveEvents, ('dictionary',))
+        self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('get_dict', ))
+        EventsFactory.add_class(AdditiveEvents, ('get_dict',))
         self.assertTrue(EventsFactory.has_class(AdditiveEvents))
-        self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('dictionary',))
+        self.assertEqual(EventsFactory.get_class_params(AdditiveEvents), ('get_dict',))
 
     def test_EventsFactory_add_class_already_has_class_raises_EventsFactoryError(self):
-        self.assert_EventsFactoryError_code('CLASS OVERWRITE', EventsFactory.add_class, AdditiveEvents, ('dice', ))
+        self.assert_EventsFactoryError_code('CLASS OVERWRITE', EventsFactory.add_class, AdditiveEvents, ('dice_data', ))
 
     def test_EventsFactory_add_class_factory_missing_getter_raises_EventsFactoryError(self):
         class Bob(object):
@@ -248,22 +255,22 @@ class TestEventsFactory(unittest.TestCase):
         self.assert_EventsFactoryError_code('MISSING GETTER', EventsFactory.add_class, Bob, ('not_there', ))
 
     def test_EventsFactory_add_getter_new_method(self):
-        EventsFactory.add_getter('number', 'get_num', 0)
-        self.assertEqual(EventsFactory.get_getter_string('number'), 'method: "get_num", default: 0')
+        EventsFactory.add_getter('get_num', 0)
+        self.assertEqual(EventsFactory.get_getter_string('get_num'), 'method: "get_num", default: 0')
 
     def test_EventsFactory_add_getter_new_property(self):
-        EventsFactory.add_getter('number', 'get_num', 0, type_str='property')
-        self.assertEqual(EventsFactory.get_getter_string('number'), 'property: "get_num", default: 0')
+        EventsFactory.add_getter('get_num', 0, type_str='property')
+        self.assertEqual(EventsFactory.get_getter_string('get_num'), 'property: "get_num", default: 0')
 
     def test_EventsFactory_add_getter_already_there_does_nothing(self):
-        EventsFactory.add_getter('dictionary', 'get_dict', {0: 1})
-        self.assertEqual(EventsFactory.get_getter_string('dictionary'), 'method: "get_dict", default: {0: 1}')
+        EventsFactory.add_getter('get_dict', {0: 1})
+        self.assertEqual(EventsFactory.get_getter_string('get_dict'), 'method: "get_dict", default: {0: 1}')
 
     def test_EventsFactory_add_getter_already_not_equal_raises_error(self):
         self.assert_EventsFactoryError_code('GETTER OVERWRITE',
-                                            EventsFactory.add_getter, 'dictionary', 'get_dict', {1: 1})
+                                            EventsFactory.add_getter, 'get_dict', {1: 1})
         self.assert_EventsFactoryError_code('GETTER OVERWRITE',
-                                            EventsFactory.add_getter, 'dictionary', 'oops', {0: 1})
+                                            EventsFactory.add_getter, 'get_dict', {0: 1}, 'property')
 
     def test_EventsFactory_check_no_errors_or_warnings(self):
         self.assert_no_warning(EventsFactory.check, AdditiveEvents)
@@ -290,7 +297,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventsFactory_check_never_runs_loader_if_class_found(self):
         class Bob(object):
             factory_keys = ('will cause error', )
-        EventsFactory.add_class(Bob, ('dice', ))
+        EventsFactory.add_class(Bob, ('dice_data', ))
         self.assert_no_warning(EventsFactory.check, Bob)
 
     def test_EventsFactory_check_only_issues_warning_for_totally_unrelated_class(self):
@@ -307,7 +314,7 @@ class TestEventsFactory(unittest.TestCase):
     def test_EventFactory_construction__new_class_added_and_called(self):
         class Bob(AdditiveEvents):
             pass
-        EventsFactory.add_class(Bob, ('dictionary', ))
+        EventsFactory.add_class(Bob, ('get_dict', ))
         self.assert_no_warning(EventsFactory.new, Bob)
         test = EventsFactory.new(Bob)
         self.assertIs(type(test), Bob)
@@ -347,8 +354,8 @@ class TestEventsFactory(unittest.TestCase):
 
             def __init__(self, num):
                 self.num = num
-        EventsFactory.add_getter('number', 'num', -5, 'property')
-        EventsFactory.add_class(Bob, ('number', ))
+        EventsFactory.add_getter('num', -5, 'property')
+        EventsFactory.add_class(Bob, ('num', ))
         self.assert_no_warning(EventsFactory.new, Bob)
         test = EventsFactory.new(Bob)
         self.assertIs(type(test), Bob)
@@ -366,32 +373,32 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_EventsFactory_construction__new_class_bad_new_keys_raises_EventsFactoryError(self):
         class BadLoaderKeys(AdditiveEvents):
-            factory_keys = ('dice', )
-            new_keys = [('dice', 'get_dice', 5)]
+            factory_keys = ('dice_data', )
+            new_keys = [('dice_data', 5)]
         self.assert_EventsFactoryError_code('GETTER OVERWRITE', EventsFactory.new, BadLoaderKeys)
 
     def test_EventsFactory_construction__class_present_wrong_signature_wrong_param_EventsFactoryError(self):
         class Bob(AdditiveEvents):
             pass
-        EventsFactory.add_class(Bob, ('dice', ))
+        EventsFactory.add_class(Bob, ('dice_data', ))
         self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
 
     def test_EventsFactory_construction__class_present_different_signature_too_many_params_EventsFactoryError(self):
         class Bob(AdditiveEvents):
             pass
-        EventsFactory.add_class(Bob, ('dictionary', 'dice'))
+        EventsFactory.add_class(Bob, ('get_dict', 'dice_data'))
         self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
 
     def test_EventsFactory_construction__class_present_different_signature_too_few_params_EventsFactoryError(self):
         class Bob(DiceTable):
             pass
-        EventsFactory.add_class(Bob, ('dictionary', ))
+        EventsFactory.add_class(Bob, ('get_dict', ))
         self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
 
     def test_EventsFactory_construction__class_present_wrong_signature_wrong_order_EventsFactoryError(self):
         class Bob(DiceTable):
             pass
-        EventsFactory.add_class(Bob, ('dice', 'dictionary'))
+        EventsFactory.add_class(Bob, ('dice_data', 'get_dict'))
         self.assert_EventsFactoryError_code('SIGNATURES DIFFERENT', EventsFactory.new, Bob)
 
     def test_EventsFactory_new_AdditiveEvents(self):
@@ -435,14 +442,14 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_EventsFactory_from_dict_and_dice_DiceTable(self):
         events = DiceTable.new()
-        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, DiceRecord({Die(2): 2}))
         self.assertIs(type(new_events), DiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
 
     def test_EventsFactory_from_dict_and_dice_DetailedDiceTable(self):
-        events = DetailedDiceTable({2: 2}, {}, False)
-        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, {Die(2): 2})
+        events = DetailedDiceTable({2: 2}, DiceRecord.new(), False)
+        new_events = EventsFactory.from_dictionary_and_dice(events, {1: 1}, DiceRecord({Die(2): 2}))
         self.assertIs(type(new_events), DetailedDiceTable)
         self.assertEqual(new_events.get_dict(), {1: 1})
         self.assertEqual(new_events.get_list(), [(Die(2), 2)])
@@ -452,20 +459,20 @@ class TestEventsFactory(unittest.TestCase):
         start_dict = {2: 2}
         new_dict = {1: 1}
 
-        start_dice = {Die(2): 1}
-        new_dice = {Die(3): 3}
+        start_dice = DiceRecord({Die(2): 1})
+        new_dice = DiceRecord({Die(3): 3})
 
         start_num = 5
         new_num = 10
 
         start = NewDiceTableNewInitUpdate(start_dict, start_dice, start_num)
 
-        new_events1 = EventsFactory.from_params(start, {'number': new_num, 'dice': new_dice})
+        new_events1 = EventsFactory.from_params(start, {'number': new_num, 'dice_data': new_dice})
         self.assertEqual(new_events1.get_dict(), start_dict)
         self.assertEqual(new_events1.dice_data(), new_dice)
         self.assertEqual(new_events1.number, new_num)
 
-        new_events2 = EventsFactory.from_params(start, {'dictionary': new_dict})
+        new_events2 = EventsFactory.from_params(start, {'get_dict': new_dict})
         self.assertEqual(new_events2.get_dict(), new_dict)
         self.assertEqual(new_events2.dice_data(), start_dice)
         self.assertEqual(new_events2.number, start_num)
@@ -488,7 +495,7 @@ class TestEventsFactory(unittest.TestCase):
             '\n' +
             'SOLUTION:\n' +
             '  class variable: factory_keys = (names of factory keys for getters)\n'
-            '  current factory keys are: [\'calc_bool\', \'dice\', \'dictionary\']\n'
+            '  current factory keys are: [\'calc_includes_zeroes\', \'dice_data\', \'get_dict\']\n'
         )
 
         class WillWarn(DiceTable):
@@ -517,21 +524,21 @@ class TestEventsFactory(unittest.TestCase):
     def test_Events_Factory_error_correct_message_CLASS_OVERWRITE(self):
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
         class_name = '<class \'dicetables.dicetable.DiceTable\'>'
-        current_keys = '(\'dictionary\', \'dice\')'
-        passed_keys = '(\'dice\',)'
+        current_keys = '(\'get_dict\', \'dice_data\')'
+        passed_keys = '(\'dice_data\',)'
         expected = (factory_name, class_name, current_keys, passed_keys)
-        self.assert_EventsFactoryError_contains(expected, EventsFactory.add_class, DiceTable, ('dice',))
+        self.assert_EventsFactoryError_contains(expected, EventsFactory.add_class, DiceTable, ('dice_data',))
 
     def test_Events_Factory_error_correct_message_GETTER_OVERWRITE(self):
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
-        getter_key = '\'dice\''
-        getter_string = 'method: "dice_data", default: {}'
-        new_getter_string = 'method: "get_dice", default: [(2, Die(6))]'
+        getter_key = '\'dice_data\''
+        getter_string = 'method: "dice_data", default: DiceRecord({})'
+        new_getter_string = 'method: "dice_data", default: [(2, Die(6))]'
         expected = (factory_name, getter_key, getter_string, new_getter_string)
 
         class Bob(object):
-            factory_keys = ('dice', )
-            new_keys = [('dice', 'get_dice', [(2, Die(6))], 'method')]
+            factory_keys = ('dice_data', )
+            new_keys = [('dice_data', [(2, Die(6))], 'method')]
         self.assert_EventsFactoryError_contains(expected, EventsFactory.new, Bob)
 
     def test_Events_Factory_error_correct_message_MISSING_GETTER(self):
@@ -540,12 +547,12 @@ class TestEventsFactory(unittest.TestCase):
             bob_insert = ''
         bob = 'tests.factory.test_eventsfactory.{}Bob'.format(bob_insert)
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
-        factory_keys = '[\'calc_bool\', \'dice\', \'dictionary\']'
+        factory_keys = '[\'calc_includes_zeroes\', \'dice_data\', \'get_dict\']'
         missing_key = '\'foo\''
         expected = (bob, factory_name, factory_keys, missing_key)
 
         class Bob(object):
-            factory_keys = ('dice', 'foo')
+            factory_keys = ('dice_data', 'foo')
         self.assert_EventsFactoryError_contains(expected, EventsFactory.new, Bob)
 
     def test_Events_Factory_error_correct_message_SIGNATURES_DIFFERENT(self):
@@ -554,13 +561,13 @@ class TestEventsFactory(unittest.TestCase):
             bob_insert = ''
         bob = 'tests.factory.test_eventsfactory.{}Bob'.format(bob_insert)
         factory_name = '<class \'dicetables.factory.eventsfactory.EventsFactory\'>'
-        signature = '(\'dictionary\', \'dice\')'
+        signature = '(\'get_dict\', \'dice_data\')'
         expected = (bob, factory_name, signature)
 
         class Bob(object):
             def __init__(self, num):
                 self.num = num
-        EventsFactory.add_class(Bob, ('dictionary', 'dice'))
+        EventsFactory.add_class(Bob, ('get_dict', 'dice_data'))
         self.assert_EventsFactoryError_contains(expected, EventsFactory.new, Bob)
 
     def test_Events_Factory_error_correct_message_WTF(self):
@@ -597,7 +604,7 @@ class TestEventsFactory(unittest.TestCase):
 
         self.assertIs(EventsFactory._class_args, C._class_args)
         self.assertIs(B._getters, A._getters)
-        B.add_class(int, ('dice', ))
+        B.add_class(int, ('dice_data', ))
         self.assertEqual(EventsFactory.get_keys()[0], ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable'])
         self.assertEqual(C.get_keys()[0], ['AdditiveEvents', 'DetailedDiceTable', 'DiceTable', 'int'])
         EventsFactory.reset()
@@ -611,9 +618,9 @@ class TestEventsFactory(unittest.TestCase):
     def test_object_of_astonishing_idiocy(self):
 
         class DoubleTable(DiceTable):
-            factory_keys = ('dictionary', 'second_dic', 'dice', 'dice_first')
-            new_keys = [('second_dic', 'get_dict_alt', {0: 1}, 'method'),
-                        ('dice_first', 'init_dice_first', True, 'method')]
+            factory_keys = ('get_dict', 'get_dict_alt', 'dice_data', 'get_dice_first_val')
+            new_keys = [('get_dict_alt', {0: 1}, 'method'),
+                        ('get_dice_first_val', True, 'method')]
 
             def __init__(self, dic1, dic2, dice, init_dice_first):
                 if init_dice_first:
@@ -636,7 +643,7 @@ class TestEventsFactory(unittest.TestCase):
                     return super(DoubleTable, self).get_dict()
                 return self._additive.get_dict()
 
-            def init_dice_first(self):
+            def get_dice_first_val(self):
                 answer = self._dice_first
                 self._dice_first = True
                 return answer
@@ -661,7 +668,7 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_deep_depths_of_dumbness(self):
         class DetachableDiceTable(DiceTable):
-            factory_keys = ('dictionary', 'dice')
+            factory_keys = ('get_dict', 'dice_data')
             lyrics = cycle((
                 'I woke up this morning with a bad hangover and my {} was missing again.',
                 'I can leave it home, when I think it\'s gonna get me in trouble,',
