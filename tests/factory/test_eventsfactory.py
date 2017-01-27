@@ -6,7 +6,7 @@ import warnings
 from sys import version_info
 from itertools import cycle
 
-from dicetables.additiveevents import AdditiveEvents
+from dicetables.additiveevents import AdditiveEvents, EventsDictCreator
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die
 from dicetables.dicerecord import DiceRecord
@@ -616,53 +616,36 @@ class TestEventsFactory(unittest.TestCase):
         self.assertIsNot(B._getters, C._getters)
 
     def test_object_of_astonishing_idiocy(self):
-
         class DoubleTable(DiceTable):
-            factory_keys = ('get_dict', 'get_dict_alt', 'dice_data', 'get_dice_first_val')
-            new_keys = [('get_dict_alt', {0: 1}, 'method'),
-                        ('get_dice_first_val', True, 'method')]
+            """
+            TWO TABLES IN ONE!!!
+            add_die/remove_die affect primary table.
+            combine/remove affect secondary table.
+            demonstrates factory method and EventsDictCreator
+            """
+            factory_keys = ('get_dict', 'get_dict_alt', 'dice_data')
+            new_keys = [('get_dict_alt', {0: 1}, 'method')]
 
-            def __init__(self, dic1, dic2, dice, init_dice_first):
-                if init_dice_first:
-                    dice_dic = dic1
-                    additive = dic2
-                else:
-                    dice_dic = dic2
-                    additive = dic1
-                self._dice_first = True
-                self._additive = AdditiveEvents(additive)
-                super(DoubleTable, self).__init__(dice_dic, dice)
-
-            def get_dict(self):
-                if not self._dice_first:
-                    return self._additive.get_dict()
-                return super(DoubleTable, self).get_dict()
+            def __init__(self, dict_for_add_die, dict_for_combine, dice_record):
+                self._additive = AdditiveEvents(dict_for_combine)
+                super(DoubleTable, self).__init__(dict_for_add_die, dice_record)
 
             def get_dict_alt(self):
-                if not self._dice_first:
-                    return super(DoubleTable, self).get_dict()
                 return self._additive.get_dict()
 
-            def get_dice_first_val(self):
-                answer = self._dice_first
-                self._dice_first = True
-                return answer
-
             def combine(self, events, times=1):
-                self._dice_first = False
-                return super(DoubleTable, self).combine(events, times)
+                new_alt_dict = EventsDictCreator(self._additive, events).create_using_combine_by_fastest(times)
+                return EventsFactory.from_params(self, {'get_dict_alt': new_alt_dict})
 
             def remove(self, events, times=1):
-                self._dice_first = False
-                return super(DoubleTable, self).remove(events, times)
+                new_alt_dict = EventsDictCreator(self._additive, events).create_using_remove_by_tuple_list(times)
+                return EventsFactory.from_params(self, {'get_dict_alt': new_alt_dict})
 
         new = DoubleTable.new()
         d1 = new.add_die(Die(2), 1)
-        self.assertTrue(d1._dice_first)
         self.assertEqual(d1.get_dict(), {1: 1, 2: 1})
         self.assertEqual(d1.get_dict_alt(), {0: 1})
         d1_plus = d1.combine(Die(3), 1)
-        self.assertTrue(d1_plus._dice_first)
         self.assertEqual(d1_plus.get_dict(), {1: 1, 2: 1})
         self.assertEqual(d1_plus.get_dict_alt(), {1: 1, 2: 1, 3: 1})
 
@@ -679,8 +662,8 @@ class TestEventsFactory(unittest.TestCase):
                 'Even though sometimes it\'s a pain in the ass, I like having a detachable {}.'
             ))
 
-            def __init__(self, events_dict, dice_number_dict):
-                super(DetachableDiceTable, self).__init__(events_dict, dice_number_dict)
+            def __init__(self, events_dict, dice_record):
+                super(DetachableDiceTable, self).__init__(events_dict, dice_record)
 
             def detach(self, die):
                 awesome_lyric = next(self.__class__.lyrics).format(die)
@@ -704,6 +687,47 @@ class TestEventsFactory(unittest.TestCase):
         self.assertEqual(detached_1.get_dict(), detached_2.get_dict())
         self.assertEqual(str(detached_1), '4D5')
         self.assertEqual(empty.get_dict(), {0: 1})
+
+    def test_a_silly_example_to_show_EventsDictCreator_and_EventsFactory_from_params(self):
+        """
+        combine events with a single event that occurs once simply shifts the values of all events.
+
+        AdditiveEvents({1: 2, 3: 4}).combine(AdditiveEvents({10: 1})).get_dict()
+        {11: 2, 13: 4}
+        AdditiveEvents({1: 2, 3: 4}).combine(AdditiveEvents({100: 1})).get_dict()
+        {101: 2, 103: 4}
+        """
+        class ModifierTable(DiceTable):
+            factory_keys = ('get_dict', 'dice_data', 'modifier')
+            new_keys = [('modifier', 0, 'property')]
+
+            def __init__(self, events_dict, dice_record, modifier):
+                self._mod = modifier
+                super(ModifierTable, self).__init__(events_dict, dice_record)
+
+            def __str__(self):
+                return '{}\n{:+}'.format(super(ModifierTable, self).__str__(), self._mod)
+
+            @property
+            def modifier(self):
+                return self._mod
+
+            def change_mod(self, new_modifier):
+                change = new_modifier - self._mod
+                change_events = AdditiveEvents({change: 1})
+                new_dict = EventsDictCreator(self, change_events).create_using_combine_by_dictionary(1)
+                return EventsFactory.from_params(self, {'get_dict': new_dict, 'modifier': new_modifier})
+
+        to_test = ModifierTable.new()
+        to_test = to_test.add_die(Die(2), 2)
+        self.assertEqual(to_test.get_dict(), {2: 1, 3: 2, 4: 1})
+        self.assertEqual(str(to_test), '2D2\n+0')
+        to_test = to_test.change_mod(10)
+        self.assertEqual(to_test.get_dict(), {12: 1, 13: 2, 14: 1})
+        self.assertEqual(str(to_test), '2D2\n+10')
+        to_test = to_test.change_mod(-14)
+        self.assertEqual(to_test.get_dict(), {-12: 1, -11: 2, -10: 1})
+        self.assertEqual(str(to_test), '2D2\n-14')
 
 
 if __name__ == '__main__':

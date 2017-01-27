@@ -660,7 +660,9 @@ The other way to do this is to directly add the class to the EventsFactory::
     In[64]: factory.has_class(A)
     Out[64]: False
 
-
+When creating new methods, you can generate new events dictionaries by using
+dicetables.additiveevents.EventsDictCreator.  the factory can create new instances with
+EventsFactory.from_params.  For examples see the last few test in tests.factory.test_eventsfactory
 Top_
 
 --------------------------
