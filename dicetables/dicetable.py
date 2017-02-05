@@ -61,6 +61,9 @@ class DiceTable(AdditiveEvents):
         dictionary = EventsDictCreator(self, die).create_using_remove_by_tuple_list(times)
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_data)
 
+    def __eq__(self, other):
+        return super(DiceTable, self).__eq__(other) and self.dice_data() == other.dice_data()
+
 
 def format_die_info(die, number):
     weight_info = die.weight_info()
@@ -87,3 +90,6 @@ class DetailedDiceTable(DiceTable):
 
     def switch_boolean(self):
         return EventsFactory.from_params(self, {'calc_includes_zeroes': not self.calc_includes_zeroes})
+
+    def __eq__(self, other):
+        return super(DetailedDiceTable, self).__eq__(other) and self.calc_includes_zeroes == other.calc_includes_zeroes

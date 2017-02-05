@@ -69,6 +69,44 @@ class TestDiceTable(unittest.TestCase):
         table = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
         self.assertEqual(table.get_list(), [(Die(1), 2), (Die(2), 100), (Die(3), 2)])
 
+    def test_DiceTable__eq__true(self):
+        table_1 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        table_2 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertTrue(table_1.__eq__(table_2))
+        self.assertTrue(table_2.__eq__(table_1))
+
+    def test_DiceTable__eq__false_by_type(self):
+        class Bob(DiceTable):
+            factory_keys = ('dice_data', 'get_dict')
+
+        table_1 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        table_2 = Bob({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertFalse(table_1.__eq__(table_2))
+        self.assertFalse(table_2.__eq__(table_1))
+
+    def test_DiceTable__eq__false_by_unrelated_type(self):
+        table_1 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertFalse(table_1.__eq__(2))
+        self.assertFalse(table_1.__eq__(Die(1)))
+
+    def test_DiceTable__eq__false_by_get_dict(self):
+        table_1 = DiceTable({2: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        table_2 = DiceTable({1: 2}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertFalse(table_1.__eq__(table_2))
+        self.assertFalse(table_2.__eq__(table_1))
+
+    def test_DiceTable__eq__false_by_dice_data_die_type(self):
+        table_1 = DiceTable({1: 1}, DiceRecord({Die(300): 2, Die(2): 100, Die(1): 2}))
+        table_2 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertFalse(table_1.__eq__(table_2))
+        self.assertFalse(table_2.__eq__(table_1))
+
+    def test_DiceTable__eq__false_by_dice_data_die_number(self):
+        table_1 = DiceTable({1: 1}, DiceRecord({Die(3): 200, Die(2): 100, Die(1): 2}))
+        table_2 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertFalse(table_1.__eq__(table_2))
+        self.assertFalse(table_2.__eq__(table_1))
+
     def test_DiceTable_number_of_dice_reports_correctly(self):
         table = DiceTable({1: 1}, DiceRecord({Die(4): 5}))
         self.assertEqual(table.number_of_dice(Die(4)), 5)
@@ -326,6 +364,31 @@ class TestDiceTable(unittest.TestCase):
         self.assertEqual(new.calc.percentage_points(), [(0, 100.0)])
         self.assertEqual(new.get_list(), [(StrongDie(Die(2), 2), 1)])
         self.assertFalse(new.calc_includes_zeroes)
+
+    def test_DetailedDiceTable__eq__true(self):
+        table_1 = DetailedDiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}), False)
+        table_2 = DetailedDiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}), False)
+        self.assertTrue(table_1.__eq__(table_2))
+        self.assertTrue(table_2.__eq__(table_1))
+
+    def test_DetailedDiceTable__eq__false_by_type(self):
+        table_1 = DetailedDiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}), True)
+        table_2 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
+        self.assertFalse(table_1.__eq__(table_2))
+        self.assertFalse(table_2.__eq__(table_1))
+
+    def test_DetailedDiceTable__eq__false_by_unrelated_type(self):
+        table_1 = DetailedDiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}), True)
+        self.assertFalse(table_1.__eq__(2))
+        self.assertFalse(table_1.__eq__(Die(1)))
+
+    def test_DetailedDiceTable__eq__false_by_calc_includes_zeroes(self):
+        table_1 = DetailedDiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}), False)
+        table_2 = DetailedDiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}), True)
+        self.assertFalse(table_1.__eq__(table_2))
+        self.assertFalse(table_2.__eq__(table_1))
+
+
 
         
 if __name__ == '__main__':

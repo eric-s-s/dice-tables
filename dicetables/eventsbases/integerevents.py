@@ -50,3 +50,9 @@ class IntegerEvents(object):
         message = ('get_dict() must return a dictionary\n' +
                    '{event: occurrences, ...} event=int, occurrence=int>0.')
         raise NotImplementedError(message)
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.get_dict() == other.get_dict()
+
+    def __ne__(self, other):
+        return not self == other

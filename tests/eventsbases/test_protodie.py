@@ -44,14 +44,14 @@ class TestProtoDie(unittest.TestCase):
         second = DummyDie(2, 3, {2: 2}, 'b')
         self.assertTrue(first == second)
 
-    def test_ProtoDie_equality_true_if_different_types_eval_the_same(self):
+    def test_ProtoDie_equality_false_if_different_types_eval_the_same(self):
         class NewDummyDie(DummyDie):
             def __init__(self, size, weight, dictionary, repr_str):
                 super(NewDummyDie, self).__init__(size, weight, dictionary, repr_str)
 
         first = DummyDie(2, 3, {2: 2}, 'b')
         second = NewDummyDie(2, 3, {2: 2}, 'b')
-        self.assertTrue(first == second)
+        self.assertFalse(first == second)
 
     def test_ProtoDie_equality_false_by_size(self):
         first = DummyDie(2, 3, {2: 2}, 'b')

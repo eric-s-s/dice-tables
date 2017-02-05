@@ -1,5 +1,5 @@
 #################
-dicetables v2.1.0
+dicetables v2.1.2
 #################
 =========
 CHANGELOG
@@ -14,6 +14,9 @@ CHANGELOG
     - adding new getter no longer needs getter key.  now is (<getter_name>, <default>, 'property' or 'method')
     - Factory.add_getter(<getter_name>, <default>, 'property' or 'method')
     - or as class variable: new_keys = [(<getter_name>, <default>, 'property' or 'method'), ...] see inheritance_
+- all IntegerEvents have __eq__ and __ne__
+    - different classes override
+    - has strict type checking so DiceTable can never equal DetailedDiceTable
 
 
 =====================================================
@@ -356,7 +359,8 @@ AdditiveEvents is the parent of DiceTable. It has the class method new() which r
 inherited by its children. You can add and remove events using the ".combine" method which tries
 to pick the fastest combining algorithm. You can pick it yourself by calling ".combine_by_<algorithm>". You can
 combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,
-but there's no record of it::
+but there's no record of it.  AdditiveEvents has __eq__ method that tests type and get_dict(). This is inherited
+from IntegerEvents.::
 
     In [32]: three_D2 = dt.AdditiveEvents.new().combine_by_dictionary(dt.Die(2), 3)
 
@@ -372,6 +376,9 @@ but there's no record of it::
     In [37]: identity.get_dict() == dt.AdditiveEvents.new().get_dict()
     Out[37]: True
 
+    In [38]: identity == dt.AdditiveEvents.new()
+    Out[38]: True
+
     In [41]: print(three_D2)
     table from 3 to 6
 
@@ -383,6 +390,9 @@ but there's no record of it::
 
     In [45]: dt.DiceTable.new().add_die(dt.Die(4), 5).get_dict() == five_D4.get_dict()
     Out[45]: True
+
+    In [45]: dt.DiceTable.new().add_die(dt.Die(4), 5) == five_D4
+    Out[45]: False  <-- DiceTable is not AdditiveEvents
 
 Since DiceTable is the child of AdditiveEvents, it can do all this combining and removing, but it won't be recorded
 in the dice record.
@@ -396,7 +406,8 @@ You can instantiate any DiceTable or DetailedDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
 Please note that the "dice_data" method is ambiguously named on purpose. It's
 function is to get correct input to instantiate a new DiceTable, whatever that
-happens to be. To get consistent output, use "get_list".
+happens to be. To get consistent output, use "get_list".  Equality testing is by type, get_dict(), dice_data()
+(and calc_includes_zeroes for DetailedDiceTable).
 ::
 
     In [14]: old = dt.DiceTable.new()
@@ -422,6 +433,17 @@ happens to be. To get consistent output, use "get_list".
     In [47]: old.get_list() == new.get_list() == also_new.get_list()
     Out[47]: True
 
+    In [47]: old == new
+    Out[47]: True
+
+    In [47]: old == also_new
+    Out[47]: False  <- by type
+
+    In [47]: isinstance(also_new, DiceTable)
+    Out[47]: True
+
+    In [47]: type(also_new) is DiceTable
+    Out[47]: False
 
 DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
 ::

@@ -62,22 +62,22 @@ class TestAdditiveEvents(unittest.TestCase):
     def test_AdditiveEvents_combine_by_dictionary(self):
         to_combine = AdditiveEvents({1: 2, 2: 2})
         new = AdditiveEvents.new().combine_by_dictionary(to_combine, 1)
-        self.assertEqual(new.get_dict(), to_combine.get_dict())
+        self.assertEqual(new, to_combine)
 
     def test_AdditiveEvents_combine_by_flattened_list(self):
         to_combine = AdditiveEvents({1: 1, 2: 2})
         new = AdditiveEvents.new().combine_by_flattened_list(to_combine, 1)
-        self.assertEqual(new.get_dict(), to_combine.get_dict())
+        self.assertEqual(new, to_combine)
 
     def test_AdditiveEvents_combine_by_indexed_values(self):
         to_combine = AdditiveEvents({1: 1, 2: 2})
         new = AdditiveEvents.new().combine_by_indexed_values(to_combine, 1)
-        self.assertEqual(new.get_dict(), to_combine.get_dict())
+        self.assertEqual(new, to_combine)
 
     def test_AdditiveEvents_combine(self):
         to_combine = AdditiveEvents({1: 1, 2: 2})
         new = AdditiveEvents.new().combine(to_combine, 1)
-        self.assertEqual(new.get_dict(), to_combine.get_dict())
+        self.assertEqual(new, to_combine)
 
     def test_AdditiveEvents_combine_works_with_low_total_occurrences_events(self):
         low_ratio_events = AdditiveEvents({1: 1, 2: 1})
@@ -112,14 +112,14 @@ class TestAdditiveEvents(unittest.TestCase):
         five_a = AdditiveEvents.new().combine(arbitrary_events, 5)
         ten_b = AdditiveEvents.new().combine(arbitrary_events, 10)
         five_b = ten_b.remove(arbitrary_events, 5)
-        self.assertEqual(five_a.get_dict(), five_b.get_dict())
+        self.assertEqual(five_a, five_b)
 
     def test_AdditiveEvents_remove_works_for_large_numbers(self):
         arbitrary_large_events = AdditiveEvents({-5: 10 ** 500, 0: 5 * 10 ** 700, 3: 2 ** 1000})
         one_large = AdditiveEvents.new().combine(arbitrary_large_events, 1)
         two_large = AdditiveEvents.new().combine(arbitrary_large_events, 2)
         alt_one_large = two_large.remove(arbitrary_large_events, 1)
-        self.assertEqual(one_large.get_dict(), alt_one_large.get_dict())
+        self.assertEqual(one_large, alt_one_large)
 
     def test_AdditiveEvents_combine_works_regardless_of_order(self):
         arbitrary_a = AdditiveEvents({1: 2, 3: 10 ** 456})
@@ -128,8 +128,7 @@ class TestAdditiveEvents(unittest.TestCase):
         one_a_two_b = one_a.combine(arbitrary_b, 2)
         two_b = AdditiveEvents.new().combine(arbitrary_b, 2)
         two_b_one_a = two_b.combine(arbitrary_a, 1)
-        self.assertEqual(one_a_two_b.get_dict(),
-                         two_b_one_a.get_dict())
+        self.assertEqual(one_a_two_b, two_b_one_a)
 
     def test_AdditiveEvents_remove_removes_same_regardless_of_order(self):
         arbitrary_a = AdditiveEvents({-1: 2, 3: 5})
@@ -143,7 +142,7 @@ class TestAdditiveEvents(unittest.TestCase):
 
         one_b = AdditiveEvents.new().combine(arbitrary_b, 1)
         one_b_one_a = one_b.combine(arbitrary_a, 1)
-        self.assertEqual(one_a_one_b.get_dict(), one_b_one_a.get_dict())
+        self.assertEqual(one_a_one_b, one_b_one_a)
 
     def test_AdditiveEvents_combine_defaults_to_one_time(self):
         to_use = AdditiveEvents({1: 2})
@@ -168,7 +167,7 @@ class TestAdditiveEvents(unittest.TestCase):
     def test_AdditiveEvents_remove_defaults_to_one_time(self):
         to_use = AdditiveEvents({1: 2})
         test = AdditiveEvents({1: 2}).remove(to_use)
-        self.assertEqual(test.get_dict(), {0: 1})
+        self.assertEqual(test, AdditiveEvents.new())
 
     def test_EventsDictCreator_create_using_combine_by_fastest(self):
         primary = AdditiveEvents.new()

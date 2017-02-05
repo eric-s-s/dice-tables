@@ -8,6 +8,15 @@ from dicetables.eventsbases.integerevents import IntegerEvents, EventsVerifier
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
+class DummyEvents(IntegerEvents):
+    def __init__(self, dictionary):
+        self._dictionary = dictionary
+        super(DummyEvents, self).__init__()
+
+    def get_dict(self):
+        return self._dictionary
+
+
 class TestIntegerEvents(unittest.TestCase):
     def setUp(self):
         self.checker = EventsVerifier()
@@ -66,15 +75,45 @@ class TestIntegerEvents(unittest.TestCase):
         self.assertRaises(InvalidEventsError, self.checker.verify_get_dict, {'a': 'b'})
 
     def test_IntegerEvents_checks_get_dict_at_init(self):
-        """
-        IntegerEvents.__init__ does not raise error.  IntegerEvents.get_dict does raise error.
-        """
-        self.assertRaises(NotImplementedError, IntegerEvents)
+        self.assertRaises(InvalidEventsError, DummyEvents, {'a': 'b'})
 
     def test_IntegerEvents_init_error_message(self):
         message = ('get_dict() must return a dictionary\n' +
                    '{event: occurrences, ...} event=int, occurrence=int>0.')
         self.assert_my_regex(NotImplementedError, message, IntegerEvents)
+
+    def test_IntegerEvents__eq__true(self):
+        self.assertTrue(DummyEvents({1: 2}).__eq__(DummyEvents({1: 2})))
+
+    def test_IntegerEvents__eq__false_by_type_of_Events(self):
+        class NewDummy(DummyEvents):
+            pass
+
+        self.assertFalse(DummyEvents({1: 2}).__eq__(NewDummy({1: 2})))
+        self.assertFalse(NewDummy({1: 2}).__eq__(DummyEvents({1: 2})))
+
+    def test_IntegerEvents__eq__false_by_unrelated_object(self):
+        self.assertFalse(DummyEvents({1: 2}).__eq__(2))
+
+    def test_IntegerEvents__eq__false_by_get_dict(self):
+        self.assertFalse(DummyEvents({1: 2}).__eq__(DummyEvents({1: 2, 3: 4})))
+
+    def test_IntegerEvents__ne__false(self):
+        self.assertFalse(DummyEvents({1: 2}).__ne__(DummyEvents({1: 2})))
+
+    def test_IntegerEvents__ne__true_by_type_of_Events(self):
+        class NewDummy(DummyEvents):
+            pass
+
+        self.assertTrue(DummyEvents({1: 2}).__ne__(NewDummy({1: 2})))
+        self.assertTrue(NewDummy({1: 2}).__ne__(DummyEvents({1: 2})))
+
+    def test_IntegerEvents__ne__true_by_unrelated_object(self):
+        self.assertTrue(DummyEvents({1: 2}).__ne__(2))
+
+    def test_IntegerEvents__ne__true_by_get_dict(self):
+        self.assertTrue(DummyEvents({1: 2}).__ne__(DummyEvents({1: 2, 3: 4})))
+
 
 if __name__ == '__main__':
     unittest.main()
