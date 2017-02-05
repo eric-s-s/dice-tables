@@ -52,7 +52,7 @@ class IntegerEvents(object):
         raise NotImplementedError(message)
 
     def __eq__(self, other):
-        return type(self) == type(other) and self.get_dict() == other.get_dict()
+        return type(self) is type(other) and self.get_dict() == other.get_dict()
 
     def __ne__(self, other):
         return not self == other

@@ -341,6 +341,8 @@ All tables and dice inherit from dicetables.eventsbases.IntegerEvents.  All subc
 get_dict() which returns {event: occurrences, ...} for each NON-ZERO occurrence.  When you instantiate
 any subclass, it checks to make sure you're get_dict() is legal.
 
+Any child of IntegerEvents has access to __eq__ and __ne__ evaluated by type and then get_dict(). It can be compared
+to any object and two events that are not the exact same class will be !=.
 
 Any of the classes that take a dictionary of events as input scrub the zero
 occurrences out of the dictionary for you.
@@ -602,6 +604,7 @@ your new class and if it fails, will return the closest related type::
     In[9]: class A(dt.DiceTable):
       ...:     pass
       ...:
+
     In[10]: A.new()
     E:\work\dice_tables\dicetables\baseevents.py:74: EventsFactoryWarning:
     factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>
@@ -617,6 +620,7 @@ your new class and if it fails, will return the closest related type::
       ...:         self.name = name
       ...:         self.num = number
       ...:
+    
     In[12]: B.new()
     E:\work\dice_tables\dicetables\baseevents.py:74: EventsFactoryWarning:
     factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>
@@ -624,6 +628,7 @@ your new class and if it fails, will return the closest related type::
     Failed to find/add the following class to the EventsFactory -
     class: <class '__main__.B'>
     ..... blah blah blah.....
+
     Out[12]: <dicetables.dicetable.DiceTable at 0x4c23f28>  <-- Oops. EventsFactory can't figure out how to make one.
 
 | Now I will try again, but I will give the factory the info it needs.
