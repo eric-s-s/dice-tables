@@ -146,8 +146,9 @@ class EventsCalculations(object):
         else:
             return self._info.all_events()
 
-    def full_table_string(self):
-        formatter = NumberFormatter()
+    def full_table_string(self, shown_digits=4):
+        shown_digits = max(shown_digits, 1)
+        formatter = NumberFormatter(shown_digits=shown_digits)
         right_just = self._get_right_just()
         out_str = ''
         for value, frequency in self._get_data_set():
@@ -159,12 +160,13 @@ class EventsCalculations(object):
         value_right_just = max(len(str(min_event)), len(str(max_event)))
         return value_right_just
 
-    def stats_strings(self, query_values):
+    def stats_strings(self, query_values, shown_digits=4):
         """
 
         :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
         """
-        formatter = NumberFormatter()
+        shown_digits = max(shown_digits, 1)
+        formatter = NumberFormatter(shown_digits=shown_digits)
 
         total_occurrences = self._info.total_occurrences()
         query_values_occurrences = self._get_query_values_occurrences(query_values)
@@ -225,9 +227,9 @@ def percentage_axes(events, include_zeroes=True):
     return EventsCalculations(events, include_zeroes).percentage_axes()
 
 
-def stats(events, query_values):
-    return EventsCalculations(events).stats_strings(query_values)
+def stats(events, query_values, shown_digits=4):
+    return EventsCalculations(events).stats_strings(query_values, shown_digits=shown_digits)
 
 
-def full_table_string(events, include_zeroes=True):
-    return EventsCalculations(events, include_zeroes).full_table_string()
+def full_table_string(events, include_zeroes=True, shown_digits=4):
+    return EventsCalculations(events, include_zeroes).full_table_string(shown_digits=shown_digits)

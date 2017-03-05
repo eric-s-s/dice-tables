@@ -1,23 +1,11 @@
 #################
-dicetables v2.1.2
+dicetables v2.1.3
 #################
 =========
 CHANGELOG
 =========
-- DiceTable signature changed.  DiceTable({1: 1, 2: 1}, DiceRecord({Die(2): 1})
-    - DiceTable.dice_data() now returns DiceRecord obj.
-    - DiceRecord
-        - signature DiceRecord({die: number})
-        - is immutable
-        - can compare with __eq__ and __ne__ only
-- Factory getter keys = ['calc_includes_zeroes', 'dice_data', 'get_dict']
-    - adding new getter no longer needs getter key.  now is (<getter_name>, <default>, 'property' or 'method')
-    - Factory.add_getter(<getter_name>, <default>, 'property' or 'method')
-    - or as class variable: new_keys = [(<getter_name>, <default>, 'property' or 'method'), ...] see inheritance_
-- all IntegerEvents have __eq__ and __ne__
-    - different classes override
-    - has strict type checking so DiceTable can never equal DetailedDiceTable
-
+very minor change. EventsCalculations.stats_strings, EventsCalculations.full_table_string, stats and full_table_string
+can now take a variable "shown_digits" that controls how many digits are displayed and defaults to four.
 
 =====================================================
 a module for statistics of die rolls and other events

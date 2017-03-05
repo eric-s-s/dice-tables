@@ -205,6 +205,21 @@ class TestEventsInfo(unittest.TestCase):
         calculator = ti.EventsCalculations(events)
         self.assertEqual(calculator.full_table_string(), '10000: 1.000e+1000\n')
 
+    def test_EventsCalculations_full_table_string_shown_digits_lt_one(self):
+        events = AdditiveEvents({10000: 10**1000})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.full_table_string(shown_digits=-5), '10000: 1e+1000\n')
+
+    def test_EventsCalculations_full_table_string_shown_digits_lt_four(self):
+        events = AdditiveEvents({10000: 10**1000})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.full_table_string(shown_digits=2), '10000: 1.0e+1000\n')
+
+    def test_EventsCalculations_full_table_string_show_digits_gt_four(self):
+        events = AdditiveEvents({10000: 10**1000})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.full_table_string(shown_digits=6), '10000: 1.00000e+1000\n')
+
     def test_get_fast_pct_number_zero(self):
         self.assertEqual(ti.get_fast_pct_number(0, 100), 0)
 
@@ -337,6 +352,21 @@ class TestEventsInfo(unittest.TestCase):
         expected = ('1', '1', '1.000e+2000', '1.000e+2000', '1.000e-1998')
         self.assertEqual(calculator.stats_strings([1]), expected)
 
+    def test_EventsCalculations_stats_strings_digit_value_below_min(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 2000}))
+        expected = ('1', '1', '1e+2000', '1e+2000', '1e-1998')
+        self.assertEqual(calculator.stats_strings([1], shown_digits=-5), expected)
+
+    def test_EventsCalculations_stats_strings_digit_value_below_four(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 2000}))
+        expected = ('1', '1', '1.00e+2000', '1.00e+2000', '1.00e-1998')
+        self.assertEqual(calculator.stats_strings([1], shown_digits=3), expected)
+
+    def test_EventsCalculations_stats_strings_digit_value_above_four(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 2000}))
+        expected = ('1', '1', '1.00000e+2000', '1.00000e+2000', '1.00000e-1998')
+        self.assertEqual(calculator.stats_strings([1], shown_digits=6), expected)
+
     """
     note: the following are wrapper functions. These tests simply confirm that the presets work.
     For full test see above and (for format_number) test_numberformatter.py
@@ -377,6 +407,10 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 1})
         self.assertEqual(ti.stats(events, [1]), ('1', '1', '1', '1.000', '100.0'))
 
+    def test_stats_can_access_shown_digits(self):
+        events = AdditiveEvents({1: 1})
+        self.assertEqual(ti.stats(events, [1], shown_digits=5), ('1', '1', '1', '1.0000', '100.00'))
+
     def test_full_table_string_include_zeroes_true(self):
         events = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.full_table_string(events, True), '1: 1\n2: 0\n3: 1\n')
@@ -384,6 +418,10 @@ class TestEventsInfo(unittest.TestCase):
     def test_full_table_string_include_zeroes_false(self):
         events = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.full_table_string(events, False), '1: 1\n3: 1\n')
+
+    def test_full_table_string_can_access_shown_digits(self):
+        events = AdditiveEvents({1: 10 ** 100})
+        self.assertEqual(ti.full_table_string(events, False, shown_digits=5), '1: 1.0000e+100\n')
 
 
 if __name__ == '__main__':
