@@ -5,6 +5,41 @@ All the descendants of ProtoDie.  These are IntegerEvents that represent differe
 from dicetables.eventsbases.protodie import ProtoDie
 
 
+# TODO keep this?
+class Modifier(ProtoDie):
+    """
+    stores and returns info for a modifier to add to the final die roll.
+    Modifier(-3) rolls -3 and only -3
+    """
+    def __init__(self, modifier):
+        self._mod = modifier
+        super(Modifier, self).__init__()
+
+    def get_modifier(self):
+        return self._mod
+
+    def get_size(self):
+        return 0
+
+    def get_weight(self):
+        return 0
+
+    def get_dict(self):
+        return {self._mod: 1}
+
+    def weight_info(self):
+        return str(self)
+
+    def multiply_str(self, number):
+        return '\n'.join([str(self)] * number)
+
+    def __str__(self):
+        return '{:+}'.format(self._mod)
+
+    def __repr__(self):
+        return 'Modifier({})'.format(self._mod)
+
+
 class Die(ProtoDie):
     """
     stores and returns info for a basic Die.

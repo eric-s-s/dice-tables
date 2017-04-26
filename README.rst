@@ -1,11 +1,13 @@
 #################
-dicetables v2.1.3
+dicetables v2.1.4
 #################
 =========
 CHANGELOG
 =========
-very minor change. EventsCalculations.stats_strings, EventsCalculations.full_table_string, stats and full_table_string
-can now take a variable "shown_digits" that controls how many digits are displayed and defaults to four.
+# TODO i suspect!
+Added Modifier die class
+EventsCalculations.stats_strings now returns a namedtuple StatsStrings
+(which behaves like a tuple with added goodies)
 
 =====================================================
 a module for statistics of die rolls and other events
@@ -27,9 +29,6 @@ contents:
 - `EventsInformation And EventsCalculations`_
 - `Inheritance`_
 - `HOW TO GET ERRORS AND BUGS`_
-- `CHANGES`_
-    - `0.4_to_1.0`_
-    - `1.0_to_2.0`_
 
 .. _Top:
 
@@ -199,9 +198,9 @@ You may also access this functionality with wrapper functions:
 
     In [43]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
 
-    In [47]: print(dt.full_table_string(silly_table, include_zeroes=False))
+    In [47]: print(dt.full_table_string(silly_table, include_zeroes=False, shown_digits=6))
       1: 123,456
-    100: 1.234e+1004
+    100: 1.23450e+1004
 
     In [49]: stats_info = dt.stats(silly_table, list(range(-5000, 5)))
 
@@ -319,6 +318,18 @@ StrongDie
 
     - .get_multiplier()
     - .get_input_die()
+
+Modifier
+    A simple +/- modifier that adds to the total dice roll.
+
+    Modifier(-3) is a one-sided die that always rolls a -3.  size=0, weight=0.
+
+    so dt.DiceTable.new().add_die(dt.Die(6), 2).add_die(dt.Modifier(-2)) has die rolls in the range
+    2 (-2) to 12 (-2) or 0 to 10.
+
+    added methods:
+
+    - .get_modifier()
 
 Top_
 
@@ -504,6 +515,8 @@ EventsInformation:
 EventsCalculations:
 
 * full_table_string
+    * can set the number of shown_digits
+
 * info
 * mean
 * percentage_axes
@@ -516,7 +529,8 @@ EventsCalculations:
 * percentage_points_exact
 * stats_strings
     * takes a list of events values you want information for
-    * returns
+    * optional parameter is shown_digits
+    * returns a namedtuple
         * string of those events
         * number of times those events occurred in the table
         * total number of occurrences of all events in the table
@@ -537,20 +551,33 @@ EventsCalculations:
     In[37]: calc.mean()
     Out[37]: 3500.0
 
-    In[38]: calc.stats_strings([3500])
-    Out[38]: ('3,500', '1.046e+776', '1.417e+778', '135.4', '0.7386')
+    In[38]: calc.stats_strings([3500], shown_digits=6)
+    Out[38]: StatsStrings(query_values='3,500',
+                          query_occurrences='1.04628e+776',
+                          total_occurrences='1.41661e+778',
+                          one_in_chance='135.395',
+                          pct_chance='0.738580')
     (yes, that is correct. out of 5000 possible rolls, 3500 has a 0.7% chance of occurring)
 
     In[41]: calc.stats_strings(list(range(1000, 3001)) + list(range(4000, 10000)))
 
     Out[41]:
-    ('1,000-3,000, 4,000-9,999',
-     '2.183e+758',
-     '1.417e+778',
-     '6.490e+19',
-     '1.541e-18')
+    StatsStrings(query_values='1,000-3,000, 4,000-9,999',
+                 query_occurrences='2.183e+758',
+                 total_occurrences='1.417e+778',
+                 one_in_chance='6.490e+19',
+                 pct_chance='1.541e-18')
 
     (this is also correct; rolls not in the middle 1000 collectively have a much smaller chance than the mean.)
+
+    In[42]: silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
+
+    In[43]: silly_calc = dt.EventsCalculations(silly_table, include_zeroes=False)
+
+    In[44]:  print(silly_calc.full_table_string(shown_digits=6))
+      1: 123,456
+    100: 1.23457e+1006
+
 
 EventsCalculations.include_zeroes is only settable at instantiation. It does
 exactly what it says. EventCalculations owns an EventsInformation. So
@@ -847,161 +874,3 @@ Calling combine_by_flattened_list can be risky::
     OverflowError: cannot fit 'int' into an index-sized integer
 
 Top_
-
-=======
-CHANGES
-=======
-
-0.4_to_1.0_
-
-1.0_to_2.0_
-
----------------------------------
-from version 0.4.6 to version 1.0
----------------------------------
-
-.. _0.4_to_1.0:
-
-There are several major changes. An important side-effect of these changes is that dicetables is now
-much more modular and ready for change.  It is now possible to speed up the algorithms and push those
-changes without further affecting the API.  (speeds have already been doubled for large adds).
-
-Version 1.0 is just an intermediary to allow some of the useful changes without breaking the API too badly.
-If any really astounding changes happen, I will try to adapt them to the 1.X versions too, but any further work will
-be done on 2.X versions.
-
-- Modules and classes  and methods got renamed. see the dictionary at the bottom. There are new classes
-- DiceTable.__init__() now takes arguments. The class method DiceTable.new() creates an empty table.
-- DiceTable and its parent AdditiveEvents are no longer responsible for obtaining any but the most basic information.
-- All the calculations and information are now done by EventsInformation and EventsCalculations
-- Aside from the above two classes, every other object is now a child of IntegerEvents.
-- Dice classes no longer have "tuple_list()" method. They use the same "get_dict()" method that all IntegerEvents use
-
-The following modules and classes have been renamed.
-
-- longintmath.py: baseevents.py
-- dicestats.py: dieevents.py, dicetable.py
-- tableinfo.py: eventsinfo.py
-- LongIntTable: AdditiveEvents
-
-The following classes have been added:
-
-- baseevents.InvalidEventsError
-- dicetable.DiceRecordError
-- baseevents.IntegerEvents
-- dicetable.DetailedDiceTable
-- eventsinfo.EventsInformation
-- eventsinfo.EventsCalculations
-
-
-DiceTable.__init__() now takes two arguments - a dictionary of {event: occurrences}
-and a list of [(die, number), ]. to create a new table, call the class method DiceTable.new(). This change allows
-easy creation of a new dice table from data. new_table = DiceTable(old_table.get_dict(), old_table.get_list()) or
-new_table = DiceTable(stored_dict, stored_dice_list). To create a DiceTable with no dice, use DiceTable.new().
-
-The base class of DiceTable is now called AdditiveEvents and not LongIntTable. If any IntegerEvents events is
-instantiated in a way that would cause bugs, it raises an error; the same is true for any dice.
-
-AdditiveEvents.combine/remove take any IntegerEvents as an argument whereas LongIntTable.add/remove took a list of
-tuples as an argument. the methods for getting basic information from LongIntTable are now in EventsInformation.  mean()
-and stddev() are part of EventsCalculations object. These objects work on ANY kind of IntegerEvents, not just DiceTable.
-
-all of tableinfo was rewritten as objects. although they are deprecated, the following still exist as wrapper
-functions for those objects:
-
-- events_range
-- format_number
-- full_table_string
-- graph_pts
-- graph_pts_overflow
-- mean
-- percentage_axes
-- percentage_points
-- safe_true_div
-- stats
-- stddev
-
-the new objects are:
-
-- NumberFormatter
-- EventsInformation
-- EventsCalculations
-
-for details, see their headings in the README.
-
-For output:
-stats() now shows tiny percentages, and if infinite, shows 'Infinity'.
-Any exponent between 10 and -10 has that extraneous zero removed: '1.2e+05' is now '1.2e+5'.
-
-Any subclass of ProtoDie no longer has the .tuple_list() method.  It has been replaced by the .get_dict() method
-which returns a dictionary and not a list of tuples. The string for StrongDie now puts parentheses around the multiplier.
-::
-
-    CONVERSIONS = {
-        'DiceTable()': 'DiceTable.new()',
-        'LongIntTable.add': 'AdditiveEvents.combine',
-        'LongIntTable.frequency': 'EventsInformation(event).get_event',
-        'LongIntTable.frequency_all': 'EventsInformation(event).all_events',
-        'LongIntTable.frequency_highest': 'EventsInformation(event).biggest_event',
-        'LongIntTable.frequency_range': 'EventsInformation(event).get_range_of_events',
-        'LongIntTable.mean': 'EventsCalculations(event).mean',
-        'LongIntTable.merge': 'GONE',
-        'LongIntTable.remove': 'AdditiveEvents.remove',
-        'LongIntTable.stddev': 'EventsCalculations(event).stddev',
-        'LongIntTable.total_frequency': 'EventsInformation(event).total_occurrences',
-        'LongIntTable.update_frequency': 'GONE',
-        'LongIntTable.update_value_add': 'GONE',
-        'LongIntTable.update_value_ow': 'GONE',
-        'LongIntTable.values': 'EventsInformation(event).event_keys',
-        'LongIntTable.values_max': 'EventsInformation(event).event_range[0]',
-        'LongIntTable.values_min': 'EventsInformation(event).event_range[1]',
-        'LongIntTable.values_range': 'EventsInformation(event).event_range',
-        'DiceTable.update_list': 'GONE (DiceTable owns a DiceRecord object that handles this)',
-        'ProtoDie.tuple_list': ('sorted(ProtoDie.get_dict().items)', 'EventsInformation(ProtoDie).all_events'),
-        'scinote': 'NumberFormatter.format',
-        'full_table_string', 'EventsCalculations(event).full_table_string',
-        'stats', 'EventsCalculations(event).stats_strings',
-        'long_int_div': 'safe_true_div',
-        'graph_pts': ('EventsCalculations(event).percentage_points',
-                      'EventsCalculations(event).percentage_points_exact',
-                      'EventsCalculations(event).percentage_axes',
-                      'EventsCalculations(event).percentage_axes_exact',
-                      'EventsInformation(events).all_events',
-                      'EventsInformation(events).all_events_include_zeroes')
-        }
-
-
-Top_
-
--------------------------------
-from version 1.0 to version 2.0
--------------------------------
-
-.. _1.0_to_2.0:
-
-There are 3 large changes. They affect speed slightly for the worse in the microseconds range (small numbers of adds)
-and double the speed in the large adds range.
-
-- add_die, remove_die, all combines and remove now follow the signature add_die(die, times=1).
-  It takes care of inconsistencies in the API: all output was (events, times) and now input is the same.
-  It allows for easily adding/removing one time without confusion.  Since
-  the other changes were so drastic, one more couldn't hurt.
-
-- all children of AdditiveEvents are immutable. This can have some interesting
-  inheritance effects. See Inheritance_.
-
-- DiceTable does not take a list of [(die, number), ...]. It now takes DiceRecord({die: number}).
-  To get the correct data to build a new table, use DiceTable.get_dict() and DiceTable.dice_data() .
-
-- Removed wrapper functions: graph_pts, graph_pts_overflow, format_number
-
-::
-
-    in [12]: new = dt.AdditiveEvents.new()
-
-    in [12]: new.combine(dt.AdditiveEvents({1: 1, 2: 5}), 2)
-    Out[13]: <dicetables.baseevents.AdditiveEvents at 0x5e73828>
-
-    In [14]: dt.DiceTable({1: 1, 2: 1, 3: 1}, dt.DiceRecord({dt.Die(3): 1}))
-    Out[14]: <dicetables.dicetable.DiceTable at 0x5eddef0>
-

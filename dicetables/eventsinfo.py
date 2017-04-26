@@ -16,7 +16,7 @@ from __future__ import absolute_import
 
 from decimal import Decimal
 from math import log10
-
+from collections import namedtuple
 from dicetables.tools.numberforamtter import NumberFormatter
 from dicetables.tools.listtostring import get_string_from_list_of_ints
 
@@ -160,24 +160,23 @@ class EventsCalculations(object):
         value_right_just = max(len(str(min_event)), len(str(max_event)))
         return value_right_just
 
-    def stats_strings(self, query_values, shown_digits=4):
+    def stats_strings(self, query_list, shown_digits=4):
         """
-
         :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
         """
         shown_digits = max(shown_digits, 1)
         formatter = NumberFormatter(shown_digits=shown_digits)
 
         total_occurrences = self._info.total_occurrences()
-        query_values_occurrences = self._get_query_values_occurrences(query_values)
+        query_values_occurrences = self._get_query_values_occurrences(query_list)
 
         inverse_chance_str, pct_str = _calculate_chance_and_pct(query_values_occurrences, total_occurrences)
 
-        return (get_string_from_list_of_ints(query_values),
-                formatter.format(query_values_occurrences),
-                formatter.format(total_occurrences),
-                formatter.format(inverse_chance_str),
-                formatter.format(pct_str))
+        return StatsStrings(get_string_from_list_of_ints(query_list),
+                            formatter.format(query_values_occurrences),
+                            formatter.format(total_occurrences),
+                            formatter.format(inverse_chance_str),
+                            formatter.format(pct_str))
 
     def _get_query_values_occurrences(self, query_values):
         combinations_of_values = 0
@@ -185,6 +184,10 @@ class EventsCalculations(object):
         for value in no_copies:
             combinations_of_values += self._info.get_event(value)[1]
         return combinations_of_values
+
+
+StatsStrings = namedtuple('StatsStrings',
+                          'query_values, query_occurrences, total_occurrences, one_in_chance, pct_chance')
 
 
 def _calculate_chance_and_pct(query_values_occurrences, total_combinations):

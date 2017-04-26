@@ -1,11 +1,12 @@
 from setuptools import setup
 
+# TODO check that necessary changes were made for next push
 def readme():
     with open('README.rst') as f:
         return f.read()
 
 setup(name='dicetables',
-      version='2.1.3',
+      version='2.1.4',
       description='get all combinations for any set of dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',

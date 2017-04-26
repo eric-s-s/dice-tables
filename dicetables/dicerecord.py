@@ -54,13 +54,13 @@ class DiceRecord(object):
     def add_die(self, die, times):
         RecordVerifier.check_number(times)
         new = self._record.copy()
-        new[die] = times + new.get(die, 0)
+        new[die] = times + self.get_number(die)
         return DiceRecord(new)
 
     def remove_die(self, die, times):
         RecordVerifier.check_number(times)
         new = self._record.copy()
-        new[die] = new.get(die, 0) - times
+        new[die] = self.get_number(die) - times
         return DiceRecord(new)
 
     def __eq__(self, other):

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie
+from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
@@ -15,7 +15,8 @@ class TestDieEvents(unittest.TestCase):
                 WeightedDie({1: 1, 2: 1}),
                 ModDie(2, 0),
                 Die(2),
-                Die(3)]
+                Die(3),
+                Modifier(2)]
         self.assertIsNone(dice.sort())
 
     def test_lt_all_die_types_sort_as_expected(self):
@@ -25,8 +26,10 @@ class TestDieEvents(unittest.TestCase):
                 WeightedDie({1: 2, 2: 0}),
                 ModDie(2, 0),
                 Die(2),
-                Die(3)]
-        sorted_dice = [Die(2),
+                Die(3),
+                Modifier(2)]
+        sorted_dice = [Modifier(2),
+                       Die(2),
                        ModDie(2, 0),
                        StrongDie(Die(2), 1),
                        ModWeightedDie({1: 1, 2: 1}, 0),
@@ -51,6 +54,48 @@ class TestDieEvents(unittest.TestCase):
         self.assertNotEqual(hash(one_a), hash(not_same_a))
         self.assertNotEqual(hash(one_a), hash(not_same_b))
         self.assertNotEqual(hash(one_a), hash(not_same_c))
+
+# TODO keep modifier? change it?
+    def test_Modifier_init_raises_InvalidEventsError_only_for_non_int_values(self):
+        Modifier(5)
+        Modifier(0)
+        Modifier(-100)
+
+        self.assertRaises(InvalidEventsError, Modifier, 'a')
+        self.assertRaises(InvalidEventsError, Modifier, 1.0)
+
+    def test_Modifier_get_size_is_zero(self):
+        self.assertEqual(Modifier(5).get_size(), 0)
+        self.assertEqual(Modifier(0).get_size(), 0)
+        self.assertEqual(Modifier(-5).get_size(), 0)
+
+    def test_Modifier_get_weight_is_zero(self):
+        self.assertEqual(Modifier(5).get_weight(), 0)
+        self.assertEqual(Modifier(0).get_weight(), 0)
+        self.assertEqual(Modifier(-5).get_weight(), 0)
+
+    def test_Modifier_get_dict(self):
+        self.assertEqual(Modifier(5).get_dict(), {5: 1})
+        self.assertEqual(Modifier(0).get_dict(), {0: 1})
+        self.assertEqual(Modifier(-5).get_dict(), {-5: 1})
+
+    def test_Modifier_str(self):
+        self.assertEqual(str(Modifier(1)), '+1')
+        self.assertEqual(str(Modifier(-1)), '-1')
+
+    def test_Modifier_multiply_str(self):
+        self.assertEqual(Modifier(-2).multiply_str(3), '-2\n-2\n-2')
+        self.assertEqual(Modifier(2).multiply_str(3), '+2\n+2\n+2')
+        self.assertEqual(Modifier(2).multiply_str(1), '+2')
+
+    def test_Modifier_weight_info(self):
+        self.assertEqual(Modifier(3).weight_info(), '+3')
+
+    def test_Modifier_get_modifier(self):
+        self.assertEqual(Modifier(3).get_modifier(), 3)
+
+    def test_Modifier_repr(self):
+        self.assertEqual(repr(Modifier(3)), 'Modifier(3)')
 
     def test_Die_init_raises_InvalidEventsError_for_illegal_size(self):
         self.assertRaises(InvalidEventsError, Die, 0)

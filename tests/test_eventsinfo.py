@@ -367,6 +367,30 @@ class TestEventsInfo(unittest.TestCase):
         expected = ('1', '1', '1.00000e+2000', '1.00000e+2000', '1.00000e-1998')
         self.assertEqual(calculator.stats_strings([1], shown_digits=6), expected)
 
+    def test_EventsCalculations_stats_strings_named_tuple_values(self):
+
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 10 ** 2000}))
+        test_result = calculator.stats_strings([1])
+        query_values = '1'
+        query_occurrences = '2'
+        total_occurrences = '1.000e+2000'
+        one_in_chance = '5.000e+1999'
+        pct_chance = '2.000e-1998'
+
+        self.assertIsInstance(test_result, ti.StatsStrings)
+
+        self.assertEqual(test_result.query_values, query_values)
+        self.assertEqual(test_result.query_occurrences, query_occurrences)
+        self.assertEqual(test_result.total_occurrences, total_occurrences)
+        self.assertEqual(test_result.one_in_chance, one_in_chance)
+        self.assertEqual(test_result.pct_chance, pct_chance)
+
+        self.assertEqual(test_result[0], query_values)
+        self.assertEqual(test_result[1], query_occurrences)
+        self.assertEqual(test_result[2], total_occurrences)
+        self.assertEqual(test_result[3], one_in_chance)
+        self.assertEqual(test_result[4], pct_chance)
+
     """
     note: the following are wrapper functions. These tests simply confirm that the presets work.
     For full test see above and (for format_number) test_numberformatter.py
