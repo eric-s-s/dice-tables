@@ -5,7 +5,6 @@ All the descendants of ProtoDie.  These are IntegerEvents that represent differe
 from dicetables.eventsbases.protodie import ProtoDie
 
 
-# TODO keep this?
 class Modifier(ProtoDie):
     """
     stores and returns info for a modifier to add to the final die roll.

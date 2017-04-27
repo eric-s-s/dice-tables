@@ -137,7 +137,6 @@ class TestDiceTable(unittest.TestCase):
     def test_DiceTable_str_one_element(self):
         self.assertEqual(DiceTable({1: 1}, DiceRecord({Die(1): 2})).__str__(), '2D1')
 
-# TODO keep modifier?
     def test_DiceTable_str_many_elements_note_they_are_sorted(self):
         dice_record = DiceRecord({ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2})
         table = DiceTable({1: 1}, dice_record)

@@ -1,6 +1,6 @@
 from setuptools import setup
 
-# TODO check that necessary changes were made for next push
+
 def readme():
     with open('README.rst') as f:
         return f.read()

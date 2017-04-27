@@ -55,7 +55,6 @@ class TestDieEvents(unittest.TestCase):
         self.assertNotEqual(hash(one_a), hash(not_same_b))
         self.assertNotEqual(hash(one_a), hash(not_same_c))
 
-# TODO keep modifier? change it?
     def test_Modifier_init_raises_InvalidEventsError_only_for_non_int_values(self):
         Modifier(5)
         Modifier(0)

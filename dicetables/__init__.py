@@ -8,5 +8,3 @@ from dicetables.eventsbases.eventerrors import DiceRecordError, InvalidEventsErr
 from dicetables.eventsinfo import (EventsCalculations, EventsInformation,
                                    events_range, mean, stddev, percentage_points, percentage_axes, stats,
                                    full_table_string)
-
-# TODO keep modifier?

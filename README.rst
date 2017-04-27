@@ -4,8 +4,9 @@ dicetables v2.1.4
 =========
 CHANGELOG
 =========
-# TODO i suspect!
+
 Added Modifier die class
+
 EventsCalculations.stats_strings now returns a namedtuple StatsStrings
 (which behaves like a tuple with added goodies)
 
@@ -215,6 +216,7 @@ Finally, here are all the kinds of dice you can add
 - dt.WeightedDie({1:1, 2:5, 3:2})
 - dt.ModWeightedDie({1:1, 2:5, 3:2}, 5)
 - dt.StrongDie(dt.Die(6), 5)
+- dt.Modifier(-6)
 
 That's all of the basic implementation. The rest of this is details about base classes, details of the
 die classes, details of dicetable classes, what causes errors and the changes from the previous version.
@@ -551,13 +553,18 @@ EventsCalculations:
     In[37]: calc.mean()
     Out[37]: 3500.0
 
-    In[38]: calc.stats_strings([3500], shown_digits=6)
-    Out[38]: StatsStrings(query_values='3,500',
+    In[38]: the_stats = calc.stats_strings([3500], shown_digits=6)
+
+    In[39]: the_stats
+    Out[39]: StatsStrings(query_values='3,500',
                           query_occurrences='1.04628e+776',
                           total_occurrences='1.41661e+778',
                           one_in_chance='135.395',
                           pct_chance='0.738580')
     (yes, that is correct. out of 5000 possible rolls, 3500 has a 0.7% chance of occurring)
+
+    In[40]: the_stats.one_in_chance
+    out[40]: '135.395'
 
     In[41]: calc.stats_strings(list(range(1000, 3001)) + list(range(4000, 10000)))
 
