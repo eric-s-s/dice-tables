@@ -1,5 +1,5 @@
 #################
-dicetables v2.1.4
+dicetables v2.1.5
 #################
 =========
 CHANGELOG
