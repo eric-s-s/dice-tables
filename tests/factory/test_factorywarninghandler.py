@@ -73,17 +73,18 @@ class TestEventsFactoryWarningHandler(unittest.TestCase):
                          expected)
 
     def test_create_instructions(self):
+        self.maxDiff = None
         expected = (
             'SOLUTION:\n' +
-            '  class variable: factory_keys = (names of factory keys for getters)\n'
+            '  class variable: factory_keys = (getter method/property names)\n'
             '  current factory keys are: [\'calc_includes_zeroes\', \'dice_data\', \'get_dict\']\n' +
             '  class variable: new_keys = [(info for each key not already in factory)]\n' +
-            '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n' +
+            '  Each tuple in "new_keys" is (getter_name, default_value, "property"/"method")\n' +
             'ex:\n' +
             '  NewClass(Something):\n' +
-            '      factory_keys = ("dice_data", "get_dict", "thingy", "other")\n' +
-            '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
-            '                  ("other", "label", "", "property")]\n' +
+            '      factory_keys = ("dice_data", "get_dict", "get_thingy", "label")\n' +
+            '      new_keys = [("get_thingy", 0, "method"),\n' +
+            '                  ("label", "", "property")]\n' +
             '\n' +
             '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +
             '          ....\n'
@@ -149,15 +150,15 @@ def create_error_code_body(classes, code):
 def create_instructions(factory):
     instructions = (
         'SOLUTION:\n' +
-        '  class variable: factory_keys = (names of factory keys for getters)\n'
+        '  class variable: factory_keys = (getter method/property names)\n'
         '  current factory keys are: {}\n'.format(factory.get_keys()[1]) +
         '  class variable: new_keys = [(info for each key not already in factory)]\n' +
-        '  Each tuple in "new_keys" is (key_name, getter_name, default_value, "property"/"method")\n'
+        '  Each tuple in "new_keys" is (getter_name, default_value, "property"/"method")\n'
         'ex:\n' +
         '  NewClass(Something):\n' +
-        '      factory_keys = ("dice_data", "get_dict", "thingy", "other")\n' +
-        '      new_keys = [("thingy", "get_thingy", 0, "method"),\n' +
-        '                  ("other", "label", "", "property")]\n\n' +
+        '      factory_keys = ("dice_data", "get_dict", "get_thingy", "label")\n' +
+        '      new_keys = [("get_thingy", 0, "method"),\n' +
+        '                  ("label", "", "property")]\n\n' +
         '      def __init__(self, events_dict, dice_list, new_thingy, label):\n' +
         '          ....\n'
     )

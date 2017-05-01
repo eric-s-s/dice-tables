@@ -494,7 +494,7 @@ class TestEventsFactory(unittest.TestCase):
             'Warning raised while performing check at instantiation\n' +
             '\n' +
             'SOLUTION:\n' +
-            '  class variable: factory_keys = (names of factory keys for getters)\n'
+            '  class variable: factory_keys = (getter method/property names)\n'
             '  current factory keys are: [\'calc_includes_zeroes\', \'dice_data\', \'get_dict\']\n'
         )
 

@@ -5,10 +5,10 @@ dicetables v2.1.4
 CHANGELOG
 =========
 
-Added Modifier die class
-
-EventsCalculations.stats_strings now returns a namedtuple StatsStrings
-(which behaves like a tuple with added goodies)
+- Added Modifier die class
+- EventsCalculations.stats_strings now returns a namedtuple StatsStrings
+  (which behaves like a tuple with added goodies)
+- updated EventsFactory warning message
 
 =====================================================
 a module for statistics of die rolls and other events
