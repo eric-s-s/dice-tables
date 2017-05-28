@@ -239,3 +239,158 @@ class StrongDie(ProtoDie):
 
     def __repr__(self):
         return 'StrongDie({!r}, {})'.format(self._original, self._multiplier)
+
+
+class Exploding(ProtoDie):
+    """
+    stores and returns info for an version of another die.
+    On the maximum roll, the die continues to roll, adding the maximum roll to the result.
+    Exploding(Die(6), explosions=2) roll 1-5, then 7-11 then 12-18. Explosions are applied after modifiers and
+    multipliers.
+    Exploding(ModDie(4, -2)) explodes on a 2 so it rolls: [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    """
+
+    def __init__(self, input_die, explosions=2):
+        """
+
+        :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
+        :param explosions: int
+        """
+        self._original = input_die
+        self._explosions = explosions
+        self._dict = self._get_exploding_dict()
+        super(Exploding, self).__init__()
+
+    def _get_exploding_dict(self):
+        base_dict = self._original.get_dict()
+
+        new_dict = {}
+        for explosion_level in range(self._explosions + 1):
+            level_dict = self._get_level_dict(explosion_level, base_dict)
+            new_dict = add_dicts(new_dict, level_dict)
+        return new_dict
+
+    def _get_level_dict(self, explosion_level, base_dict):
+        level_dict = {}
+
+        all_occurrences = sum(base_dict.values())
+        highest_roll = max(base_dict)
+
+        roll_mod = explosion_level * highest_roll
+        level_depth_multiplier = all_occurrences ** (self._explosions - explosion_level)
+        highest_roll_multiplier = base_dict[highest_roll] ** explosion_level
+        occurrence_mod = level_depth_multiplier * highest_roll_multiplier
+        for roll, occurrences in base_dict.items():
+            if roll == highest_roll and explosion_level != self._explosions:
+                continue
+            new_roll = roll + roll_mod
+            level_dict[new_roll] = occurrences * occurrence_mod
+        return level_dict
+
+    def get_size(self):
+        return self._original.get_size()
+
+    def get_weight(self):
+        return self._original.get_weight() + 1
+
+    def get_explosions(self):
+        return self._explosions
+
+    def get_input_die(self):
+        """returns an instance of the original die"""
+        return self._original
+
+    def get_dict(self):
+        return self._dict.copy()
+
+    def weight_info(self):
+        return '{}\nExploding adds weight: 1'.format(
+            self._original.weight_info().replace(str(self._original), str(self)))
+
+    def multiply_str(self, number):
+        return '{}({})'.format(number, self)
+
+    def __str__(self):
+        return '{}: Explosions={}'.format(self._original, self._explosions)
+
+    def __repr__(self):
+        return 'Exploding({!r}, {})'.format(self._original, self._explosions)
+
+
+class ExplodingOn(ProtoDie):
+    def __init__(self, input_die, rolls_tuple, explosions=2):
+        self._explodes_on = rolls_tuple
+        self._explosions = explosions
+        self._original = input_die
+        self._dict = self._get_exploding_dict()
+        super(ExplodingOn, self).__init__()
+
+    def _get_exploding_dict(self):
+        level = 0
+        weight_multiplier = 1
+        roll_mod = 0
+        return self._recursively_derive_exploding_dict(roll_mod, level, weight_multiplier)
+
+    def _recursively_derive_exploding_dict(self, roll_mod, level, weight_multiplier):
+        base_dict = self._original.get_dict()
+        current_level = self._get_base_for_current_level(base_dict, level, roll_mod, weight_multiplier)
+
+        if level == self._explosions:
+            return current_level
+
+        for roll in self._explodes_on:
+            weight_val = base_dict[roll]
+            new_weight_multiplier = weight_multiplier * weight_val
+            new_roll_mod = roll_mod + roll
+            new_level = level + 1
+            sub_level = self._recursively_derive_exploding_dict(new_roll_mod, new_level, new_weight_multiplier)
+            current_level = add_dicts(current_level, sub_level)
+        return current_level
+
+    def _get_base_for_current_level(self, base_dict, level, roll_mod, weight_multiplier):
+        base_level_multiplier = sum(base_dict.values())
+        level_multiplier = base_level_multiplier ** (self._explosions - level)
+        current_level_all_rolls = {roll + roll_mod: occurrence * weight_multiplier * level_multiplier
+                                   for roll, occurrence in base_dict.items()}
+        if level == self._explosions:
+            return current_level_all_rolls
+
+        to_exclude = [roll + roll_mod for roll in self._explodes_on]
+        return {roll: value for roll, value in current_level_all_rolls.items() if roll not in to_exclude}
+
+    def get_size(self):
+        return self._original.get_size()
+
+    def get_weight(self):
+        return self._original.get_weight() + 1
+
+    def get_explosions(self):
+        return self._explosions
+
+    def get_input_die(self):
+        """returns an instance of the original die"""
+        return self._original
+
+    def get_dict(self):
+        return self._dict.copy()
+
+    def weight_info(self):
+        return '{}\nExploding adds weight: 1'.format(
+            self._original.weight_info().replace(str(self._original), str(self)))
+
+    def multiply_str(self, number):
+        return '{}({})'.format(number, self)
+
+    def __str__(self):
+        return '{}: Explosions={}'.format(self._original, self._explosions)
+
+    def __repr__(self):
+        return 'Exploding({!r}, {})'.format(self._original, self._explosions)
+
+
+
+def add_dicts(dict_1, dict_2):
+    out = dict_1.copy()
+    for key, val in dict_2.items():
+        out[key] = out.get(key, 0) + val
+    return out

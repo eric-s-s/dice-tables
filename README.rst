@@ -1,14 +1,13 @@
 #################
-dicetables v2.1.5
+dicetables v2.2.0
 #################
 =========
 CHANGELOG
 =========
 
-- Added Modifier die class
-- EventsCalculations.stats_strings now returns a namedtuple StatsStrings
-  (which behaves like a tuple with added goodies)
-- updated EventsFactory warning message
+- EventsCalculations added functions log10_points and log10_axes
+- New die: Exploding(other_die, explosions=2)
+TODODODODODODODODODODODODODOODODODO - details
 
 =====================================================
 a module for statistics of die rolls and other events
@@ -64,7 +63,9 @@ THE BASICS
     In [7]: new.get_dict()
     out[7]: {0: 1}
 
-Here are basic table functions. note that times added defaults to one.::
+Here are basic table functions. note that times added defaults to one.
+Also note that DiceTable is immutable. adding and removing dice creates a new table. The original table is intact.
+::
 
     In [4]: table = dt.DiceTable.new().add_die(dt.Die(2)).add_die(dt.Die(3))
 
@@ -76,6 +77,12 @@ Here are basic table functions. note that times added defaults to one.::
     In [7]: table = table.remove_die(dt.Die(2), 99)
 
     In [17]: print(table)
+    2D2
+    1D3
+
+    In [18]: print(table.add_die(Modifier(5), 2))
+    +5
+    +5
     2D2
     1D3
 
@@ -193,7 +200,7 @@ You may also access this functionality with wrapper functions:
 - stats
 - full_table_string
 - percentage_points
-- percentage_axe
+- percentage_axes
 
 ::
 
@@ -527,6 +534,10 @@ EventsCalculations:
 * percentage_axes_exact
 * percentage_points
     * very fast but only good to 10 decimal places
+
+* log10_axes and log10_points
+    * log10 of the combinations.
+    * any occurrence of zero is default set to -100.0 but can be assigned any number.
 
 * percentage_points_exact
 * stats_strings

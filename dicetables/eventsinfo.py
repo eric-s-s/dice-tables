@@ -134,6 +134,13 @@ class EventsCalculations(object):
     def percentage_axes_exact(self):
         return list(zip(*self.percentage_points_exact()))
 
+    def log10_points(self, log10_of_zero_value=-100.0):
+        return [(event, log10(occurrence) if occurrence != 0 else log10_of_zero_value)
+                for event, occurrence in self._get_data_set()]
+
+    def log10_axes(self, log10_of_zero_value=-100.0):
+        return list(zip(*self.log10_points(log10_of_zero_value)))
+
     def _percentage_points_by_method(self, method_str):
         methods = {'fast': get_fast_pct_number, 'exact': get_exact_pct_number}
         pct_method = methods[method_str]

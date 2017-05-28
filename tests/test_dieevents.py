@@ -3,7 +3,8 @@ from __future__ import absolute_import
 
 import unittest
 
-from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier
+from dicetables.dieevents import (Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier,
+                                  Exploding, ExplodingOn, add_dicts)
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
@@ -324,6 +325,242 @@ class TestDieEvents(unittest.TestCase):
     def test_StrongDie_edge_case_StrongDie_of_StrongDie_weight_info(self):
         die = StrongDie(ModWeightedDie({1: 4}, 1), 2)
         self.assertEqual(StrongDie(die, 3).weight_info(), '((D1+1  W:4)X(2))X(3)\n    a roll of 1 has a weight of 4')
+
+    def test_Exploding_on_Die_get_dict(self):
+        die = Exploding(Die(3))
+        self.assertEqual(die.get_dict(), {1: 9, 2: 9, 4: 3, 5: 3, 7: 1, 8: 1, 9: 1})
+
+    def test_Exploding_on_Die_get_dict_set_explosions(self):
+        die = Exploding(Die(3), explosions=3)
+        self.assertEqual(die.get_dict(), {1: 27, 2: 27, 4: 9, 5: 9, 7: 3, 8: 3, 10: 1, 11: 1, 12: 1})
+
+    def test_Exploding_on_WeightedDie_get_dict(self):
+        die = Exploding(WeightedDie({1: 2, 2: 1, 3: 3}))
+        self.assertEqual(die.get_dict(), {1: 1 * 36 * 2, 2: 1 * 36 * 1,
+                                          4: 3 * 6 * 2, 5: 3 * 6 * 1,
+                                          7: 9 * 1 * 2, 8: 9 * 1 * 1, 9: 9 * 1 * 3})
+
+    def test_Exploding_on_ModWeightedDieDie_get_dict_set_explosions(self):
+        die = Exploding(ModWeightedDie({1: 2, 2: 1, 3: 3}, -1), explosions=3)
+        self.assertEqual(die.get_dict(), {0: 1 * 216 * 2, 1: 1 * 216 * 1,
+                                          2: 3 * 36 * 2, 3: 3 * 36 * 1,
+                                          4: 9 * 6 * 2, 5: 9 * 6 * 1,
+                                          6: 27 * 1 * 2, 7: 27 * 1 * 1, 8: 27 * 1 * 3})
+
+    def test_Exploding_works_according_to_get_dict_and_not_get_size(self):
+        silly_die = WeightedDie({1: 1, 2: 1, 3: 0})
+        self.assertEqual(silly_die.get_size(), 3)
+        self.assertEqual(silly_die.get_dict(), {1: 1, 2: 1})
+        self.assertEqual(Exploding(silly_die).get_dict(), {1: 4, 3: 2, 5: 1, 6: 1})
+
+    def test_Exploding_get_dict_edge_case_explosions_are_zero(self):
+        self.assertEqual(Exploding(Die(2), 0).get_dict(), {1: 1, 2: 1})
+
+    def test_Exploding_get_dict_edge_case_Modifier(self):
+        self.assertEqual(Exploding(Modifier(-3)).get_dict(), {-9: 1})
+
+    def test_Exploding_get_dict_edge_case_ModDie_repeats_values(self):
+        die = Exploding(ModDie(3, -2))
+        first_set = {-1: 9, 0: 9}
+        second_set = {0: 3, 1: 3}
+        third_set = {1: 1, 2: 1, 3: 1}
+        answer = {roll: first_set.get(roll, 0) + second_set.get(roll, 0) + third_set.get(roll, 0)
+                  for roll in range(-1, 4)}
+        self.assertEqual(answer, die.get_dict())
+
+    def test_Exploding_get_dict_edge_case_StrongDie(self):
+        self.assertEqual(Exploding(StrongDie(Die(3), 4)).get_dict(),
+                         {4: 9, 8: 9, 16: 3, 20: 3, 28: 1, 32: 1, 36: 1})
+
+        mod = ModDie(3, -2)
+        self.assertEqual(Exploding(mod).get_dict(), {-1: 9, 0: 12, 1: 4, 2: 1, 3: 1})
+        self.assertEqual(Exploding(StrongDie(mod, 4)).get_dict(), {-4: 9, 0: 12, 4: 4, 8: 1, 12: 1})
+
+    def test_Exploding_get_size(self):
+        dice = [Die(3), ModDie(3, 4), WeightedDie({1: 2, 3: 4}), ModWeightedDie({1: 2, 3: 4}, -1), StrongDie(Die(4), 3)]
+        for die in dice:
+            self.assertEqual(Exploding(die, 3).get_size(), die.get_size())
+
+    def test_Exploding_get_weight(self):
+        dice = [Die(3), ModDie(3, 4), WeightedDie({1: 2, 3: 4}), ModWeightedDie({1: 2, 3: 4}, -1), StrongDie(Die(4), 3)]
+        for die in dice:
+            self.assertEqual(Exploding(die, 3).get_weight(), die.get_weight() + 1)
+
+    def test_Exploding_get_input_die(self):
+        dice = [Die(3), ModDie(3, 4), WeightedDie({1: 2, 3: 4}), ModWeightedDie({1: 2, 3: 4}, -1), StrongDie(Die(4), 3)]
+        for die in dice:
+            self.assertEqual(Exploding(die, 3).get_input_die(), die)
+
+    def test_Exploding_get_explosions(self):
+        two = Exploding(Modifier(1))
+        five = Exploding(Modifier(1), 5)
+        self.assertEqual(two.get_explosions(), 2)
+        self.assertEqual(five.get_explosions(), 5)
+
+    def test_Exploding__str__(self):
+        self.assertEqual(Exploding(Die(6), 3).__str__(), "D6: Explosions=3")
+        self.assertEqual(Exploding(ModWeightedDie({1: 1, 2: 2}, -2), 1).__str__(), "D2-2  W:3: Explosions=1")
+
+    def test_Exploding_multiply_str(self):
+        self.assertEqual(Exploding(Die(6), 3).multiply_str(3), "3(D6: Explosions=3)")
+        self.assertEqual(Exploding(ModWeightedDie({1: 1, 2: 2}, -2), 1).multiply_str(5), "5(D2-2  W:3: Explosions=1)")
+
+    def test_Exploding_weight_info(self):
+        self.assertEqual(Exploding(Die(6)).weight_info(), "D6: Explosions=2\n    No weights\nExploding adds weight: 1")
+        self.assertEqual(Exploding(ModWeightedDie({1: 1, 2: 2}, -2), 1).weight_info(),
+                         ("D2-2  W:3: Explosions=1\n" +
+                          "    a roll of 1 has a weight of 1\n" +
+                          "    a roll of 2 has a weight of 2\n" +
+                          "Exploding adds weight: 1"))
+
+    def test_Exploding_repr(self):
+        self.assertEqual(repr(Exploding(Die(6))), "Exploding(Die(6), 2)")
+        self.assertEqual(repr(Exploding(StrongDie(Die(6), 3), explosions=10)), "Exploding(StrongDie(Die(6), 3), 10)")
+
+    def test_module_level_method_add_dicts_empty_empty(self):
+        a = {}
+        b = {}
+        answer = add_dicts(a, b)
+        self.assertEqual(answer, {})
+        self.assertIsNot(answer, a)
+        self.assertIsNot(answer, b)
+
+    def test_module_level_method_add_dicts_first_empty(self):
+        a = {1: 1}
+        b = {}
+        answer = add_dicts(a, b)
+        self.assertEqual(answer, {1: 1})
+        self.assertIsNot(answer, a)
+        self.assertIsNot(answer, b)
+
+    def test_module_level_method_add_dicts_second_empty(self):
+        a = {1: 1}
+        b = {}
+        answer = add_dicts(b, a)
+        self.assertEqual(answer, {1: 1})
+        self.assertIsNot(answer, a)
+        self.assertIsNot(answer, b)
+
+    def test_module_level_method_add_dicts_no_overlap(self):
+        a = {1: 1}
+        b = {2: 3}
+        answer = add_dicts(b, a)
+        self.assertEqual(answer, {1: 1, 2: 3})
+        self.assertIsNot(answer, a)
+        self.assertIsNot(answer, b)
+
+    def test_module_level_method_add_dicts_overlap(self):
+        a = {1: 1, 2: 3}
+        b = {2: 3, 4: 5}
+        answer = add_dicts(b, a)
+        self.assertEqual(answer, {1: 1, 2: 6, 4: 5})
+        self.assertIsNot(answer, a)
+        self.assertIsNot(answer, b)
+
+    def test_ExplodingOn_get_dict_regular_die(self):
+        die = ExplodingOn(Die(4), (3, 4), explosions=2)
+        level_zero = {1: 16, 2: 16}
+        level_one_three = {1 + 3: 4, 2 + 3: 4}
+        level_two_three_three = {1 + 6: 1, 2 + 6: 1, 3 + 6: 1, 4 + 6: 1}
+        level_two_three_four = {1 + 3 + 4: 1, 2 + 3 + 4: 1, 3 + 3 + 4: 1, 4 + 3 + 4: 1}
+        level_one_four = {1 + 4: 4, 2 + 4: 4}
+        level_two_four_four = {1 + 8: 1, 2 + 8: 1, 3 + 8: 1, 4 + 8: 1}
+        level_two_four_three = {1 + 4 + 3: 1, 2 + 4 + 3: 1, 3 + 4 + 3: 1, 4 + 4 + 3: 1}
+        answer = add_dicts(level_zero, level_one_three)
+        answer = add_dicts(answer, level_one_four)
+        answer = add_dicts(answer, level_two_four_four)
+        answer = add_dicts(answer, level_two_four_three)
+        answer = add_dicts(answer, level_two_three_four)
+        answer = add_dicts(answer, level_two_three_three)
+        self.assertEqual(answer, {1: 16, 2: 16, 4: 4, 5: 8, 6: 4, 7: 1, 8: 3, 9: 4, 10: 4, 11: 3, 12: 1})
+        self.assertEqual(answer, die.get_dict())
+
+    def test_ExplodingOn_get_dict_regular_die_different_numbers(self):
+        die = ExplodingOn(WeightedDie({1: 1, 2: 1, 3: 1, 4: 1}), (1, 4), explosions=2)
+        level_zero = {2: 16, 3: 16}
+        level_one_one = {3: 4, 4: 4}
+        level_one_four = {6: 4, 7: 4}
+        level_two_one_one = {3: 1, 4: 1, 5: 1, 6: 1}
+        level_two_one_four = {6: 1, 7: 1, 8: 1, 9: 1}
+        level_two_four_one = {6: 1, 7: 1, 8: 1, 9: 1}
+        level_two_four_four = {9: 1, 10: 1, 11: 1, 12: 1}
+
+        answer = add_dicts(level_zero, level_one_one)
+        answer = add_dicts(answer, level_one_four)
+        answer = add_dicts(answer, level_two_four_four)
+        answer = add_dicts(answer, level_two_four_one)
+        answer = add_dicts(answer, level_two_one_four)
+        answer = add_dicts(answer, level_two_one_one)
+        self.assertEqual(answer, {2: 16, 3: 21, 4: 5, 5: 1, 6: 7, 7: 6, 8: 2, 9: 3, 10: 1, 11: 1, 12: 1})
+        self.assertEqual(answer, die.get_dict())
+
+    def test_ExplodingOn_get_dict_WeightedDie_one(self):
+        die = ExplodingOn(WeightedDie({1: 1, 2: 1, 3: 1, 4: 2}), (3, 4), explosions=2)
+        level_zero = {1: 25, 2: 25}
+        level_one_three = {4: 5, 5: 5}
+        level_one_four = {5: 10, 6: 10}
+        level_two_three_three = {7: 1, 8: 1, 9: 1, 10: 2}
+        level_two_three_four = {8: 2, 9: 2, 10: 2, 11: 4}
+        level_two_four_three = {8: 2, 9: 2, 10: 2, 11: 4}
+        level_two_four_four = {9: 4, 10: 4, 11: 4, 12: 8}
+
+        answer = add_dicts(level_zero, level_one_three)
+        answer = add_dicts(answer, level_one_four)
+        answer = add_dicts(answer, level_two_four_four)
+        answer = add_dicts(answer, level_two_four_three)
+        answer = add_dicts(answer, level_two_three_four)
+        answer = add_dicts(answer, level_two_three_three)
+        self.assertEqual(answer, {1: 25, 2: 25, 4: 5, 5: 15, 6: 10, 7: 1, 8: 5, 9: 9, 10: 10, 11: 12, 12: 8})
+        self.assertEqual(answer, die.get_dict())
+
+    def test_ExplodingOn_get_dict_WeightedDie_two(self):
+        die = ExplodingOn(WeightedDie({1: 1, 2: 1, 3: 2, 4: 3}), (3, 4), explosions=2)
+        level_zero = {1: 49, 2: 49}
+        level_one_three = {4: 14, 5: 14}
+        level_one_four = {5: 21, 6: 21}
+        level_two_three_three = {7: 4, 8: 4, 9: 8, 10: 12}
+        level_two_three_four = {8: 6, 9: 6, 10: 12, 11: 18}
+        level_two_four_three = {8: 6, 9: 6, 10: 12, 11: 18}
+        level_two_four_four = {9: 9, 10: 9, 11: 18, 12: 27}
+
+        answer = add_dicts(level_zero, level_one_three)
+        answer = add_dicts(answer, level_one_four)
+        answer = add_dicts(answer, level_two_four_four)
+        answer = add_dicts(answer, level_two_four_three)
+        answer = add_dicts(answer, level_two_three_four)
+        answer = add_dicts(answer, level_two_three_three)
+        self.assertEqual(answer, {1: 49, 2: 49, 4: 14, 5: 35, 6: 21, 7: 4, 8: 16, 9: 29, 10: 45, 11: 54, 12: 27})
+        self.assertEqual(answer, die.get_dict())
+
+    def test_ExplodingOn_get_dict_WeightedDie_set_explosions(self):
+        die = ExplodingOn(WeightedDie({1: 1, 2: 2, 3: 3}), (2, 3), explosions=3)
+        level_zero = {1: 216}
+        level_one_two = {3: 36*2}
+        level_one_three = {4: 36*3}
+        level_two_two_two = {5: 4*6}
+        level_two_two_three = {6: 6*6}
+        level_two_three_two = {6: 6*6}
+        level_two_three_three = {7: 9*6}
+
+        level_three_two_two = add_dicts({7: 8, 8: 8*2, 9: 8*3}, {8: 12, 9: 12*2, 10: 12*3})
+        level_three_two_three = add_dicts({8: 12, 9: 12*2, 10: 12*3}, {9: 18, 10: 18*2, 11: 18*3})
+        level_three_three_two = add_dicts({8: 12, 9: 12*2, 10: 12*3}, {9: 18, 10: 18*2, 11: 18*3})
+        level_three_three_three = add_dicts({9: 18, 10: 18*2, 11: 18*3}, {10: 27, 11: 27*2, 12: 27*3})
+
+        answer = add_dicts(level_zero, level_one_two)
+        answer = add_dicts(answer, level_one_three)
+        answer = add_dicts(answer, level_two_three_three)
+        answer = add_dicts(answer, level_two_three_two)
+        answer = add_dicts(answer, level_two_two_three)
+        answer = add_dicts(answer, level_two_two_two)
+
+        answer = add_dicts(answer, level_three_two_two)
+        answer = add_dicts(answer, level_three_two_three)
+        answer = add_dicts(answer, level_three_three_two)
+        answer = add_dicts(answer, level_three_three_three)
+        self.assertEqual(answer, {1: 216, 3: 72, 4: 108, 5: 24, 6: 72, 7: 62, 8: 16 + 12*3, 9: 24*4+18*3,
+                                  10: 36*6+27, 11: 162+54, 12: 81})
+        self.assertEqual(answer, die.get_dict())
 
 if __name__ == '__main__':
     unittest.main()
