@@ -479,6 +479,10 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(answer, {1: 16, 2: 16, 4: 4, 5: 8, 6: 4, 7: 1, 8: 3, 9: 4, 10: 4, 11: 3, 12: 1})
         self.assertEqual(answer, die.get_dict())
 
+    def test_ExplodingOn_get_dict_one_explodes_on(self):
+        die = ExplodingOn(Die(3), (2, ))
+        self.assertEqual(die.get_dict(), {1: 9, 3: 12, 5: 4, 6: 1, 7: 1})
+
     def test_ExplodingOn_get_dict_regular_die_different_numbers(self):
         die = ExplodingOn(WeightedDie({1: 1, 2: 1, 3: 1, 4: 1}), (1, 4), explosions=2)
 
@@ -554,6 +558,14 @@ class TestDieEvents(unittest.TestCase):
     def test_ExplodingOn_get_dict_edge_case_empty_explodes_on(self):
         die = ExplodingOn(Die(3), ())
         self.assertEqual(die.get_dict(), {1: 9, 2: 9, 3: 9})
+
+    def test_ExplodingOn_get_dict_edge_case_no_explosions(self):
+        die = ExplodingOn(Die(3), (1, 2), 0)
+        self.assertEqual(die.get_dict(), {1: 1, 2: 1, 3: 1})
+
+    def test_ExplodingOn_get_dict_edge_case_explodes_on_all_values(self):
+        die = ExplodingOn(Die(3), (1, 2, 3), 1)
+        self.assertEqual(die.get_dict(), {2: 1, 3: 2, 4: 3, 5: 2, 6: 1})
 
     def test_ExplodingOn_get_dict_edge_case_explodes_on_roll_not_in_die(self):
         self.assertRaises(ValueError, ExplodingOn, Die(3), (1, 2, 3, 4))

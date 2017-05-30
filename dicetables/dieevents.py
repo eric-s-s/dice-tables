@@ -243,11 +243,13 @@ class StrongDie(ProtoDie):
 
 class Exploding(ProtoDie):
     """
-    stores and returns info for an version of another die.
+    Stores and returns info for an exploding version of another die.
     On the maximum roll, the die continues to roll, adding the maximum roll to the result.
-    Exploding(Die(6), explosions=2) roll 1-5, then 7-11 then 12-18. Explosions are applied after modifiers and
-    multipliers.
-    Exploding(ModDie(4, -2)) explodes on a 2 so it rolls: [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    The die only continues rolling an (explosions) number of times.
+    Exploding(Die(6), explosions=2) rolls [1 to 5], 6+[1 to 5], 12+[1 to 6]
+    Explosions are applied after modifiers and multipliers.
+    Exploding(ModDie(4, -2)) explodes on a 2 so it rolls:
+    [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
     """
 
     def __init__(self, input_die, explosions=2):
@@ -316,6 +318,15 @@ class Exploding(ProtoDie):
 
 
 class ExplodingOn(ProtoDie):
+    """
+    Stores and returns info for an exploding version of another die.
+    On the roll-values in (explodes_on), the die continues to roll, adding that value to the result.
+    The die only continues rolling an (explosions) number of times.
+    Exploding(Die(6), (1, 6), explosions=2) rolls:
+    [2 to 5], 1+[2 to 5], 6+[2 to 5], 2*(7+[1 to 6]), 2+[1 to 6], 12 + [1 to 6]
+    Explosions are applied after modifiers and multipliers.
+    Exploding(ModDie(4, -2), (2)) explodes on a 2 so it rolls: [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    """
     def __init__(self, input_die, explodes_on, explosions=2):
         """
 

@@ -6,8 +6,8 @@ CHANGELOG
 =========
 
 - EventsCalculations added functions log10_points and log10_axes
-- New die: Exploding(other_die, explosions=2)
-TODODODODODODODODODODODODODOODODODO - details
+- New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
+- see `Die Classes`_ and `EventsInformation And EventsCalculations`_ for details
 
 =====================================================
 a module for statistics of die rolls and other events
@@ -339,6 +339,34 @@ Modifier
     added methods:
 
     - .get_modifier()
+
+Exploding
+    A die that continues rolling if the maximum value is rolled, adding the previous roll to the results.
+    It rolls up to (explosions) number of times. So, dt.Exploding(dt.Die(6), explosions=3) will keep rolling
+    as long as a 6 was rolled, to a maximum of 3 re-rolls, that means it rolls, 1-5, then 7-11 (6 + 1to5),
+    then 13-17, and finally, 19-24. Any modifiers and multipliers are applied to each re-roll.
+    dt.Exploding(dt.ModDie(6, 1), explosions=2) rolls, 2-6, then 9-13, and finally, 15-21.
+
+    The number of explosions defaults to 2.
+
+    added methods:
+
+    - .get_input_die()
+    - .get_explosions()
+
+ExplodingOn
+    The same as Exploding, except you also use a tuple of ints to state what values the die continues rolling on.
+    dt.ExplodingOn(dt.Die(6), (1, 6), explosions=2) continues rolling and adding the die value when either 1 or 6
+    is rolled. So it would roll, [2to5] and then 1+[2to5] and then 6+[2to5] and then 1+1+[1to6], 1+6+[1to6],
+    6+1+[1to6], 6+6+[1to6].
+
+    The number of explosions defaults to 2.
+
+    added methods:
+
+    - .get_input_die()
+    - .get_explosions()
+    - .get_explodes_on()
 
 Top_
 
