@@ -50,8 +50,10 @@ THE BASICS
 >>> one_two_sided_one_three_sided = one_two_sided.add_die(dt.Die(3), 1)
 >>> one_two_sided_one_three_sided.get_dict()
 {2: 1, 3: 2, 4: 2, 5: 1}
+
 >>> one_two_sided.get_dict()
 {1: 1, 2: 1}
+
 >>> new.get_dict()
 {0: 1}
 
