@@ -45,19 +45,13 @@ THE BASICS
 - roll - 5: 1 occurrence  (1 in 6 chance)
 
 >>> import dicetables as dt
-
 >>> new = dt.DiceTable.new()
-
 >>> one_two_sided = new.add_die(dt.Die(2), times=1)
-
 >>> one_two_sided_one_three_sided = one_two_sided.add_die(dt.Die(3), 1)
-
 >>> one_two_sided_one_three_sided.get_dict()
 {2: 1, 3: 2, 4: 2, 5: 1}
-
 >>> one_two_sided.get_dict()
 {1: 1, 2: 1}
-
 >>> new.get_dict()
 {0: 1}
 
@@ -66,33 +60,24 @@ Also note that DiceTable is immutable. adding and removing dice creates a new ta
 
 
 >>> table = dt.DiceTable.new().add_die(dt.Die(2)).add_die(dt.Die(3))
-
 >>> str(table)
 '1D2\n1D3'
-
 >>> table = table.add_die(dt.Die(2), 100)
-
 >>> table = table.remove_die(dt.Die(2), 99)
-
 >>> print(table)
 2D2
 1D3
-
 >>> print(table.add_die(dt.Modifier(5), 2))
 +5
 +5
 2D2
 1D3
-
 >>> table.get_list()  # list is sorted according to die
 [(Die(2), 2), (Die(3), 1)]
-
 >>> table.number_of_dice(dt.Die(10))
 0
-
 >>> table.number_of_dice(dt.Die(2))
 2
-
 >>> print(table.weights_info())
 2D2
     No weights
