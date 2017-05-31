@@ -50,10 +50,8 @@ THE BASICS
 >>> one_two_sided_one_three_sided = one_two_sided.add_die(dt.Die(3), 1)
 >>> one_two_sided_one_three_sided.get_dict()
 {2: 1, 3: 2, 4: 2, 5: 1}
-
 >>> one_two_sided.get_dict()
 {1: 1, 2: 1}
-
 >>> new.get_dict()
 {0: 1}
 
@@ -91,47 +89,32 @@ To get useful information, use EventsInformation object and EventsCalculations o
 
 >>> table = dt.DiceTable.new()
 >>> table = table.add_die(dt.StrongDie(dt.Die(2), 3), 2)
-
 >>> table.get_dict()  # doctest: +SKIP
 {6: 1, 9: 2, 12: 1}
-
 >>> info = dt.EventsInformation(table)
-
 >>> info.all_events()
 [(6, 1), (9, 2), (12, 1)]
-
 >>> info.all_events_include_zeroes()
 [(6, 1), (7, 0), (8, 0), (9, 2), (10, 0), (11, 0), (12, 1)]
-
 >>> info.events_keys()
 [6, 9, 12]
-
 >>> info.events_range()
 (6, 12)
-
 >>> info.get_event(4)
 (4, 0)
-
 >>> info.get_range_of_events(7, 13)
 [(7, 0), (8, 0), (9, 2), (10, 0), (11, 0), (12, 1)]
-
 >>> info.biggest_event()
 (9, 2)
-
 >>> info.total_occurrences()
 4
-
 >>> calc = dt.EventsCalculations(table)
-
 >>> calc.mean()
 9.0
-
 >>> calc.stddev()
 2.1213
-
 >>> calc.percentage_points()
 [(6, 25.0), (7, 0.0), (8, 0.0), (9, 50.0), (10, 0.0), (11, 0.0), (12, 25.0)]
-
 >>> print(calc.full_table_string())
  6: 1
  7: 0
@@ -141,39 +124,29 @@ To get useful information, use EventsInformation object and EventsCalculations o
 11: 0
 12: 1
 <BLANKLINE>
-
 >>> without_zeroes = dt.EventsCalculations(table, include_zeroes=False)
-
 >>> print(without_zeroes.full_table_string())
  6: 1
  9: 2
 12: 1
 <BLANKLINE>
-
 >>> stats_str = "{} occurred {} times out of {} combinations.\nThat's a one in {} chance or {}%"
-
 >>> print(stats_str.format(*without_zeroes.stats_strings([1, 2, 5, 8, 9, 10])))
 1-2, 5, 8-10 occurred 2 times out of 4 combinations.
 That's a one in 2.000 chance or 50.00%
-
 >>> without_zeroes.percentage_axes()
 [(6, 9, 12), (25.0, 50.0, 25.0)]
 
 DetailedDiceTable keeps a copy of these objects at .info and .calc calc_includes_zeros defaults to True
 
 >>> d_table = dt.DetailedDiceTable.new()
-
 >>> d_table.info.events_range()
 (0, 0)
-
 >>> d_table.calc.mean()
 0.0
-
 >>> d_table = d_table.add_die(dt.Die(6), 100)
-
 >>> d_table.info.events_range()
 (100, 600)
-
 >>> d_table.calc.mean()
 350.0
 
@@ -188,13 +161,11 @@ You may also access this functionality with wrapper functions:
 - percentage_axes
 
 >>> silly_table = dt.AdditiveEvents({1: 123456, 100: 12345*10**1000})
-
 >>> print(dt.full_table_string(silly_table, include_zeroes=False, shown_digits=6))
   1: 123,456
 100: 1.23450e+1004
 <BLANKLINE>
 >>> stats_info = dt.stats(silly_table, list(range(-5000, 5)))
-
 >>> print(stats_str.format(*stats_info))
 (-5,000)-4 occurred 123,456 times out of 1.234e+1004 combinations.
 That's a one in 1.000e+999 chance or 1.000e-997%
@@ -234,10 +205,8 @@ So:
 ... dt.StrongDie(dt.Die(2), 1),
 ... dt.StrongDie(dt.WeightedDie({1: 1, 2: 1}), 1)
 ... ]
-
 >>> [die.get_dict() == {1: 1, 2: 1} for die in dice_list]
 [True, True, True, True, True, True]
-
 >>> sorted(dice_list)  # doctest: +NORMALIZE_WHITESPACE
 [Die(2),
  ModDie(2, 0),
@@ -245,19 +214,13 @@ So:
  ModWeightedDie({1: 1, 2: 1}, 0),
  StrongDie(WeightedDie({1: 1, 2: 1}), 1),
  WeightedDie({1: 1, 2: 1})]
-
 >>> [die == dt.Die(2) for die in sorted(dice_list)]
 [True, False, False, False, False, False]
-
 >>> my_set = {dt.Die(6)}
-
 >>> my_set.add(dt.Die(6))
-
 >>> my_set  # doctest: +SKIP
 {Die(6)}
-
 >>> my_set.add(dt.ModDie(6, 0))
-
 >>> my_set  # doctest: +SKIP
 {Die(6), ModDie(6, 0)}
 
@@ -398,10 +361,8 @@ occurrences out of the dictionary for you.
 
 >>> dt.DiceTable({1: 1, 2:0}, {}).get_dict()
 {1: 1}
-
 >>> dt.AdditiveEvents({1: 2, 3: 0, 4: 1}).get_dict()
 {1: 2, 4: 1}
-
 >>> dt.ModWeightedDie({1: 2, 3: 0, 4: 1}, -5).get_dict()
 {-4: 2, -1: 1}
 
@@ -413,34 +374,22 @@ but there's no record of it.  AdditiveEvents has __eq__ method that tests type a
 from IntegerEvents.
 
 >>> three_D2 = dt.AdditiveEvents.new().combine_by_dictionary(dt.Die(2), 3)
-
 >>> also_three_D2 = dt.AdditiveEvents({3: 1, 4: 3, 5: 3, 6: 1})
-
 >>> still_three_D2 = dt.AdditiveEvents.new().combine(dt.AdditiveEvents({1: 1, 2: 1}), 3)
-
 >>> three_D2.get_dict() == also_three_D2.get_dict() == still_three_D2.get_dict()
 True
-
 >>> identity = three_D2.remove(dt.Die(2), 3)
-
 >>> identity.get_dict() == dt.AdditiveEvents.new().get_dict()
 True
-
 >>> identity == dt.AdditiveEvents.new()
 True
-
 >>> print(three_D2)
 table from 3 to 6
-
 >>> twenty_one_D2 = three_D2.combine_by_indexed_values(three_D2, 6)
-
 >>> twenty_one_D2_five_D4 = twenty_one_D2.combine_by_flattened_list(dt.Die(4), 5)
-
 >>> five_D4 = twenty_one_D2_five_D4.remove(dt.Die(2), 21)
-
 >>> dt.DiceTable.new().add_die(dt.Die(4), 5).get_dict() == five_D4.get_dict()
 True
-
 >>> dt.DiceTable.new().add_die(dt.Die(4), 5) == five_D4  # will be False since DiceTable is not AdditiveEvents
 False
 
@@ -460,58 +409,40 @@ happens to be. To get consistent output, use "get_list".  Equality testing is by
 (and calc_includes_zeroes for DetailedDiceTable).
 
 >>> old = dt.DiceTable.new()
-
 >>> old = old.add_die(dt.Die(6), 100)
-
 >>> events_record = old.get_dict()
-
 >>> dice_record = old.dice_data()
-
 >>> new = dt.DiceTable(events_record, dice_record)
-
 >>> print(new)
 100D6
-
 >>> record = dt.DiceRecord({dt.Die(6): 100})
-
 >>> also_new = dt.DetailedDiceTable(new.get_dict(), record, calc_includes_zeroes=False)
-
 >>> old.get_dict() == new.get_dict() == also_new.get_dict()
 True
-
 >>> old.get_list() == new.get_list() == also_new.get_list()
 True
-
 >>> old == new
 True
-
 >>> old == also_new  # False by type
 False
-
 >>> isinstance(also_new, dt.DiceTable)
 True
-
 >>> type(also_new) is dt.DiceTable
 False
 
 DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
 
 >>> d_table = dt.DetailedDiceTable.new()
-
 >>> d_table.calc_includes_zeroes
 True
-
 >>> d_table = d_table.add_die(dt.StrongDie(dt.Die(2), 2))
-
 >>> print(d_table.calc.full_table_string())
 2: 1
 3: 0
 4: 1
 <BLANKLINE>
 >>> d_table = d_table.switch_boolean()
-
 >>> the_same = dt.DetailedDiceTable({2: 1, 4: 1}, d_table.dice_data(), False)
-
 >>> print(d_table.calc.full_table_string())
 2: 1
 4: 1
@@ -521,14 +452,12 @@ True
 4: 1
 <BLANKLINE>
 >>> d_table = d_table.add_die(dt.StrongDie(dt.Die(2), 2))
-
 >>> print(d_table.calc.full_table_string())
 4: 1
 6: 2
 8: 1
 <BLANKLINE>
 >>> d_table = d_table.switch_boolean()
-
 >>> print(d_table.calc.full_table_string())
 4: 1
 5: 0
@@ -590,28 +519,23 @@ EventsCalculations:
     * defaults to 4 decimal places, but can be increased or decreased
 
 >>> table = dt.DiceTable.new().add_die(dt.Die(6), 1000)
-
 >>> calc = dt.EventsCalculations(table)
-
 >>> calc.stddev(7)
 54.0061725
-
 >>> calc.mean()
 3500.0
-
 >>> the_stats = calc.stats_strings([3500], shown_digits=6)
-
 >>> the_stats  # doctest: +NORMALIZE_WHITESPACE
 StatsStrings(query_values='3,500',
              query_occurrences='1.04628e+776',
              total_occurrences='1.41661e+778',
              one_in_chance='135.395',
              pct_chance='0.738580')
->>>  # (yes, that is correct. out of 5000 possible rolls, 3500 has a 0.7% chance of occurring)
+
+This is correct. Out of 5000 possible rolls, 3500 has a 0.7% chance of occurring.
 
 >>> the_stats.one_in_chance
 '135.395'
-
 >>> calc.stats_strings(list(range(1000, 3001)) + list(range(4000, 10000)))  # doctest: +NORMALIZE_WHITESPACE
 StatsStrings(query_values='1,000-3,000, 4,000-9,999',
              query_occurrences='2.183e+758',
@@ -619,12 +543,10 @@ StatsStrings(query_values='1,000-3,000, 4,000-9,999',
              one_in_chance='6.490e+19',
              pct_chance='1.541e-18')
 
->>>  # (this is also correct; rolls not in the middle 1000 collectively have a much smaller chance than the mean.)
+This is also correct. Rolls not in the middle 1000 collectively have a much smaller chance than the mean.
 
 >>> silly_table = dt.AdditiveEvents({1: 123456, 100: 1234567*10**1000})
-
 >>> silly_calc = dt.EventsCalculations(silly_table, include_zeroes=False)
-
 >>> print(silly_calc.full_table_string(shown_digits=6))
   1: 123,456
 100: 1.23457e+1006
@@ -637,9 +559,7 @@ two for the price of one. It's accessed with the property
 EventsCalculations.info .
 
 >>> table = dt.DiceTable.new().add_die(dt.StrongDie(dt.Die(3), 2))
-
 >>> calc = dt.EventsCalculations(table, True)
-
 >>> print(calc.full_table_string())
 2: 1
 3: 0
@@ -648,7 +568,6 @@ EventsCalculations.info .
 6: 1
 <BLANKLINE>
 >>> calc = dt.EventsCalculations(table, False)
-
 >>> print(calc.full_table_string())
 2: 1
 4: 1
@@ -664,13 +583,12 @@ Inheritance
 -----------
 If you inherit from any child of AdditiveEvents and you do not load the new information
 into EventsFactory, it will complain and give you instructions. The EventsFactory will try to create
-your new class and if it fails, will return the closest related type::
+your new class and if it fails, will return the closest related type
 
-In[9]: class A(dt.DiceTable):
-  ...:     pass
-  ...:
-
-In[10]: A.new()
+>>> class A(dt.DiceTable):
+...     pass
+...
+>>> A.new()  # doctest: +SKIP
 E:\work\dice_tables\dicetables\baseevents.py:74: EventsFactoryWarning:
 factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>
 Warning code: CONSTRUCT
@@ -678,15 +596,15 @@ Failed to find/add the following class to the EventsFactory -
 class: <class '__main__.A'>
 ..... blah blah blah.....
 
-Out[10]: <__main__.A at 0x4c25400>  <-- you got lucky. it's your class
+<__main__.A at 0x4c25400>  <-- you got lucky. it's your class
 
-In[11]: class B(dt.DiceTable):
-  ...:     def __init__(self, name, number, events_dict, dice_data):
-  ...:         self.name = name
-  ...:         self.num = number
-  ...:
+>>> class B(dt.DiceTable):
+...     def __init__(self, name, number, events_dict, dice_data):
+...         self.name = name
+...         self.num = number
+...
 
-In[12]: B.new()
+>>> B.new()  # doctest: +SKIP
 E:\work\dice_tables\dicetables\baseevents.py:74: EventsFactoryWarning:
 factory: <class 'dicetables.factory.eventsfactory.EventsFactory'>
 Warning code: CONSTRUCT
@@ -694,63 +612,63 @@ Failed to find/add the following class to the EventsFactory -
 class: <class '__main__.B'>
 ..... blah blah blah.....
 
-Out[12]: <dicetables.dicetable.DiceTable at 0x4c23f28>  <-- Oops. EventsFactory can't figure out how to make one.
+<dicetables.dicetable.DiceTable at 0x4c23f28>  <-- Oops. EventsFactory can't figure out how to make one.
 
 | Now I will try again, but I will give the factory the info it needs.
 | The factory knows how to get 'get_dict', 'dice_data'
 | and 'calc_includes_zeroes'. If you need it to get anything else, you need tuples of
 | (<getter name>, <default value>, 'property' or 'method')
 
-::
+>>> class B(dt.DiceTable):
+...     factory_keys = ('name', 'get_num', 'get_dict', 'dice_data')
+...     new_keys = (('name', '', 'property'), ('get_num', 0, 'method'))
+...     def __init__(self, name, number, events_dict, dice_data):
+...         self.name = name
+...         self._num = number
+...         super(B, self).__init__(events_dict, dice_data)
+...     def get_num(self):
+...         return self._num
+...
+>>> B.new()
+<B ...>
 
-    In[6]: class B(dt.DiceTable):
-      ...:     factory_keys = ('name', 'get_num', 'get_dict', 'dice_data')
-      ...:     new_keys = (('name', '', 'property'), ('get_num', 0, 'method'))
-      ...:     def __init__(self, name, number, events_dict, dice_data):
-      ...:         self.name = name
-      ...:         self._num = number
-      ...:         super(B, self).__init__(events_dict, dice_data)
-      ...:     def get_num(self):
-      ...:         return self._num
-      ...:
-    In[7]: B.new()
-    Out[7]: <__main__.B at 0x4ca94a8>
+>>> class C(dt.DiceTable):
+...     factory_keys = ('get_dict', 'dice_data')
+...     def fancy_add_die(self, die, times):
+...         new = self.add_die(die, times)
+...         return 'so fancy', new
+...
+>>> x = C.new().fancy_add_die(dt.Die(3), 2)
+>>> x[1].get_dict()
+{2: 1, 3: 2, 4: 3, 5: 2, 6: 1}
+>>> x
+('so fancy', <C ...>)
 
-    In[8]: class C(dt.DiceTable):
-      ...:     factory_keys = ('get_dict', 'dice_data')
-      ...:     def fancy_add_die(self, die, times):
-      ...:         new = self.add_die(die, times)
-      ...:         return 'so fancy', new
-      ...:
-    In[9]: x = C.new().fancy_add_die(dt.Die(3), 2)
-    In[10]: x[1].get_dict()
-    Out[10]: {2: 1, 3: 2, 4: 3, 5: 2, 6: 1}
-    In[11]: x
-    Out[11]: ('so fancy', <__main__.C at 0x5eb4d68>)  <-- notice it returned C and not DiceTable
+Notice that C is returned and not DiceTable
 
-The other way to do this is to directly add the class to the EventsFactory::
+The other way to do this is to directly add the class to the EventsFactory
 
-    In[49]: factory = dt.factory.eventsfactory.EventsFactory
+>>> factory = dt.factory.eventsfactory.EventsFactory
 
-    In[50]: factory.add_getter('get_num', 0, 'method')
+>>> factory.add_getter('get_num', 0, 'method')
 
-    In[51]: class A(dt.DiceTable):
-       ...:     def __init__(self, number, events_dict, dice):
-       ...:         self._num = number
-       ...:         super(A, self).__init__(events_dict, dice)
-       ...:     def get_num(self):
-       ...:         return self._num
-       ...:
+>>> class A(dt.DiceTable):
+...     def __init__(self, number, events_dict, dice):
+...         self._num = number
+...         super(A, self).__init__(events_dict, dice)
+...     def get_num(self):
+...         return self._num
+...
 
-    In[53]: factory.add_class(A, ('get_num', 'get_dict', 'dice_data'))
+>>> factory.add_class(A, ('get_num', 'get_dict', 'dice_data'))
 
-    In[55]: A.new()
-    Out[55]: <__main__.A at 0x5f951d0>
+>>> A.new()
+<A ...>
 
-    In[63]: factory.reset()
+>>> factory.reset()
 
-    In[64]: factory.has_class(A)
-    Out[64]: False
+>>> factory.has_class(A)
+False
 
 When creating new methods, you can generate new events dictionaries by using
 dicetables.additiveevents.EventsDictCreator.  the factory can create new instances with
@@ -762,16 +680,22 @@ HOW TO GET ERRORS AND BUGS
 --------------------------
 Every time you instantiate any IntegerEvents, it is checked.  The get_dict() method returns a dict, and every value
 in get_dict().values() must be >=1. get_dict() may not be empty.
-since dt.Die(-2).get_dict() returns {}::
+since dt.Die(-2).get_dict() returns {}
 
-    In [3]: dt.Die(-2)
-    dicetables.eventsbases.eventerrors.InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
+>>> dt.Die(-2)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+InvalidEventsError: events may not be empty. a good alternative is the identity - {0: 1}.
 
-    In [5]: dt.AdditiveEvents({1.0: 2})
-    dicetables.eventsbases.eventerrors.InvalidEventsError: all values must be ints
+>>> dt.AdditiveEvents({1.0: 2})  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+InvalidEventsError: all values must be ints
 
-    In [6]: dt.WeightedDie({1: 1, 2: -5})
-    dicetables.eventsbases.eventerrors.InvalidEventsError: no negative or zero occurrences in Events.get_dict()
+>>> dt.WeightedDie({1: 1, 2: -5})
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+InvalidEventsError: no negative or zero occurrences in Events.get_dict()
 
 Because AdditiveEvents and WeightedDie specifically
 scrub the zeroes from their get_dict() methods, these will not throw errors.
