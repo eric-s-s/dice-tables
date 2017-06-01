@@ -415,11 +415,9 @@ class ExplodingOn(ProtoDie):
 
 
 def remove_duplicates(input_tuple):
-    already_added = []
     list_version = []
     for val in input_tuple:
-        if val not in already_added:
-            already_added.append(val)
+        if val not in list_version:
             list_version.append(val)
     return tuple(list_version)
 
