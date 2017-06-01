@@ -18,7 +18,9 @@ class TestDieEvents(unittest.TestCase):
                 ModDie(2, 0),
                 Die(2),
                 Die(3),
-                Modifier(2)]
+                Modifier(2),
+                Exploding(Die(2)),
+                ExplodingOn(Die(2), (1,))]
         self.assertIsNone(dice.sort())
 
     def test_lt_all_die_types_sort_as_expected(self):
@@ -29,14 +31,18 @@ class TestDieEvents(unittest.TestCase):
                 ModDie(2, 0),
                 Die(2),
                 Die(3),
-                Modifier(2)]
+                Modifier(2),
+                Exploding(Die(2)),
+                ExplodingOn(Die(2), (1, 2))]
         sorted_dice = [Modifier(2),
                        Die(2),
                        ModDie(2, 0),
                        StrongDie(Die(2), 1),
+                       Exploding(Die(2)),
                        ModWeightedDie({1: 1, 2: 1}, 0),
                        StrongDie(WeightedDie({1: 2, 2: 0}), 1),
                        WeightedDie({1: 2, 2: 0}),
+                       ExplodingOn(Die(2), (1, 2)),
                        Die(3)]
         self.assertEqual(sorted(dice), sorted_dice)
 
@@ -418,16 +424,16 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(repr(Exploding(Die(6))), "Exploding(Die(6), 2)")
         self.assertEqual(repr(Exploding(StrongDie(Die(6), 3), explosions=10)), "Exploding(StrongDie(Die(6), 3), 10)")
 
-    def test_module_level_method_remove_duplicates_empty(self):
+    def test_module_level_helper_function_remove_duplicates_empty(self):
         self.assertEqual(remove_duplicates(()), ())
 
-    def test_module_level_method_remove_duplicates_no_duplicates(self):
+    def test_module_level_helper_function_remove_duplicates_no_duplicates(self):
         self.assertEqual(remove_duplicates((1, 4, 3, 2)), (1, 4, 3, 2))
 
-    def test_module_level_method_remove_duplicates_has_duplicates_orders_by_first_appearance(self):
+    def test_module_level_helper_function_remove_duplicates_has_duplicates_orders_by_first_appearance(self):
         self.assertEqual(remove_duplicates((1, 4, 1, 3, 3, 4, 2, 3, 1, 1)), (1, 4, 3, 2))
 
-    def test_module_level_method_add_dicts_empty_empty(self):
+    def test_module_level_helper_function_add_dicts_empty_empty(self):
         a = {}
         b = {}
         answer = add_dicts(a, b)
@@ -435,7 +441,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertIsNot(answer, a)
         self.assertIsNot(answer, b)
 
-    def test_module_level_method_add_dicts_first_empty(self):
+    def test_module_level_helper_function_add_dicts_first_empty(self):
         a = {1: 1}
         b = {}
         answer = add_dicts(a, b)
@@ -443,7 +449,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertIsNot(answer, a)
         self.assertIsNot(answer, b)
 
-    def test_module_level_method_add_dicts_second_empty(self):
+    def test_module_level_helper_function_add_dicts_second_empty(self):
         a = {1: 1}
         b = {}
         answer = add_dicts(b, a)
@@ -451,7 +457,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertIsNot(answer, a)
         self.assertIsNot(answer, b)
 
-    def test_module_level_method_add_dicts_no_overlap(self):
+    def test_module_level_helper_function_add_dicts_no_overlap(self):
         a = {1: 1}
         b = {2: 3}
         answer = add_dicts(b, a)
@@ -459,7 +465,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertIsNot(answer, a)
         self.assertIsNot(answer, b)
 
-    def test_module_level_method_add_dicts_overlap(self):
+    def test_module_level_helper_function_add_dicts_overlap(self):
         a = {1: 1, 2: 3}
         b = {2: 3, 4: 5}
         answer = add_dicts(b, a)
@@ -467,7 +473,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertIsNot(answer, a)
         self.assertIsNot(answer, b)
 
-    def test_module_level_method_remove_keys_after_applying_modifier(self):
+    def test_module_level_helper_function_remove_keys_after_applying_modifier(self):
         modifier = 4
         to_remove = (1, 2)
         base_dict = dict.fromkeys(range(10), 1)
@@ -489,7 +495,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(answer, {1: 16, 2: 16, 4: 4, 5: 8, 6: 4, 7: 1, 8: 3, 9: 4, 10: 4, 11: 3, 12: 1})
         self.assertEqual(answer, die.get_dict())
 
-    def test_ExplodingOn_get_dict_one_explodes_on(self):
+    def test_ExplodingOn_get_dict_one_explodes_on_value(self):
         die = ExplodingOn(Die(3), (2, ))
         self.assertEqual(die.get_dict(), {1: 9, 3: 12, 5: 4, 6: 1, 7: 1})
 
@@ -568,6 +574,8 @@ class TestDieEvents(unittest.TestCase):
     def test_ExplodingOn_get_dict_edge_case_empty_explodes_on(self):
         die = ExplodingOn(Die(3), ())
         self.assertEqual(die.get_dict(), {1: 9, 2: 9, 3: 9})
+        die = ExplodingOn(Die(3), (), explosions=2)
+        self.assertEqual(die.get_dict(), {1: 3, 2: 3, 3: 3})
 
     def test_ExplodingOn_get_dict_edge_case_no_explosions(self):
         die = ExplodingOn(Die(3), (1, 2), 0)
