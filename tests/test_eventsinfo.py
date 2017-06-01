@@ -322,6 +322,36 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(three_sevenths, 300./7.)
         self.assertEqual(four_sevenths, 400./7.)
 
+    def test_EventsCalculations_log10_points_include_zeroes_is_false(self):
+        events = AdditiveEvents({1: 10, 3: 100})
+        calculator = ti.EventsCalculations(events, False)
+        self.assertEqual(calculator.log10_points(), [(1, 1.0), (3, 2.0)])
+
+    def test_EventsCalculations_log10_points_include_zeroes_is_true(self):
+        events = AdditiveEvents({1: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.log10_points(), [(1, 1.0), (2, -100.0), (3, 2.0)])
+
+    def test_EventsCalculations_log10_points_set_log10_of_zero_value(self):
+        events = AdditiveEvents({1: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.log10_points(-3.0), [(1, 1.0), (2, -3.0), (3, 2.0)])
+
+    def test_EventsCalculations_log10_axes_include_zeroes_is_false(self):
+        events = AdditiveEvents({1: 10, 3: 100})
+        calculator = ti.EventsCalculations(events, False)
+        self.assertEqual(calculator.log10_axes(), [(1, 3), (1.0, 2.0)])
+
+    def test_EventsCalculations_log10_axes_include_zeroes_is_true(self):
+        events = AdditiveEvents({1: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.log10_axes(), [(1, 2, 3), (1.0, -100.0, 2.0)])
+
+    def test_EventsCalculations_log10_axes_set_log10_of_zero_value(self):
+        events = AdditiveEvents({1: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        self.assertEqual(calculator.log10_axes(-3.0), [(1, 2, 3), (1.0, -3.0, 2.0)])
+
     def test_EventsCalculations_stats_strings_values_not_in_events(self):
         calculator = ti.EventsCalculations(AdditiveEvents({1: 1}))
         expected = ('2', '0', '1', 'Infinity', '0')

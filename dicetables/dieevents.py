@@ -239,3 +239,195 @@ class StrongDie(ProtoDie):
 
     def __repr__(self):
         return 'StrongDie({!r}, {})'.format(self._original, self._multiplier)
+
+
+class Exploding(ProtoDie):
+    """
+    Stores and returns info for an exploding version of another die.
+    On the maximum roll, the die continues to roll, adding the maximum roll to the result.
+    The die only continues rolling an (explosions) number of times.
+    Exploding(Die(6), explosions=2) rolls [1 to 5], 6+[1 to 5], 12+[1 to 6]
+    Explosions are applied after modifiers and multipliers.
+    Exploding(ModDie(4, -2)) explodes on a 2 so it rolls:
+    [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    """
+
+    def __init__(self, input_die, explosions=2):
+        """
+
+        :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
+        :param explosions: int
+        """
+        self._original = input_die
+        self._explosions = explosions
+        self._dict = self._get_exploding_dict()
+        super(Exploding, self).__init__()
+
+    def _get_exploding_dict(self):
+        base_dict = self._original.get_dict()
+
+        new_dict = {}
+        for explosion_level in range(self._explosions + 1):
+            level_dict = self._get_level_dict(explosion_level, base_dict)
+            new_dict = add_dicts(new_dict, level_dict)
+        return new_dict
+
+    def _get_level_dict(self, explosion_level, base_dict):
+        highest_roll = max(base_dict)
+
+        all_occurrences = sum(base_dict.values())
+        level_depth_multiplier = all_occurrences ** (self._explosions - explosion_level)
+        highest_roll_multiplier = base_dict[highest_roll] ** explosion_level
+
+        occurrence_mod = level_depth_multiplier * highest_roll_multiplier
+        roll_mod = explosion_level * highest_roll
+
+        level_dict = {roll + roll_mod: occurrence * occurrence_mod for roll, occurrence in base_dict.items()}
+        if explosion_level != self._explosions:
+            level_dict = remove_keys_after_applying_modifier(level_dict, (highest_roll,), roll_mod)
+        return level_dict
+
+    def get_size(self):
+        return self._original.get_size()
+
+    def get_weight(self):
+        return self._original.get_weight() + 1
+
+    def get_explosions(self):
+        return self._explosions
+
+    def get_input_die(self):
+        """returns an instance of the original die"""
+        return self._original
+
+    def get_dict(self):
+        return self._dict.copy()
+
+    def weight_info(self):
+        return '{}\nExploding adds weight: 1'.format(
+            self._original.weight_info().replace(str(self._original), str(self)))
+
+    def multiply_str(self, number):
+        return '{}({})'.format(number, self)
+
+    def __str__(self):
+        return '{}: Explosions={}'.format(self._original, self._explosions)
+
+    def __repr__(self):
+        return 'Exploding({!r}, {})'.format(self._original, self._explosions)
+
+
+class ExplodingOn(ProtoDie):
+    """
+    Stores and returns info for an exploding version of another die.
+    On the roll-values in (explodes_on), the die continues to roll, adding that value to the result.
+    The die only continues rolling an (explosions) number of times.
+    Exploding(Die(6), (1, 6), explosions=2) rolls:
+    [2 to 5], 1+[2 to 5], 6+[2 to 5], 2*(7+[1 to 6]), 2+[1 to 6], 12 + [1 to 6]
+    Explosions are applied after modifiers and multipliers.
+    Exploding(ModDie(4, -2), (2)) explodes on a 2 so it rolls: [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    """
+    def __init__(self, input_die, explodes_on, explosions=2):
+        """
+
+        :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
+        :param explodes_on: tuple[int] - rolls that die explodes on
+        :param explosions: int
+        """
+        self._explodes_on = remove_duplicates(explodes_on)
+        self._explosions = explosions
+        self._original = input_die
+        self._raise_error_for_bad_explodes_on()
+        self._dict = self._get_exploding_dict()
+        super(ExplodingOn, self).__init__()
+
+    def _raise_error_for_bad_explodes_on(self):
+        base_dict = self._original.get_dict()
+        if any(key not in base_dict for key in self._explodes_on):
+            raise ValueError('"explodes_on" value not present in input_die.get_dict()')
+
+    def _get_exploding_dict(self):
+        level = 0
+        weight_multiplier = 1
+        roll_mod = 0
+        return self._recursively_derive_exploding_dict(level, roll_mod, weight_multiplier)
+
+    def _recursively_derive_exploding_dict(self, level, roll_mod, weight_multiplier):
+        base_dict = self._original.get_dict()
+        current_level = self._get_base_for_current_level(base_dict, level, roll_mod, weight_multiplier)
+
+        if level == self._explosions:
+            return current_level
+
+        for roll in self._explodes_on:
+            weight_val = base_dict[roll]
+            new_weight_multiplier = weight_multiplier * weight_val
+            new_roll_mod = roll_mod + roll
+            new_level = level + 1
+            sub_level = self._recursively_derive_exploding_dict(new_level, new_roll_mod, new_weight_multiplier)
+            current_level = add_dicts(current_level, sub_level)
+        return current_level
+
+    def _get_base_for_current_level(self, base_dict, level, roll_mod, weight_multiplier):
+        base_level_multiplier = sum(base_dict.values())
+        level_multiplier = base_level_multiplier ** (self._explosions - level)
+        current_level_all_rolls = {roll + roll_mod: occurrence * weight_multiplier * level_multiplier
+                                   for roll, occurrence in base_dict.items()}
+        if level == self._explosions:
+            return current_level_all_rolls
+
+        return remove_keys_after_applying_modifier(current_level_all_rolls, self._explodes_on, roll_mod)
+
+    def get_size(self):
+        return self._original.get_size()
+
+    def get_weight(self):
+        return self._original.get_weight() + len(self._explodes_on)
+
+    def get_explosions(self):
+        return self._explosions
+
+    def get_explodes_on(self):
+        return self._explodes_on
+
+    def get_input_die(self):
+        """returns an instance of the original die"""
+        return self._original
+
+    def get_dict(self):
+        return self._dict.copy()
+
+    def weight_info(self):
+        base_weight_info = self._original.weight_info().replace(str(self._original), str(self))
+        num_of_values = len(self._explodes_on)
+        value_str = 'value' if num_of_values == 1 else 'values'
+        return '{0}\nExploding on {1} {2} adds weight: {1}'.format(base_weight_info, num_of_values, value_str)
+
+    def multiply_str(self, number):
+        return '{}({})'.format(number, self)
+
+    def __str__(self):
+        explodes_on = ', '.join([str(val) for val in self._explodes_on])
+        return '{}: Explosions={} On: {}'.format(self._original, self._explosions, explodes_on)
+
+    def __repr__(self):
+        return 'ExplodingOn({!r}, {}, {})'.format(self._original, self._explodes_on, self._explosions)
+
+
+def remove_duplicates(input_tuple):
+    list_version = []
+    for val in input_tuple:
+        if val not in list_version:
+            list_version.append(val)
+    return tuple(list_version)
+
+
+def add_dicts(dict_1, dict_2):
+    out = dict_1.copy()
+    for key, val in dict_2.items():
+        out[key] = out.get(key, 0) + val
+    return out
+
+
+def remove_keys_after_applying_modifier(start_dict, to_exclude_basis, basis_modifier):
+    return {key: val for key, val in start_dict.items() if key - basis_modifier not in to_exclude_basis}
