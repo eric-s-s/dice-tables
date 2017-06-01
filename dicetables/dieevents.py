@@ -334,7 +334,7 @@ class ExplodingOn(ProtoDie):
         :param explodes_on: tuple[int] - rolls that die explodes on
         :param explosions: int
         """
-        self._explodes_on = explodes_on
+        self._explodes_on = remove_duplicates(explodes_on)
         self._explosions = explosions
         self._original = input_die
         self._raise_error_for_bad_explodes_on()
@@ -412,6 +412,16 @@ class ExplodingOn(ProtoDie):
 
     def __repr__(self):
         return 'ExplodingOn({!r}, {}, {})'.format(self._original, self._explodes_on, self._explosions)
+
+
+def remove_duplicates(input_tuple):
+    already_added = []
+    list_version = []
+    for val in input_tuple:
+        if val not in already_added:
+            already_added.append(val)
+            list_version.append(val)
+    return tuple(list_version)
 
 
 def add_dicts(dict_1, dict_2):

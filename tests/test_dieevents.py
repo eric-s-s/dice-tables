@@ -4,7 +4,8 @@ from __future__ import absolute_import
 import unittest
 
 from dicetables.dieevents import (Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier,
-                                  Exploding, ExplodingOn, add_dicts, remove_keys_after_applying_modifier)
+                                  Exploding, ExplodingOn,
+                                  add_dicts, remove_keys_after_applying_modifier, remove_duplicates)
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
@@ -417,6 +418,15 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(repr(Exploding(Die(6))), "Exploding(Die(6), 2)")
         self.assertEqual(repr(Exploding(StrongDie(Die(6), 3), explosions=10)), "Exploding(StrongDie(Die(6), 3), 10)")
 
+    def test_module_level_method_remove_duplicates_empty(self):
+        self.assertEqual(remove_duplicates(()), ())
+
+    def test_module_level_method_remove_duplicates_no_duplicates(self):
+        self.assertEqual(remove_duplicates((1, 4, 3, 2)), (1, 4, 3, 2))
+
+    def test_module_level_method_remove_duplicates_has_duplicates_orders_by_first_appearance(self):
+        self.assertEqual(remove_duplicates((1, 4, 1, 3, 3, 4, 2, 3, 1, 1)), (1, 4, 3, 2))
+
     def test_module_level_method_add_dicts_empty_empty(self):
         a = {}
         b = {}
@@ -567,6 +577,10 @@ class TestDieEvents(unittest.TestCase):
         die = ExplodingOn(Die(3), (1, 2, 3), 1)
         self.assertEqual(die.get_dict(), {2: 1, 3: 2, 4: 3, 5: 2, 6: 1})
 
+    def test_ExplodingOn_get_dict_edge_case_explodes_on_duplicate_values(self):
+        die = ExplodingOn(Die(3), (1, 2, 1, 2, 3, 1), 1)
+        self.assertEqual(die.get_dict(), {2: 1, 3: 2, 4: 3, 5: 2, 6: 1})
+
     def test_ExplodingOn_get_dict_edge_case_explodes_on_roll_not_in_die(self):
         self.assertRaises(ValueError, ExplodingOn, Die(3), (1, 2, 3, 4))
 
@@ -605,20 +619,24 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(ExplodingOn(Die(3), (1,)).get_explodes_on(), (1,))
         self.assertEqual(ExplodingOn(Die(3), (1, 2)).get_explodes_on(), (1, 2))
 
+    def test_ExplodingOn_get_explodes_on_duplicate_values(self):
+        self.assertEqual(ExplodingOn(Die(3), (1, 1)).get_explodes_on(), (1,))
+        self.assertEqual(ExplodingOn(Die(3), (1, 1, 2, 1, 2, 3, 2)).get_explodes_on(), (1, 2, 3))
+
     def test_ExplodingOn__str__(self):
         self.assertEqual(ExplodingOn(Die(6), (1, 2), 3).__str__(), "D6: Explosions=3 On: 1, 2")
-        self.assertEqual(ExplodingOn(ModWeightedDie({1: 1, 2: 2}, -2), (0, ), 1).__str__(),
+        self.assertEqual(ExplodingOn(ModWeightedDie({1: 1, 2: 2}, -2), (0,), 1).__str__(),
                          "D2-2  W:3: Explosions=1 On: 0")
 
     def test_ExplodingOn_multiply_str(self):
         self.assertEqual(ExplodingOn(Die(6), (1, 2), 3).multiply_str(3), "3(D6: Explosions=3 On: 1, 2)")
-        self.assertEqual(ExplodingOn(ModWeightedDie({1: 1, 2: 2}, -2), (0, ), 1).multiply_str(5),
+        self.assertEqual(ExplodingOn(ModWeightedDie({1: 1, 2: 2}, -2), (0,), 1).multiply_str(5),
                          "5(D2-2  W:3: Explosions=1 On: 0)")
 
     def test_ExplodingOn_weight_info(self):
         self.assertEqual(ExplodingOn(Die(6), (1, 5)).weight_info(),
                          "D6: Explosions=2 On: 1, 5\n    No weights\nExploding on 2 values adds weight: 2")
-        self.assertEqual(ExplodingOn(ModWeightedDie({1: 1, 2: 2}, -2), (0, ), 1).weight_info(),
+        self.assertEqual(ExplodingOn(ModWeightedDie({1: 1, 2: 2}, -2), (0,), 1).weight_info(),
                          ("D2-2  W:3: Explosions=1 On: 0\n" +
                           "    a roll of 1 has a weight of 1\n" +
                           "    a roll of 2 has a weight of 2\n" +
@@ -628,6 +646,16 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(repr(ExplodingOn(Die(6), (1,))), "ExplodingOn(Die(6), (1,), 2)")
         self.assertEqual(repr(ExplodingOn(StrongDie(Die(6), 3), (3, 6), explosions=10)),
                          "ExplodingOn(StrongDie(Die(6), 3), (3, 6), 10)")
+
+    def test_ExplodingOn_all_relevant_methods_ignore_duplicate_explodes_on_values(self):
+        die = ExplodingOn(Die(2), (1, 1, 1), explosions=1)
+        self.assertEqual(str(die), "D2: Explosions=1 On: 1")
+        self.assertEqual(repr(die), "ExplodingOn(Die(2), (1,), 1)")
+        self.assertEqual(die.multiply_str(2), "2(D2: Explosions=1 On: 1)")
+        self.assertEqual(die.get_weight(), 1)
+        self.assertEqual(die.weight_info(),
+                         "D2: Explosions=1 On: 1\n    No weights\nExploding on 1 value adds weight: 1")
+        self.assertEqual(die, ExplodingOn(Die(2), (1,), 1))
 
 if __name__ == '__main__':
     unittest.main()
