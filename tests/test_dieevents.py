@@ -575,7 +575,7 @@ class TestDieEvents(unittest.TestCase):
         die = ExplodingOn(Die(3), ())
         self.assertEqual(die.get_dict(), {1: 9, 2: 9, 3: 9})
         die = ExplodingOn(Die(3), (), explosions=2)
-        self.assertEqual(die.get_dict(), {1: 3, 2: 3, 3: 3})
+        self.assertEqual(die.get_dict(), {1: 9, 2: 9, 3: 9})
 
     def test_ExplodingOn_get_dict_edge_case_no_explosions(self):
         die = ExplodingOn(Die(3), (1, 2), 0)
