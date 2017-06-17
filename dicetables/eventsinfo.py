@@ -194,7 +194,7 @@ class EventsCalculations(object):
 
 
 StatsStrings = namedtuple('StatsStrings',
-                          'query_values, query_occurrences, total_occurrences, one_in_chance, pct_chance')
+                          ['query_values', 'query_occurrences', 'total_occurrences', 'one_in_chance', 'pct_chance'])
 
 
 def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
