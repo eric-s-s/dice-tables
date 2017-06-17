@@ -6,21 +6,26 @@ from dicetables.factory.factorytools import StaticDict
 
 
 FunctionCall = namedtuple('FunctionCall', ['func', 'params'])
+Group = namedtuple('Group', ['value'])
+Value = namedtuple('Value', ['value'])
 
 
-class StringPrep(object):
+class StringToParams(object):
 
     @staticmethod
-    def get_params(input_str):
+    def get_call_structure(input_str):
         no_whitespace = input_str.strip()
         out_put = []
         while no_whitespace:
-            if StringPrep.starts_with_function_call(no_whitespace):
-                param, remainder = StringPrep.get_function_call(no_whitespace)
-            elif StringPrep.starts_with_group(no_whitespace):
-                param, remainder = StringPrep.get_first_group(no_whitespace)
+            if StringToParams.starts_with_function_call(no_whitespace):
+                func_name, params, remainder = StringToParams.get_function_call(no_whitespace)
+                param = FunctionCall(func=func_name, params=StringToParams.get_call_structure(params))
+            elif StringToParams.starts_with_group(no_whitespace):
+                gp_name, remainder = StringToParams.get_group(no_whitespace)
+                param = Group(value=gp_name)
             else:
-                param, remainder = StringPrep.get_next_param(no_whitespace)
+                val_name, remainder = StringToParams.get_param(no_whitespace)
+                param = Value(value=val_name)
             out_put.append(param)
             no_whitespace = remainder
         return out_put
@@ -28,29 +33,30 @@ class StringPrep(object):
     @staticmethod
     def starts_with_function_call(input_str):
         to_test = input_str.strip()
-        test = re.match('[A-Z,a-z]+\(', to_test)
+        test = re.match('[A-Za-z_][A-Za-z0-9_]+\(', to_test)
         return test is not None
 
     @staticmethod
     def starts_with_group(input_str):
+        no_whitespace = input_str.lstrip()
         collection_starts = ['(', '{', '[']
-        return input_str[0] in collection_starts
+        return no_whitespace[0] in collection_starts
 
     @staticmethod
     def get_function_call(input_str):
         no_whitespace = input_str.strip()
         func_name, groups = no_whitespace.split('(', 1)
         groups = '(' + groups
-        func_params, remainder = StringPrep.get_first_group(groups)
+        func_params, remainder = StringToParams.get_group(groups)
         without_parens = func_params[1:-1]
-        return FunctionCall(func=func_name, params=StringPrep.get_params(without_parens)), remainder
+        return func_name, without_parens, remainder
 
     @staticmethod
-    def get_first_group(input_str):
+    def get_group(input_str):
         no_whitespace = input_str.strip()
-        start_of_remainder = StringPrep.find_end_of_first_group(no_whitespace) + 1
+        start_of_remainder = StringToParams.find_end_of_first_group(no_whitespace) + 1
         first_group = no_whitespace[:start_of_remainder]
-        remainder = no_whitespace[start_of_remainder:].strip().lstrip(',').lstrip(' ')
+        remainder = no_whitespace[start_of_remainder:].lstrip().lstrip(',').lstrip(' ')
         return first_group, remainder
 
     @staticmethod
@@ -72,62 +78,32 @@ class StringPrep(object):
         raise ValueError('String had no end of group')
 
     @staticmethod
-    def get_next_param(input_str):
+    def get_param(input_str):
         if ',' not in input_str:
             return input_str.strip(), ''
         base_param, base_remainder = input_str.split(',', 1)
         return base_param.strip(), base_remainder.strip()
 
-    # @staticmethod
-    # def split_first_el(big_str):
-    #     big_str = big_str.strip()
-    #     if ',' not in big_str:
-    #         return big_str, ''
-    #
-    #     if big_str.startswith('[') or big_str.startswith('(') or big_str.startswith('{'):
-    #         collection_end = StringPrep.find_collection_end(big_str)
-    #         raw_index = big_str[collection_end:].find(',')
-    #         if raw_index == -1:
-    #             raw_index = 1
-    #         index = raw_index + collection_end
-    #     else:
-    #         index = big_str.find(',')
-    #     return big_str[:index], big_str[index + 1:]
-    #
-    # @staticmethod
-    # def find_collection_end(list_string):
-    #     starts_and_ends = {'[': ']', '{': '}', '(': ')'}
-    #     start_char = list_string[0]
-    #     end_char = starts_and_ends[start_char]
-    #     brackets = 1
-    #     index = 1
-    #     while brackets:
-    #         if list_string[index] == start_char:
-    #             brackets += 1
-    #         if list_string[index] == end_char:
-    #             brackets -= 1
-    #         index += 1
-    #     return index - 1
+
+def make_die(function_tuple):
+    return Parser.get_die_from_function_tuple(function_tuple)
 
 
-class NodeCreator(object):
-    def __init__(self, big_string):
-        self.die_names = ['Die', 'ModDie', 'WeightedDie', 'ModWeightedDie', 'StrongDie', 'Modifier', 'Exploding',
-                          'ExplodingOn']
-        self.big_string = big_string
+def make_int_dict(group_tuple):
+    no_braces = group_tuple.value.strip()[1: -1]
+    pairs = no_braces.split(',')
+    key_vals = [pair.split(':') for pair in pairs]
+    return {int(key): int(val) for key, val in key_vals}
 
-    def to_dict(self):
-        answer = {}
-        remainder = self.big_string
-        while remainder:
-            for name in self.die_names:
-                if remainder.startswith(name + '('):
-                    answer[name] = []
-                    remainder = remainder.lstrip(name)
-            if remainder.startswith('('):
-                return answer
-            print(remainder)
-        return answer
+
+def make_int_tuple(group_tuple):
+    no_paren = group_tuple.value.strip()[1:-1]
+    str_values = no_paren.split(',')
+    return tuple([int(str_val) for str_val in str_values])
+
+
+def make_int(value_tuple):
+    return int(value_tuple.value)
 
 
 class Parser(object):
@@ -137,13 +113,35 @@ class Parser(object):
          ExplodingOn: ('die', 'int_tuple', 'int')}
     )
 
-    methods = StaticDict({})
+    methods = StaticDict({'int': make_int, 'int_dict': make_int_dict, 'die': make_die, 'int_tuple': make_int_tuple})
 
     @classmethod
-    def parse(cls, die_string):
-        if die_string == 'die(6)':
-            return Die(6)
-        return Die(7)
+    def parse_die(cls, die_string):
+        function_tuple = StringToParams.get_call_structure(die_string)[0]
+        return cls.get_die_from_function_tuple(function_tuple)
+
+    @classmethod
+    def get_die_from_function_tuple(cls, function_tuple):
+        die_class_name = function_tuple.func
+        die_param_strings = function_tuple.params
+        die_class = cls.get_die_class(die_class_name)
+        die_params = cls.get_params(die_param_strings, die_class)
+        return die_class(*die_params)
+
+    @classmethod
+    def get_die_class(cls, class_name):
+        for die_class in cls.classes.keys():
+            if die_class.__name__ == class_name:
+                return die_class
+
+    @classmethod
+    def get_params(cls, param_strings, die_class):
+        params = []
+        method_names = cls.classes.get(die_class)
+        for index, param_str in enumerate(param_strings):
+            method = cls.methods.get(method_names[index])
+            params.append(method(param_str))
+        return params
 
     @classmethod
     def add_die(cls, klass, params):
@@ -153,4 +151,19 @@ class Parser(object):
     def add_param(cls, param_name, creation_method):
         pass
 
-
+#
+# def make_die(input_str):
+#     return Parser.parse_die(input_str)
+#
+#
+# def make_int_dict(input_str):
+#     no_braces = input_str.strip()[1: -1]
+#     pairs = no_braces.split(',')
+#     key_vals = [pair.split(':') for pair in pairs]
+#     return {int(key): int(val) for key, val in key_vals}
+#
+#
+# def make_int_tuple(input_str):
+#     no_paren = input_str.strip()[1:-1]
+#     str_values = no_paren.split(',')
+#     return tuple([int(str_val) for str_val in str_values])
