@@ -5,8 +5,8 @@ import unittest
 
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, Exploding, ExplodingOn
 
-from dicetables.parser import (Parser, StringToParams, FunctionCall, Value, Group, Parser2,
-                               make_die, make_int, make_int_dict, make_int_tuple)
+from dicetables.parser import (StringToParams, FunctionCall, Value, Group, Parser,
+                               make_int, make_int_dict, make_int_tuple)
 
 
 class TestStringToParams(unittest.TestCase):
@@ -168,21 +168,19 @@ class TestStringToParams(unittest.TestCase):
 
 
 class TestParser(unittest.TestCase):
-
-    def setUp(self):
-        Parser.reset()
-
+    # TODO re-order, add tests for: init, (get_params, get_die_class), bad class to parse, bad added class at parse,
+    # TODO calling with ignore case, and also nested ignore case.
     def test_make_die_on_die(self):
         die = FunctionCall('Die', [Value('6')])
-        self.assertEqual(make_die(die), Die(6))
+        self.assertEqual(Parser().make_die(die), Die(6))
 
     def test_make_die_on_modweighteddie(self):
         die = FunctionCall('ModWeightedDie', [Group('{1: 2}'), Value('6')])
-        self.assertEqual(make_die(die), ModWeightedDie({1: 2}, 6))
+        self.assertEqual(Parser().make_die(die), ModWeightedDie({1: 2}, 6))
 
     def test_make_die_on_explodingon(self):
         die = FunctionCall('ExplodingOn', [FunctionCall('Die', [Value('4')]), Group('(1, 2)')])
-        self.assertEqual(make_die(die), ExplodingOn(Die(4), (1, 2)))
+        self.assertEqual(Parser().make_die(die), ExplodingOn(Die(4), (1, 2)))
 
     def test_make_int(self):
         self.assertEqual(make_int(Value('3')), 3)
@@ -199,44 +197,44 @@ class TestParser(unittest.TestCase):
         self.assertEqual(make_int_dict(Group('{-1: 1, 0: 0, 1: -1}')), {-1: 1, 0: 0, 1: -1})
 
     def test_Die(self):
-        self.assertEqual(Parser.parse_die('Die(6)'), Die(6))
+        self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
 
     def test_ModDie(self):
-        self.assertEqual(Parser.parse_die('ModDie(6, 2)'), ModDie(6, 2))
-        self.assertEqual(Parser.parse_die('ModDie(6, -2)'), ModDie(6, -2))
-        self.assertEqual(Parser.parse_die('ModDie(6, 0)'), ModDie(6, 0))
+        self.assertEqual(Parser().parse_die('ModDie(6, 2)'), ModDie(6, 2))
+        self.assertEqual(Parser().parse_die('ModDie(6, -2)'), ModDie(6, -2))
+        self.assertEqual(Parser().parse_die('ModDie(6, 0)'), ModDie(6, 0))
 
     def test_WeightedDie(self):
-        self.assertEqual(Parser.parse_die('WeightedDie({1: 2, 3: 4})'), WeightedDie({1: 2, 3: 4}))
+        self.assertEqual(Parser().parse_die('WeightedDie({1: 2, 3: 4})'), WeightedDie({1: 2, 3: 4}))
 
     def test_ModWeightedDie(self):
-        self.assertEqual(Parser.parse_die('ModWeightedDie({1: 2, 3: 4}, 3)'), ModWeightedDie({1: 2, 3: 4}, 3))
-        self.assertEqual(Parser.parse_die('ModWeightedDie({1: 2, 3: 4}, -3)'), ModWeightedDie({1: 2, 3: 4}, -3))
-        self.assertEqual(Parser.parse_die('ModWeightedDie({1: 2, 3: 4}, 0)'), ModWeightedDie({1: 2, 3: 4}, 0))
+        self.assertEqual(Parser().parse_die('ModWeightedDie({1: 2, 3: 4}, 3)'), ModWeightedDie({1: 2, 3: 4}, 3))
+        self.assertEqual(Parser().parse_die('ModWeightedDie({1: 2, 3: 4}, -3)'), ModWeightedDie({1: 2, 3: 4}, -3))
+        self.assertEqual(Parser().parse_die('ModWeightedDie({1: 2, 3: 4}, 0)'), ModWeightedDie({1: 2, 3: 4}, 0))
 
     def test_StrongDie(self):
-        self.assertEqual(Parser.parse_die('StrongDie(Die(6), 2)'), StrongDie(Die(6), 2))
-        self.assertEqual(Parser.parse_die('StrongDie(Die(6), -2)'), StrongDie(Die(6), -2))
-        self.assertEqual(Parser.parse_die('StrongDie(Die(6), 0)'), StrongDie(Die(6), 0))
+        self.assertEqual(Parser().parse_die('StrongDie(Die(6), 2)'), StrongDie(Die(6), 2))
+        self.assertEqual(Parser().parse_die('StrongDie(Die(6), -2)'), StrongDie(Die(6), -2))
+        self.assertEqual(Parser().parse_die('StrongDie(Die(6), 0)'), StrongDie(Die(6), 0))
 
     def test_Modifier(self):
-        self.assertEqual(Parser.parse_die('Modifier(6)'), Modifier(6))
-        self.assertEqual(Parser.parse_die('Modifier(-6)'), Modifier(-6))
-        self.assertEqual(Parser.parse_die('Modifier(0)'), Modifier(0))
+        self.assertEqual(Parser().parse_die('Modifier(6)'), Modifier(6))
+        self.assertEqual(Parser().parse_die('Modifier(-6)'), Modifier(-6))
+        self.assertEqual(Parser().parse_die('Modifier(0)'), Modifier(0))
 
     def test_Exploding(self):
-        self.assertEqual(Parser.parse_die('Exploding(Die(6), 3)'), Exploding(Die(6), 3))
-        self.assertEqual(Parser.parse_die('Exploding(Die(6), 0)'), Exploding(Die(6), 0))
-        self.assertEqual(Parser.parse_die('Exploding(Die(6))'), Exploding(Die(6)))
+        self.assertEqual(Parser().parse_die('Exploding(Die(6), 3)'), Exploding(Die(6), 3))
+        self.assertEqual(Parser().parse_die('Exploding(Die(6), 0)'), Exploding(Die(6), 0))
+        self.assertEqual(Parser().parse_die('Exploding(Die(6))'), Exploding(Die(6)))
 
     def test_ExplodingOn(self):
-        self.assertEqual(Parser.parse_die('ExplodingOn(Die(6), (2, 6), 3)'), ExplodingOn(Die(6), (2, 6), 3))
-        self.assertEqual(Parser.parse_die('ExplodingOn(Die(6), (2, 6), 0)'), ExplodingOn(Die(6), (2, 6), 0))
-        self.assertEqual(Parser.parse_die('ExplodingOn(Die(6), (2,))'), ExplodingOn(Die(6), (2,)))
-        self.assertEqual(Parser.parse_die('ExplodingOn(Die(6), ())'), ExplodingOn(Die(6), ()))
+        self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), (2, 6), 3)'), ExplodingOn(Die(6), (2, 6), 3))
+        self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), (2, 6), 0)'), ExplodingOn(Die(6), (2, 6), 0))
+        self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), (2,))'), ExplodingOn(Die(6), (2,)))
+        self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), ())'), ExplodingOn(Die(6), ()))
 
     def test_nested_dice(self):
-        self.assertEqual(Parser.parse_die('Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)'),
+        self.assertEqual(Parser().parse_die('Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)'),
                          Exploding(
                              StrongDie(
                                  WeightedDie({1: 2, 3: 4}),
@@ -246,78 +244,132 @@ class TestParser(unittest.TestCase):
                          )
                          )
 
+    def test_get_methods(self):
+        the_parser = Parser()
+        answer = {'int': make_int, 'int_dict': make_int_dict,
+                  'die': the_parser.make_die, 'int_tuple': make_int_tuple}
 
-class TestParser2(unittest.TestCase):
-    def test_make_die_on_die(self):
-        die = FunctionCall('Die', [Value('6')])
-        self.assertEqual(Parser2().make_die(die), Die(6))
+        self.assertEqual(the_parser.get_methods(), answer)
+        self.assertIsNot(the_parser.get_methods(), answer)
+        self.assertNotEqual(Parser().get_methods(), answer)
 
-    def test_make_die_on_modweighteddie(self):
-        die = FunctionCall('ModWeightedDie', [Group('{1: 2}'), Value('6')])
-        self.assertEqual(Parser2().make_die(die), ModWeightedDie({1: 2}, 6))
+    def test_get_methods_is_specific_to_each_instance_due_to_value_at_die(self):
+        the_parser = Parser()
+        answer = {'int': make_int, 'int_dict': make_int_dict,
+                  'die': the_parser.make_die, 'int_tuple': make_int_tuple}
 
-    def test_make_die_on_explodingon(self):
-        die = FunctionCall('ExplodingOn', [FunctionCall('Die', [Value('4')]), Group('(1, 2)')])
-        self.assertEqual(Parser2().make_die(die), ExplodingOn(Die(4), (1, 2)))
+        self.assertNotEqual(Parser().get_methods(), answer)
 
-    def test_make_int(self):
-        self.assertEqual(make_int(Value('3')), 3)
-        self.assertEqual(make_int(Value('-3')), -3)
-        self.assertEqual(make_int(Value('0')), 0)
+    def test_get_classes(self):
+        answer = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
+                  WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
+                  ExplodingOn: ('die', 'int_tuple', 'int')}
+        self.assertEqual(answer, Parser().get_classes())
+        self.assertIsNot(answer, Parser().get_classes())
 
-    def test_make_int_tuple(self):
-        self.assertEqual(make_int_tuple(Group('()')), ())
-        self.assertEqual(make_int_tuple(Group('(-2,)')), (-2,))
-        self.assertEqual(make_int_tuple(Group('(2, 0, -2)')), (2, 0, -2))
+    def test_add_class(self):
+        class Thing(object):
+            pass
 
-    def test_make_int_dict(self):
-        self.assertEqual(make_int_dict(Group('{}')), {})
-        self.assertEqual(make_int_dict(Group('{-1: 1, 0: 0, 1: -1}')), {-1: 1, 0: 0, 1: -1})
+        parser = Parser()
+        parser.add_class(Thing, ('bogus', 'lame'))
 
-    def test_Die(self):
-        self.assertEqual(Parser2().parse_die('Die(6)'), Die(6))
+        answer = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
+                  WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
+                  ExplodingOn: ('die', 'int_tuple', 'int'), Thing: ('bogus', 'lame')}
 
-    def test_ModDie(self):
-        self.assertEqual(Parser2().parse_die('ModDie(6, 2)'), ModDie(6, 2))
-        self.assertEqual(Parser2().parse_die('ModDie(6, -2)'), ModDie(6, -2))
-        self.assertEqual(Parser2().parse_die('ModDie(6, 0)'), ModDie(6, 0))
+        self.assertEqual(answer, parser.get_classes())
 
-    def test_WeightedDie(self):
-        self.assertEqual(Parser2().parse_die('WeightedDie({1: 2, 3: 4})'), WeightedDie({1: 2, 3: 4}))
+    def test_add_method(self):
+        a_func = lambda x: x
+        parser = Parser()
+        parser.add_method('make_funkiness', a_func)
 
-    def test_ModWeightedDie(self):
-        self.assertEqual(Parser2().parse_die('ModWeightedDie({1: 2, 3: 4}, 3)'), ModWeightedDie({1: 2, 3: 4}, 3))
-        self.assertEqual(Parser2().parse_die('ModWeightedDie({1: 2, 3: 4}, -3)'), ModWeightedDie({1: 2, 3: 4}, -3))
-        self.assertEqual(Parser2().parse_die('ModWeightedDie({1: 2, 3: 4}, 0)'), ModWeightedDie({1: 2, 3: 4}, 0))
+        answer = {'int': make_int, 'int_dict': make_int_dict, 'make_funkiness': a_func,
+                  'die': parser.make_die, 'int_tuple': make_int_tuple}
+        self.assertEqual(answer, parser.get_methods())
 
-    def test_StrongDie(self):
-        self.assertEqual(Parser2().parse_die('StrongDie(Die(6), 2)'), StrongDie(Die(6), 2))
-        self.assertEqual(Parser2().parse_die('StrongDie(Die(6), -2)'), StrongDie(Die(6), -2))
-        self.assertEqual(Parser2().parse_die('StrongDie(Die(6), 0)'), StrongDie(Die(6), 0))
+    def test_add_class_key_override_raises_error(self):
+        self.assertRaises(KeyError, Parser().add_class, Die, ('int',))
 
-    def test_Modifier(self):
-        self.assertEqual(Parser2().parse_die('Modifier(6)'), Modifier(6))
-        self.assertEqual(Parser2().parse_die('Modifier(-6)'), Modifier(-6))
-        self.assertEqual(Parser2().parse_die('Modifier(0)'), Modifier(0))
+    def test_add_method_key_override_raises_error(self):
+        self.assertRaises(KeyError, Parser().add_method, 'int', make_int)
 
-    def test_Exploding(self):
-        self.assertEqual(Parser2().parse_die('Exploding(Die(6), 3)'), Exploding(Die(6), 3))
-        self.assertEqual(Parser2().parse_die('Exploding(Die(6), 0)'), Exploding(Die(6), 0))
-        self.assertEqual(Parser2().parse_die('Exploding(Die(6))'), Exploding(Die(6)))
+    def test_reset_with_methods(self):
+        a_func = lambda x: x
+        parser = Parser()
+        parser.add_method('make_funkiness', a_func)
 
-    def test_ExplodingOn(self):
-        self.assertEqual(Parser2().parse_die('ExplodingOn(Die(6), (2, 6), 3)'), ExplodingOn(Die(6), (2, 6), 3))
-        self.assertEqual(Parser2().parse_die('ExplodingOn(Die(6), (2, 6), 0)'), ExplodingOn(Die(6), (2, 6), 0))
-        self.assertEqual(Parser2().parse_die('ExplodingOn(Die(6), (2,))'), ExplodingOn(Die(6), (2,)))
-        self.assertEqual(Parser2().parse_die('ExplodingOn(Die(6), ())'), ExplodingOn(Die(6), ()))
+        answer = {'int': make_int, 'int_dict': make_int_dict,
+                  'die': parser.make_die, 'int_tuple': make_int_tuple}
+        parser.reset()
+        self.assertEqual(answer, parser.get_methods())
 
-    def test_nested_dice(self):
-        self.assertEqual(Parser2().parse_die('Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)'),
-                         Exploding(
-                             StrongDie(
-                                 WeightedDie({1: 2, 3: 4}),
-                                 3
-                             ),
-                             4
-                         )
-                         )
+    def test_reset_with_class(self):
+        class Thing(object):
+            pass
+
+        parser = Parser()
+        parser.add_class(Thing, ('bogus', 'lame'))
+
+        answer = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
+                  WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
+                  ExplodingOn: ('die', 'int_tuple', 'int')}
+        parser.reset()
+
+        self.assertEqual(answer, parser.get_classes())
+
+    def test_an_instance_of_parser_with_a_new_die(self):
+        class StupidDie(Die):
+            def __init__(self, name, size):
+                self.name = name
+                super(StupidDie, self).__init__(size)
+
+            def __repr__(self):
+                return 'StupidDie({!r}, {})'.format(self.name, self.get_size())
+
+        new_parser = Parser()
+        new_parser.add_method('name', lambda val_tuple: val_tuple.value[1: -1])
+        new_parser.add_class(StupidDie, ('name', 'int'))
+
+        self.assertEqual(new_parser.parse_die('StupidDie("hello", 3)'), StupidDie("hello", 3))
+        self.assertEqual(new_parser.parse_die('Die(3)'), Die(3))
+
+    def test_new_parser_class_with_new_die(self):
+        class StupidDie(Die):
+            def __init__(self, name, size):
+                self.name = name
+                super(StupidDie, self).__init__(size)
+
+            def __repr__(self):
+                return 'StupidDie({!r}, {})'.format(self.name, self.get_size())
+
+        def make_name(value_tuple):
+            return value_tuple.value[1: -1]
+
+        class NewParser(Parser):
+            def reset(self):
+                super(NewParser, self).reset()
+                self.add_class(StupidDie, ('name', 'int'))
+                self.add_method('name', make_name)
+
+        self.assertEqual(NewParser().parse_die('StupidDie("hello", 3)'), StupidDie("hello", 3))
+        self.assertEqual(NewParser().parse_die('Die(3)'), Die(3))
+
+    def test_new_parser_class_with_new_die_that_calls_die(self):
+        class DoubleDie(Die):
+            def __init__(self, die, size):
+                self.die = die
+                super(DoubleDie, self).__init__(size)
+
+            def __repr__(self):
+                return 'DoubleDie({!r}, {})'.format(self.die, self.get_size())
+
+        class NewParser(Parser):
+            def reset(self):
+                super(NewParser, self).reset()
+                self.add_class(DoubleDie, ('die', 'int'))
+
+        self.assertEqual(NewParser().parse_die('DoubleDie(DoubleDie(Die(2), 4), 3)'),
+                         DoubleDie(DoubleDie(Die(2), 4), 3))
+        self.assertEqual(NewParser().parse_die('Die(3)'), Die(3))

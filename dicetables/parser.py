@@ -2,7 +2,6 @@ import re
 from collections import namedtuple
 
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
-from dicetables.factory.factorytools import StaticDict
 
 
 FunctionCall = namedtuple('FunctionCall', ['func', 'params'])
@@ -85,30 +84,7 @@ class StringToParams(object):
         return base_param.strip(), base_remainder.strip()
 
 
-def make_die(function_tuple):
-    return Parser.get_die_from_function_tuple(function_tuple)
-
-
-def make_int_dict(group_tuple):
-    no_braces = group_tuple.value.strip()[1: -1]
-    if no_braces.strip() == '':
-        return {}
-    pairs = no_braces.split(',')
-    key_vals = [pair.split(':') for pair in pairs]
-    return {int(key): int(val) for key, val in key_vals}
-
-
-def make_int_tuple(group_tuple):
-    no_paren = group_tuple.value.strip()[1:-1]
-    str_values = no_paren.split(',')
-    return tuple([int(str_val) for str_val in str_values if str_val.strip()])
-
-
-def make_int(value_tuple):
-    return int(value_tuple.value)
-
-
-class Parser2(object):
+class Parser(object):
 
     def __init__(self, ignore_case=False):
         self.__base_classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
@@ -122,6 +98,12 @@ class Parser2(object):
         self._classes = {}
         self._methods = {}
         self.reset()
+
+    def get_methods(self):
+        return self._methods.copy()
+
+    def get_classes(self):
+        return self._classes.copy()
 
     def parse_die(self, die_string):
         function_tuple = StringToParams.get_call_structure(die_string)[0]
@@ -147,9 +129,11 @@ class Parser2(object):
 
     def get_params(self, param_strings, die_class):
         params = []
-        method_names = self._classes.get(die_class)
+        method_names = self._classes[die_class]
+        if any(method_name not in self._methods for method_name in method_names):
+            raise ValueError('Param type not in parser dictionary.')
         for index, param_str in enumerate(param_strings):
-            method = self._methods.get(method_names[index])
+            method = self._methods[method_names[index]]
             params.append(method(param_str))
         return params
 
@@ -158,80 +142,34 @@ class Parser2(object):
 
         self._classes = self.__base_classes.copy()
 
-    def add_die(self, klass, param_identifiers):
+    def add_class(self, klass, param_identifiers):
         self._raise_error_for_altering_existing_key(klass, 'die')
         self._classes[klass] = param_identifiers
 
-    def add_param(self, param_name, creation_method):
+    def add_method(self, param_name, creation_method):
         self._raise_error_for_altering_existing_key(param_name, 'param_type')
         self._methods[param_name] = creation_method
 
     def _raise_error_for_altering_existing_key(self, new_key, key_type_str):
-        lookups = {'die': self._classes, 'param_type': self._methods }
+        lookups = {'die': self._classes, 'param_type': self._methods}
         if new_key in lookups[key_type_str].keys():
             raise KeyError('Tried to overwrite a {} already assigned'.format(key_type_str))
 
 
-class Parser(object):
-    classes = StaticDict(
-        {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
-         WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
-         ExplodingOn: ('die', 'int_tuple', 'int')}
-    )
+def make_int_dict(group_tuple):
+    no_braces = group_tuple.value.strip()[1: -1]
+    if no_braces.strip() == '':
+        return {}
+    pairs = no_braces.split(',')
+    key_vals = [pair.split(':') for pair in pairs]
+    return {int(key): int(val) for key, val in key_vals}
 
-    methods = StaticDict({'int': make_int, 'int_dict': make_int_dict, 'die': make_die, 'int_tuple': make_int_tuple})
 
-    @classmethod
-    def parse_die(cls, die_string):
-        function_tuple = StringToParams.get_call_structure(die_string)[0]
-        return cls.get_die_from_function_tuple(function_tuple)
+def make_int_tuple(group_tuple):
+    no_paren = group_tuple.value.strip()[1:-1]
+    str_values = no_paren.split(',')
+    return tuple([int(str_val) for str_val in str_values if str_val.strip()])
 
-    @classmethod
-    def get_die_from_function_tuple(cls, function_tuple):
-        die_class_name = function_tuple.func
-        die_param_strings = function_tuple.params
-        die_class = cls.get_die_class(die_class_name)
-        die_params = cls.get_params(die_param_strings, die_class)
-        return die_class(*die_params)
 
-    @classmethod
-    def get_die_class(cls, class_name):
-        for die_class in cls.classes.keys():
-            if die_class.__name__ == class_name:
-                return die_class
-
-    @classmethod
-    def get_params(cls, param_strings, die_class):
-        params = []
-        method_names = cls.classes.get(die_class)
-        for index, param_str in enumerate(param_strings):
-            method = cls.methods.get(method_names[index])
-            params.append(method(param_str))
-        return params
-
-    @classmethod
-    def reset(cls):
-        cls.methods = StaticDict({'int': make_int, 'int_dict': make_int_dict, 'die': make_die,
-                                  'int_tuple': make_int_tuple})
-
-        cls.classes = StaticDict(
-            {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
-             WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
-             ExplodingOn: ('die', 'int_tuple', 'int')}
-        )
-
-    @classmethod
-    def add_die(cls, klass, param_identifiers):
-        cls._raise_error_for_altering_existing_key(klass, 'die')
-        cls.classes = cls.classes.set(klass, param_identifiers)
-
-    @classmethod
-    def add_param(cls, param_name, creation_method):
-        cls._raise_error_for_altering_existing_key(param_name, 'param_type')
-        cls.methods = cls.methods.set(param_name, creation_method)
-
-    @classmethod
-    def _raise_error_for_altering_existing_key(cls, new_key, key_type_str):
-        lookups = {'die': cls.classes, 'param_type': cls.methods }
-        if new_key in lookups[key_type_str].keys():
-            raise KeyError('Tried to overwrite a {} already assigned'.format(key_type_str))
+def make_int(value_tuple):
+    return int(value_tuple.value)
