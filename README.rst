@@ -1,10 +1,9 @@
 #################
 dicetables v2.3.0
 #################
-=========
+---------
 CHANGELOG
-=========
-
+---------
 since v2.1.0
 
 - EventsCalculations added functions log10_points and log10_axes
@@ -21,7 +20,7 @@ This module uses DiceTable and AdditiveEvents to combine
 dice and other events that can be added together. It is used to
 figure out the probability of events occurring.  For instance, if you
 roll 100 six-sided dice, the chance of rolling any number between 100
-and 300 is 0.15 percent.
+and 300 is 0.15 percent while the chance of rolling only 350 is 2.3 percent.
 
 contents:
 
