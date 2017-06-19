@@ -5,6 +5,8 @@ dicetables v2.3.0
 CHANGELOG
 =========
 
+>>> fix the parser
+
 - TODO ADD PARSER
 - EventsCalculations added functions log10_points and log10_axes
 - New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
