@@ -5,12 +5,12 @@ dicetables v2.3.0
 CHANGELOG
 =========
 
->>> fix the parser
+since v2.1.0
 
-- TODO ADD PARSER
 - EventsCalculations added functions log10_points and log10_axes
 - New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
 - see `Die Classes`_ and `EventsInformation And EventsCalculations`_ for details
+- New object: `Parser`_ - It converts strings to Die objects.
 
 =====================================================
 a module for statistics of die rolls and other events
@@ -31,6 +31,7 @@ contents:
 - `DiceTable And DetailedDiceTable`_
 - `EventsInformation And EventsCalculations`_
 - `Inheritance`_
+- `Parser`_
 - `HOW TO GET ERRORS AND BUGS`_
 
 .. _Top:
@@ -314,7 +315,8 @@ Exploding
     and adds that 6. If it rolls a 6 again, this continues, adding 12 to the result. Since this is an infinite
     but increasingly unlikely process, the "explosions" parameter sets the number of re-rolls allowed.
 
-    The number of explosions defaults to 2.
+    The number of explosions defaults to 2. **WARNING:** setting the number of explosions too high can make
+    instantiation VERY slow.
 
     Here are the rolls for an exploding D4 that can explode up to 3 times. It rolls 1-3 sixty-four
     times more often than 13-16.
@@ -348,7 +350,8 @@ ExplodingOn
     dt.ExplodingOn(dt.Die(6), (1, 6), explosions=2) continues rolling and adding the die value when either 1 or 6
     is rolled.
 
-    The number of explosions defaults to 2.
+    The number of explosions defaults to 2. **WARNING:** setting the number of explosions too high can make
+    instantiation VERY slow.
 
     Here are the rolls for an exploding D6 that can explode the default times and explodes on 5 and 6.
 
@@ -697,6 +700,109 @@ False
 When creating new methods, you can generate new events dictionaries by using
 dicetables.additiveevents.EventsDictCreator.  the factory can create new instances with
 EventsFactory.from_params.  For examples see the last few test in tests.factory.test_eventsfactory
+
+Top_
+
+------
+Parser
+------
+The Parser object converts strings into dice objects.
+
+>>> new_die = dt.Parser().parse_die('Die(6)')
+>>> new_die == dt.Die(6)
+True
+
+It can ignore case or not. It defaults to ignore_case=False.
+
+>>> dt.Parser().parse_die('die(6)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: Die class: <die> not recognized by parser.
+
+>>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), 4)') == dt.StrongDie(dt.Die(6), 4)
+True
+
+The Parser can parse all dice in the library: Die, ModDie, WeightedDie, ModWeightedDie, Modifier, StrongDie,
+Exploding and ExplodingOn. It is possible to add other dice to an instance of Parser or make a new class that
+can parse other dice.
+
+**HOW TO CUSTOMIZE PARSER**
+
+Parser can only parse very specific types of parameters.
+
+>>> from dicetables.parser import make_int, make_int_dict, make_int_tuple
+>>> parser = dt.Parser()
+>>> parser.get_param_types() == {'int': make_int, 'int_dict': make_int_dict,
+...                              'die': parser.make_die, 'int_tuple': make_int_tuple}
+True
+
+If, for example, you need Parser to know how to parse a string and a list of strings, you first need to create
+functions that can parse the appropriate Nodes. Here are the node types.
+
+>>> from dicetables.parser import StringToNodes, FunctionNode, GroupNode, ValueNode
+>>> StringToNodes.get_call_structure('list("abc")')
+[FunctionNode(func='list', params=[ValueNode(value='"abc"')])]
+>>> StringToNodes.get_call_structure('divmod(3, 4)')
+[FunctionNode(func='divmod', params=[ValueNode(value='3'), ValueNode(value='4')])]
+>>> str_value =  ValueNode('"abd"')
+>>> str_value.value
+'"abd"'
+>>> str_list = GroupNode("['a', 'b', 'c']")
+>>> str_list.value
+"['a', 'b', 'c']"
+
+and here are conversion methods.
+
+>>> def make_str(value_node):
+...     return value_node.value[1: -1]
+>>> make_str(str_value)
+'abd'
+
+>>> def make_str_list(group_node):
+...     just_strs = group_node.value[1: -1]
+...     out = []
+...     for raw_val in just_strs.split(','):
+...         out.append(raw_val.strip()[1: -1])
+...     return out
+>>> make_str_list(str_list)
+['a', 'b', 'c']
+
+Now you tell the parser that a key of your choice corresponds to the method.
+
+>>> parser = dt.Parser()
+>>> parser.add_param_type('str', make_str)
+>>> parser.add_param_type('str_list', make_str_list)
+
+To add a new dice class to the parser, give the parser the class and a tuple of the param_types keys for each parameter.
+
+>>> class NamedDie(dt.Die):
+...     def __init__(self, name, buddys_names, size):
+...         self.name = name
+...         self.best_buds = buddys_names.copy()
+...         super(NamedDie, self).__init__(size)
+...
+...     def __eq__(self, other):
+...         return (super(NamedDie, self).__eq__(other) and
+...                 self.name == other.name and self.best_buds == other.best_buds)
+
+>>> parser.add_class(NamedDie, ('str', 'str_list', 'int'))
+>>> parser.parse_die('NamedDie("Tom", ["Dick", "Harry"], 4)') == NamedDie('Tom', ['Dick', 'Harry'], 4)
+True
+
+You can make a new parser class instead of a specific instance of Parser.
+
+>>> class MyParser(dt.Parser):
+...     def __init__(self, ignore_case=False):
+...         super(MyParser, self).__init__(ignore_case)
+...         self.add_param_type('str', make_str)
+...         self.add_param_type('str_list', make_str_list)
+...         self.add_class(NamedDie, ('str', 'str_list', 'int'))
+>>> MyParser().parse_die('NamedDie("Tom", ["Dick", "Harry"], 4)') == NamedDie('Tom', ['Dick', 'Harry'], 4)
+True
+>>> t_d_and_h_4_eva = MyParser(ignore_case=True).parse_die('nameddie("Tom", ["Dick", "Harry"], 4)')
+>>> t_d_and_h_4_eva == NamedDie('Tom', ['Dick', 'Harry'], 4)
+True
+
 Top_
 
 --------------------------

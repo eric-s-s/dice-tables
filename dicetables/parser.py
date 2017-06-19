@@ -4,9 +4,9 @@ from collections import namedtuple
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
 
 
-FunctionCall = namedtuple('FunctionCall', ['func', 'params'])
-Group = namedtuple('Group', ['value'])
-Value = namedtuple('Value', ['value'])
+FunctionNode = namedtuple('FunctionNode', ['func', 'params'])
+GroupNode = namedtuple('GroupNode', ['value'])
+ValueNode = namedtuple('ValueNode', ['value'])
 
 
 class ParseError(ValueError):
@@ -32,12 +32,12 @@ class Parser(object):
         return self._classes.copy()
 
     def parse_die(self, die_string):
-        function_tuple = StringToParams.get_call_structure(die_string)[0]
+        function_tuple = StringToNodes.get_call_structure(die_string)[0]
         return self.make_die(function_tuple)
 
-    def make_die(self, function_tuple):
-        die_class_name = function_tuple.func
-        param_values = function_tuple.params
+    def make_die(self, function_node):
+        die_class_name = function_node.func
+        param_values = function_node.params
         die_class = self._get_die_class(die_class_name)
         die_params = self._get_params(param_values, die_class)
         return die_class(*die_params)
@@ -48,7 +48,7 @@ class Parser(object):
             test_against = self._update_search_string(die_class.__name__)
             if class_name == test_against:
                 return die_class
-        raise ParseError('Die class: {} not recognized by parser.'.format(class_name))
+        raise ParseError('Die class: <{}> not recognized by parser.'.format(class_name))
 
     def _update_search_string(self, search_str):
         if self.ignore_case:
@@ -67,7 +67,7 @@ class Parser(object):
 
     def _raise_error_for_missing_methods(self, param_types, die_class):
         if any(type_key not in self._param_types for type_key in param_types):
-            raise ParseError('Failed to create die: {} with param types: {}. One or more param types not recognized.'
+            raise ParseError('Failed to create die: <{}> with param types: {}. One or more param types not recognized.'
                              .format(die_class.__name__, param_types))
 
     def add_class(self, klass, param_identifiers):
@@ -77,8 +77,8 @@ class Parser(object):
         self._param_types[param_type] = creation_method
 
 
-def make_int_dict(group_tuple):
-    no_braces = group_tuple.value.strip()[1: -1]
+def make_int_dict(group_node):
+    no_braces = group_node.value.strip()[1: -1]
     if no_braces.strip() == '':
         return {}
     pairs = no_braces.split(',')
@@ -86,32 +86,32 @@ def make_int_dict(group_tuple):
     return {int(key): int(val) for key, val in key_vals}
 
 
-def make_int_tuple(group_tuple):
-    no_paren = group_tuple.value.strip()[1:-1]
+def make_int_tuple(group_node):
+    no_paren = group_node.value.strip()[1:-1]
     str_values = no_paren.split(',')
     return tuple([int(str_val) for str_val in str_values if str_val.strip()])
 
 
-def make_int(value_tuple):
-    return int(value_tuple.value)
+def make_int(value_node):
+    return int(value_node.value)
 
 
-class StringToParams(object):
+class StringToNodes(object):
 
     @staticmethod
     def get_call_structure(input_str):
         no_whitespace = input_str.strip()
         out_put = []
         while no_whitespace:
-            if StringToParams.starts_with_function_call(no_whitespace):
-                func_name, params, remainder = StringToParams.get_function_call(no_whitespace)
-                param = FunctionCall(func=func_name, params=StringToParams.get_call_structure(params))
-            elif StringToParams.starts_with_group(no_whitespace):
-                gp_name, remainder = StringToParams.get_group(no_whitespace)
-                param = Group(value=gp_name)
+            if StringToNodes.starts_with_function_call(no_whitespace):
+                func_name, params, remainder = StringToNodes.get_function_call(no_whitespace)
+                param = FunctionNode(func=func_name, params=StringToNodes.get_call_structure(params))
+            elif StringToNodes.starts_with_group(no_whitespace):
+                gp_name, remainder = StringToNodes.get_group(no_whitespace)
+                param = GroupNode(value=gp_name)
             else:
-                val_name, remainder = StringToParams.get_param(no_whitespace)
-                param = Value(value=val_name)
+                val_name, remainder = StringToNodes.get_param(no_whitespace)
+                param = ValueNode(value=val_name)
             out_put.append(param)
             no_whitespace = remainder
         return out_put
@@ -133,14 +133,14 @@ class StringToParams(object):
         no_whitespace = input_str.strip()
         func_name, groups = no_whitespace.split('(', 1)
         groups = '(' + groups
-        func_params, remainder = StringToParams.get_group(groups)
+        func_params, remainder = StringToNodes.get_group(groups)
         without_parens = func_params[1:-1]
         return func_name, without_parens, remainder
 
     @staticmethod
     def get_group(input_str):
         no_whitespace = input_str.strip()
-        start_of_remainder = StringToParams.find_end_of_first_group(no_whitespace) + 1
+        start_of_remainder = StringToNodes.find_end_of_first_group(no_whitespace) + 1
         first_group = no_whitespace[:start_of_remainder]
         remainder = no_whitespace[start_of_remainder:].lstrip().lstrip(',').lstrip(' ')
         return first_group, remainder
