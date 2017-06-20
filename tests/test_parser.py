@@ -200,6 +200,7 @@ class TestParser(unittest.TestCase):
 
     def test_Die(self):
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
+        self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
 
     def test_ModDie(self):
         self.assertEqual(Parser().parse_die('ModDie(6, 2)'), ModDie(6, 2))
@@ -239,45 +240,30 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser().parse_die('Die(die_size=6)'), Die(6))
 
     def test_ModDie_with_kwargs(self):
-        self.assertEqual(Parser().parse_die('ModDie(6, modifier=2)'), ModDie(6, 2))
         self.assertEqual(Parser().parse_die('ModDie(die_size=6, modifier=-2)'), ModDie(6, -2))
-        self.assertEqual(Parser().parse_die('ModDie(die_size=6, modifier=0)'), ModDie(6, 0))
 
     def test_WeightedDie_with_kwargs(self):
         self.assertEqual(Parser().parse_die('WeightedDie(dictionary_input={1: 2, 3: 4})'), WeightedDie({1: 2, 3: 4}))
 
     def test_ModWeightedDie_with_kwargs(self):
-        self.assertEqual(Parser().parse_die('ModWeightedDie({1: 2, 3: 4}, modifier=3)'),
-                         ModWeightedDie({1: 2, 3: 4}, 3))
         self.assertEqual(Parser().parse_die('ModWeightedDie(dictionary_input={1: 2, 3: 4}, modifier=-3)'),
                          ModWeightedDie({1: 2, 3: 4}, -3))
-        self.assertEqual(Parser().parse_die('ModWeightedDie(dictionary_input={1: 2, 3: 4}, modifier=0)'),
-                         ModWeightedDie({1: 2, 3: 4}, 0))
 
     def test_StrongDie_with_kwargs(self):
-        self.assertEqual(Parser().parse_die('StrongDie(Die(6), multiplier=2)'), StrongDie(Die(6), 2))
         self.assertEqual(Parser().parse_die('StrongDie(input_die=Die(6), multiplier=-2)'), StrongDie(Die(6), -2))
-        self.assertEqual(Parser().parse_die('StrongDie(input_die=Die(6), multiplier=0)'), StrongDie(Die(6), 0))
 
     def test_Modifier_with_kwargs(self):
-        self.assertEqual(Parser().parse_die('Modifier(modifier=6)'), Modifier(6))
         self.assertEqual(Parser().parse_die('Modifier(modifier=-6)'), Modifier(-6))
-        self.assertEqual(Parser().parse_die('Modifier(modifier=0)'), Modifier(0))
 
     def test_Exploding_with_kwargs(self):
-        self.assertEqual(Parser().parse_die('Exploding(Die(6), explosions=3)'), Exploding(Die(6), 3))
         self.assertEqual(Parser().parse_die('Exploding(input_die=Die(6), explosions=0)'), Exploding(Die(6), 0))
         self.assertEqual(Parser().parse_die('Exploding(input_die=Die(6))'), Exploding(Die(6)))
 
     def test_ExplodingOn_with_kwargs(self):
-        self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), (2, 6), explosions=3)'),
-                         ExplodingOn(Die(6), (2, 6), 3))
         self.assertEqual(Parser().parse_die('ExplodingOn(input_die=Die(6), explodes_on=(2, 6), explosions=0)'),
                          ExplodingOn(Die(6), (2, 6), 0))
         self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), explodes_on=(2,))'),
                          ExplodingOn(Die(6), (2,)))
-        self.assertEqual(Parser().parse_die('ExplodingOn(input_die=Die(6), explodes_on=())'),
-                         ExplodingOn(Die(6), ()))
 
     def test_nested_dice(self):
         self.assertEqual(Parser().parse_die('Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)'),

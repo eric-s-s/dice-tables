@@ -99,15 +99,17 @@ class Parser(object):
 
     def _get_kwarg_value(self, die_class, kwarg_node):
         search_kwarg_name = self._update_search_string(kwarg_node.arg)
+        value_node = kwarg_node.value
 
+        param_types = self._classes[die_class]
         true_kwarg_tuple = self._kwargs[die_class]
         search_kwarg_tuple = self._update_search_tuple(true_kwarg_tuple)
+
         index = search_kwarg_tuple.index(search_kwarg_name)
-        param_types = self._classes[die_class]
 
         param_key = param_types[index]
-        value_node = kwarg_node.value
         value = self._param_types[param_key](value_node)
+
         true_kwarg_name = true_kwarg_tuple[index]
         return true_kwarg_name, value
 
