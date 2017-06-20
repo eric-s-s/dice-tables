@@ -47,7 +47,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(make_int(ast.Num(n=0)), 0)
 
     def test_make_int_with_unary_operation_node_python_3_vs_2(self):
-        unary_operation = ast.parse('- 2').body[0].value
+        unary_operation = ast.parse('-2').body[0].value
         if sys.version_info[0] > 2:
             self.assertEqual(ast.dump(unary_operation), 'UnaryOp(op=USub(), operand=Num(n=2))')
             self.assertIsInstance(unary_operation, ast.UnaryOp)
@@ -58,53 +58,21 @@ class TestParser(unittest.TestCase):
         self.assertEqual(make_int(unary_operation), -2)
 
     def test_make_int_tuple(self):
-        self.assertEqual(make_int_tuple(ast.Tuple(elts=[])), ())
-        self.assertEqual(make_int_tuple(ast.Tuple(elts=[ast.Num(n=-2)])), (-2,))
-        self.assertEqual(make_int_tuple(ast.Tuple(elts=[ast.Num(n=2), ast.Num(n=0), ast.Num(n=-2)])), (2, 0, -2))
+        empty_node = ast.parse('()').body[0].value
+        self.assertEqual(make_int_tuple(empty_node), ())
 
-    def test_make_int_tuple_with_unary_operation_node_python_3_vs_2(self):
         tuple_node = ast.parse('(-2,)').body[0].value
-        if sys.version_info[0] > 2:
-            self.assertIsInstance(tuple_node.elts[0], ast.UnaryOp)
-            self.assertEqual(ast.dump(tuple_node), 'Tuple(elts=[UnaryOp(op=USub(), operand=Num(n=2))], ctx=Load())')
-        else:
-            self.assertIsInstance(tuple_node.elts[0], ast.Num)
-            self.assertEqual(ast.dump(tuple_node), 'Tuple(elts=[Num(n=-2)], ctx=Load())')
-
         self.assertEqual(make_int_tuple(tuple_node), (-2,))
 
+        tuple_node = ast.parse('(-2, 2, 0)').body[0].value
+        self.assertEqual(make_int_tuple(tuple_node), (-2, 2, 0))
+
     def test_make_int_dict(self):
-        self.assertEqual(
-            make_int_dict(
-                ast.Dict(keys=[ast.Num(n=-1), ast.Num(n=0), ast.Num(n=1)],
-                         values=[ast.Num(n=1), ast.Num(n=0), ast.Num(n=-1)])
-            ),
-            {-1: 1, 0: 0, 1: -1})
-        self.assertEqual(
-            make_int_dict(
-                ast.Dict(keys=[],
-                         values=[])
-            ),
-            {})
+        dict_node = ast.parse('{-1: 1, 0: 0, 1: -1}').body[0].value
+        self.assertEqual(make_int_dict(dict_node), {-1: 1, 0: 0, 1: -1})
 
-    def test_make_int_dict_with_unary_operation_nodes_python_3_vs_2(self):
-        dict_node = ast.parse('{-2: -2}').body[0].value
-        if sys.version_info[0] > 2:
-            self.assertIsInstance(dict_node.keys[0], ast.UnaryOp)
-            self.assertIsInstance(dict_node.values[0], ast.UnaryOp)
-            self.assertEqual(
-                ast.dump(dict_node),
-                'Dict(keys=[UnaryOp(op=USub(), operand=Num(n=2))], values=[UnaryOp(op=USub(), operand=Num(n=2))])'
-            )
-        else:
-            self.assertIsInstance(dict_node.keys[0], ast.Num)
-            self.assertIsInstance(dict_node.values[0], ast.Num)
-            self.assertEqual(
-                ast.dump(dict_node),
-                'Dict(keys=[Num(n=-2)], values=[Num(n=-2)])'
-            )
-
-        self.assertEqual(make_int_dict(dict_node), {-2: -2})
+        empty_dict_node = ast.parse('{}').body[0].value
+        self.assertEqual(make_int_dict(empty_dict_node), {})
 
     def test_make_die_raises_error_on_function_call_not_in_parser(self):
         die = ast.parse('NotThere()').body[0].value
