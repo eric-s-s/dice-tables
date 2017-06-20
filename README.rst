@@ -702,16 +702,28 @@ The Parser object converts strings into dice objects.
 >>> new_die = dt.Parser().parse_die('Die(6)')
 >>> new_die == dt.Die(6)
 True
+>>> other_die = dt.Parser().parse_die('ModDie(6, modifier=1)')
+>>> other_die == dt.ModDie(6, 1)
+True
 
-It can ignore case or not. It defaults to ignore_case=False.
+It can ignore case or not.  This applies to dice names and kwarg names. It defaults to ignore_case=False.
+You can also disable allowing kwargs. It defaults to disable_kwargs=False.
 
 >>> dt.Parser().parse_die('die(6)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: Die class: <die> not recognized by parser.
 
->>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), 4)') == dt.StrongDie(dt.Die(6), 4)
+>>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), MULTIPLIER=4)') == dt.StrongDie(dt.Die(6), 4)
 True
+
+>>> parser = dt.Parser(disable_kwargs=True)
+>>> parser.parse_die('Die(6)') == dt.Die(6)
+True
+>>> parser.parse_die('Die(die_size=6)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: Tried to use kwargs on a Parser with disable_kwargs=True
 
 The Parser can parse all dice in the library: Die, ModDie, WeightedDie, ModWeightedDie, Modifier, StrongDie,
 Exploding and ExplodingOn. It is possible to add other dice to an instance of Parser or make a new class that
@@ -786,6 +798,7 @@ Now you tell the parser that a key of your choice corresponds to the method.
 >>> parser.add_param_type('str_int_dict', make_str_int_dict)
 
 To add a new dice class to the parser, give the parser the class and a tuple of the param_types keys for each parameter.
+If you want the parser to be able to use kwargs on your new die, you must also pass that in.
 
 >>> class NamedDie(dt.Die):
 ...     def __init__(self, name, buddys_names, stats, size):
@@ -800,12 +813,14 @@ To add a new dice class to the parser, give the parser the class and a tuple of 
 ...                 self.best_buds == other.best_buds and
 ...                 self.stats == other.stats)
 
->>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
->>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
+>>> kwargs = ('name', 'buddys_names', 'stats', 'size')
+>>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'), kwargs=kwargs)
+>>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], stats={"friends": 2, "coolness_factor": 10}, size=4)'
 >>> parser.parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 True
 
-You can make a new parser class instead of a specific instance of Parser.
+You can make a new parser class instead of a specific instance of Parser. Notice that I forgot to tell it about the
+kwargs for NamedDie.
 
 >>> class MyParser(dt.Parser):
 ...     def __init__(self, ignore_case=False):
@@ -822,6 +837,11 @@ True
 >>> t_d_and_h_4_eva = MyParser(ignore_case=True).parse_die(upper_lower_who_cares)
 >>> t_d_and_h_4_eva == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 True
+>>> with_kwargs = 'NamedDie("Tom", ["D", "H"], stats={}, size=4)'
+>>> MyParser().parse_die(with_kwargs)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: One or more kwargs not in kwarg_list: () for die: <NamedDie>
 
 Top_
 
