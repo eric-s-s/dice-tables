@@ -1,15 +1,6 @@
 #################
 dicetables v2.3.0
 #################
----------
-CHANGELOG
----------
-since v2.1.0
-
-- EventsCalculations added functions log10_points and log10_axes
-- New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
-- see `Die Classes`_ and `EventsInformation And EventsCalculations`_ for details
-- New object: `Parser`_ - It converts strings to Die objects.
 
 =====================================================
 a module for statistics of die rolls and other events
@@ -32,6 +23,7 @@ contents:
 - `Inheritance`_
 - `Parser`_
 - `HOW TO GET ERRORS AND BUGS`_
+- `ChangeLog`_
 
 .. _Top:
 
@@ -1025,5 +1017,17 @@ MemoryError
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 OverflowError: cannot fit 'int' into an index-sized integer
+
+Top_
+
+---------
+ChangeLog
+---------
+since v2.1.0
+
+- EventsCalculations added functions log10_points and log10_axes
+- New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
+- see `Die Classes`_ and `EventsInformation And EventsCalculations`_ for details
+- New object: `Parser`_ - It converts strings to Die objects.
 
 Top_
