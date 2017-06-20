@@ -1,12 +1,6 @@
-import re
-from collections import namedtuple
+import ast
 
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
-
-
-FunctionNode = namedtuple('FunctionNode', ['func', 'params'])
-GroupNode = namedtuple('GroupNode', ['value'])
-ValueNode = namedtuple('ValueNode', ['value'])
 
 
 class ParseError(ValueError):
@@ -32,14 +26,14 @@ class Parser(object):
         return self._classes.copy()
 
     def parse_die(self, die_string):
-        function_tuple = StringToNodes.get_call_structure(die_string)[0]
-        return self.make_die(function_tuple)
+        ast_call_node = ast.parse(die_string).body[0].value
+        return self.make_die(ast_call_node)
 
-    def make_die(self, function_node):
-        die_class_name = function_node.func
-        param_values = function_node.params
+    def make_die(self, call_node):
+        die_class_name = call_node.func.id
+        param_nodes = call_node.args
         die_class = self._get_die_class(die_class_name)
-        die_params = self._get_params(param_values, die_class)
+        die_params = self._get_params(param_nodes, die_class)
         return die_class(*die_params)
 
     def _get_die_class(self, class_name):
@@ -55,14 +49,14 @@ class Parser(object):
             return search_str.lower()
         return search_str
 
-    def _get_params(self, param_values, die_class):
+    def _get_params(self, param_nodes, die_class):
         params = []
         param_types = self._classes[die_class]
         self._raise_error_for_missing_methods(param_types, die_class)
-        for index, value in enumerate(param_values):
+        for index, node in enumerate(param_nodes):
             type_key = param_types[index]
             conversion_method = self._param_types[type_key]
-            params.append(conversion_method(value))
+            params.append(conversion_method(node))
         return params
 
     def _raise_error_for_missing_methods(self, param_types, die_class):
@@ -77,95 +71,21 @@ class Parser(object):
         self._param_types[param_type] = creation_method
 
 
-def make_int_dict(group_node):
-    no_braces = group_node.value.strip()[1: -1]
-    if no_braces.strip() == '':
-        return {}
-    pairs = no_braces.split(',')
-    key_vals = [pair.split(':') for pair in pairs]
-    return {int(key): int(val) for key, val in key_vals}
+def make_int_dict(dict_node):
+    keys = make_int_list(dict_node.keys)
+    values = make_int_list(dict_node.values)
+    return dict(zip(keys, values))
 
 
-def make_int_tuple(group_node):
-    no_paren = group_node.value.strip()[1:-1]
-    str_values = no_paren.split(',')
-    return tuple([int(str_val) for str_val in str_values if str_val.strip()])
+def make_int_tuple(tuple_node):
+    return tuple(make_int_list(tuple_node.elts))
 
 
-def make_int(value_node):
-    return int(value_node.value)
+def make_int_list(num_node_list):
+    return [make_int(num_node) for num_node in num_node_list]
 
 
-class StringToNodes(object):
-
-    @staticmethod
-    def get_call_structure(input_str):
-        no_whitespace = input_str.strip()
-        out_put = []
-        while no_whitespace:
-            if StringToNodes.starts_with_function_call(no_whitespace):
-                func_name, params, remainder = StringToNodes.get_function_call(no_whitespace)
-                param = FunctionNode(func=func_name, params=StringToNodes.get_call_structure(params))
-            elif StringToNodes.starts_with_group(no_whitespace):
-                gp_name, remainder = StringToNodes.get_group(no_whitespace)
-                param = GroupNode(value=gp_name)
-            else:
-                val_name, remainder = StringToNodes.get_param(no_whitespace)
-                param = ValueNode(value=val_name)
-            out_put.append(param)
-            no_whitespace = remainder
-        return out_put
-
-    @staticmethod
-    def starts_with_function_call(input_str):
-        to_test = input_str.strip()
-        test = re.match('[A-Za-z_][A-Za-z0-9_]*\(', to_test)
-        return test is not None
-
-    @staticmethod
-    def starts_with_group(input_str):
-        no_whitespace = input_str.lstrip()
-        collection_starts = ['(', '{', '[']
-        return no_whitespace[0] in collection_starts
-
-    @staticmethod
-    def get_function_call(input_str):
-        no_whitespace = input_str.strip()
-        func_name, groups = no_whitespace.split('(', 1)
-        groups = '(' + groups
-        func_params, remainder = StringToNodes.get_group(groups)
-        without_parens = func_params[1:-1]
-        return func_name, without_parens, remainder
-
-    @staticmethod
-    def get_group(input_str):
-        no_whitespace = input_str.strip()
-        start_of_remainder = StringToNodes.find_end_of_first_group(no_whitespace) + 1
-        first_group = no_whitespace[:start_of_remainder]
-        remainder = no_whitespace[start_of_remainder:].lstrip().lstrip(',').lstrip(' ')
-        return first_group, remainder
-
-    @staticmethod
-    def find_end_of_first_group(stripped_str):
-        starts_and_ends = {'[': ']', '{': '}', '(': ')'}
-        start_char = stripped_str[0]
-        if start_char not in starts_and_ends:
-            raise ValueError('String did not start with "[", "(" or "{"')
-        end_char = starts_and_ends[start_char]
-        brackets = 1
-        for index in range(1, len(stripped_str)):
-            if stripped_str[index] == start_char:
-                brackets += 1
-            if stripped_str[index] == end_char:
-                brackets -= 1
-
-            if brackets == 0:
-                return index
-        raise ValueError('String had no end of group')
-
-    @staticmethod
-    def get_param(input_str):
-        if ',' not in input_str:
-            return input_str.strip(), ''
-        base_param, base_remainder = input_str.split(',', 1)
-        return base_param.strip(), base_remainder.strip()
+def make_int(num_node):
+    if isinstance(num_node, ast.UnaryOp) and isinstance(num_node.op, ast.USub):
+        return num_node.operand.n * -1
+    return num_node.n

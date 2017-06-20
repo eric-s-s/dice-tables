@@ -735,57 +735,82 @@ Parser can only parse very specific types of parameters.
 ...                              'die': parser.make_die, 'int_tuple': make_int_tuple}
 True
 
-If, for example, you need Parser to know how to parse a string and a list of strings, you first need to create
-functions that can parse the appropriate Nodes. Here are the node types.
+If, for example, you need Parser to know how to parse a string, a list of strings and
+dictionary of keys=str: values=int, you first need to create functions that can parse
+the appropriate Nodes. Then you assign the functions to the parser.
 
->>> from dicetables.parser import StringToNodes, FunctionNode, GroupNode, ValueNode
->>> StringToNodes.get_call_structure('list("abc")')
-[FunctionNode(func='list', params=[ValueNode(value='"abc"')])]
->>> StringToNodes.get_call_structure('divmod(3, 4)')
-[FunctionNode(func='divmod', params=[ValueNode(value='3'), ValueNode(value='4')])]
->>> str_value =  ValueNode('"abd"')
->>> str_value.value
-'"abd"'
->>> str_list = GroupNode("['a', 'b', 'c']")
->>> str_list.value
-"['a', 'b', 'c']"
+    First, a very very quick introduction to the Abstract Syntax Tree:
+
+    The nodes are derived using the "ast" module. ast, very briefly, takes a string and parses it into nodes. To see what
+    it does, use :code:`ast.dump(ast.parse(<your_string>))`.  Create and test nodes by using
+    :code:`my_node = ast.parse(<your_string>).body[0].value`
+
+    >>> import ast
+    >>> ast.dump(ast.parse('[1, -1, "A"]'))
+    "Module(body=[Expr(value=List(elts=[Num(n=1), UnaryOp(op=USub(), operand=Num(n=1)), Str(s='A')], ctx=Load()))])"
+    >>> my_list_node = ast.parse('[1, -1, "A"]').body[0].value
+    >>> ast.dump(my_list_node)
+    "List(elts=[Num(n=1), UnaryOp(op=USub(), operand=Num(n=1)), Str(s='A')], ctx=Load())"
+
+    This says that the List node points to its elts:
+
+    - a Num node: value=1
+    - a unary-operation node that uses unary-subtraction on operand:Num node: value=1
+    - a Str node: value='A'
+
+Now, to my example.
+
+>>> str_value =  ast.Str(s="abd")
+>>> str_value.s
+'abd'
+>>> str_list = ast.List(elts=[ast.Str(s='a'), ast.Str(s='b'), ast.Str(s='c')])
+>>> str_int_dict = ast.parse("{'a': 2, 'b': 10}").body[0].value
 
 and here are conversion methods.
 
->>> def make_str(value_node):
-...     return value_node.value[1: -1]
+>>> from dicetables.parser import make_int
+>>> def make_str(str_node):
+...     return str_node.s
 >>> make_str(str_value)
 'abd'
 
->>> def make_str_list(group_node):
-...     just_strs = group_node.value[1: -1]
-...     out = []
-...     for raw_val in just_strs.split(','):
-...         out.append(raw_val.strip()[1: -1])
-...     return out
+>>> def make_str_list(lst_node):
+...     return [make_str(node) for node in lst_node.elts]
 >>> make_str_list(str_list)
 ['a', 'b', 'c']
+
+>>> def make_str_int_dict(dict_node):
+...     keys = [make_str(node) for node in dict_node.keys]
+...     values = [make_int(node) for node in dict_node.values]
+...     return dict(zip(keys, values))
+>>> make_str_int_dict(str_int_dict) == {'a': 2, 'b': 10}
+True
 
 Now you tell the parser that a key of your choice corresponds to the method.
 
 >>> parser = dt.Parser()
 >>> parser.add_param_type('str', make_str)
 >>> parser.add_param_type('str_list', make_str_list)
+>>> parser.add_param_type('str_int_dict', make_str_int_dict)
 
 To add a new dice class to the parser, give the parser the class and a tuple of the param_types keys for each parameter.
 
 >>> class NamedDie(dt.Die):
-...     def __init__(self, name, buddys_names, size):
+...     def __init__(self, name, buddys_names, stats, size):
 ...         self.name = name
 ...         self.best_buds = buddys_names.copy()
+...         self.stats = stats.copy()
 ...         super(NamedDie, self).__init__(size)
 ...
 ...     def __eq__(self, other):
 ...         return (super(NamedDie, self).__eq__(other) and
-...                 self.name == other.name and self.best_buds == other.best_buds)
+...                 self.name == other.name and
+...                 self.best_buds == other.best_buds and
+...                 self.stats == other.stats)
 
->>> parser.add_class(NamedDie, ('str', 'str_list', 'int'))
->>> parser.parse_die('NamedDie("Tom", ["Dick", "Harry"], 4)') == NamedDie('Tom', ['Dick', 'Harry'], 4)
+>>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
+>>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
+>>> parser.parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 True
 
 You can make a new parser class instead of a specific instance of Parser.
@@ -795,11 +820,15 @@ You can make a new parser class instead of a specific instance of Parser.
 ...         super(MyParser, self).__init__(ignore_case)
 ...         self.add_param_type('str', make_str)
 ...         self.add_param_type('str_list', make_str_list)
-...         self.add_class(NamedDie, ('str', 'str_list', 'int'))
->>> MyParser().parse_die('NamedDie("Tom", ["Dick", "Harry"], 4)') == NamedDie('Tom', ['Dick', 'Harry'], 4)
+...         self.add_param_type('str_int_dict', make_str_int_dict)
+...         self.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
+
+>>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
+>>> MyParser().parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 True
->>> t_d_and_h_4_eva = MyParser(ignore_case=True).parse_die('nameddie("Tom", ["Dick", "Harry"], 4)')
->>> t_d_and_h_4_eva == NamedDie('Tom', ['Dick', 'Harry'], 4)
+>>> upper_lower_who_cares = 'nAmeDdIE("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
+>>> t_d_and_h_4_eva = MyParser(ignore_case=True).parse_die(upper_lower_who_cares)
+>>> t_d_and_h_4_eva == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 True
 
 Top_
