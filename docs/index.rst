@@ -14,7 +14,7 @@ Contents:
    the_basics.rst
    the_dice.rst
    the_dicetable.rst
-   calculations_and_information.rst
+   events_info.rst
    nitty_gritty/index.rst
 
 

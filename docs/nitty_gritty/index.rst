@@ -19,7 +19,7 @@ Contents:
    events_objects.rst
    inheritance.rst
    parser.rst
-   how_to_get_errors.rst
+   errors_and_bugs.rst
 
 
 
