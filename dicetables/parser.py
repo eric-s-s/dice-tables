@@ -113,8 +113,17 @@ class Parser(object):
         true_kwarg_name = true_kwarg_tuple[index]
         return true_kwarg_name, value
 
-    def add_class(self, klass, param_identifiers, kwargs=()):
+    def add_class(self, klass, param_identifiers, auto_detect_kwargs=True, kwargs=()):
+        """
+
+        :param klass: the class you are adding
+        :param param_identifiers: a tuple of param_types according to Parser().get_param_types()
+        :param auto_detect_kwargs: will try to detect kwargs of __init__ function. overrides kwargs param
+        :param kwargs: (optional) a tuple of the kwarg names for instantiation of the new class.
+        """
         self._classes[klass] = param_identifiers
+        if auto_detect_kwargs:
+            kwargs = _get_kwargs_from_init(klass)
         self._kwargs[klass] = kwargs
 
     def add_param_type(self, param_type, creation_method):
@@ -139,3 +148,12 @@ def make_int(num_node):
     if isinstance(num_node, ast.UnaryOp) and isinstance(num_node.op, ast.USub):
         return num_node.operand.n * -1
     return num_node.n
+
+
+def _get_kwargs_from_init(klass):
+    try:
+        kwargs = klass.__init__.__code__.co_varnames
+        return kwargs[1:]
+    except AttributeError:
+        raise AttributeError('could not find the code for __init__ function at klass.__init__.__code__')
+

@@ -188,6 +188,18 @@ class TestParser(unittest.TestCase):
         die = ast.parse('MODDIE(DIE_SIZE=6, MODIFIER=-1)').body[0].value
         self.assertEqual(Parser(ignore_case=True).make_die(die), ModDie(6, -1))
 
+    def test_make_die_ignore_case_applies_to_kwargs_with_mixed_case(self):
+        class OddDie(Die):
+            def __init__(self, dIe_SiZE):
+                super(OddDie, self).__init__(dIe_SiZE)
+
+        parser = Parser(ignore_case=True)
+        parser.add_class(OddDie, ('int',))
+        self.assertEqual(parser.get_kwargs()[OddDie], ('dIe_SiZE',))
+
+        die = ast.parse('ODDDIE(DIE_SIZE=6)').body[0].value
+        self.assertEqual(parser.make_die(die), OddDie(6))
+
     def test_make_die_disable_kwargs(self):
         die = ast.parse('Die(6)').body[0].value
         self.assertEqual(Parser(disable_kwargs=True).make_die(die), Die(6))
@@ -276,12 +288,12 @@ class TestParser(unittest.TestCase):
                          )
                          )
 
-    def test_add_class_no_kwargs_added(self):
+    def test_add_class_no_auto_detect_kwargs_no_manual_kwargs(self):
         class Thing(object):
             pass
 
         parser = Parser()
-        parser.add_class(Thing, ('bogus', 'lame'))
+        parser.add_class(Thing, ('bogus', 'lame'), auto_detect_kwargs=False)
 
         classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
                    WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
@@ -294,16 +306,51 @@ class TestParser(unittest.TestCase):
                   ExplodingOn: ('input_die', 'explodes_on', 'explosions'), Thing: ()}
         self.assertEqual(kwargs, parser.get_kwargs())
 
-    def test_add_class_with_kwargs(self):
+    def test_add_class_auto_detect_kwargs(self):
         class Thing(object):
             def __init__(self, num):
                 self.num = num
 
         parser = Parser()
-        parser.add_class(Thing, ('int',), ('num',))
-
+        parser.add_class(Thing, ('int',), auto_detect_kwargs=True)
         self.assertEqual(parser.get_classes()[Thing], ('int',))
         self.assertEqual(parser.get_kwargs()[Thing], ('num',))
+
+    def test_add_class_auto_detect_kwargs_overrides_manual(self):
+        class Thing(object):
+            def __init__(self, num):
+                self.num = num
+
+        parser = Parser()
+        parser.add_class(Thing, ('int',), auto_detect_kwargs=True, kwargs=('bite', 'my', 'shiny', 'metal', 'ass'))
+        self.assertEqual(parser.get_classes()[Thing], ('int',))
+        self.assertEqual(parser.get_kwargs()[Thing], ('num',))
+
+    def test_add_class_manual_kwargs(self):
+        class Thing(object):
+            def __init__(self, num):
+                self.num = num
+
+        kwargs = ('some', 'made', 'up', 'nonsense')
+        parser = Parser()
+        parser.add_class(Thing, ('int',), auto_detect_kwargs=False, kwargs=kwargs)
+        self.assertEqual(parser.get_classes()[Thing], ('int',))
+        self.assertEqual(parser.get_kwargs()[Thing], kwargs)
+
+    def test_add_class_auto_detect_raises_error_if_no_init_code(self):
+        class Thing(object):
+            @classmethod
+            def do_stuff(cls, x):
+                return cls.__name__ + x
+
+        with self.assertRaises(AttributeError):
+            Parser().add_class(Thing.do_stuff, ('str',))
+
+        with self.assertRaises(AttributeError) as cm:
+            Parser().add_class(Thing, ('str',))
+
+        self.assertEqual(cm.exception.args[0],
+                         'could not find the code for __init__ function at klass.__init__.__code__')
 
     def test_add_param_type(self):
         def a_func(x):

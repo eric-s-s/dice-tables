@@ -20,3 +20,4 @@ tox.ini
 /time_trials/best_time_data
 /time_trials/i_v_timetrials_data
 !/time_trials/welcome_message.txt
+/docs/make.bat

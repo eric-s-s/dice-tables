@@ -798,7 +798,8 @@ Now you tell the parser that a key of your choice corresponds to the method.
 >>> parser.add_param_type('str_int_dict', make_str_int_dict)
 
 To add a new dice class to the parser, give the parser the class and a tuple of the param_types keys for each parameter.
-If you want the parser to be able to use kwargs on your new die, you must also pass that in.
+The parser will assume you're adding a class with an __init__ function and will try to auto_detect kwargs. You can
+disable this and add your own kwargs (or not).
 
 >>> class NamedDie(dt.Die):
 ...     def __init__(self, name, buddys_names, stats, size):
@@ -813,14 +814,13 @@ If you want the parser to be able to use kwargs on your new die, you must also p
 ...                 self.best_buds == other.best_buds and
 ...                 self.stats == other.stats)
 
->>> kwargs = ('name', 'buddys_names', 'stats', 'size')
->>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'), kwargs=kwargs)
+>>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
 >>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], stats={"friends": 2, "coolness_factor": 10}, size=4)'
 >>> parser.parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 True
 
-You can make a new parser class instead of a specific instance of Parser. Notice that I forgot to tell it about the
-kwargs for NamedDie.
+You can make a new parser class instead of a specific instance of Parser. Notice that I turned off the auto_detect and
+told it some bad kwarg names.
 
 >>> class MyParser(dt.Parser):
 ...     def __init__(self, ignore_case=False):
@@ -828,7 +828,8 @@ kwargs for NamedDie.
 ...         self.add_param_type('str', make_str)
 ...         self.add_param_type('str_list', make_str_list)
 ...         self.add_param_type('str_int_dict', make_str_int_dict)
-...         self.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
+...         self.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'),
+...                        auto_detect_kwargs=False, kwargs=('oops', 'wrong', 'not_enough'))
 
 >>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
 >>> MyParser().parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
@@ -841,7 +842,7 @@ True
 >>> MyParser().parse_die(with_kwargs)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParseError: One or more kwargs not in kwarg_list: () for die: <NamedDie>
+ParseError: One or more kwargs not in kwarg_list: ('oops', 'wrong', 'not_enough') for die: <NamedDie>
 
 Top_
 
