@@ -333,6 +333,9 @@ class TestDieEvents(unittest.TestCase):
         die = StrongDie(ModWeightedDie({1: 4}, 1), 2)
         self.assertEqual(StrongDie(die, 3).weight_info(), '((D1+1  W:4)X(2))X(3)\n    a roll of 1 has a weight of 4')
 
+    def test_Exploding_negative_explosions_raises_ValueError(self):
+        self.assertRaises(ValueError, Exploding, Die(6), -1)
+
     def test_Exploding_get_dict_on_Die(self):
         die = Exploding(Die(3))
         self.assertEqual(die.get_dict(), {1: 9, 2: 9, 4: 3, 5: 3, 7: 1, 8: 1, 9: 1})
@@ -495,6 +498,13 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(answer, {1: 16, 2: 16, 4: 4, 5: 8, 6: 4, 7: 1, 8: 3, 9: 4, 10: 4, 11: 3, 12: 1})
         self.assertEqual(answer, die.get_dict())
 
+    def test_ExplodingOn_explodes_on_roll_not_in_die(self):
+        self.assertRaises(ValueError, ExplodingOn, Die(3), (1, 2, 3, 4))
+        self.assertRaises(ValueError, ExplodingOn, Die(3), (5,))
+
+    def test_ExplodingOn_negative_explosions(self):
+        self.assertRaises(ValueError, ExplodingOn, Die(3), (1,), -1)
+
     def test_ExplodingOn_get_dict_one_explodes_on_value(self):
         die = ExplodingOn(Die(3), (2, ))
         self.assertEqual(die.get_dict(), {1: 9, 3: 12, 5: 4, 6: 1, 7: 1})
@@ -588,9 +598,6 @@ class TestDieEvents(unittest.TestCase):
     def test_ExplodingOn_get_dict_edge_case_explodes_on_duplicate_values(self):
         die = ExplodingOn(Die(3), (1, 2, 1, 2, 3, 1), 1)
         self.assertEqual(die.get_dict(), {2: 1, 3: 2, 4: 3, 5: 2, 6: 1})
-
-    def test_ExplodingOn_get_dict_edge_case_explodes_on_roll_not_in_die(self):
-        self.assertRaises(ValueError, ExplodingOn, Die(3), (1, 2, 3, 4))
 
     def test_ExplodingOn_get_size(self):
         dice = [Die(3), ModDie(3, 1), WeightedDie({1: 2, 2: 4}), ModWeightedDie({1: 2, 3: 4}, -1), StrongDie(Die(4), 2)]

@@ -256,12 +256,17 @@ class Exploding(ProtoDie):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
-        :param explosions: int
+        :param explosions: int >=0
         """
         self._original = input_die
         self._explosions = explosions
+        self._raise_error_for_negative_explosions()
         self._dict = self._get_exploding_dict()
         super(Exploding, self).__init__()
+
+    def _raise_error_for_negative_explosions(self):
+        if self._explosions < 0:
+            raise ValueError('"explosions" must be >=0.')
 
     def _get_exploding_dict(self):
         base_dict = self._original.get_dict()
@@ -331,13 +336,14 @@ class ExplodingOn(ProtoDie):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
-        :param explodes_on: tuple[int] - rolls that die explodes on
-        :param explosions: int
+        :param explodes_on: tuple[int] - rolls that die explodes on. Must be in keys of input_die.get_dict().
+        :param explosions: int >=0
         """
         self._explodes_on = remove_duplicates(explodes_on)
         self._explosions = explosions
         self._original = input_die
         self._raise_error_for_bad_explodes_on()
+        self._raise_error_for_negative_explosions()
         self._dict = self._get_exploding_dict()
         super(ExplodingOn, self).__init__()
 
@@ -345,6 +351,10 @@ class ExplodingOn(ProtoDie):
         base_dict = self._original.get_dict()
         if any(key not in base_dict for key in self._explodes_on):
             raise ValueError('"explodes_on" value not present in input_die.get_dict()')
+
+    def _raise_error_for_negative_explosions(self):
+        if self._explosions < 0:
+            raise ValueError('"explosions" value must be >= 0.')
 
     def _get_exploding_dict(self):
         level = 0

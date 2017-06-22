@@ -44,8 +44,9 @@ class DiceTable(AdditiveEvents):
     def add_die(self, die, times=1):
         """
 
+        :param die: any subclass of ProtoDie: Die, ModDie, WeightedDie, ModWeightedDie, Modifier,
+            StrongDie, Exploding, ExplodingOn
         :param times: int>= 0
-        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
         dice_data = self._record.add_die(die, times)
         dictionary = EventsDictCreator(self, die).create_using_combine_by_fastest(times)
@@ -54,8 +55,9 @@ class DiceTable(AdditiveEvents):
     def remove_die(self, die, times=1):
         """
 
+        :param die: any subclass of ProtoDie: Die, ModDie, WeightedDie, ModWeightedDie, Modifier,
+            StrongDie, Exploding, ExplodingOn
         :param times: 0 <= int <= number of "die" in table
-        :param die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or new ProtoDie subclass
         """
         dice_data = self._record.remove_die(die, times)
         dictionary = EventsDictCreator(self, die).create_using_remove_by_tuple_list(times)
