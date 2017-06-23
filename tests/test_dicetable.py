@@ -147,6 +147,15 @@ class TestDiceTable(unittest.TestCase):
                      '3D10')
         self.assertEqual(str(table), table_str)
 
+    def test_DiceTable_repr_empty(self):
+        self.assertEqual(repr(DiceTable.new()), '<DiceTable containing []>')
+
+    def test_DiceTable_repr_with_dice(self):
+        dice_record = DiceRecord({ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2})
+        table = DiceTable({1: 1}, dice_record)
+        self.assertEqual(repr(table),
+                         '<DiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>')
+
     def test_DiceTable_add_die_raise_error_for_negative_add(self):
         table = DiceTable.new()
         self.assertRaises(DiceRecordError, table.add_die, Die(5), -2)
@@ -390,6 +399,14 @@ class TestDiceTable(unittest.TestCase):
         self.assertFalse(table_1.__eq__(table_2))
         self.assertFalse(table_2.__eq__(table_1))
 
+    def test_DetailedDiceTable_repr_empty(self):
+        self.assertEqual(repr(DetailedDiceTable.new()), '<DetailedDiceTable containing []>')
+
+    def test_DetailedDiceTable_repr_with_dice(self):
+        dice_record = DiceRecord({ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2})
+        table = DetailedDiceTable({1: 1}, dice_record)
+        self.assertEqual(repr(table),
+                         '<DetailedDiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>')
 
 if __name__ == '__main__':
     unittest.main()

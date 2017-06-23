@@ -690,7 +690,7 @@ class TestEventsFactory(unittest.TestCase):
 
     def test_a_silly_example_to_show_EventsDictCreator_and_EventsFactory_from_params(self):
         """
-        combine events with a single event that occurs once simply shifts the values of all events.
+        combine events with a single event that occurs once. simply shifts the values of all events.
 
         AdditiveEvents({1: 2, 3: 4}).combine(AdditiveEvents({10: 1})).get_dict()
         {11: 2, 13: 4}

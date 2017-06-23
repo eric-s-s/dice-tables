@@ -8,7 +8,8 @@ from dicetables.eventsbases.protodie import ProtoDie
 class Modifier(ProtoDie):
     """
     stores and returns info for a modifier to add to the final die roll.
-    Modifier(-3) rolls -3 and only -3
+    Modifier(-3) rolls -3 and only -3. A Modifier's size and weight are
+    always 0.
     """
     def __init__(self, modifier):
         self._mod = modifier
@@ -164,8 +165,9 @@ class WeightedDie(ProtoDie):
 class ModWeightedDie(WeightedDie):
     """
     stores and returns info for die with different chances for different rolls.
-    The modifier changes all die rolls
-    WeightedDie({1:1, 2:5}, -1) rolls 0 once for every five times that 1 is rolled.
+    The modifier changes all die rolls.
+    :code:`WeightedDie({1:1, 3:5}, -1)` is a 3-sided die - 1. It
+    rolls 0 once for every five times that 2 is rolled.
     """
 
     def __init__(self, dictionary_input, modifier):
@@ -197,7 +199,8 @@ class ModWeightedDie(WeightedDie):
 
 class StrongDie(ProtoDie):
     """
-    stores and returns info for a stronger version of another die.
+    stores and returns info for a stronger version of another die (including
+    StrongDie if you're feeling especially silly).
     The multiplier multiplies all die rolls of original Die.
     StrongDie(ModDie(3, -1), 2) rolls (1-1)*2, (2-1)*2, (3-1)*2 with equal weight.
     """
@@ -244,12 +247,18 @@ class StrongDie(ProtoDie):
 class Exploding(ProtoDie):
     """
     Stores and returns info for an exploding version of another die.
-    On the maximum roll, the die continues to roll, adding the maximum roll to the result.
-    The die only continues rolling an (explosions) number of times.
-    Exploding(Die(6), explosions=2) rolls [1 to 5], 6+[1 to 5], 12+[1 to 6]
+    Each time the highest number is rolled, you
+    add that to the total and keep rolling. An exploding D6 rolls 1-5 as usual.
+    When it rolls a 6, it re-rolls and adds that 6. If it rolls a 6 again, this continues,
+    adding 12 to the result. Since this is an infinite but increasingly unlikely process,
+    the "explosions" parameter sets the number of re-rolls allowed.
+
     Explosions are applied after modifiers and multipliers.
     Exploding(ModDie(4, -2)) explodes on a 2 so it rolls:
-    [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
+
+    **WARNING:** setting the number of explosions too high can make
+    instantiation VERY slow.
     """
 
     def __init__(self, input_die, explosions=2):
@@ -325,12 +334,18 @@ class Exploding(ProtoDie):
 class ExplodingOn(ProtoDie):
     """
     Stores and returns info for an exploding version of another die.
-    On the roll-values in (explodes_on), the die continues to roll, adding that value to the result.
-    The die only continues rolling an (explosions) number of times.
+    Each time the values in (explodes_on) are rolled, the die continues to roll,
+    adding that value to the result. The die only continues rolling an (explosions) number of times.
+
     Exploding(Die(6), (1, 6), explosions=2) rolls:
-    [2 to 5], 1+[2 to 5], 6+[2 to 5], 2*(7+[1 to 6]), 2+[1 to 6], 12 + [1 to 6]
+    [2 to 5], 1+[2 to 5], 6+[2 to 5], 1+1+[1 to 6], 1+6+[1 to 6], 6+1+[1 to 6] and 6+6+[1 to 6].
+
     Explosions are applied after modifiers and multipliers.
-    Exploding(ModDie(4, -2), (2)) explodes on a 2 so it rolls: [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (4 - 1) ..]
+    Exploding(ModDie(4, -2), (2,)) explodes on a 2 so it rolls:
+    [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
+
+    **WARNING:** setting the number of explosions too high can make
+    instantiation VERY slow.
     """
     def __init__(self, input_die, explodes_on, explosions=2):
         """

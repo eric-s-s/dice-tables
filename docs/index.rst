@@ -3,19 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. py:module:: dicetables
+
 Welcome to dice_tables's documentation!
 =======================================
+
+dicetables is a module for getting all the combinations for any set of dice.
+
+It also has many ways to
+
 
 Contents:
 
 .. toctree::
    :maxdepth: 3
 
+   intro.rst
    the_basics.rst
    the_dice.rst
    the_dicetable.rst
    events_info.rst
-   nitty_gritty/index.rst
+   implementation_details/index.rst
 
 
 Indices and tables

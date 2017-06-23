@@ -41,6 +41,11 @@ class DiceTable(AdditiveEvents):
         str_list = [die.multiply_str(number) for die, number in self.get_list()]
         return '\n'.join(str_list)
 
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        dice = str(self).replace('\n', ', ')
+        return '<{} containing [{}]>'.format(class_name, dice)
+
     def add_die(self, die, times=1):
         """
 

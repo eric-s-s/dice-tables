@@ -10,6 +10,7 @@ They are all immutable , hashable and rich-comparable. Multiple names can safely
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
 sorted with any other kind of die. Comparisons are done by (size, weight, get_dict, __repr__(as a last resort)).
 So:
+
 >>> import dicetables as dt
 >>> dice_list = [
 ... dt.ModDie(2, 0),
@@ -40,46 +41,46 @@ True
 
 The dice:
 
-Die
-    A basic die.  dt.Die(4) rolls 1, 2, 3, 4 with equal weight
+.. module:: dicetables.dieevents
 
-    No added methods
+.. autoclass:: Die
+    :members:
+    :undoc-members:
+
+    Base methods for all dice:
 
 
-ModDie
-    A die with a modifier.  The modifier is added to each die roll.
-    dt.ModDie(4, -2) rolls -1, 0, 1, 2 with equal weight. It is 4-sided die
-    with -2 added to each roll (D4-2)
+.. autoclass:: ModDie
+    :members: get_modifier
+    :undoc-members:
+
+    It is 4-sided die with -1 added to each roll (D4-1)
 
     added methods:
 
-    - .get_modifier(): returns the modifier applied to each roll
 
-WeightedDie
-    A die that rolls different rolls with different frequencies.
+.. autoclass:: WeightedDie
+    :members: get_raw_dict
+    :undoc-members:
+
     dt.WeightedDie({1:1, 3:3, 4:6}) is a 4-sided die.  It rolls 4
     six times as often as 1, rolls 3 three times as often as 1
     and never rolls 2
 
     added methods:
 
-    - .get_raw_dict(): returns all values in die.get_size() even if they are zero.
-      in the above example, it will return {1: 1, 2: 0, 3: 3, 4: 4}
+get_raw_dict(): returns all values in die.get_size() even if they are zero.
+dt.WeightedDie({1:1, 3:3, 4:6}).get_raw_dict() returns {1: 1, 2: 0, 3: 3, 4: 4}
 
-ModWeightedDie
-    A die with a modifier that rolls different rolls with different frequencies.
-    dt.ModWeightedDie({1:1, 3:3, 4:6}, 3) is a 4-sided die. 3 is added to all
-    die rolls.  The same as WeightedDie.
+.. autoclass:: ModWeightedDie
+    :members: get_raw_dict, get_modifier
+    :undoc-members:
 
     added methods:
 
-    - .get_raw_dict()
-    - .get_modifier()
-
-StrongDie
-    A die that is a strong version of any other die (including another StrongDie
-    if you're feeling especially silly). So a StrongDie with a multiplier of 2
-    would add 2 for each 1 that was rolled. StrongDie(Die(4), 2) rolls 2, 4, 6, and 8
+.. autoclass:: StrongDie
+    :members: get_multiplier, get_input_die
+    :undoc-members:
 
     >>> die = dt.Die(4)
     >>> die.get_dict() == {1: 1, 2: 1, 3: 1, 4: 1}
@@ -96,13 +97,9 @@ StrongDie
 
     added methods:
 
-    - .get_multiplier()
-    - .get_input_die()
-
-Modifier
-    A simple +/- modifier that adds to the total dice roll.
-
-    Modifier(-3) is a one-sided die that always rolls a -3.  size=0, weight=0.
+.. autoclass:: Modifier
+    :members: get_modifier
+    :undoc-members:
 
     >>> table = dt.DiceTable.new().add_die(dt.Die(4))
     >>> table.get_dict() == {1: 1, 2: 1, 3: 1, 4: 1}
@@ -116,16 +113,9 @@ Modifier
 
     added methods:
 
-    - .get_modifier(): returns the modifier value
-
-Exploding
-    An exploding die is a die that has a chance to roll again. Each time the highest number is rolled, you
-    add that to the total and keep rolling. An exploding D6 rolls 1-5 as usual. When it rolls a 6, it re-rolls
-    and adds that 6. If it rolls a 6 again, this continues, adding 12 to the result. Since this is an infinite
-    but increasingly unlikely process, the "explosions" parameter sets the number of re-rolls allowed.
-
-    The number of explosions defaults to 2. **WARNING:** setting the number of explosions too high can make
-    instantiation VERY slow.
+.. autoclass:: Exploding
+    :members: get_input_die, get_explosions
+    :undoc-members:
 
     Here are the rolls for an exploding D4 that can explode up to 3 times. It rolls 1-3 sixty-four
     times more often than 13-16.
@@ -151,16 +141,9 @@ Exploding
 
     added methods:
 
-    - .get_input_die()
-    - .get_explosions(): returns the number of re-rolls allowed
-
-ExplodingOn
-    This is the same as Exploding, except you also use a tuple of ints to state what values the die continues rolling on.
-    dt.ExplodingOn(dt.Die(6), (1, 6), explosions=2) continues rolling and adding the die value when either 1 or 6
-    is rolled.
-
-    The number of explosions defaults to 2. **WARNING:** setting the number of explosions too high can make
-    instantiation VERY slow.
+.. autoclass:: ExplodingOn
+    :members: get_input_die, get_explosions, get_explodes_on
+    :undoc-members:
 
     Here are the rolls for an exploding D6 that can explode the default times and explodes on 5 and 6.
 
@@ -171,7 +154,3 @@ ExplodingOn
      (11, 1), (12, 3), (13, 4), (14, 4), (15, 4), (16, 4), (17, 3), (18, 1)]
 
     added methods:
-
-    - .get_input_die()
-    - .get_explosions()
-    - .get_explodes_on(): returns the tuple of roll values that the die can explode on

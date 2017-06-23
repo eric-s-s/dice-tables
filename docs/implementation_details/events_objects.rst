@@ -1,7 +1,11 @@
 Events Objects
 ==============
 
-All tables and dice inherit from dicetables.eventsbases.IntegerEvents.  All subclasses of IntegerEvents need the method
+All tables and dice inherit from dicetables.eventsbases.IntegerEvents. IntegerEvents is a collection
+of {event: number of times it occurs} where events are.... integers! and number of occurrences is int >=0.
+Any events is assumed to contain all events not present with zero occurrences.
+
+All subclasses of IntegerEvents need the method
 get_dict() which returns {event: occurrences, ...} for each NON-ZERO occurrence.  When you instantiate
 any subclass, it checks to make sure you're get_dict() is legal.
 
@@ -19,7 +23,7 @@ occurrences out of the dictionary for you.
 >>> dt.ModWeightedDie({1: 2, 3: 0, 4: 1}, -5).get_dict()
 {-4: 2, -1: 1}
 
-AdditiveEvents is the parent of DiceTable. It has the class method new() which returns the identity. This method is
+It has the class method new() which returns the identity. This method is
 inherited by its children. You can add and remove events using the ".combine" method which tries
 to pick the fastest combining algorithm. You can pick it yourself by calling ".combine_by_<algorithm>". You can
 combine and remove DiceTable, AdditiveEvents, Die or any other IntegerEvents with the "combine" and "remove" methods,

@@ -42,10 +42,10 @@ and give you the following warning::
     class: <class '__main__.B'>
     ..... blah blah blah.....
 
-| Now I will try again, but I will give the factory the info it needs.
-| The factory knows how to get 'get_dict', 'dice_data'
-| and 'calc_includes_zeroes'. If you need it to get anything else, you need tuples of
-| (<getter name>, <default value>, 'property' or 'method')
+Now I will try again, but I will give the factory the info it needs.
+The factory knows how to get 'get_dict', 'dice_data'
+and 'calc_includes_zeroes'. If you need it to get anything else, you need tuples of
+(<getter name>, <default value>, 'property' or 'method')
 
 >>> class B(dt.DiceTable):
 ...     factory_keys = ('name', 'get_num', 'get_dict', 'dice_data')
@@ -95,4 +95,5 @@ False
 
 When creating new methods, you can generate new events dictionaries by using
 dicetables.additiveevents.EventsDictCreator.  the factory can create new instances with
-EventsFactory.from_params.  For examples see the last few test in tests.factory.test_eventsfactory
+EventsFactory.from_params.  For examples see the last few test in
+`tests.factory.test_eventsfactory <https://github.com/eric-s-s/dice-tables/blob/master/tests/factory/test_eventsfactory.py#L691>`_

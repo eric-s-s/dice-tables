@@ -1,51 +1,18 @@
 EventsInformation And EventsCalculations
 ========================================
 
-The methods are
+These two objects can get information from any
+Events class.
 
-EventsInformation:
+.. module:: dicetables.eventsinfo
 
-* all_events
-* all_events_include_zeroes
-* biggest_event
-* biggest_events_all <- returns the list of all events that have biggest occurrence
-* events_keys
-* events_range
-* get_event
-* get_items <- returns dict.items(): a list in py2 and an iterator in py3.
-* get_range_of_events
-* total_occurrences
+.. autoclass:: EventsInformation
+    :members:
+    :undoc-members:
 
-EventsCalculations:
-
-* full_table_string
-    * can set the number of shown_digits
-
-* info
-* mean
-* percentage_axes
-    * very fast but only good to 10 decimal places
-
-* percentage_axes_exact
-* percentage_points
-    * very fast but only good to 10 decimal places
-
-* log10_axes and log10_points
-    * log10 of the combinations.
-    * any occurrence of zero is default set to -100.0 but can be assigned any number.
-
-* percentage_points_exact
-* stats_strings
-    * takes a list of events values you want information for
-    * optional parameter is shown_digits
-    * returns a namedtuple
-        * string of those events
-        * number of times those events occurred in the table
-        * total number of occurrences of all events in the table
-        * the inverse chance of those events occurring: a 1 in (number) chance
-        * the percent chance of those events occurring: (number)% chance
-* stddev
-    * defaults to 4 decimal places, but can be increased or decreased
+.. autoclass:: EventsCalculations
+    :members:
+    :undoc-members:
 
 >>> import dicetables as dt
 >>> table = dt.DiceTable.new().add_die(dt.Die(6), 1000)
@@ -105,3 +72,20 @@ EventsCalculations.info .
 <BLANKLINE>
 >>> calc.info.events_range()
 (2, 6)
+
+
+You can also access some functionality as wrapper functions.
+
+.. py:function:: events_range(events)
+
+.. py:function:: mean(events)
+
+.. py:function:: stddev(events, decimal_place=4)
+
+.. py:function:: percentage_points(events, include_zeroes=True)
+
+.. py:function:: percentage_axes(events, include_zeroes=True)
+
+.. py:function:: stats(events, query_values, shown_digits=4)
+
+.. py:function:: full_table_string(events, include_zeroes=True, shown_digits=4)
