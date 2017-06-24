@@ -1,5 +1,9 @@
 .. image:: https://travis-ci.org/eric-s-s/dice-tables.svg?branch=master
 
+.. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=coveralls
+:target: https://coveralls.io/github/eric-s-s/dice-tables?branch=coveralls
+
+
 #################
 dicetables v2.3.0
 #################
