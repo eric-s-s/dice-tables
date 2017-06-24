@@ -1,0 +1,25 @@
+language: python
+
+python:
+  - 2.7
+  - 3.5
+  - 3.6
+
+
+install:
+  - pip install sphinx
+  - pip install sphinx_rtd_theme
+  - pip install coverage
+  - pip install coveralls
+script:
+  # Build the documentation
+  - cd docs; make html
+  # Run the test suit with coverage
+  - cd ..
+  - coverage run --source=dicetables setup.py test
+  - coverage report -m
+  # Run the doctests
+  - python doctests.py
+
+after_success:
+  - coveralls
