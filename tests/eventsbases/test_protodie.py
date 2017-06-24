@@ -53,7 +53,6 @@ class TestProtoDie(unittest.TestCase):
         self.assertRaises(NotImplementedError, test.__str__)
         self.assertRaises(NotImplementedError, test.__repr__)
 
-
     # rich comparison testing
     def test_ProtoDie_equality_true(self):
         first = DummyDie(2, 3, {2: 2}, 'b')
