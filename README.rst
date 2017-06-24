@@ -1,3 +1,5 @@
+.. image:: https://travis-ci.org/eric-s-s/dice-tables.svg?branch=master
+
 #################
 dicetables v2.3.0
 #################
