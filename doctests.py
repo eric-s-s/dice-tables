@@ -1,14 +1,19 @@
 import doctest
 import unittest
 import warnings
+import os
 
 
 # Note loader and ignore are required arguments for unittest even if unused.
 def load_tests(loader, tests, ignore):
 
     flags = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.IGNORE_EXCEPTION_DETAIL
-
-    tests.addTests(doctest.DocFileSuite("README.rst", optionflags=flags))
+    for path, _, files in os.walk('.'):
+        for file in files:
+            if file.endswith('.rst'):
+                name = os.path.join(path, file)
+                print('added file: ', name)
+                tests.addTests(doctest.DocFileSuite(name, optionflags=flags))
     return tests
 
 

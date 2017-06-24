@@ -40,6 +40,10 @@ class EventsInformation(object):
         self._dict = events.get_dict()
 
     def get_items(self):
+        """
+
+        :return: dict.items(): a list in py2 and an iterator in py3.
+        """
         return self._dict.items()
 
     def events_keys(self):
@@ -70,6 +74,10 @@ class EventsInformation(object):
                 return event, highest_occurrences
 
     def biggest_events_all(self):
+        """
+
+        :return: the list of all events that have biggest occurrence
+        """
         highest_occurrences = max(self._dict.values())
         output = []
         for event, occurrences in sorted(self._dict.items()):
@@ -123,22 +131,38 @@ class EventsCalculations(object):
         return factor_to_truncate_digits
 
     def percentage_points(self):
+        """
+        Very fast, but only good to ten decimal places.
+        """
         return self._percentage_points_by_method('fast')
 
     def percentage_points_exact(self):
         return self._percentage_points_by_method('exact')
 
     def percentage_axes(self):
+        """
+        Very fast, but only good to ten decimal places.
+        """
         return list(zip(*self.percentage_points()))
 
     def percentage_axes_exact(self):
         return list(zip(*self.percentage_points_exact()))
 
     def log10_points(self, log10_of_zero_value=-100.0):
+        """
+        returns log10 of the occurrences.
+
+        :param log10_of_zero_value: any zero-occurrence must have a preset value.
+        """
         return [(event, log10(occurrence) if occurrence != 0 else log10_of_zero_value)
                 for event, occurrence in self._get_data_set()]
 
     def log10_axes(self, log10_of_zero_value=-100.0):
+        """
+        returns log10 of the occurrences.
+
+        :param log10_of_zero_value: any zero-occurrence must have a preset value.
+        """
         return list(zip(*self.log10_points(log10_of_zero_value)))
 
     def _percentage_points_by_method(self, method_str):
@@ -169,7 +193,13 @@ class EventsCalculations(object):
 
     def stats_strings(self, query_list, shown_digits=4):
         """
+        Calculates the pct chance and one-in chance of any list of numbers,
+        including numbers not in the Events.
+
+        :param query_list: A list of ints. Calculates the chance of the list getting rolled.
+        :param shown_digits: How many digits in each scientific notation number str.
         :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
+
         """
         shown_digits = max(shown_digits, 1)
         formatter = NumberFormatter(shown_digits=shown_digits)
