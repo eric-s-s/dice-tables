@@ -63,16 +63,15 @@ the appropriate Nodes. Then you assign the functions to the parser.
     :code:`my_node = ast.parse(<your_string>).body[0].value`
 
     >>> import ast
-    >>> ast.dump(ast.parse('[1, -1, "A"]'))
-    "Module(body=[Expr(value=List(elts=[Num(n=1), UnaryOp(op=USub(), operand=Num(n=1)), Str(s='A')], ctx=Load()))])"
-    >>> my_list_node = ast.parse('[1, -1, "A"]').body[0].value
+    >>> ast.dump(ast.parse('{1: "a", 2: "b"}'))
+    "Module(body=[Expr(value=Dict(keys=[Num(n=1), Num(n=2)], values=[Str(s='a'), Str(s='b')]))])"
+    >>> my_list_node = ast.parse('[1, "A"]').body[0].value
     >>> ast.dump(my_list_node)
-    "List(elts=[Num(n=1), UnaryOp(op=USub(), operand=Num(n=1)), Str(s='A')], ctx=Load())"
+    "List(elts=[Num(n=1), Str(s='A')], ctx=Load())"
 
     This says that the List node points to its elts:
 
     - a Num node: value=1
-    - a unary-operation node that uses unary-subtraction on operand:Num node: value=1
     - a Str node: value='A'
 
 Now, to my example.
@@ -117,7 +116,7 @@ disable this and add your own kwargs (or not).
 >>> class NamedDie(dt.Die):
 ...     def __init__(self, name, buddys_names, stats, size):
 ...         self.name = name
-...         self.best_buds = buddys_names.copy()
+...         self.best_buds = buddys_names[:]
 ...         self.stats = stats.copy()
 ...         super(NamedDie, self).__init__(size)
 ...
