@@ -23,7 +23,7 @@ class ProtoDie(IntegerEvents):
         raise NotImplementedError
 
     def get_dict(self):
-        raise NotImplementedError
+        super(ProtoDie, self).get_dict()
 
     def weight_info(self):
         """return detailed info of how the die is weighted"""

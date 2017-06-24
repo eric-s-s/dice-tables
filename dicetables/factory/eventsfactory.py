@@ -151,7 +151,6 @@ class EventsFactory(object):
                 EventsFactoryWarningHandler(cls).raise_warning('CONSTRUCT', failed_class, parent_class)
                 return parent_class
         EventsFactoryErrorHandler(cls).raise_error('WTF', failed_class)
-        return object
 
     @classmethod
     def _get_default_args(cls, in_factory):

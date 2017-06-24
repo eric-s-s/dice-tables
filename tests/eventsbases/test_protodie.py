@@ -38,6 +38,22 @@ class DummyDie(ProtoDie):
 
 class TestProtoDie(unittest.TestCase):
 
+    def test_ProtoDie_not_implemented_errors(self):
+        self.assertRaises(NotImplementedError, ProtoDie)
+
+        class TestDie(ProtoDie):
+            def get_dict(self):
+                return {1: 1}
+
+        test = TestDie()
+        self.assertRaises(NotImplementedError, test.get_size)
+        self.assertRaises(NotImplementedError, test.get_weight)
+        self.assertRaises(NotImplementedError, test.weight_info)
+        self.assertRaises(NotImplementedError, test.multiply_str, 3)
+        self.assertRaises(NotImplementedError, test.__str__)
+        self.assertRaises(NotImplementedError, test.__repr__)
+
+
     # rich comparison testing
     def test_ProtoDie_equality_true(self):
         first = DummyDie(2, 3, {2: 2}, 'b')

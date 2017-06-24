@@ -7,24 +7,15 @@ python:
 
 
 install:
-  - pip install sphinx
-  - pip install sphinx_rtd_theme
   - pip install coverage
   - pip install coveralls
 
-matrix:
-  include:
-    - python: "3.5"
-      env: EXTRA_TESTS=true
 script:
-  # Build the documentation
-  - cd docs; make html
-  # Run the test suit with coverage
-  - cd ..
+
   - coverage run --source=dicetables setup.py test
   - coverage report -m
   # Run the doctests
-  - sh doctest_runner.sh $EXTRA_TESTS
+  - python doctests.py
 
 after_success:
   - coveralls
