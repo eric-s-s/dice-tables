@@ -10,7 +10,7 @@ Welcome to dice_tables's documentation!
 
 dicetables is a module for getting all the combinations for any set of dice.
 
-It also has many ways to
+It also has many ways to get fun and exciting information from these tables.
 
 
 Contents:
