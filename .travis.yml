@@ -24,7 +24,7 @@ script:
   - coverage run --source=dicetables setup.py test
   - coverage report -m
   # Run the doctests
-  - env $EXTRA_TESTS python doctests.py
+  - sh doctest_runner.sh $EXTRA_TESTS
 
 after_success:
   - coveralls
