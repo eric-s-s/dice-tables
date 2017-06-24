@@ -196,7 +196,7 @@ class EventsCalculations(object):
         Calculates the pct chance and one-in chance of any list of numbers,
         including numbers not in the Events.
 
-        :param query_list: A list of ints to calculate pct chance for
+        :param query_list: A list of ints. Calculates the chance of the list getting rolled.
         :param shown_digits: How many digits in each scientific notation number str.
         :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
 

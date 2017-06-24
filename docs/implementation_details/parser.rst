@@ -1,38 +1,45 @@
 Parser
 ======
 
-The Parser object converts strings into dice objects.
+.. module:: dicetables.parser
 
->>> import dicetables as dt
->>> new_die = dt.Parser().parse_die('Die(6)')
->>> new_die == dt.Die(6)
-True
->>> other_die = dt.Parser().parse_die('ModDie(6, modifier=1)')
->>> other_die == dt.ModDie(6, 1)
-True
+.. autoclass:: Parser
+    :members:
+    :undoc-members:
 
-It can ignore case or not.  This applies to dice names and kwarg names. It defaults to ignore_case=False.
-You can also disable allowing kwargs. It defaults to disable_kwargs=False.
 
->>> dt.Parser().parse_die('die(6)')
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-ParseError: Die class: <die> not recognized by parser.
+    The Parser object converts strings into dice objects.
 
->>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), MULTIPLIER=4)') == dt.StrongDie(dt.Die(6), 4)
-True
+    >>> import dicetables as dt
+    >>> new_die = dt.Parser().parse_die('Die(6)')
+    >>> new_die == dt.Die(6)
+    True
+    >>> other_die = dt.Parser().parse_die('ModDie(6, modifier=1)')
+    >>> other_die == dt.ModDie(6, 1)
+    True
 
->>> parser = dt.Parser(disable_kwargs=True)
->>> parser.parse_die('Die(6)') == dt.Die(6)
-True
->>> parser.parse_die('Die(die_size=6)')
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-ParseError: Tried to use kwargs on a Parser with disable_kwargs=True
+    It can ignore case or not.  This applies to dice names and kwarg names. It defaults to ignore_case=False.
+    You can also disable allowing kwargs. It defaults to disable_kwargs=False.
 
-The Parser can parse all dice in the library: Die, ModDie, WeightedDie, ModWeightedDie, Modifier, StrongDie,
-Exploding and ExplodingOn. It is possible to add other dice to an instance of Parser or make a new class that
-can parse other dice.
+    >>> dt.Parser().parse_die('die(6)')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ParseError: Die class: <die> not recognized by parser.
+
+    >>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), MULTIPLIER=4)') == dt.StrongDie(dt.Die(6), 4)
+    True
+
+    >>> parser = dt.Parser(disable_kwargs=True)
+    >>> parser.parse_die('Die(6)') == dt.Die(6)
+    True
+    >>> parser.parse_die('Die(die_size=6)')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ParseError: Tried to use kwargs on a Parser with disable_kwargs=True
+
+    The Parser can parse all dice in the library: Die, ModDie, WeightedDie, ModWeightedDie, Modifier, StrongDie,
+    Exploding and ExplodingOn. It is possible to add other dice to an instance of Parser or make a new class that
+    can parse other dice.
 
 **HOW TO CUSTOMIZE PARSER**
 
@@ -50,7 +57,8 @@ the appropriate Nodes. Then you assign the functions to the parser.
 
     First, a very very quick introduction to the Abstract Syntax Tree:
 
-    The nodes are derived using the "ast" module. ast, very briefly, takes a string and parses it into nodes. To see what
+    The nodes are derived using the `ast <https://docs.python.org/3/library/ast.html>`_
+    module. ast, very briefly, takes a string and parses it into nodes. To see what
     it does, use :code:`ast.dump(ast.parse(<your_string>))`.  Create and test nodes by using
     :code:`my_node = ast.parse(<your_string>).body[0].value`
 

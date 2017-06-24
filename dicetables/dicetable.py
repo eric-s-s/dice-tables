@@ -79,8 +79,8 @@ def format_die_info(die, number):
 
 
 class DetailedDiceTable(DiceTable):
-    def __init__(self, events_dict, dice_number_dict, calc_includes_zeroes=True):
-        super(DetailedDiceTable, self).__init__(events_dict, dice_number_dict)
+    def __init__(self, events_dict, dice_record, calc_includes_zeroes=True):
+        super(DetailedDiceTable, self).__init__(events_dict, dice_record)
         self._calc = EventsCalculations(self, calc_includes_zeroes)
 
     @property
@@ -96,6 +96,10 @@ class DetailedDiceTable(DiceTable):
         return self._calc.include_zeroes
 
     def switch_boolean(self):
+        """
+
+        :return: a new DetailedDiceTable with the `calc_includes_zeroes` boolean switched
+        """
         return EventsFactory.from_params(self, {'calc_includes_zeroes': not self.calc_includes_zeroes})
 
     def __eq__(self, other):

@@ -1,17 +1,49 @@
 The Dice
 ========
 
-All dice are subclasses of dicetables.eventsbases.protodie.ProtoDie, which is a subclass of
-dicetables.eventsbases.integerevents.IntegerEvents. They all require implementations of
-get_size(), get_weight(), weight_info(), multiply_str(number), __str__(), __repr__() and
-get_dict() (the final one is a requirement of all IntegerEvents).
+A die class is a :py:class:`dicetables.eventsbases.protodie.ProtoDie`,
+which is a subclass of
+:py:class:`dicetables.eventsbases.integerevents.IntegerEvents`. It
+is a representation of die.
 
-They are all immutable , hashable and rich-comparable. Multiple names can safely point
+
+All dice require implementations of the following methods:
+
+- :code:`get_dict()` : The representation of the die rolls as :code:`{roll: frequency}`.
+    >>> import dicetables as dt
+    >>> dt.Die(3).get_dict() == {1: 1, 2: 1, 3: 1}
+    True
+    >>> dt.ModDie(3, -2).get_dict() == {-1: 1, 0: 1, 1: 1}
+    True
+
+- :code:`get_size()` : The size of the die. This can occasionally be non-intuitive.
+    >>> die = dt.WeightedDie({1: 1, 2: 1, 3: 0})
+    >>> die.get_size()
+    3
+    >>> die.get_dict() == {1: 1, 2: 1}
+    True
+
+- :code:`get_weight()`: The total weight of all the die rolls. Used mainly in
+  the :code:`__eq__` method to differentiate between various WeightedDie.
+
+- :code:`weight_info()`: A string detailing the rolls and their weights.
+- :code:`multiply_str(number)` : The string representation for multiples of the die.
+    >>> die = dt.ModDie(6, 1)
+    >>> str(die)
+    'D6+1'
+    >>> die.multiply_str(5)
+    '5D6+5'
+
+- :code:`__str__()`
+- :code:`__repr__()`
+
+
+Dice are immutable , hashable and rich-comparable. Multiple names can safely point
 to the same instance of a Die, they can be used in sets and dictionary keys and they can be
 sorted with any other kind of die. Comparisons are done by (size, weight, get_dict, __repr__(as a last resort)).
 So:
 
->>> import dicetables as dt
+
 >>> dice_list = [
 ... dt.ModDie(2, 0),
 ... dt.WeightedDie({1: 1, 2: 1}),

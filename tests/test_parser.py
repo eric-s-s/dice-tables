@@ -55,9 +55,9 @@ class TestParser(unittest.TestCase):
         self.assertIsNot(answer, Parser().get_kwargs())
 
     def test_make_int(self):
-        self.assertEqual(make_int(ast.Num(n=3)), 3)
-        self.assertEqual(make_int(ast.Num(n=-3)), -3)
-        self.assertEqual(make_int(ast.Num(n=0)), 0)
+        self.assertEqual(make_int(ast.parse('3').body[0].value), 3)
+        self.assertEqual(make_int(ast.parse('-3').body[0].value), -3)
+        self.assertEqual(make_int(ast.parse('0').body[0].value), 0)
 
     def test_make_int_with_unary_operation_node_python_3_vs_2(self):
         unary_operation = ast.parse('-2').body[0].value

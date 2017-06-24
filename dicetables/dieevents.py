@@ -8,7 +8,7 @@ from dicetables.eventsbases.protodie import ProtoDie
 class Modifier(ProtoDie):
     """
     stores and returns info for a modifier to add to the final die roll.
-    Modifier(-3) rolls -3 and only -3. A Modifier's size and weight are
+    :code:`Modifier(-3)` rolls -3 and only -3. A Modifier's size and weight are
     always 0.
     """
     def __init__(self, modifier):
@@ -43,7 +43,7 @@ class Modifier(ProtoDie):
 class Die(ProtoDie):
     """
     stores and returns info for a basic Die.
-    Die(4) rolls 1, 2, 3, 4 with equal weight
+    :code:`Die(4)` rolls 1, 2, 3, 4 with equal weight
     """
     def __init__(self, die_size):
         """
@@ -79,7 +79,7 @@ class ModDie(Die):
     """
     stores and returns info for a Die with a modifier
     that changes the values of the rolls.
-    ModDie(4, -1) rolls 0, 1, 2, 3 with equal weight
+    :code:`ModDie(4, -1)` rolls 0, 1, 2, 3 with equal weight
     """
     def __init__(self, die_size, modifier):
         """
@@ -109,7 +109,7 @@ class ModDie(Die):
 class WeightedDie(ProtoDie):
     """
     stores and returns info for die with different chances for different rolls.
-    WeightedDie({1:1, 2:5}) rolls 1 once for every five times that 2 is rolled.
+    :code:`WeightedDie({1:1, 2:5})` rolls 1 once for every five times that 2 is rolled.
     """
     def __init__(self, dictionary_input):
         """
@@ -166,7 +166,7 @@ class ModWeightedDie(WeightedDie):
     """
     stores and returns info for die with different chances for different rolls.
     The modifier changes all die rolls.
-    :code:`WeightedDie({1:1, 3:5}, -1)` is a 3-sided die - 1. It
+    :code:`ModWeightedDie({1:1, 3:5}, -1)` is a 3-sided die - 1. It
     rolls 0 once for every five times that 2 is rolled.
     """
 
@@ -202,7 +202,7 @@ class StrongDie(ProtoDie):
     stores and returns info for a stronger version of another die (including
     StrongDie if you're feeling especially silly).
     The multiplier multiplies all die rolls of original Die.
-    StrongDie(ModDie(3, -1), 2) rolls (1-1)*2, (2-1)*2, (3-1)*2 with equal weight.
+    :code:`StrongDie(ModDie(3, -1), 2)` rolls (1-1)*2, (2-1)*2, (3-1)*2 with equal weight.
     """
 
     def __init__(self, input_die, multiplier):
@@ -254,7 +254,7 @@ class Exploding(ProtoDie):
     the "explosions" parameter sets the number of re-rolls allowed.
 
     Explosions are applied after modifiers and multipliers.
-    Exploding(ModDie(4, -2)) explodes on a 2 so it rolls:
+    :code:`Exploding(ModDie(4, -2))` explodes on a 2 so it rolls:
     [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
 
     **WARNING:** setting the number of explosions too high can make
@@ -337,11 +337,11 @@ class ExplodingOn(ProtoDie):
     Each time the values in (explodes_on) are rolled, the die continues to roll,
     adding that value to the result. The die only continues rolling an (explosions) number of times.
 
-    Exploding(Die(6), (1, 6), explosions=2) rolls:
+    :code:`ExplodingOn(Die(6), (1, 6), explosions=2)` rolls:
     [2 to 5], 1+[2 to 5], 6+[2 to 5], 1+1+[1 to 6], 1+6+[1 to 6], 6+1+[1 to 6] and 6+6+[1 to 6].
 
     Explosions are applied after modifiers and multipliers.
-    Exploding(ModDie(4, -2), (2,)) explodes on a 2 so it rolls:
+    :code:`ExplodingOn(ModDie(4, -2), (2,))` explodes on a 2 so it rolls:
     [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
 
     **WARNING:** setting the number of explosions too high can make

@@ -1,6 +1,18 @@
 How to Get Errors and Bugs
 ==========================
 
+.. _Top:
+
+- `get_dict errors`_
+- `errors for dice`_
+- `add_die and remove_die are relatively safe`_
+- `combine and remove are not`_
+- `making a DiceTable with nonsense`_
+
+
+get_dict errors
+---------------
+
 Every time you instantiate any IntegerEvents, it is checked.  The get_dict() method returns a dict, and every value
 in get_dict().values() must be >=1. get_dict() may not be empty.
 since dt.Die(-2).get_dict() returns {}
@@ -34,6 +46,13 @@ scrub the zeroes from their get_dict() methods, these will not throw errors.
 2
 >>> weird.get_raw_dict() == {1: 1, 2: 0}
 True
+
+errors for :doc:`dice <../the_dice>`
+------------------------------------
+
+`Top`_
+
+.. _errors for dice:
 
 Special rule for WeightedDie and ModWeightedDie
 
@@ -84,7 +103,15 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ValueError: "explodes_on" value not present in input_die.get_dict()
 
-"remove_die" and "add_die" are safe. They raise an error if you
+add_die and remove_die are relatively safe
+------------------------------------------
+
+`Top`_
+
+
+:py:meth:`dicetables.dicetable.DiceTable.add_die`
+and :py:meth:`dicetables.dicetable.DiceTable.add_die`
+are safe. They raise an error if you
 remove too many dice or add or remove a negative number.
 
 If you "remove" or "combine" with a negative number, nothing should happen,
@@ -117,8 +144,16 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 DiceRecordError: Tried to add_die or remove_die with a negative number.
 
-And now, this is the trouble you can get into with "combine" and "remove"
+combine and remove are not
+--------------------------
 
+`Top`_
+
+And now, this is the trouble you can get into with
+:py:meth:`dicetables.additiveevents.AdditiveEvents.combine` and
+:py:meth:`dicetables.additiveevents.AdditiveEvents.remove`
+
+>>> table = dt.DiceTable.new().add_die(dt.Die(6))
 >>> table.get_dict() == {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}
 True
 >>> table = table.combine(dt.Die(10000), -100)
@@ -149,6 +184,26 @@ Signature In Factory: ('get_dict', 'dice_data')
 To reset the factory to its base state, use EventsFactory.reset()
 
 
+Calling combine_by_flattened_list can be risky
+
+>>> x = dt.AdditiveEvents({1:1, 2: 5})
+>>> x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4}), 5)
+>>> x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4*10**10}), 5)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+MemoryError
+
+>>> x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4*10**700}))
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+OverflowError: cannot fit 'int' into an index-sized integer
+
+making a DiceTable with nonsense
+--------------------------------
+
+`Top`_
+
+
 Since you can instantiate a DiceTable with any legal input,
 you can make a table with utter nonsense. It will work horribly.
 for instance, the dictionary for 2D6 is:
@@ -177,17 +232,3 @@ DiceRecordError: Tried to create a DiceRecord with a negative value at Die(5): -
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 DiceRecordError: input must be {ProtoDie: int, ...}
-
-Calling combine_by_flattened_list can be risky
-
->>> x = dt.AdditiveEvents({1:1, 2: 5})
->>> x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4}), 5)
->>> x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4*10**10}), 5)
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-MemoryError
-
->>> x = x.combine_by_flattened_list(dt.AdditiveEvents({1: 2, 3: 4*10**700}))
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-OverflowError: cannot fit 'int' into an index-sized integer

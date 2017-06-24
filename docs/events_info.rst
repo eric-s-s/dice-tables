@@ -2,7 +2,7 @@ EventsInformation And EventsCalculations
 ========================================
 
 These two objects can get information from any
-Events class.
+Events class. Below the class docs are some code examples.
 
 .. module:: dicetables.eventsinfo
 

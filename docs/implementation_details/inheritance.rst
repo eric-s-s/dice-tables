@@ -95,5 +95,7 @@ False
 
 When creating new methods, you can generate new events dictionaries by using
 dicetables.additiveevents.EventsDictCreator.  the factory can create new instances with
-EventsFactory.from_params.  For examples see the last few test in
-`tests.factory.test_eventsfactory <https://github.com/eric-s-s/dice-tables/blob/master/tests/factory/test_eventsfactory.py#L691>`_
+EventsFactory.from_params.  For an example see
+`tests.factory.test_eventsfactory 1 <https://github.com/eric-s-s/dice-tables/blob/master/tests/factory/test_eventsfactory.py#L691>`_
+. other examples of inheritance with DiceTable can be found just above that at:
+`tests.factory.test_eventsfactory 2 <https://github.com/eric-s-s/dice-tables/blob/master/tests/factory/test_eventsfactory.py#L618>`_
