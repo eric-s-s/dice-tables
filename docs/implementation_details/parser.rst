@@ -63,10 +63,12 @@ the appropriate Nodes. Then you assign the functions to the parser.
     :code:`my_node = ast.parse(<your_string>).body[0].value`
 
     >>> import ast
-    >>> ast.dump(ast.parse('[1, -1, "A"]'))
-    "Module(body=[Expr(value=List(elts=[Num(n=1), UnaryOp(op=USub(), operand=Num(n=1)), Str(s='A')], ctx=Load()))])"
+    >>> import sys
+    >>> version = sys.version_info[0]
+    >>> ast.dump(ast.parse('[1, 2, "A"]'))
+    "Module(body=[Expr(value=List(elts=[Num(n=1), Num(n=2), Str(s='A')], ctx=Load()))])"
     >>> my_list_node = ast.parse('[1, -1, "A"]').body[0].value
-    >>> ast.dump(my_list_node)
+    >>> answer = ast.dump(my_list_node)
     "List(elts=[Num(n=1), UnaryOp(op=USub(), operand=Num(n=1)), Str(s='A')], ctx=Load())"
 
     This says that the List node points to its elts:
