@@ -101,4 +101,9 @@ StatsStrings(query_values='8-19, 35, 50-62',
 5998: 500,500
 5999: 1,000
 6000: 1
-
+>>> big_table.calc.stats_strings(list(range(1000, 1501)))
+StatsStrings(query_values='1,000-1,500',
+             query_occurrences='2.439e+412',
+             total_occurrences='1.417e+778',
+             one_in_chance='5.809e+365',
+             pct_chance='1.722e-364')

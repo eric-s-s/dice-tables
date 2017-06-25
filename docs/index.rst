@@ -5,13 +5,16 @@
 
 .. py:module:: dicetables
 
-Welcome to dice_tables's documentation!
-=======================================
+Welcome to dicetables's documentation!
+======================================
 
-dicetables is a module for getting all the combinations for any set of dice.
+dicetables is a module for getting all the combinations for any set of dice
+and getting information from that data.
 
-It also has many ways to get fun and exciting information from these tables.
+It generates the combinations by adding dice to a DiceTable or DetailedDiceTable.
+You can get useful strings and calculations with EventsCalulations.
 
+For some quick examples, see :doc:`the_basics`
 
 Contents:
 

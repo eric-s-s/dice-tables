@@ -160,7 +160,6 @@ class TestNumberFormatter(unittest.TestCase):
         self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e-100'), '1.00e-100')
         self.assertEqual(remove_extra_zero_from_single_digit_exponent('1.00e+000'), '1.00e+000')
 
-
     def test_NumberFormatter_format_as_exponent_not_remove_extra_zero(self):
         formatter = NumberFormatter()
         test = 1.23456789 * 10 ** 12

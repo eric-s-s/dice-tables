@@ -3,7 +3,8 @@ DiceTable and DetailedDiceTable
 
 .. module:: dicetables.dicetable
 
-The two DiceTable classes are below
+The two DiceTable classes are below.
+They inherit from :py:class:`dicetables.additiveevents.AdditiveEvents`
 
 .. autoclass:: DiceTable
     :members:
@@ -11,18 +12,36 @@ The two DiceTable classes are below
 
     .. automethod:: new
 
-DetailedDiceTable is a dicetable that owns a
-:py:class:`dicetables.eventsinfo.EventsCalculations`. This is
-accessed from the :code:`.calc` property and you can set whether it
-includes zero values with `calc_includes_zeros`. Owning an EventsCalculations
-means that it uses more memory.
+Here is a quick demo of number_of_dice and weights_info
+
+>>> import dicetables as dt
+>>> table = dt.DiceTable.new().add_die(dt.Die(6), 2).add_die(dt.WeightedDie({1: 2, 3: 1}))
+>>> print(table.weights_info())
+1D3  W:3
+    a roll of 1 has a weight of 2
+    a roll of 2 has a weight of 0
+    a roll of 3 has a weight of 1
+<BLANKLINE>
+2D6
+    No weights
+>>> table.number_of_dice(dt.WeightedDie({1: 2, 2: 0, 3: 1}))
+1
+>>> table.number_of_dice(dt.Die(6))
+2
+>>> table.number_of_dice(dt.Die(100))
+0
+
 
 .. autoclass:: DetailedDiceTable
     :members:
     :undoc-members:
 
+    DetailedDiceTable is a dicetable that owns a
+    :py:class:`dicetables.eventsinfo.EventsCalculations`. This is
+    accessed from the :code:`.calc` property and you can set whether it
+    includes zero values with `calc_includes_zeros`. Owning an EventsCalculations
+    means that it uses more memory.
 
-They inherit from :py:class:`dicetables.additiveevents.AdditiveEvents`
 
 You can instantiate any DiceTable or DetailedDiceTable with any data you like.
 This allows you to create a DiceTable from stored information or to copy.
@@ -35,7 +54,6 @@ Equality testing is by:
 - dice_data()
 - (and calc_includes_zeroes for DetailedDiceTable).
 
->>> import dicetables as dt
 >>> ten_d_six = dt.DiceTable.new()
 >>> ten_d_six = ten_d_six.add_die(dt.Die(6), 10)
 >>> events_record = ten_d_six.get_dict()
@@ -58,7 +76,22 @@ True
 >>> type(also_ten_d_six) is dt.DiceTable
 False
 
-DetailedDiceTable.calc_includes_zeroes defaults to True. It is as follows.
+You can also remove dice, but this will raise an error if you remove too many.
+
+>>> table = dt.DiceTable.new().add_die(dt.Die(4), 10)
+>>> table.remove_die(dt.Die(4), 7)
+<DiceTable containing [3D4]>
+>>> table.get_list()
+[(Die(4), 10)]
+>>> table.remove_die(dt.Die(4), 11)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+DiceRecordError: Tried to create a DiceRecord with a negative value at Die(4): -1
+
+
+DetailedDiceTable.calc_includes_zeroes defaults to True. The only way to change this property
+is with the :code:`switch_boolean` method, which returns a new DetailedDiceTable that is
+identical to the original, except with `calc_includes_zeroes` switched.
 
 >>> d_table = dt.DetailedDiceTable.new()
 >>> d_table.calc_includes_zeroes
