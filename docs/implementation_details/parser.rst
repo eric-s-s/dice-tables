@@ -14,9 +14,8 @@ Parser
     >>> new_die = dt.Parser().parse_die('Die(6)')
     >>> new_die == dt.Die(6)
     True
-    >>> other_die = dt.Parser().parse_die('ModDie(6, modifier=1)')
-    >>> other_die == dt.ModDie(6, 1)
-    True
+    >>> dt.Parser().parse_die('ModDie(6, modifier=1)')
+    ModDie(6, 1)
 
     It can ignore case or not.  This applies to dice names and kwarg names. It defaults to ignore_case=False.
     You can also disable allowing kwargs. It defaults to disable_kwargs=False.
@@ -26,12 +25,12 @@ Parser
       File "<stdin>", line 1, in <module>
     ParseError: Die class: <die> not recognized by parser.
 
-    >>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), MULTIPLIER=4)') == dt.StrongDie(dt.Die(6), 4)
-    True
+    >>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), MULTIPLIER=4)')
+    StrongDie(Die(6), 4)
 
     >>> parser = dt.Parser(disable_kwargs=True)
-    >>> parser.parse_die('Die(6)') == dt.Die(6)
-    True
+    >>> parser.parse_die('Die(6)')
+    Die(6)
     >>> parser.parse_die('Die(die_size=6)')
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -128,7 +127,8 @@ disable this and add your own kwargs (or not).
 
 >>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
 >>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], stats={"friends": 2, "coolness_factor": 10}, size=4)'
->>> parser.parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
+>>> die = NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
+>>> parser.parse_die(die_str) == die
 True
 
 You can make a new parser class instead of a specific instance of Parser. Notice that I turned off the auto_detect and
@@ -144,11 +144,11 @@ told it some bad kwarg names.
 ...                        auto_detect_kwargs=False, kwargs=('oops', 'wrong', 'not_enough'))
 
 >>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
->>> MyParser().parse_die(die_str) == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
+>>> t_d_and_h_4_eva = NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
+>>> MyParser().parse_die(die_str) == t_d_and_h_4_eva
 True
 >>> upper_lower_who_cares = 'nAmeDdIE("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
->>> t_d_and_h_4_eva = MyParser(ignore_case=True).parse_die(upper_lower_who_cares)
->>> t_d_and_h_4_eva == NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
+>>> MyParser(ignore_case=True).parse_die(upper_lower_who_cares) == t_d_and_h_4_eva
 True
 >>> with_kwargs = 'NamedDie("Tom", ["D", "H"], stats={}, size=4)'
 >>> MyParser().parse_die(with_kwargs)
