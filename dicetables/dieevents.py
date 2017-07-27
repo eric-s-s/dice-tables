@@ -1,6 +1,9 @@
 """
 All the descendants of ProtoDie.  These are IntegerEvents that represent different types of dice.
 """
+import itertools
+import functools
+from operator import mul
 
 from dicetables.eventsbases.protodie import ProtoDie
 
@@ -372,26 +375,28 @@ class ExplodingOn(ProtoDie):
             raise ValueError('"explosions" value must be >= 0.')
 
     def _get_exploding_dict(self):
-        level = 0
-        weight_multiplier = 1
-        roll_mod = 0
-        return self._recursively_derive_exploding_dict(level, roll_mod, weight_multiplier)
-
-    def _recursively_derive_exploding_dict(self, level, roll_mod, weight_multiplier):
         base_dict = self._original.get_dict()
-        current_level = self._get_base_for_current_level(base_dict, level, roll_mod, weight_multiplier)
+        answer = {}
+        for level in range(self._explosions + 1):
+            roll_and_weight_modifiers = self._get_roll_and_weight_mods(level, base_dict)
+            level_dict = self._get_level_dict(base_dict, level, roll_and_weight_modifiers)
+            answer = add_dicts(answer, level_dict)
+        return answer
 
-        if level == self._explosions:
-            return current_level
+    def _get_roll_and_weight_mods(self, level, base_dict):
+        if level == 0:
+            return [(0, 1)]
+        roll_weight = [(roll, base_dict[roll]) for roll in self._explodes_on]
+        elements_for_product = [roll_weight[:] for _ in range(level)]
+        raw_rollweight_combinations = itertools.product(*elements_for_product)
+        return [calc_roll_and_weight_mods(rollweight_list) for rollweight_list in raw_rollweight_combinations]
 
-        for roll in self._explodes_on:
-            weight_val = base_dict[roll]
-            new_weight_multiplier = weight_multiplier * weight_val
-            new_roll_mod = roll_mod + roll
-            new_level = level + 1
-            sub_level = self._recursively_derive_exploding_dict(new_level, new_roll_mod, new_weight_multiplier)
-            current_level = add_dicts(current_level, sub_level)
-        return current_level
+    def _get_level_dict(self, base_dict, level, roll_weights):
+        answer = {}
+        for roll_mod, weight_mod in roll_weights:
+            to_add = self._get_base_for_current_level(base_dict, level, roll_mod, weight_mod)
+            answer = add_dicts(answer, to_add)
+        return answer
 
     def _get_base_for_current_level(self, base_dict, level, roll_mod, weight_multiplier):
         base_level_multiplier = sum(base_dict.values())
@@ -452,6 +457,14 @@ def add_dicts(dict_1, dict_2):
     for key, val in dict_2.items():
         out[key] = out.get(key, 0) + val
     return out
+
+
+def calc_roll_and_weight_mods(roll_weight_tuples):
+    rolls_then_weights = list(zip(*roll_weight_tuples))
+    rolls = rolls_then_weights[0]
+    weight = rolls_then_weights[1]
+    weight_product = functools.reduce(mul, weight, 1)
+    return sum(rolls), weight_product
 
 
 def remove_keys_after_applying_modifier(start_dict, to_exclude_basis, basis_modifier):
