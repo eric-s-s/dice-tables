@@ -348,7 +348,8 @@ class ExplodingOn(ProtoDie):
     [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
 
     **WARNING:** setting the number of explosions too high can make
-    instantiation VERY slow.
+    instantiation VERY slow. Time is proportional to explosion**(len(explodes_on)). It's also linear
+    with size which gets overshadowed by the first factor.
     """
     def __init__(self, input_die, explodes_on, explosions=2):
         """
@@ -393,6 +394,7 @@ class ExplodingOn(ProtoDie):
 
     def _get_level_dict(self, base_dict, level, roll_weights):
         answer = {}
+        roll_weights = consolidate_roll_mods(roll_weights)
         for roll_mod, weight_mod in roll_weights:
             to_add = self._get_base_for_current_level(base_dict, level, roll_mod, weight_mod)
             answer = add_dicts(answer, to_add)
@@ -469,3 +471,16 @@ def calc_roll_and_weight_mods(roll_weight_tuples):
 
 def remove_keys_after_applying_modifier(start_dict, to_exclude_basis, basis_modifier):
     return {key: val for key, val in start_dict.items() if key - basis_modifier not in to_exclude_basis}
+
+
+def consolidate_roll_mods(rollweight_tuples):
+    rolls = set([rollweight[0] for rollweight in rollweight_tuples])
+    answer = []
+    for roll_ in rolls:
+        weights = [weight for roll, weight in rollweight_tuples if roll == roll_]
+        answer.append((roll_, sum(weights)))
+    return answer
+"""
+consolidate two sets.  final level and intermediate lvls.  have two methods to calc based on bse_dict and big list of
+rollweights.  time tst vs Exploding
+"""
