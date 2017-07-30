@@ -2,8 +2,7 @@
 All the descendants of ProtoDie.  These are IntegerEvents that represent different types of dice.
 """
 import itertools
-import functools
-from operator import mul
+
 
 from dicetables.eventsbases.protodie import ProtoDie
 
@@ -261,7 +260,7 @@ class Exploding(ProtoDie):
     [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
 
     **WARNING:** setting the number of explosions too high can make
-    instantiation VERY slow.
+    instantiation VERY slow. The time is proportional to explosions and die_size.
     """
 
     def __init__(self, input_die, explosions=2):
@@ -300,9 +299,9 @@ class Exploding(ProtoDie):
         roll_mod = explosion_level * highest_roll
 
         level_dict = {roll + roll_mod: occurrence * occurrence_mod for roll, occurrence in base_dict.items()}
-        if explosion_level != self._explosions:
-            level_dict = remove_keys_after_applying_modifier(level_dict, (highest_roll,), roll_mod)
-        return level_dict
+        if explosion_level == self._explosions:
+            return level_dict
+        return remove_keys_after_applying_modifier(level_dict, (highest_roll,), roll_mod)
 
     def get_size(self):
         return self._original.get_size()
@@ -387,15 +386,15 @@ class ExplodingOn(ProtoDie):
     def _get_roll_and_weight_mods(self, level, base_dict):
         if level == 0:
             return [(0, 1)]
-        roll_weight = [(roll, base_dict[roll]) for roll in self._explodes_on]
-        elements_for_product = [roll_weight[:] for _ in range(level)]
+        base_rolls_and_weights = [(roll, base_dict[roll]) for roll in self._explodes_on]
+        elements_for_product = [base_rolls_and_weights] * level
         raw_rollweight_combinations = itertools.product(*elements_for_product)
         return [calc_roll_and_weight_mods(rollweight_list) for rollweight_list in raw_rollweight_combinations]
 
     def _get_level_dict(self, base_dict, level, roll_weights):
         answer = {}
-        roll_weights = consolidate_roll_mods(roll_weights)
-        for roll_mod, weight_mod in roll_weights:
+        roll_weight_dict = consolidate_roll_mods(roll_weights)
+        for roll_mod, weight_mod in roll_weight_dict.items():
             to_add = self._get_base_for_current_level(base_dict, level, roll_mod, weight_mod)
             answer = add_dicts(answer, to_add)
         return answer
@@ -462,25 +461,27 @@ def add_dicts(dict_1, dict_2):
 
 
 def calc_roll_and_weight_mods(roll_weight_tuples):
-    rolls_then_weights = list(zip(*roll_weight_tuples))
-    rolls = rolls_then_weights[0]
-    weight = rolls_then_weights[1]
-    weight_product = functools.reduce(mul, weight, 1)
-    return sum(rolls), weight_product
+    total_roll_mod = 0
+    total_weight_mod = 1
+    for roll, weight in roll_weight_tuples:
+        total_roll_mod += roll
+        total_weight_mod *= weight
+    return total_roll_mod, total_weight_mod
 
 
-def remove_keys_after_applying_modifier(start_dict, to_exclude_basis, basis_modifier):
-    return {key: val for key, val in start_dict.items() if key - basis_modifier not in to_exclude_basis}
+def remove_keys_after_applying_modifier(modified_dict, original_excluded_keys, key_modifier):
+    return {key: val for key, val in modified_dict.items() if key - key_modifier not in original_excluded_keys}
 
 
 def consolidate_roll_mods(rollweight_tuples):
-    rolls = set([rollweight[0] for rollweight in rollweight_tuples])
-    answer = []
-    for roll_ in rolls:
-        weights = [weight for roll, weight in rollweight_tuples if roll == roll_]
-        answer.append((roll_, sum(weights)))
+    answer = {}
+    for roll, weight in rollweight_tuples:
+        answer[roll] = weight + answer.get(roll, 0)
     return answer
+
 """
 consolidate two sets.  final level and intermediate lvls.  have two methods to calc based on bse_dict and big list of
 rollweights.  time tst vs Exploding
+
+dont' forget testing helpers.
 """

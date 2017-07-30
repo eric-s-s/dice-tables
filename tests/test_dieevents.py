@@ -5,7 +5,8 @@ import unittest
 
 from dicetables.dieevents import (Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier,
                                   Exploding, ExplodingOn,
-                                  add_dicts, remove_keys_after_applying_modifier, remove_duplicates)
+                                  add_dicts, remove_keys_after_applying_modifier, remove_duplicates,
+                                  calc_roll_and_weight_mods, consolidate_roll_mods)
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
@@ -476,6 +477,21 @@ class TestDieEvents(unittest.TestCase):
         self.assertIsNot(answer, a)
         self.assertIsNot(answer, b)
 
+    def test_module_level_helper_function_calc_roll_and_weight_mods(self):
+        rolls_and_weights = [(-1, 2), (0, 3), (4, 5)]
+        self.assertEqual(calc_roll_and_weight_mods(rolls_and_weights),
+                         (-1 + 0 + 4, 2 * 3 * 5))
+
+    def test_consolidate_roll_mods_rolls_all_different(self):
+        roll_mods_and_weight_mods = [(1, 2), (3, 4), (5, 6)]
+        expected = {1: 2, 3: 4, 5: 6}
+        self.assertEqual(consolidate_roll_mods(roll_mods_and_weight_mods), expected)
+
+    def test_consolidate_roll_mods_some_rolls_the_same(self):
+        roll_mods_and_weight_mods = [(1, 2), (3, 4), (5, 6), (1, 3)]
+        expected = {1: 5, 3: 4, 5: 6}
+        self.assertEqual(consolidate_roll_mods(roll_mods_and_weight_mods), expected)
+
     def test_module_level_helper_function_remove_keys_after_applying_modifier(self):
         modifier = 4
         to_remove = (1, 2)
@@ -671,35 +687,6 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(die.weight_info(),
                          "D2: Explosions=1 On: 1\n    No weights\nExploding on 1 value adds weight: 1")
         self.assertEqual(die, ExplodingOn(Die(2), (1,), 1))
-
-import time
-
-class TestTime(unittest.TestCase):
-    def test_time(self):
-        for expl in range(1, 6):
-            lowest = []
-            for die_size in (10, 50, 100, 500, 1000):
-                print('SIZE: ', die_size, 'EXPL: ', expl)
-                for num_el in range(1, 6):
-                    param = tuple(range(1, num_el + 1))
-                    in_dict = {roll: roll + 5 for roll in range(1, die_size + 1)}
-
-                    if num_el == 1:
-                        the_time = time.clock()
-                        Exploding(Die(die_size), explosions=expl)
-                        exptime = time.clock() - the_time
-                        print('Single  time: {:0.5f}'.format(exptime))
-
-                    now = time.clock()
-                    # ExplodingOn(WeightedDie(in_dict), param, explosions=expl)
-                    ExplodingOn(Die(die_size), param, explosions=expl)
-                    then = time.clock() - now
-                    if die_size == 10:
-                        lowest.append(then)
-                    index = num_el - 1
-                    factor = then / lowest[index]
-                    print('els: {}  time: {:.5f}  factor: {:.1f}'.format(num_el, then, factor))
-
 
 
 if __name__ == '__main__':
