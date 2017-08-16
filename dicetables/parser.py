@@ -7,7 +7,7 @@ class ParseError(ValueError):
     def __init__(self, *args):
         super(ParseError, self).__init__(*args)
 
-
+# TODO explosion limits : number = elts + explosions reasonable limit = 10
 class Parser(object):
     def __init__(self, ignore_case=False, disable_kwargs=False):
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
@@ -156,4 +156,3 @@ def _get_kwargs_from_init(klass):
         return kwargs[1:]
     except AttributeError:
         raise AttributeError('could not find the code for __init__ function at klass.__init__.__code__')
-

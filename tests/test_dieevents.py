@@ -689,6 +689,61 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(die, ExplodingOn(Die(2), (1,), 1))
 
 
+import time
+
+class TestTime(unittest.TestCase):
+    def test_time(self):
+        data = []
+        for expl in range(1, 11):
+            lowest = []
+            for die_size in (10, 50, 100, 500, 1000):
+                # print('SIZE: ', die_size, 'EXPL: ', expl)
+                for num_el in range(1, 6):
+                    param = tuple(range(1, num_el + 1))
+                    in_dict = {roll: roll + 5 for roll in range(1, die_size + 1)}
+
+                    if num_el == 1:
+                        the_time = time.clock()
+                        Exploding(Die(die_size), explosions=expl)
+                        exptime = time.clock() - the_time
+                        # print('Single  time: {:0.5f}'.format(exptime))
+
+                    now = time.clock()
+                    # ExplodingOn(WeightedDie(in_dict), param, explosions=expl)
+                    ExplodingOn(Die(die_size), param, explosions=expl)
+                    then = time.clock() - now
+                    if die_size == 10:
+                        lowest.append(then)
+                    index = num_el - 1
+                    factor = then / lowest[index]
+                    # print('els: {}  time: {:.5f}  factor: {:.1f}'.format(num_el, then, factor))
+                    data.append((then, expl, num_el, die_size))
+        sz = 5
+        for line in data:
+            if sz != line[3]:
+                sz = line[3]
+                print()
+            if line[2] == 1:
+                base = line[0]
+            factor = line[0] / base
+
+            print('{:>11.3f}, {:.4f}, {}, {}, {}'.format(factor, *line))
+
+
+        print('='*10)
+        el = 1
+        for line in sorted(data, key=lambda x: (x[3], x[2], x[1])):
+            if el != line[2]:
+                print()
+                el = line[2]
+
+            if line[1] == 1:
+                base = line[0]
+            factor = line[0] / base
+
+            print('{:>11.3f}, {:.4f}, {}, {}, {}'.format(factor, *line))
+
+
 if __name__ == '__main__':
 
     unittest.main()
