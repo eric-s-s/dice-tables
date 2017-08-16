@@ -481,7 +481,7 @@ def consolidate_roll_mods(rollweight_tuples):
 
 """
 consolidate two sets.  final level and intermediate lvls.  have two methods to calc based on bse_dict and big list of
-rollweights.  time tst vs Exploding
+rllweights.  time tst vs Exploding
 
 dont' forget testing helpers.
 """
