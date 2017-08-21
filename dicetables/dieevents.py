@@ -478,10 +478,3 @@ def consolidate_roll_mods(rollweight_tuples):
     for roll, weight in rollweight_tuples:
         answer[roll] = weight + answer.get(roll, 0)
     return answer
-
-"""
-consolidate two sets.  final level and intermediate lvls.  have two methods to calc based on bse_dict and big list of
-rllweights.  time tst vs Exploding
-
-dont' forget testing helpers.
-"""

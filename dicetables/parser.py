@@ -7,9 +7,9 @@ class ParseError(ValueError):
     def __init__(self, *args):
         super(ParseError, self).__init__(*args)
 
-# TODO explosion limits : number = elts + explosions reasonable limit = 10
+
 class Parser(object):
-    def __init__(self, ignore_case=False, disable_kwargs=False):
+    def __init__(self, ignore_case=False, disable_kwargs=False, max_size=500, max_explosions=10, recursion_depth=5):
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
                          ModWeightedDie: ('int_dict', 'int'), WeightedDie: ('int_dict',),
                          StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
@@ -24,6 +24,12 @@ class Parser(object):
 
         self.ignore_case = ignore_case
         self.disable_kwargs = disable_kwargs
+        self.max_size = max_size
+        self.max_explosions = max_explosions
+        self.recursion_depth = recursion_depth
+
+        self._current_depth = 0
+        self._use_limits = False
 
     def get_param_types(self):
         return self._param_types.copy()
@@ -38,6 +44,14 @@ class Parser(object):
         ast_call_node = ast.parse(die_string).body[0].value
         return self.make_die(ast_call_node)
 
+    def parse_die_within_limits(self, die_string):
+        ast_call_node = ast.parse(die_string).body[0].value
+        self._use_limits = True
+        self._current_depth = 0
+        die = self.make_die(ast_call_node)
+        self._use_limits = False
+        return die
+
     def make_die(self, call_node):
         die_class_name = call_node.func.id
         param_nodes = call_node.args
@@ -45,6 +59,8 @@ class Parser(object):
         die_class = self._get_die_class(die_class_name)
         die_params = self._get_params(param_nodes, die_class)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_class)
+        if self._use_limits:
+            self.check_limits(die_class, die_params, die_kwargs)
         return die_class(*die_params, **die_kwargs)
 
     def _get_die_class(self, class_name):
@@ -113,18 +129,54 @@ class Parser(object):
         true_kwarg_name = true_kwarg_tuple[index]
         return true_kwarg_name, value
 
-    def add_class(self, klass, param_identifiers, auto_detect_kwargs=True, kwargs=()):
+    def check_limits(self, die_class, die_params, die_kwargs):
+        self._check_recursion_depth()
+        self._current_depth += 1
+
+        class_kwargs = self._kwargs[die_class]
+
+        explosions = find_value('explosions', class_kwargs, die_params, die_kwargs)
+        explodes_on = find_value('explodes_on', class_kwargs, die_params, die_kwargs)
+        die_size = find_value('die_size', class_kwargs, die_params, die_kwargs)
+        dictionary_input = find_value('dictionary_input', class_kwargs, die_params, die_kwargs)
+
+        self._check_die_size(dictionary_input, die_size)
+
+        self._check_explosions(explodes_on, explosions)
+
+    def _check_recursion_depth(self):
+        if self._current_depth > self.recursion_depth:
+            msg = 'Too many nested dice in die string. Max number of nested calls: {}'.format(self.recursion_depth)
+            raise ParseError(msg)
+
+    def _check_die_size(self, dictionary_input, die_size):
+        if die_size is not None:
+            if die_size > self.max_size:
+                raise ParseError('die_size exceeds limit: {}'.format(self.max_size))
+        if dictionary_input is not None:
+            if max(dictionary_input.keys()) > self.max_size:
+                raise ParseError('max value of dictionary exceeds limit: {}'.format(self.max_size))
+
+    def _check_explosions(self, explodes_on, explosions):
+        if explosions is not None:
+            total = explosions
+            if explodes_on is not None:
+                total += len(explodes_on)
+            if total > self.max_explosions:
+                raise ParseError('Explosions + len(explodes_on) exceeds limit: {}'.format(self.max_explosions))
+
+    def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
         """
 
-        :param klass: the class you are adding
+        :param class_: the class you are adding
         :param param_identifiers: a tuple of param_types according to Parser().get_param_types()
         :param auto_detect_kwargs: will try to detect kwargs of __init__ function. overrides kwargs param
         :param kwargs: (optional) a tuple of the kwarg names for instantiation of the new class.
         """
-        self._classes[klass] = param_identifiers
+        self._classes[class_] = param_identifiers
         if auto_detect_kwargs:
-            kwargs = _get_kwargs_from_init(klass)
-        self._kwargs[klass] = kwargs
+            kwargs = _get_kwargs_from_init(class_)
+        self._kwargs[class_] = kwargs
 
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
@@ -150,9 +202,20 @@ def make_int(num_node):
     return num_node.n
 
 
-def _get_kwargs_from_init(klass):
+def _get_kwargs_from_init(class_):
     try:
-        kwargs = klass.__init__.__code__.co_varnames
+        kwargs = class_.__init__.__code__.co_varnames
         return kwargs[1:]
     except AttributeError:
-        raise AttributeError('could not find the code for __init__ function at klass.__init__.__code__')
+        raise AttributeError('could not find the code for __init__ function at class_.__init__.__code__')
+
+
+def find_value(key_word, class_kwargs, die_params, die_kwargs):
+    if key_word not in class_kwargs:
+        return None
+
+    index = list(class_kwargs).index(key_word)
+    if len(die_params) > index:
+        return die_params[index]
+    else:
+        return die_kwargs[key_word]

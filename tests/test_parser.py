@@ -7,13 +7,17 @@ import sys
 
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, Exploding, ExplodingOn
 
-from dicetables.parser import Parser, ParseError, make_int, make_int_dict, make_int_tuple
+from dicetables.parser import Parser, ParseError, make_int, make_int_dict, make_int_tuple, find_value
 
 
 class TestParser(unittest.TestCase):
     def test_init_default(self):
         self.assertFalse(Parser().ignore_case)
         self.assertFalse(Parser().disable_kwargs)
+
+        self.assertEqual(Parser().recursion_depth, 5)
+        self.assertEqual(Parser().max_size, 500)
+        self.assertEqual(Parser().max_explosions, 10)
 
     def test_init_setting_ignore_case(self):
         self.assertFalse(Parser(False).ignore_case)
@@ -23,36 +27,10 @@ class TestParser(unittest.TestCase):
         self.assertFalse(Parser(disable_kwargs=False).disable_kwargs)
         self.assertTrue(Parser(disable_kwargs=True).disable_kwargs)
 
-    def test_get_param_types(self):
-        the_parser = Parser()
-        answer = {'int': make_int, 'int_dict': make_int_dict,
-                  'die': the_parser.make_die, 'int_tuple': make_int_tuple}
-
-        self.assertEqual(the_parser.get_param_types(), answer)
-        self.assertIsNot(the_parser.get_param_types(), answer)
-        self.assertNotEqual(Parser().get_param_types(), answer)
-
-    def test_get_param_types_is_specific_to_each_instance_due_to_value_at_die(self):
-        the_parser = Parser()
-        answer = {'int': make_int, 'int_dict': make_int_dict,
-                  'die': the_parser.make_die, 'int_tuple': make_int_tuple}
-
-        self.assertNotEqual(Parser().get_param_types(), answer)
-
-    def test_get_classes(self):
-        answer = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
-                  WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
-                  ExplodingOn: ('die', 'int_tuple', 'int')}
-        self.assertEqual(answer, Parser().get_classes())
-        self.assertIsNot(answer, Parser().get_classes())
-
-    def test_get_kwargs(self):
-        answer = {Die: ('die_size',), ModDie: ('die_size', 'modifier'), Modifier: ('modifier',),
-                  ModWeightedDie: ('dictionary_input', 'modifier'), WeightedDie: ('dictionary_input',),
-                  StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
-                  ExplodingOn: ('input_die', 'explodes_on', 'explosions')}
-        self.assertEqual(answer, Parser().get_kwargs())
-        self.assertIsNot(answer, Parser().get_kwargs())
+    def test_init_setting_limits(self):
+        self.assertEqual(Parser(recursion_depth=10).recursion_depth, 10)
+        self.assertEqual(Parser(max_explosions=100).max_explosions, 100)
+        self.assertEqual(Parser(max_size=100).max_size, 100)
 
     def test_make_int(self):
         self.assertEqual(make_int(ast.parse('3').body[0].value), 3)
@@ -86,6 +64,146 @@ class TestParser(unittest.TestCase):
 
         empty_dict_node = ast.parse('{}').body[0].value
         self.assertEqual(make_int_dict(empty_dict_node), {})
+
+    def test_get_param_types(self):
+        the_parser = Parser()
+        answer = {'int': make_int, 'int_dict': make_int_dict,
+                  'die': the_parser.make_die, 'int_tuple': make_int_tuple}
+
+        self.assertEqual(the_parser.get_param_types(), answer)
+        self.assertIsNot(the_parser.get_param_types(), answer)
+        self.assertNotEqual(Parser().get_param_types(), answer)
+
+    def test_get_param_types_is_specific_to_each_instance_due_to_value_at_die(self):
+        the_parser = Parser()
+        answer = {'int': make_int, 'int_dict': make_int_dict,
+                  'die': the_parser.make_die, 'int_tuple': make_int_tuple}
+
+        self.assertNotEqual(Parser().get_param_types(), answer)
+
+    def test_get_classes(self):
+        answer = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
+                  WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
+                  ExplodingOn: ('die', 'int_tuple', 'int')}
+        self.assertEqual(answer, Parser().get_classes())
+        self.assertIsNot(answer, Parser().get_classes())
+
+    def test_get_kwargs(self):
+        answer = {Die: ('die_size',), ModDie: ('die_size', 'modifier'), Modifier: ('modifier',),
+                  ModWeightedDie: ('dictionary_input', 'modifier'), WeightedDie: ('dictionary_input',),
+                  StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
+                  ExplodingOn: ('input_die', 'explodes_on', 'explosions')}
+        self.assertEqual(answer, Parser().get_kwargs())
+        self.assertIsNot(answer, Parser().get_kwargs())
+
+    def test_find_value_key_word_not_present(self):
+        key_word = 'not_there'
+        class_kwargs = ('die_size', 'modifier')
+        die_params = (3, )
+        die_kwargs = {'modifier': -2}
+        self.assertIsNone(find_value(key_word, class_kwargs, die_params, die_kwargs))
+
+    def test_find_value_key_word_in_params(self):
+        key_word = 'die_size'
+        class_kwargs = ('die_size', 'modifier')
+        die_params = (3, )
+        die_kwargs = {'modifier': -2}
+        self.assertEqual(find_value(key_word, class_kwargs, die_params, die_kwargs), 3)
+
+    def test_find_value_key_word_in_kwargs(self):
+        key_word = 'modifier'
+        class_kwargs = ('die_size', 'modifier')
+        die_params = (3, )
+        die_kwargs = {'modifier': -2}
+        self.assertEqual(find_value(key_word, class_kwargs, die_params, die_kwargs), -2)
+
+    def test_check_limits_die_has_no_limit_values(self):
+        self.assertIsNone(Parser().check_limits(Modifier, (100000,), {}))
+        self.assertIsNone(Parser().check_limits(Modifier, (), {'modifier': 1000000}))
+
+    def test_check_limits_explosions_within_limits_Exploding(self):
+        input_die = Die(3)
+        params = (input_die, 10)
+        kwargs = {'input_die': input_die, 'explosions': 10}
+        self.assertIsNone(Parser().check_limits(Exploding, params, {}))
+        self.assertIsNone(Parser().check_limits(Exploding, (), kwargs))
+
+    def test_check_limits_explosions_over_limits_Exploding(self):
+        input_die = Die(3)
+        params = (input_die, 11)
+        kwargs = {'input_die': input_die, 'explosions': 11}
+        with self.assertRaises(ParseError) as e:
+            Parser().check_limits(Exploding, params, {})
+        self.assertEqual(e.exception.args[0], 'Explosions + len(explodes_on) exceeds limit: 10')
+        self.assertRaises(ParseError, Parser().check_limits, Exploding, (), kwargs)
+
+    def test_check_limits_explosions_within_limits_ExplodingOn(self):
+        input_die = Die(3)
+        params = (input_die, (1, 2), 8)
+        kwargs = {'input_die': input_die, 'explodes_on': (1, 2), 'explosions': 8}
+        self.assertIsNone(Parser().check_limits(ExplodingOn, params, {}))
+        self.assertIsNone(Parser().check_limits(ExplodingOn, (), kwargs))
+
+    def test_check_limits_explosions_over_limits_exploding(self):
+        input_die = Die(3)
+        params = (input_die, (1, 2), 9)
+        kwargs = {'input_die': input_die, 'explodes_on': (1, 2), 'explosions': 9}
+        with self.assertRaises(ParseError) as e:
+            Parser().check_limits(ExplodingOn, params, {})
+        self.assertEqual(e.exception.args[0], 'Explosions + len(explodes_on) exceeds limit: 10')
+        self.assertRaises(ParseError, Parser().check_limits, ExplodingOn, (), kwargs)
+
+    def test_check_limits_die_size_int(self):
+        parser = Parser(max_size=10)
+
+        die_size = 10
+        mod = -500000
+
+        params = (die_size, mod)
+        kwargs = {'die_size': die_size, 'modifier': mod}
+
+        self.assertIsNone(parser.check_limits(ModDie, params, {}))
+        self.assertIsNone(parser.check_limits(ModDie, (), kwargs))
+
+        die_size += 1
+        with self.assertRaises(ParseError) as e:
+            parser.check_limits(ModDie, (die_size,), {'modifier': mod})
+        self.assertEqual(e.exception.args[0], 'die_size exceeds limit: 10')
+
+    def test_check_limits_die_size_input_dict(self):
+        parser = Parser(max_size=10)
+
+        input_dict = {10: 1}
+        mod = -500000
+
+        params = (input_dict, mod)
+        kwargs = {'dictionary_input': input_dict, 'modifier': mod}
+
+        self.assertIsNone(parser.check_limits(ModWeightedDie, params, {}))
+        self.assertIsNone(parser.check_limits(ModWeightedDie, (), kwargs))
+
+        input_dict[11] = 2
+        with self.assertRaises(ParseError) as e:
+            parser.check_limits(ModWeightedDie, (input_dict,), {'modifier': mod})
+        self.assertEqual(e.exception.args[0], 'max value of dictionary exceeds limit: 10')
+
+    def test_check_limits_recursion_depth(self):
+        parser = Parser(recursion_depth=3)
+        depth_3 = 'StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)'
+        depth_4 = 'StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)'
+        parser.parse_die_within_limits(depth_3)
+        # TODO make better test!
+        # parser.parse_die_within_limits(depth_4)
+
+    def test_parse_within_limits(self):
+        depth_4 = 'StrongDie(StrongDie(StrongDie(StrongDie(Die(501), 2), 2), 2), 2)'
+        # TODO make better test!
+        # Parser().parse_die_within_limits(depth_4)
+
+    def test_parse_within_limits_2(self):
+        depth_4 = 'StrongDie(ExplodingOn(Exploding(Die(500), 3), (1, 2), 9), 5)'
+        # TODO make better test!
+        # Parser().parse_die_within_limits(depth_4)
 
     def test_make_die_raises_error_on_function_call_not_in_parser(self):
         die = ast.parse('NotThere()').body[0].value
@@ -350,7 +468,7 @@ class TestParser(unittest.TestCase):
             Parser().add_class(Thing, ('str',))
 
         self.assertEqual(cm.exception.args[0],
-                         'could not find the code for __init__ function at klass.__init__.__code__')
+                         'could not find the code for __init__ function at class_.__init__.__code__')
 
     def test_add_param_type(self):
         def a_func(x):
