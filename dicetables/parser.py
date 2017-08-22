@@ -28,7 +28,7 @@ class Parser(object):
         self.max_explosions = max_explosions
         self.recursion_depth = recursion_depth
 
-        self._current_depth = 0
+        self._current_recursion_depth = 0
         self._use_limits = False
 
     def get_param_types(self):
@@ -47,7 +47,7 @@ class Parser(object):
     def parse_die_within_limits(self, die_string):
         ast_call_node = ast.parse(die_string).body[0].value
         self._use_limits = True
-        self._current_depth = 0
+        self._current_recursion_depth = 0
         die = self.make_die(ast_call_node)
         self._use_limits = False
         return die
@@ -61,6 +61,7 @@ class Parser(object):
         die_kwargs = self._get_kwargs(kwarg_nodes, die_class)
         if self._use_limits:
             self.check_limits(die_class, die_params, die_kwargs)
+            self._current_recursion_depth += 1
         return die_class(*die_params, **die_kwargs)
 
     def _get_die_class(self, class_name):
@@ -114,24 +115,23 @@ class Parser(object):
         return tuple(map(self._update_search_string, search_tuple))
 
     def _get_kwarg_value(self, die_class, kwarg_node):
-        search_kwarg_name = self._update_search_string(kwarg_node.arg)
+        kwarg_name_to_search_for = self._update_search_string(kwarg_node.arg)
         value_node = kwarg_node.value
 
-        param_types = self._classes[die_class]
-        true_kwarg_tuple = self._kwargs[die_class]
-        search_kwarg_tuple = self._update_search_tuple(true_kwarg_tuple)
+        class_param_types = self._classes[die_class]
+        true_kwarg_names = self._kwargs[die_class]
+        kwarg_names_to_search = self._update_search_tuple(true_kwarg_names)
 
-        index = search_kwarg_tuple.index(search_kwarg_name)
+        index = kwarg_names_to_search.index(kwarg_name_to_search_for)
 
-        param_key = param_types[index]
-        value = self._param_types[param_key](value_node)
+        kwarg_type = class_param_types[index]
+        value = self._param_types[kwarg_type](value_node)
 
-        true_kwarg_name = true_kwarg_tuple[index]
+        true_kwarg_name = true_kwarg_names[index]
         return true_kwarg_name, value
 
     def check_limits(self, die_class, die_params, die_kwargs):
         self._check_recursion_depth()
-        self._current_depth += 1
 
         class_kwargs = self._kwargs[die_class]
 
@@ -145,17 +145,18 @@ class Parser(object):
         self._check_explosions(explodes_on, explosions)
 
     def _check_recursion_depth(self):
-        if self._current_depth > self.recursion_depth:
-            msg = 'Too many nested dice in die string. Max number of nested calls: {}'.format(self.recursion_depth)
+        if self._current_recursion_depth > self.recursion_depth:
+            msg = 'LIMITS EXCEEDED. Max number of nested dice: {}'.format(self.recursion_depth)
             raise ParseError(msg)
 
     def _check_die_size(self, dictionary_input, die_size):
+        msg = 'LIMITS EXCEEDED. Max die_size: {}'.format(self.max_size)
         if die_size is not None:
             if die_size > self.max_size:
-                raise ParseError('die_size exceeds limit: {}'.format(self.max_size))
+                raise ParseError(msg)
         if dictionary_input is not None:
             if max(dictionary_input.keys()) > self.max_size:
-                raise ParseError('max value of dictionary exceeds limit: {}'.format(self.max_size))
+                raise ParseError(msg)
 
     def _check_explosions(self, explodes_on, explosions):
         if explosions is not None:
@@ -163,7 +164,8 @@ class Parser(object):
             if explodes_on is not None:
                 total += len(explodes_on)
             if total > self.max_explosions:
-                raise ParseError('Explosions + len(explodes_on) exceeds limit: {}'.format(self.max_explosions))
+                msg = 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
+                raise ParseError(msg)
 
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
         """

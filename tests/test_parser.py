@@ -134,7 +134,7 @@ class TestParser(unittest.TestCase):
         kwargs = {'input_die': input_die, 'explosions': 11}
         with self.assertRaises(ParseError) as e:
             Parser().check_limits(Exploding, params, {})
-        self.assertEqual(e.exception.args[0], 'Explosions + len(explodes_on) exceeds limit: 10')
+        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): 10')
         self.assertRaises(ParseError, Parser().check_limits, Exploding, (), kwargs)
 
     def test_check_limits_explosions_within_limits_ExplodingOn(self):
@@ -150,7 +150,7 @@ class TestParser(unittest.TestCase):
         kwargs = {'input_die': input_die, 'explodes_on': (1, 2), 'explosions': 9}
         with self.assertRaises(ParseError) as e:
             Parser().check_limits(ExplodingOn, params, {})
-        self.assertEqual(e.exception.args[0], 'Explosions + len(explodes_on) exceeds limit: 10')
+        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): 10')
         self.assertRaises(ParseError, Parser().check_limits, ExplodingOn, (), kwargs)
 
     def test_check_limits_die_size_int(self):
@@ -168,7 +168,7 @@ class TestParser(unittest.TestCase):
         die_size += 1
         with self.assertRaises(ParseError) as e:
             parser.check_limits(ModDie, (die_size,), {'modifier': mod})
-        self.assertEqual(e.exception.args[0], 'die_size exceeds limit: 10')
+        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max die_size: 10')
 
     def test_check_limits_die_size_input_dict(self):
         parser = Parser(max_size=10)
@@ -185,7 +185,7 @@ class TestParser(unittest.TestCase):
         input_dict[11] = 2
         with self.assertRaises(ParseError) as e:
             parser.check_limits(ModWeightedDie, (input_dict,), {'modifier': mod})
-        self.assertEqual(e.exception.args[0], 'max value of dictionary exceeds limit: 10')
+        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max die_size: 10')
 
     def test_check_limits_recursion_depth(self):
         parser = Parser(recursion_depth=3)
