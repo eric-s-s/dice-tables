@@ -9,7 +9,17 @@ class ParseError(ValueError):
 
 
 class Parser(object):
-    def __init__(self, ignore_case=False, disable_kwargs=False, max_size=500, max_explosions=10, recursion_depth=5):
+    def __init__(self, ignore_case=False, disable_kwargs=False, max_size=500, max_explosions=10, max_nested_dice=5):
+        """
+
+        :param ignore_case: False: Can the parser ignore case on die names and kwargs.
+        :param disable_kwargs: False: Is the ability to parse kwargs disabled.
+        :param max_size: 500: The maximum allowed die size when :code:`parse_die_within_limits`
+        :param max_explosions: 10: The maximum allowed (explosions + len(explodes_on)) when
+            :code:`parse_die_within_limits`
+        :param max_nested_dice: 5: The maximum number of nested dice beyond first when :code:`parse_die_within_limits`.
+            Ex: :code:`StrongDie(Exploding(Die(5), 2), 3)` has 2 nested dice.
+        """
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
                          ModWeightedDie: ('int_dict', 'int'), WeightedDie: ('int_dict',),
                          StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
@@ -26,9 +36,9 @@ class Parser(object):
         self.disable_kwargs = disable_kwargs
         self.max_size = max_size
         self.max_explosions = max_explosions
-        self.recursion_depth = recursion_depth
+        self.max_nested_dice = max_nested_dice
 
-        self._current_recursion_depth = 0
+        self._nested_dice_counter = 0
         self._use_limits = False
 
     def get_param_types(self):
@@ -45,11 +55,27 @@ class Parser(object):
         return self.make_die(ast_call_node)
 
     def parse_die_within_limits(self, die_string):
+        """
+        Checks to see if limits are exceeded. If not, parses string. This only works with die classes that contain the
+        following key-word arguments:
+
+        - die_size
+        - dictionary_input
+        - explosions
+        - explodes_on
+
+        If your die classes use different kwargs to describe size or number of explosions, they will
+        be parsed as if there were no limits.
+        """
         ast_call_node = ast.parse(die_string).body[0].value
+
         self._use_limits = True
-        self._current_recursion_depth = 0
+        self._nested_dice_counter = 0
+
         die = self.make_die(ast_call_node)
+
         self._use_limits = False
+
         return die
 
     def make_die(self, call_node):
@@ -60,8 +86,8 @@ class Parser(object):
         die_params = self._get_params(param_nodes, die_class)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_class)
         if self._use_limits:
-            self.check_limits(die_class, die_params, die_kwargs)
-            self._current_recursion_depth += 1
+            self._check_limits(die_class, die_params, die_kwargs)
+            self._nested_dice_counter += 1
         return die_class(*die_params, **die_kwargs)
 
     def _get_die_class(self, class_name):
@@ -130,8 +156,8 @@ class Parser(object):
         true_kwarg_name = true_kwarg_names[index]
         return true_kwarg_name, value
 
-    def check_limits(self, die_class, die_params, die_kwargs):
-        self._check_recursion_depth()
+    def _check_limits(self, die_class, die_params, die_kwargs):
+        self._check_nested_calls()
 
         class_kwargs = self._kwargs[die_class]
 
@@ -144,9 +170,9 @@ class Parser(object):
 
         self._check_explosions(explodes_on, explosions)
 
-    def _check_recursion_depth(self):
-        if self._current_recursion_depth > self.recursion_depth:
-            msg = 'LIMITS EXCEEDED. Max number of nested dice: {}'.format(self.recursion_depth)
+    def _check_nested_calls(self):
+        if self._nested_dice_counter > self.max_nested_dice:
+            msg = 'LIMITS EXCEEDED. Max number of nested dice: {}'.format(self.max_nested_dice)
             raise ParseError(msg)
 
     def _check_die_size(self, dictionary_input, die_size):

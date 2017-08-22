@@ -7,6 +7,8 @@ Parser
     :members:
     :undoc-members:
 
+    .. automethod:: __init__
+
 
     The Parser object converts strings into dice objects.
 
@@ -155,3 +157,65 @@ True
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: One or more kwargs not in kwarg_list: ('oops', 'wrong', 'not_enough') for die: <NamedDie>
+
+Finally, you can make the parser enforce limits with :meth:`Parser.parse_die_within_limits`. This uses the limits
+declared in :meth:`Parser.__init__` (follow the link for explanations of each limit).
+
+It's important to note that this relies on
+the dice using the following arguments for size and explosions.
+
+- 'die_size'
+- 'dictionary_input'
+- 'explosions'
+- 'explodes_on'
+
+If you make a die that doesn't use these key-word arguments, the parser will have no way to check limits for you and
+will simply parse the die string. 
+
+ex:
+
+>>> dt.Parser().parse_die_within_limits('Die(500)') == dt.Die(500)
+True
+>>> dt.Parser().parse_die_within_limits('Die(501)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: LIMITS EXCEEDED. Max die_size: 500
+
+>>> class NewDie(dt.Die):
+...    def __init__(self, funky_new_die_size):
+...        super(NewDie, self).__init__(funky_new_die_size)
+
+>>> parser = dt.Parser()
+>>> parser.add_class(NewDie, ('int',))
+
+>>> parser.parse_die_within_limits('NewDie(5000)') == NewDie(5000)
+True
+>>> parser.parse_die_within_limits('Die(5000)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: LIMITS EXCEEDED. Max die_size: 500
+
+There is no great way around this. You can add your own code to :meth:`Parser._check_limits` to circumvent.
+
+>>> from dicetables.parser import find_value
+>>> class NewParser(dt.Parser):
+...    def __init__(self):
+...        super(NewParser, self).__init__()
+...
+...    def _check_limits(self, die_class, die_params, die_kwargs):
+...        super(NewParser, self)._check_limits(die_class, die_params, die_kwargs)
+...        class_kwargs = self._kwargs[die_class]
+...        extra_size_val = find_value('funky_new_die_size', class_kwargs, die_params, die_kwargs)
+...        self._check_die_size(dictionary_input=None, die_size=extra_size_val)
+
+>>> new_parser = NewParser()
+>>> new_parser.add_class(NewDie, ('int',))
+
+>>> new_parser.parse_die_within_limits('NewDie(5000)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: LIMITS EXCEEDED. Max die_size: 500
+>>> new_parser.parse_die_within_limits('Die(5000)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: LIMITS EXCEEDED. Max die_size: 500
