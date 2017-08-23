@@ -158,11 +158,17 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: One or more kwargs not in kwarg_list: ('oops', 'wrong', 'not_enough') for die: <NamedDie>
 
-Finally, you can make the parser enforce limits with :meth:`Parser.parse_die_within_limits`. This uses the limits
-declared in :meth:`Parser.__init__` (follow the link for explanations of each limit).
+**LIMITING WHAT VALUES CAN BE PARSED**
 
-It's important to note that this relies on
-the dice using the following arguments for size and explosions.
+You can make the parser enforce limits with :meth:`Parser.parse_die_within_limits`. This uses the limits
+declared in :meth:`Parser.__init__`. This limits the size, explosions and number of nested dice in a die.
+The size is limited according to the `die_size` parameter and the max value of the `dictionary_input` parameter.
+The explosions is limited according to `explosions` parameter and the `len` of the `explodes_on` parameter. The number
+of nested dice is limited according to how many times the parser has to make a die while creating the die.
+:code:`StrongDie(Exploding(Die(4)), 3)` is a `StrongDie` containing two nested dice.
+
+The number of nested dice is according to how many times :meth:`Parser.make_die` is called. The other two limits depend
+on a die that calls its size and explosion parameters by the following names.
 
 - 'die_size'
 - 'dictionary_input'
@@ -170,12 +176,12 @@ the dice using the following arguments for size and explosions.
 - 'explodes_on'
 
 If you make a die that doesn't use these key-word arguments, the parser will have no way to check limits for you and
-will simply parse the die string. 
+will simply parse the die string.
 
 ex:
 
->>> dt.Parser().parse_die_within_limits('Die(500)') == dt.Die(500)
-True
+>>> dt.Parser().parse_die_within_limits('Die(500)')
+Die(500)
 >>> dt.Parser().parse_die_within_limits('Die(501)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
@@ -184,18 +190,26 @@ ParseError: LIMITS EXCEEDED. Max die_size: 500
 >>> class NewDie(dt.Die):
 ...    def __init__(self, funky_new_die_size):
 ...        super(NewDie, self).__init__(funky_new_die_size)
+...
+...    def __repr__(self):
+...        return 'NewDie({})'.format(self.get_size())
 
 >>> parser = dt.Parser()
 >>> parser.add_class(NewDie, ('int',))
 
->>> parser.parse_die_within_limits('NewDie(5000)') == NewDie(5000)
-True
+>>> parser.parse_die_within_limits('NewDie(5000)')
+NewDie(5000)
 >>> parser.parse_die_within_limits('Die(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: LIMITS EXCEEDED. Max die_size: 500
 
-There is no great way around this. You can add your own code to :meth:`Parser._check_limits` to circumvent.
+Currently, the best option, aside from keeping the original kwargs, is to over-ride :meth:`Parser._check_limits`.
+The other useful methods and functions are
+
+- :meth:`Parser._check_die_size`
+- :meth:`Parser._check_explosions`
+- :func:`dicetables.parser.find_value`
 
 >>> from dicetables.parser import find_value
 >>> class NewParser(dt.Parser):

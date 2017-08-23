@@ -155,6 +155,6 @@ since v2.1.0
 since v2.2.0
 
 - Improved ExplodingOn speed.
-- Added `parse_with_limits` function to parser. Also added limit values.
+- Added `parse_die_within_limits` function to parser. Also added limit values.
 
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html

@@ -386,20 +386,19 @@ class ExplodingOn(ProtoDie):
     def _get_roll_and_weight_mods(self, level, base_dict):
         if level == 0:
             return [(0, 1)]
-        base_rolls_and_weights = [(roll, base_dict[roll]) for roll in self._explodes_on]
-        elements_for_product = [base_rolls_and_weights] * level
-        raw_rollweight_combinations = itertools.product(*elements_for_product)
-        return [calc_roll_and_weight_mods(rollweight_list) for rollweight_list in raw_rollweight_combinations]
+        base_roll_weight_mods = [(roll, base_dict[roll]) for roll in self._explodes_on]
+        groups_of_roll_weight_mods = itertools.product(base_roll_weight_mods, repeat=level)
+        return [calc_roll_and_weight_mods(group_of_rollweights) for group_of_rollweights in groups_of_roll_weight_mods]
 
     def _get_level_dict(self, base_dict, level, roll_weights):
         answer = {}
-        roll_weight_dict = consolidate_roll_mods(roll_weights)
+        roll_weight_dict = combine_rollweights_with_same_roll_value(roll_weights)
         for roll_mod, weight_mod in roll_weight_dict.items():
-            to_add = self._get_base_for_current_level(base_dict, level, roll_mod, weight_mod)
+            to_add = self._get_partial_level_dict(base_dict, level, roll_mod, weight_mod)
             answer = add_dicts(answer, to_add)
         return answer
 
-    def _get_base_for_current_level(self, base_dict, level, roll_mod, weight_multiplier):
+    def _get_partial_level_dict(self, base_dict, level, roll_mod, weight_multiplier):
         base_level_multiplier = sum(base_dict.values())
         level_multiplier = base_level_multiplier ** (self._explosions - level)
         current_level_all_rolls = {roll + roll_mod: occurrence * weight_multiplier * level_multiplier
@@ -460,10 +459,10 @@ def add_dicts(dict_1, dict_2):
     return out
 
 
-def calc_roll_and_weight_mods(roll_weight_tuples):
+def calc_roll_and_weight_mods(group_of_rollweights):
     total_roll_mod = 0
     total_weight_mod = 1
-    for roll, weight in roll_weight_tuples:
+    for roll, weight in group_of_rollweights:
         total_roll_mod += roll
         total_weight_mod *= weight
     return total_roll_mod, total_weight_mod
@@ -473,7 +472,7 @@ def remove_keys_after_applying_modifier(modified_dict, original_excluded_keys, k
     return {key: val for key, val in modified_dict.items() if key - key_modifier not in original_excluded_keys}
 
 
-def consolidate_roll_mods(rollweight_tuples):
+def combine_rollweights_with_same_roll_value(rollweight_tuples):
     answer = {}
     for roll, weight in rollweight_tuples:
         answer[roll] = weight + answer.get(roll, 0)

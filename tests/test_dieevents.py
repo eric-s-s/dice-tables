@@ -6,7 +6,7 @@ import unittest
 from dicetables.dieevents import (Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier,
                                   Exploding, ExplodingOn,
                                   add_dicts, remove_keys_after_applying_modifier, remove_duplicates,
-                                  calc_roll_and_weight_mods, consolidate_roll_mods)
+                                  calc_roll_and_weight_mods, combine_rollweights_with_same_roll_value)
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
 
@@ -482,15 +482,15 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(calc_roll_and_weight_mods(rolls_and_weights),
                          (-1 + 0 + 4, 2 * 3 * 5))
 
-    def test_consolidate_roll_mods_rolls_all_different(self):
+    def test_module_level_helper_function_combine_rollweights_with_same_roll_value_rolls_all_different(self):
         roll_mods_and_weight_mods = [(1, 2), (3, 4), (5, 6)]
         expected = {1: 2, 3: 4, 5: 6}
-        self.assertEqual(consolidate_roll_mods(roll_mods_and_weight_mods), expected)
+        self.assertEqual(combine_rollweights_with_same_roll_value(roll_mods_and_weight_mods), expected)
 
-    def test_consolidate_roll_mods_some_rolls_the_same(self):
+    def test_module_level_helper_function_combine_rollweights_with_same_roll_value_some_rolls_the_same(self):
         roll_mods_and_weight_mods = [(1, 2), (3, 4), (5, 6), (1, 3)]
         expected = {1: 5, 3: 4, 5: 6}
-        self.assertEqual(consolidate_roll_mods(roll_mods_and_weight_mods), expected)
+        self.assertEqual(combine_rollweights_with_same_roll_value(roll_mods_and_weight_mods), expected)
 
     def test_module_level_helper_function_remove_keys_after_applying_modifier(self):
         modifier = 4
