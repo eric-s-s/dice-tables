@@ -19,6 +19,7 @@
 #
 import os
 import sys
+from dicetables import Parser
 
 sys.path.insert(0, os.path.abspath('../'))
 
@@ -341,12 +342,4 @@ texinfo_documents = [
 #
 # texinfo_no_detailmenu = False
 
-
-def skip_properties(app, what, name, obj, skip, options):
-    if isinstance(obj, property):
-        return True
-    return skip
-
-
-def setup(app):
-    app.connect('autodoc-skip-member', skip_properties)
+autodoc_member_order = 'bysource'

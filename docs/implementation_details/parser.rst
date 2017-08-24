@@ -1,5 +1,8 @@
 Parser
 ======
+- `Customizing Parser`_
+- `Limiting Max Values`_
+
 
 .. module:: dicetables.parser
 
@@ -42,7 +45,8 @@ Parser
     Exploding and ExplodingOn. It is possible to add other dice to an instance of Parser or make a new class that
     can parse other dice.
 
-**HOW TO CUSTOMIZE PARSER**
+Customizing Parser
+------------------
 
 Parser can only parse very specific types of parameters.
 
@@ -158,17 +162,20 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: One or more kwargs not in kwarg_list: ('oops', 'wrong', 'not_enough') for die: <NamedDie>
 
-**LIMITING WHAT VALUES CAN BE PARSED**
+Limiting Max Values
+-------------------
 
 You can make the parser enforce limits with :meth:`Parser.parse_die_within_limits`. This uses the limits
-declared in :meth:`Parser.__init__`. This limits the size, explosions and number of nested dice in a die.
-The size is limited according to the `die_size` parameter and the max value of the `dictionary_input` parameter.
+declared in :meth:`Parser.__init__`. It limits the size, explosions and number of nested dice in a die.
+
+The size is limited according to the `die_size` parameter or the max value of the `dictionary_input` parameter.
 The explosions is limited according to `explosions` parameter and the `len` of the `explodes_on` parameter. The number
 of nested dice is limited according to how many times the parser has to make a die while creating the die.
 :code:`StrongDie(Exploding(Die(4)), 3)` is a `StrongDie` containing two nested dice.
 
-The number of nested dice is according to how many times :meth:`Parser.make_die` is called. The other two limits depend
-on a die that calls its size and explosion parameters by the following names.
+The number of nested dice is calculated according to how many times :meth:`Parser.make_die` is called.
+In order to check the size and explosions, the parser must know what parameter name is assigned to values that
+control size and explosions. It recognized the following kwarg names:
 
 - 'die_size'
 - 'dictionary_input'
@@ -220,8 +227,10 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: LIMITS EXCEEDED. Max die_size: 500
 
-For size, your key-words must point to an :code:`int` or :code:`{int: int}`. For explosions, your key-words must point
-to an :code:`int`, :code:`[int]` or :code:`(int)`.
+The parser only knows how to evaluate size based on a parameter that represents size as an `int` or dictionary of
+`{int: int}` where the size is the highest key value. Similarly, the parser assumes that it can count the explosions
+by evaluating an `int` or the length of a `list` or `tuple`. If these are not the case, you will need to delve into the
+code and over-ride :meth:`Parser._check_die_size`, :meth:`Parser._check_explosions` or :meth:`Parser._check_limits`
 
 >>> class NewDie(dt.Die):
 ...    def __init__(self, size_int_as_str):
@@ -241,3 +250,28 @@ True
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ValueError: A kwarg declared as a "die size limit" is neither an int nor a dict of ints.
+
+and **a** solution
+
+>>> class NewParser(dt.Parser):
+...     def _check_die_size(self, die_size_params):
+...         string_params = [param for param in die_size_params if isinstance(param, str)]
+...         other_params = [param for param in die_size_params if not isinstance(param, str)]
+...         for number_str in string_params:
+...             if int(number_str) > self.max_size:
+...                 raise dt.ParseError('Dude! NOT cool!')
+...         super(NewParser, self)._check_die_size(other_params)
+...
+>>> parser = NewParser()
+>>> parser.add_param_type('string', make_string)
+>>> parser.add_class(NewDie, ('string',))
+>>> parser.add_die_size_limit_kwarg('size_int_as_str')
+
+>>> parser.parse_die_within_limits('NewDie("5000")')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: LIMITS EXCEEDED. Max die_size: 500
+>>> parser.parse_die_within_limits('Die(5000)')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ParseError: LIMITS EXCEEDED. Max die_size: 500

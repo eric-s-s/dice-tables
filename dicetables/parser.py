@@ -223,7 +223,7 @@ class Parser(object):
         """
 
         :param class_: the class you are adding
-        :param param_identifiers: a tuple of param_types according to Parser().param_types()
+        :param param_identifiers: a tuple of param_types according to Parser().param_types
         :param auto_detect_kwargs: will try to detect kwargs of __init__ function. overrides kwargs param
         :param kwargs: (optional) a tuple of the kwarg names for instantiation of the new class.
         """
