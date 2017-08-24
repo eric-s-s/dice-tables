@@ -19,6 +19,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../'))
 
 # import dicetables
@@ -339,3 +340,13 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
+
+
+def skip_properties(app, what, name, obj, skip, options):
+    if isinstance(obj, property):
+        return True
+    return skip
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', skip_properties)

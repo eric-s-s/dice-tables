@@ -48,8 +48,8 @@ Parser can only parse very specific types of parameters.
 
 >>> from dicetables.parser import make_int, make_int_dict, make_int_tuple
 >>> parser = dt.Parser()
->>> parser.get_param_types() == {'int': make_int, 'int_dict': make_int_dict,
-...                              'die': parser.make_die, 'int_tuple': make_int_tuple}
+>>> parser.param_types == {'int': make_int, 'int_dict': make_int_dict,
+...                        'die': parser.make_die, 'int_tuple': make_int_tuple}
 True
 
 If, for example, you need Parser to know how to parse a string, a list of strings and
@@ -204,26 +204,12 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: LIMITS EXCEEDED. Max die_size: 500
 
-Currently, the best option, aside from keeping the original kwargs, is to over-ride :meth:`Parser._check_limits`.
-The other useful methods and functions are
+You can add your new and exciting key-words to the parser with :meth:`Parser.add_die_size_limit_kwarg` and
+:meth:`Parser.add_explosions_limit_kwarg`.
 
-- :meth:`Parser._check_die_size`
-- :meth:`Parser._check_explosions`
-- :func:`dicetables.parser.find_value`
-
->>> from dicetables.parser import find_value
->>> class NewParser(dt.Parser):
-...    def __init__(self):
-...        super(NewParser, self).__init__()
-...
-...    def _check_limits(self, die_class, die_params, die_kwargs):
-...        super(NewParser, self)._check_limits(die_class, die_params, die_kwargs)
-...        class_kwargs = self._kwargs[die_class]
-...        extra_size_val = find_value('funky_new_die_size', class_kwargs, die_params, die_kwargs)
-...        self._check_die_size(dictionary_input=None, die_size=extra_size_val)
-
->>> new_parser = NewParser()
+>>> new_parser = dt.Parser()
 >>> new_parser.add_class(NewDie, ('int',))
+>>> new_parser.add_die_size_limit_kwarg('funky_new_die_size')
 
 >>> new_parser.parse_die_within_limits('NewDie(5000)')
 Traceback (most recent call last):
@@ -233,3 +219,25 @@ ParseError: LIMITS EXCEEDED. Max die_size: 500
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 ParseError: LIMITS EXCEEDED. Max die_size: 500
+
+For size, your key-words must point to an :code:`int` or :code:`{int: int}`. For explosions, your key-words must point
+to an :code:`int`, :code:`[int]` or :code:`(int)`.
+
+>>> class NewDie(dt.Die):
+...    def __init__(self, size_int_as_str):
+...        super(NewDie, self).__init__(int(size_int_as_str))
+
+>>> def make_string(str_node):
+...     return str_node.s
+
+>>> parser = dt.Parser()
+>>> parser.add_param_type('string', make_string)
+>>> parser.add_class(NewDie, ('string',))
+>>> parser.add_die_size_limit_kwarg('size_int_as_str')
+
+>>> parser.parse_die('NewDie("5")') == NewDie("5")
+True
+>>> parser.parse_die_within_limits('NewDie("5")')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ValueError: A kwarg declared as a "die size limit" is neither an int nor a dict of ints.
