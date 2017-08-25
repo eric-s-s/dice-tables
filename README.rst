@@ -7,7 +7,7 @@
 
 
 #################
-dicetables v2.3.3
+dicetables v2.4.0
 #################
 
 Calculate the Combinations For Any Set of Dice
