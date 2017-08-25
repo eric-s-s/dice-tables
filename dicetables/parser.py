@@ -32,8 +32,8 @@ class Parser(object):
                         StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
                         ExplodingOn: ('input_die', 'explodes_on', 'explosions')}
 
-        self._size_limit_kwargs = ['die_size', 'dictionary_input']
-        self._explosions_limit_kwargs = ['explosions', 'explodes_on']
+        self._size_limit_kwargs = [('die_size', None), ('dictionary_input', None)]
+        self._explosions_limit_kwargs = [('explosions', 2), ('explodes_on', None)]
 
         self.ignore_case = ignore_case
         self.disable_kwargs = disable_kwargs
@@ -171,10 +171,10 @@ class Parser(object):
         self._check_nested_calls()
 
         class_kwargs = self._kwargs[die_class]
-        size_params = [find_value(key_word, class_kwargs, die_params, die_kwargs)
-                       for key_word in self._size_limit_kwargs]
-        explosions_params = [find_value(key_word, class_kwargs, die_params, die_kwargs)
-                             for key_word in self._explosions_limit_kwargs]
+        size_params = [find_value(key_word, default, class_kwargs, die_params, die_kwargs)
+                       for key_word, default in self._size_limit_kwargs]
+        explosions_params = [find_value(key_word, default, class_kwargs, die_params, die_kwargs)
+                             for key_word, default in self._explosions_limit_kwargs]
 
         self._check_die_size(size_params)
         self._check_explosions(explosions_params)
@@ -235,11 +235,11 @@ class Parser(object):
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
 
-    def add_die_size_limit_kwarg(self, new_key_word):
-        self._size_limit_kwargs.append(new_key_word)
+    def add_die_size_limit_kwarg(self, new_key_word, default=None):
+        self._size_limit_kwargs.append((new_key_word, default))
 
-    def add_explosions_limit_kwarg(self, new_key_word):
-        self._explosions_limit_kwargs.append(new_key_word)
+    def add_explosions_limit_kwarg(self, new_key_word, default=None):
+        self._explosions_limit_kwargs.append((new_key_word, default))
 
 
 def make_int_dict(dict_node):
@@ -270,7 +270,7 @@ def _get_kwargs_from_init(class_):
         raise AttributeError('could not find the code for __init__ function at class_.__init__.__code__')
 
 
-def find_value(key_word, class_kwargs, die_params, die_kwargs):
+def find_value(key_word, default, class_kwargs, die_params, die_kwargs):
     if key_word not in class_kwargs:
         return None
 
@@ -278,4 +278,4 @@ def find_value(key_word, class_kwargs, die_params, die_kwargs):
     if len(die_params) > index:
         return die_params[index]
     else:
-        return die_kwargs[key_word]
+        return die_kwargs.get(key_word, default)

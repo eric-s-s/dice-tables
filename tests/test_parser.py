@@ -257,6 +257,9 @@ class TestParser(unittest.TestCase):
         die_kwargs = {'modifier': -2}
         self.assertEqual(find_value(key_word, class_kwargs, die_params, die_kwargs), -2)
 
+    def test_find_value_default_value_not_supplied(self):
+        raise NotImplementedError
+
     def test_check_limits_die_has_no_limit_values(self):
         self.assertIsNone(Parser()._check_limits(Modifier, (100000,), {}))
         self.assertIsNone(Parser()._check_limits(Modifier, (), {'modifier': 1000000}))
@@ -418,6 +421,14 @@ class TestParser(unittest.TestCase):
         self.assertRaises(ParseError, parser.parse_die_within_limits, 'Die(5000)')
         self.assertEqual(NewDie(5000), parser.parse_die_within_limits('NewDie(5000)'))
 
+    def test_parse_within_limits_unfilled_default_value(self):
+        self.assertEqual(Parser().parse_die_within_limits('Exploding(Die(5))'), Exploding(Die(5)))
+        self.assertEqual(Parser().parse_die_within_limits('ExplodingOn(Die(10), (1, 2, 3))'),
+                         ExplodingOn(Die(10), (1, 2, 3)))
+
+        self.assertRaises(ParseError, Parser().parse_die_within_limits,
+                          'ExplodingOn(Die(10), (1, 2, 3, 4, 5, 6, 7, 8, 9))')
+
     def test_Die(self):
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
@@ -576,7 +587,7 @@ class TestParser(unittest.TestCase):
 
         self.assertEqual(new_parser.param_types['int'], int)
 
-    def test_add_die_size_limit_kwarg(self):
+    def test_add_die_size_limit_kwarg_no_default_value(self):
         defaults = {'die_size_limits': ['die_size', 'dictionary_input'],
                     'explosions_limits': ['explosions', 'explodes_on']}
         parser = Parser()
@@ -586,6 +597,9 @@ class TestParser(unittest.TestCase):
         answer = {'die_size_limits': ['die_size', 'dictionary_input', 'new_size_kwarg'],
                   'explosions_limits': ['explosions', 'explodes_on']}
         self.assertEqual(parser.limits_kwargs, answer)
+
+    def test_add_die_size_limit_kwarg_with_default_value(self):
+        raise NotImplementedError
 
     def test_add_explosions_limit_kwarg(self):
         defaults = {'die_size_limits': ['die_size', 'dictionary_input'],
@@ -597,6 +611,9 @@ class TestParser(unittest.TestCase):
         answer = {'die_size_limits': ['die_size', 'dictionary_input'],
                   'explosions_limits': ['explosions', 'explodes_on', 'new_explosions_kwarg']}
         self.assertEqual(parser.limits_kwargs, answer)
+
+    def test_add_explosions_limit_kwarg_with_default_value(self):
+        raise NotImplementedError
 
     def test_an_instance_of_parser_with_a_new_die(self):
         class StupidDie(Die):
@@ -761,6 +778,9 @@ class TestParser(unittest.TestCase):
                          'A kwarg declared as an "explosions limit" is neither an int nor a tuple/list of ints.')
 
         self.assertRaises(ParseError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
+
+    def test_parse_wihtin_limits_new_size_and_explosions_kwargs_with_defualts(self):
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

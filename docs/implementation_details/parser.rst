@@ -212,7 +212,7 @@ Traceback (most recent call last):
 ParseError: LIMITS EXCEEDED. Max die_size: 500
 
 You can add your new and exciting key-words to the parser with :meth:`Parser.add_die_size_limit_kwarg` and
-:meth:`Parser.add_explosions_limit_kwarg`.
+:meth:`Parser.add_explosions_limit_kwarg`. If this has a default value, you can add that too.
 
 >>> new_parser = dt.Parser()
 >>> new_parser.add_class(NewDie, ('int',))
