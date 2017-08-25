@@ -175,7 +175,7 @@ of nested dice is limited according to how many times the parser has to make a d
 
 The number of nested dice is calculated according to how many times :meth:`Parser.make_die` is called.
 In order to check the size and explosions, the parser must know what parameter name is assigned to values that
-control size and explosions. It recognized the following kwarg names:
+control size and explosions. It recognizes the following kwarg names:
 
 - 'die_size'
 - 'dictionary_input'

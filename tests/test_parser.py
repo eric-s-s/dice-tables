@@ -102,9 +102,9 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser().limits_kwargs, answer)
 
     def test_make_die_raises_error_on_function_call_not_in_parser(self):
-        die = ast.parse('NotThere()').body[0].value
+        die_node = ast.parse('NotThere()').body[0].value
         with self.assertRaises(ParseError) as cm:
-            Parser().make_die(die)
+            Parser().make_die(die_node)
         self.assertEqual(cm.exception.args[0], 'Die class: <NotThere> not recognized by parser.')
 
     def test_make_die_raises_error_on_die_with_bad_param_types(self):
@@ -116,9 +116,9 @@ class TestParser(unittest.TestCase):
         parser = Parser()
         parser.add_class(StupidDie, ('string', 'int'))
 
-        die = ast.parse('StupidDie("Ishmael", 6)').body[0].value
+        die_node = ast.parse('StupidDie("Ishmael", 6)').body[0].value
         with self.assertRaises(ParseError) as cm:
-            parser.make_die(die)
+            parser.make_die(die_node)
         self.assertEqual(
             cm.exception.args[0], (
                 "Failed to create die: <StupidDie> with param types: ('string', 'int'). " +
@@ -134,80 +134,84 @@ class TestParser(unittest.TestCase):
         self.assertRaises((AttributeError, TypeError), Parser().make_die, die_node)
 
     def test_make_die_on_simple_die(self):
-        die = ast.parse('Die(6)').body[0].value
-        self.assertEqual(Parser().make_die(die), Die(6))
+        die_node = ast.parse('Die(6)').body[0].value
+        self.assertEqual(Parser().make_die(die_node), Die(6))
 
     def test_make_die_on_multi_param(self):
-        die = ast.parse('ModWeightedDie({1: 2}, 6)').body[0].value
-        self.assertEqual(Parser().make_die(die), ModWeightedDie({1: 2}, 6))
+        die_node = ast.parse('ModWeightedDie({1: 2}, 6)').body[0].value
+        self.assertEqual(Parser().make_die(die_node), ModWeightedDie({1: 2}, 6))
 
     def test_make_die_on_die_with_recursive_call(self):
-        die = ast.parse('ExplodingOn(Die(4), (1, 2))').body[0].value
-        self.assertEqual(Parser().make_die(die), ExplodingOn(Die(4), (1, 2)))
+        die_node = ast.parse('ExplodingOn(Die(4), (1, 2))').body[0].value
+        self.assertEqual(Parser().make_die(die_node), ExplodingOn(Die(4), (1, 2)))
 
     def test_make_die_default_values_do_not_need_to_be_included(self):
-        die = ast.parse('Exploding(Die(6))').body[0].value
-        self.assertEqual(Parser().make_die(die), Exploding(Die(6), explosions=2))
+        die_node = ast.parse('Exploding(Die(6))').body[0].value
+        self.assertEqual(Parser().make_die(die_node), Exploding(Die(6), explosions=2))
 
         same_die = ast.parse('Exploding(Die(6), 2)').body[0].value
         self.assertEqual(Parser().make_die(same_die), Exploding(Die(6), explosions=2))
 
     def test_make_die_ignore_case_true_basic_die(self):
-        die = ast.parse('dIe(6)').body[0].value
-        self.assertEqual(Parser(ignore_case=True).make_die(die), Die(6))
+        die_node = ast.parse('dIe(6)').body[0].value
+        self.assertEqual(Parser(ignore_case=True).make_die(die_node), Die(6))
 
-        die = ast.parse('Die(6)').body[0].value
-        self.assertEqual(Parser(ignore_case=True).make_die(die), Die(6))
+        die_node = ast.parse('Die(6)').body[0].value
+        self.assertEqual(Parser(ignore_case=True).make_die(die_node), Die(6))
 
     def test_make_die_ignore_case_true_recursive_call(self):
-        die = ast.parse('strONgdIE(diE(6), 3)').body[0].value
-        self.assertEqual(Parser(ignore_case=True).make_die(die), StrongDie(Die(6), 3))
+        die_node = ast.parse('strONgdIE(diE(6), 3)').body[0].value
+        self.assertEqual(Parser(ignore_case=True).make_die(die_node), StrongDie(Die(6), 3))
 
-        die = ast.parse('StrongDie(Die(6), 3)').body[0].value
-        self.assertEqual(Parser(ignore_case=True).make_die(die), StrongDie(Die(6), 3))
+        die_node = ast.parse('StrongDie(Die(6), 3)').body[0].value
+        self.assertEqual(Parser(ignore_case=True).make_die(die_node), StrongDie(Die(6), 3))
 
     def test_make_die_ignore_case_false_basic_die(self):
-        with self.assertRaises(ParseError):
-            die = ast.parse('dIe(6)').body[0].value
-            self.assertEqual(Parser(ignore_case=False).make_die(die), Die(6))
+        with self.assertRaises(ParseError) as e:
+            die_node = ast.parse('dIe(6)').body[0].value
+            Parser(ignore_case=False).make_die(die_node)
+        self.assertEqual(e.exception.args[0], 'Die class: <dIe> not recognized by parser.')
 
-        die = ast.parse('Die(6)').body[0].value
-        self.assertEqual(Parser(ignore_case=False).make_die(die), Die(6))
+        die_node = ast.parse('dIe(6)').body[0].value
+        self.assertRaises(ParseError, Parser(ignore_case=False).make_die, die_node)
+
+        die_node = ast.parse('Die(6)').body[0].value
+        self.assertEqual(Parser(ignore_case=False).make_die(die_node), Die(6))
 
     def test_make_die_ignore_case_false_recursive_call(self):
         with self.assertRaises(ParseError):
-            die = ast.parse('strONgdIE(diE(6), 3)').body[0].value
-            self.assertEqual(Parser(ignore_case=False).make_die(die), StrongDie(Die(6), 3))
+            die_node = ast.parse('strONgdIE(diE(6), 3)').body[0].value
+            Parser(ignore_case=False).make_die(die_node)
 
-        die = ast.parse('StrongDie(Die(6), 3)').body[0].value
-        self.assertEqual(Parser(ignore_case=False).make_die(die), StrongDie(Die(6), 3))
+        die_node = ast.parse('StrongDie(Die(6), 3)').body[0].value
+        self.assertEqual(Parser(ignore_case=False).make_die(die_node), StrongDie(Die(6), 3))
 
     def test_make_die_all_kwargs(self):
-        die = ast.parse('ModDie(die_size=6, modifier=-1)').body[0].value
-        self.assertEqual(Parser().make_die(die), ModDie(6, -1))
+        die_node = ast.parse('ModDie(die_size=6, modifier=-1)').body[0].value
+        self.assertEqual(Parser().make_die(die_node), ModDie(6, -1))
 
     def test_make_die_some_kwargs(self):
-        die = ast.parse('ModDie(6, modifier=-1)').body[0].value
-        self.assertEqual(Parser().make_die(die), ModDie(6, -1))
+        die_node = ast.parse('ModDie(6, modifier=-1)').body[0].value
+        self.assertEqual(Parser().make_die(die_node), ModDie(6, -1))
 
     def test_make_die_kwargs_in_recursive_call(self):
-        die = ast.parse('StrongDie(ModDie(6, modifier=-1), multiplier=3)').body[0].value
-        self.assertEqual(Parser().make_die(die), StrongDie(ModDie(6, -1), 3))
+        die_node = ast.parse('StrongDie(ModDie(6, modifier=-1), multiplier=3)').body[0].value
+        self.assertEqual(Parser().make_die(die_node), StrongDie(ModDie(6, -1), 3))
 
     def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die(self):
-        die = ast.parse('StrongDie(input_die=ModDie(6, modifier=-1), multiplier=3)').body[0].value
-        self.assertEqual(Parser().make_die(die), StrongDie(ModDie(6, -1), 3))
+        die_node = ast.parse('StrongDie(input_die=ModDie(6, modifier=-1), multiplier=3)').body[0].value
+        self.assertEqual(Parser().make_die(die_node), StrongDie(ModDie(6, -1), 3))
 
     def test_make_die_incorrect_kwargs(self):
-        die = ast.parse('ModDie(die_size=6, MODIFIER=-1)').body[0].value
+        die_node = ast.parse('ModDie(die_size=6, MODIFIER=-1)').body[0].value
         with self.assertRaises(ParseError) as cm:
-            Parser().make_die(die), ModDie(6, -1)
+            Parser().make_die(die_node), ModDie(6, -1)
         self.assertEqual(cm.exception.args[0],
                          "One or more kwargs not in kwarg_list: ('die_size', 'modifier') for die: <ModDie>")
 
     def test_make_die_ignore_case_applies_to_kwargs(self):
-        die = ast.parse('MODDIE(DIE_SIZE=6, MODIFIER=-1)').body[0].value
-        self.assertEqual(Parser(ignore_case=True).make_die(die), ModDie(6, -1))
+        die_node = ast.parse('MODDIE(DIE_SIZE=6, MODIFIER=-1)').body[0].value
+        self.assertEqual(Parser(ignore_case=True).make_die(die_node), ModDie(6, -1))
 
     def test_make_die_ignore_case_applies_to_kwargs_with_mixed_case(self):
         class OddDie(Die):
@@ -218,17 +222,17 @@ class TestParser(unittest.TestCase):
         parser.add_class(OddDie, ('int',))
         self.assertEqual(parser.kwargs[OddDie], ('dIe_SiZE',))
 
-        die = ast.parse('ODDDIE(DIE_SIZE=6)').body[0].value
-        self.assertEqual(parser.make_die(die), OddDie(6))
+        die_node = ast.parse('ODDDIE(DIE_SIZE=6)').body[0].value
+        self.assertEqual(parser.make_die(die_node), OddDie(6))
 
     def test_make_die_disable_kwargs(self):
-        die = ast.parse('Die(6)').body[0].value
-        self.assertEqual(Parser(disable_kwargs=True).make_die(die), Die(6))
+        die_node = ast.parse('Die(6)').body[0].value
+        self.assertEqual(Parser(disable_kwargs=True).make_die(die_node), Die(6))
 
     def test_make_die_disable_kwargs_raises_error(self):
-        die = ast.parse('Die(die_size=6)').body[0].value
+        die_node = ast.parse('Die(die_size=6)').body[0].value
         with self.assertRaises(ParseError) as cm:
-            Parser(disable_kwargs=True).make_die(die)
+            Parser(disable_kwargs=True).make_die(die_node)
         self.assertEqual(cm.exception.args[0], 'Tried to use kwargs on a Parser with disable_kwargs=True')
 
     # Making die with limits
@@ -483,14 +487,7 @@ class TestParser(unittest.TestCase):
 
     def test_nested_dice(self):
         self.assertEqual(Parser().parse_die('Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)'),
-                         Exploding(
-                             StrongDie(
-                                 WeightedDie({1: 2, 3: 4}),
-                                 3
-                             ),
-                             4
-                         )
-                         )
+                         Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4))
 
     def test_add_class_no_auto_detect_kwargs_no_manual_kwargs(self):
         class Thing(object):
