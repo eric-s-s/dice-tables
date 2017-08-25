@@ -1,6 +1,8 @@
 """
 All the descendants of ProtoDie.  These are IntegerEvents that represent different types of dice.
 """
+import itertools
+
 
 from dicetables.eventsbases.protodie import ProtoDie
 
@@ -258,7 +260,7 @@ class Exploding(ProtoDie):
     [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
 
     **WARNING:** setting the number of explosions too high can make
-    instantiation VERY slow.
+    instantiation VERY slow. The time is proportional to explosions and die_size.
     """
 
     def __init__(self, input_die, explosions=2):
@@ -297,9 +299,9 @@ class Exploding(ProtoDie):
         roll_mod = explosion_level * highest_roll
 
         level_dict = {roll + roll_mod: occurrence * occurrence_mod for roll, occurrence in base_dict.items()}
-        if explosion_level != self._explosions:
-            level_dict = remove_keys_after_applying_modifier(level_dict, (highest_roll,), roll_mod)
-        return level_dict
+        if explosion_level == self._explosions:
+            return level_dict
+        return remove_keys_after_applying_modifier(level_dict, (highest_roll,), roll_mod)
 
     def get_size(self):
         return self._original.get_size()
@@ -345,7 +347,8 @@ class ExplodingOn(ProtoDie):
     [-1, 0, 1, (2 -1), (2 + 0), (2 + 1), (2+2 - 1) ..]
 
     **WARNING:** setting the number of explosions too high can make
-    instantiation VERY slow.
+    instantiation VERY slow. Time is proportional to explosion**(len(explodes_on)). It's also linear
+    with size which gets overshadowed by the first factor.
     """
     def __init__(self, input_die, explodes_on, explosions=2):
         """
@@ -372,28 +375,30 @@ class ExplodingOn(ProtoDie):
             raise ValueError('"explosions" value must be >= 0.')
 
     def _get_exploding_dict(self):
-        level = 0
-        weight_multiplier = 1
-        roll_mod = 0
-        return self._recursively_derive_exploding_dict(level, roll_mod, weight_multiplier)
-
-    def _recursively_derive_exploding_dict(self, level, roll_mod, weight_multiplier):
         base_dict = self._original.get_dict()
-        current_level = self._get_base_for_current_level(base_dict, level, roll_mod, weight_multiplier)
+        answer = {}
+        for level in range(self._explosions + 1):
+            roll_and_weight_modifiers = self._get_roll_and_weight_mods(level, base_dict)
+            level_dict = self._get_level_dict(base_dict, level, roll_and_weight_modifiers)
+            answer = add_dicts(answer, level_dict)
+        return answer
 
-        if level == self._explosions:
-            return current_level
+    def _get_roll_and_weight_mods(self, level, base_dict):
+        if level == 0:
+            return [(0, 1)]
+        base_roll_weight_mods = [(roll, base_dict[roll]) for roll in self._explodes_on]
+        groups_of_roll_weight_mods = itertools.product(base_roll_weight_mods, repeat=level)
+        return [calc_roll_and_weight_mods(group_of_rollweights) for group_of_rollweights in groups_of_roll_weight_mods]
 
-        for roll in self._explodes_on:
-            weight_val = base_dict[roll]
-            new_weight_multiplier = weight_multiplier * weight_val
-            new_roll_mod = roll_mod + roll
-            new_level = level + 1
-            sub_level = self._recursively_derive_exploding_dict(new_level, new_roll_mod, new_weight_multiplier)
-            current_level = add_dicts(current_level, sub_level)
-        return current_level
+    def _get_level_dict(self, base_dict, level, roll_weights):
+        answer = {}
+        roll_weight_dict = combine_rollweights_with_same_roll_value(roll_weights)
+        for roll_mod, weight_mod in roll_weight_dict.items():
+            to_add = self._get_partial_level_dict(base_dict, level, roll_mod, weight_mod)
+            answer = add_dicts(answer, to_add)
+        return answer
 
-    def _get_base_for_current_level(self, base_dict, level, roll_mod, weight_multiplier):
+    def _get_partial_level_dict(self, base_dict, level, roll_mod, weight_multiplier):
         base_level_multiplier = sum(base_dict.values())
         level_multiplier = base_level_multiplier ** (self._explosions - level)
         current_level_all_rolls = {roll + roll_mod: occurrence * weight_multiplier * level_multiplier
@@ -454,5 +459,21 @@ def add_dicts(dict_1, dict_2):
     return out
 
 
-def remove_keys_after_applying_modifier(start_dict, to_exclude_basis, basis_modifier):
-    return {key: val for key, val in start_dict.items() if key - basis_modifier not in to_exclude_basis}
+def calc_roll_and_weight_mods(group_of_rollweights):
+    total_roll_mod = 0
+    total_weight_mod = 1
+    for roll, weight in group_of_rollweights:
+        total_roll_mod += roll
+        total_weight_mod *= weight
+    return total_roll_mod, total_weight_mod
+
+
+def remove_keys_after_applying_modifier(modified_dict, original_excluded_keys, key_modifier):
+    return {key: val for key, val in modified_dict.items() if key - key_modifier not in original_excluded_keys}
+
+
+def combine_rollweights_with_same_roll_value(rollweight_tuples):
+    answer = {}
+    for roll, weight in rollweight_tuples:
+        answer[roll] = weight + answer.get(roll, 0)
+    return answer
