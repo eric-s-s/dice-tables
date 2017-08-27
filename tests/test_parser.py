@@ -598,6 +598,20 @@ class TestParser(unittest.TestCase):
         self.assertEqual(NewParser().parse_die('Die(3)'), Die(3))
 
     # parse_within_limits_new_die
+    def test_parse_within_limits_new_die_preserves_original_kwargs(self):
+        class NewDie(Die):
+            def __init__(self, name, die_size):
+                self.name = name
+                super(NewDie, self).__init__(die_size=die_size)
+
+        def make_string(str_node):
+            return str_node.s
+
+        parser = Parser()
+        parser.add_param_type('string', make_string)
+        parser.add_class(NewDie, ('string', 'int'))
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie("bob", 501)')
+
     def test_parse_within_limits_new_die_size_kwarg_int(self):
         class NewDie(Die):
             def __init__(self, funky_new_die_size):
