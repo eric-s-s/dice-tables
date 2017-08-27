@@ -7,7 +7,7 @@ import sys
 
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, Exploding, ExplodingOn
 
-from dicetables.parser import Parser, ParseError, make_int, make_int_dict, make_int_tuple, find_value
+from dicetables.parser import Parser, ParseError, ParserLimitsError, make_int, make_int_dict, make_int_tuple
 
 
 class TestParser(unittest.TestCase):
@@ -97,8 +97,8 @@ class TestParser(unittest.TestCase):
         self.assertIsNot(answer, Parser().kwargs)
 
     def test_limits_kwargs(self):
-        answer = {'die_size_limits': ['die_size', 'dictionary_input'],
-                  'explosions_limits': ['explosions', 'explodes_on']}
+        answer = {'size': [('die_size', None), ('dictionary_input', None)],
+                  'explosions': [('explosions', 2), ('explodes_on', None)]}
         self.assertEqual(Parser().limits_kwargs, answer)
 
     def test_make_die_raises_error_on_function_call_not_in_parser(self):
@@ -235,152 +235,22 @@ class TestParser(unittest.TestCase):
             Parser(disable_kwargs=True).make_die(die_node)
         self.assertEqual(cm.exception.args[0], 'Tried to use kwargs on a Parser with disable_kwargs=True')
 
-    # Making die with limits
-    def test_find_value_key_word_not_present(self):
-        key_word = 'not_there'
-        class_kwargs = ('die_size', 'modifier')
-        die_params = (3, )
-        die_kwargs = {'modifier': -2}
-        self.assertIsNone(find_value(key_word, class_kwargs, die_params, die_kwargs))
-
-    def test_find_value_key_word_in_params(self):
-        key_word = 'die_size'
-        class_kwargs = ('die_size', 'modifier')
-        die_params = (3, )
-        die_kwargs = {'modifier': -2}
-        self.assertEqual(find_value(key_word, class_kwargs, die_params, die_kwargs), 3)
-
-    def test_find_value_key_word_in_kwargs(self):
-        key_word = 'modifier'
-        class_kwargs = ('die_size', 'modifier')
-        die_params = (3, )
-        die_kwargs = {'modifier': -2}
-        self.assertEqual(find_value(key_word, class_kwargs, die_params, die_kwargs), -2)
-
-    def test_find_value_default_value_not_supplied(self):
-        raise NotImplementedError
-
-    def test_check_limits_die_has_no_limit_values(self):
-        self.assertIsNone(Parser()._check_limits(Modifier, (100000,), {}))
-        self.assertIsNone(Parser()._check_limits(Modifier, (), {'modifier': 1000000}))
-
-    def test_check_limits_explosions_within_limits_Exploding(self):
-        input_die = Die(3)
-        params = (input_die, 10)
-        kwargs = {'input_die': input_die, 'explosions': 10}
-        self.assertIsNone(Parser()._check_limits(Exploding, params, {}))
-        self.assertIsNone(Parser()._check_limits(Exploding, (), kwargs))
-
-    def test_check_limits_explosions_over_limits_Exploding(self):
-        input_die = Die(3)
-        params = (input_die, 11)
-        kwargs = {'input_die': input_die, 'explosions': 11}
-        with self.assertRaises(ParseError) as e:
-            Parser()._check_limits(Exploding, params, {})
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): 10')
-        self.assertRaises(ParseError, Parser()._check_limits, Exploding, (), kwargs)
-
-    def test_check_limits_explosions_within_limits_ExplodingOn(self):
-        input_die = Die(3)
-        params = (input_die, (1, 2), 8)
-        kwargs = {'input_die': input_die, 'explodes_on': (1, 2), 'explosions': 8}
-        self.assertIsNone(Parser()._check_limits(ExplodingOn, params, {}))
-        self.assertIsNone(Parser()._check_limits(ExplodingOn, (), kwargs))
-
-    def test_check_limits_explosions_over_limits_exploding(self):
-        input_die = Die(3)
-        params = (input_die, (1, 2), 9)
-        kwargs = {'input_die': input_die, 'explodes_on': (1, 2), 'explosions': 9}
-        with self.assertRaises(ParseError) as e:
-            Parser()._check_limits(ExplodingOn, params, {})
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): 10')
-        self.assertRaises(ParseError, Parser()._check_limits, ExplodingOn, (), kwargs)
-
-    def test_check_limits_die_size_int(self):
-        parser = Parser(max_size=10)
-
-        die_size = 10
-        mod = -500000
-
-        params = (die_size, mod)
-        kwargs = {'die_size': die_size, 'modifier': mod}
-
-        self.assertIsNone(parser._check_limits(ModDie, params, {}))
-        self.assertIsNone(parser._check_limits(ModDie, (), kwargs))
-
-        die_size += 1
-        with self.assertRaises(ParseError) as e:
-            parser._check_limits(ModDie, (die_size,), {'modifier': mod})
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max die_size: 10')
-
-    def test_check_limits_die_size_input_dict(self):
-        parser = Parser(max_size=10)
-
-        input_dict = {10: 1}
-        mod = -500000
-
-        params = (input_dict, mod)
-        kwargs = {'dictionary_input': input_dict, 'modifier': mod}
-
-        self.assertIsNone(parser._check_limits(ModWeightedDie, params, {}))
-        self.assertIsNone(parser._check_limits(ModWeightedDie, (), kwargs))
-
-        input_dict[11] = 2
-        with self.assertRaises(ParseError) as e:
-            parser._check_limits(ModWeightedDie, (input_dict,), {'modifier': mod})
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max die_size: 10')
-
-    def test_check_limits_max_nested_dice(self):
-        parser = Parser(max_nested_dice=2)
-
-        parser._nested_dice_counter = 2
-        self.assertIsNone(parser._check_limits(Die, (5,), {}))
-
-        parser._nested_dice_counter = 3
-        with self.assertRaises(ParseError) as e:
-            parser._check_limits(Die, (5, ), {})
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of nested dice: 2')
-
-    def test_make_die_defaults_to_no_limits(self):
-        node = ast.parse('Die(5000)').body[0].value
-        self.assertEqual(Parser().make_die(node), Die(5000))
-
-    def test_make_die_with_limits(self):
-        node = ast.parse('Die(5000)').body[0].value
-
-        parser = Parser()
-        parser._use_limits = True
-        self.assertRaises(ParseError, parser.make_die, node)
-
-    def test_make_die_with_limits_advances_nested_counter_and_should_not_be_used_without_resetting(self):
-        depth_3 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
-        node = ast.parse(repr(depth_3)).body[0].value
-        parser = Parser(max_nested_dice=9)
-        parser._use_limits = True
-
-        self.assertEqual(parser.make_die(node), depth_3)
-        self.assertEqual(parser._nested_dice_counter, 4)
-
-        self.assertEqual(parser.make_die(node), depth_3)
-        self.assertEqual(parser._nested_dice_counter, 8)
-
-        self.assertRaises(ParseError, parser.make_die, node)
-        self.assertEqual(parser._nested_dice_counter, 10)
-
-    def test_parse_within_limits_max_size(self):
+    def test_parse_within_limits_max_size_int(self):
         self.assertEqual(Parser().parse_die_within_limits('Die(500)'), Die(500))
-        self.assertRaises(ParseError, Parser().parse_die_within_limits, 'Die(501)')
+        self.assertRaises(ParserLimitsError, Parser().parse_die_within_limits, 'Die(501)')
 
+    def test_parse_within_limits_max_size_dict(self):
         self.assertEqual(Parser().parse_die_within_limits('WeightedDie({500:1})'), WeightedDie({500: 1}))
-        self.assertRaises(ParseError, Parser().parse_die_within_limits, 'WeightedDie({501: 1})')
+        self.assertRaises(ParserLimitsError, Parser().parse_die_within_limits, 'WeightedDie({501: 1})')
 
-    def test_parse_within_limits_max_explosions(self):
+    def test_parse_within_limits_max_explosions_only_explosions(self):
         self.assertEqual(Parser().parse_die_within_limits('Exploding(Die(6), 10)'), Exploding(Die(6), 10))
-        self.assertRaises(ParseError, Parser().parse_die_within_limits, 'Exploding(Die(6), 11)')
+        self.assertRaises(ParserLimitsError, Parser().parse_die_within_limits, 'Exploding(Die(6), 11)')
 
+    def test_parse_within_limits_max_explosions_explosions_and_explodes_on(self):
         self.assertEqual(Parser().parse_die_within_limits('ExplodingOn(Die(6), (1, 2, 3), 7)'),
                          ExplodingOn(Die(6), (1, 2, 3), 7))
-        self.assertRaises(ParseError, Parser().parse_die_within_limits, 'ExplodingOn(Die(6), (1, 2, 3), 8)')
+        self.assertRaises(ParserLimitsError, Parser().parse_die_within_limits, 'ExplodingOn(Die(6), (1, 2, 3), 8)')
 
     def test_parse_within_limits_max_nested_dice(self):
         parser = Parser(max_nested_dice=3)
@@ -388,10 +258,7 @@ class TestParser(unittest.TestCase):
         depth_4 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
 
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
-        with self.assertRaises(ParseError) as e:
-            parser.parse_die_within_limits(repr(depth_4))
-
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of nested dice: 3')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, repr(depth_4))
 
     def test_parse_die_within_limits_resets_nested_dice_counter_each_time(self):
         parser = Parser(max_nested_dice=3)
@@ -400,15 +267,15 @@ class TestParser(unittest.TestCase):
 
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
-        self.assertRaises(ParseError, parser.parse_die_within_limits, repr(depth_4))
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, repr(depth_4))
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
 
     def test_parse_within_limits_catches_violation_on_nested_call(self):
         exploding_on_error = 'StrongDie(ExplodingOn(Exploding(Die(500), 3), (1, 2), 9), 5)'
-        with self.assertRaises(ParseError) as e:
+        with self.assertRaises(ParserLimitsError) as e:
             Parser().parse_die_within_limits(exploding_on_error)
 
-        self.assertEqual(e.exception.args[0], 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): 10')
+        self.assertEqual(e.exception.args[0], 'Max number of explosions + len(explodes_on): 10')
 
     def test_parse_within_limits_does_not_catch_non_hardcoded_kwargs(self):
         class NewDie(Die):
@@ -418,7 +285,7 @@ class TestParser(unittest.TestCase):
         parser = Parser()
         parser.add_class(NewDie, ('int',))
 
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'Die(5000)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'Die(5000)')
         self.assertEqual(NewDie(5000), parser.parse_die_within_limits('NewDie(5000)'))
 
     def test_parse_within_limits_unfilled_default_value(self):
@@ -426,8 +293,31 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser().parse_die_within_limits('ExplodingOn(Die(10), (1, 2, 3))'),
                          ExplodingOn(Die(10), (1, 2, 3)))
 
-        self.assertRaises(ParseError, Parser().parse_die_within_limits,
+        self.assertRaises(ParserLimitsError, Parser().parse_die_within_limits,
                           'ExplodingOn(Die(10), (1, 2, 3, 4, 5, 6, 7, 8, 9))')
+
+    def test_parse_wtihin_limits_unfilled_default_value_can_pass_limiter_and_fails_elsewhere(self):
+        self.assertRaises(TypeError, Parser().parse_die_within_limits, 'Die()')
+        self.assertRaises(TypeError, Parser().parse_die_within_limits, 'WeightedDie()')
+        self.assertRaises(TypeError, Parser().parse_die_within_limits, 'ExplodingOn(Die(6))')
+
+    def test_parse_within_limits_error_message_nested_calls(self):
+        parser = Parser(max_nested_dice=1)
+        with self.assertRaises(ParserLimitsError) as e:
+            parser.parse_die_within_limits('StrongDie(StrongDie(Die(6), 2), 2)')
+        self.assertEqual(e.exception.args[0], 'Max number of nested dice: 1')
+
+    def test_parse_within_limits_error_message_max_size(self):
+        parser = Parser(max_size=10)
+        with self.assertRaises(ParserLimitsError) as e:
+            parser.parse_die_within_limits('Die(11)')
+        self.assertEqual(e.exception.args[0], 'Max die_size: 10')
+
+    def test_parse_within_limits_error_message_max_explosions(self):
+        parser = Parser(max_explosions=2)
+        with self.assertRaises(ParserLimitsError) as e:
+            parser.parse_die_within_limits('Exploding(Die(5), 3)')
+        self.assertEqual(e.exception.args[0], 'Max number of explosions + len(explodes_on): 2')
 
     def test_Die(self):
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
@@ -588,32 +478,48 @@ class TestParser(unittest.TestCase):
         self.assertEqual(new_parser.param_types['int'], int)
 
     def test_add_die_size_limit_kwarg_no_default_value(self):
-        defaults = {'die_size_limits': ['die_size', 'dictionary_input'],
-                    'explosions_limits': ['explosions', 'explodes_on']}
+        defaults = {'size': [('die_size', None), ('dictionary_input', None)],
+                    'explosions': [('explosions', 2), ('explodes_on', None)]}
         parser = Parser()
         self.assertEqual(parser.limits_kwargs, defaults)
 
         parser.add_die_size_limit_kwarg('new_size_kwarg')
-        answer = {'die_size_limits': ['die_size', 'dictionary_input', 'new_size_kwarg'],
-                  'explosions_limits': ['explosions', 'explodes_on']}
+        answer = {'size': [('die_size', None), ('dictionary_input', None), ('new_size_kwarg', None)],
+                  'explosions': [('explosions', 2), ('explodes_on', None)]}
         self.assertEqual(parser.limits_kwargs, answer)
 
     def test_add_die_size_limit_kwarg_with_default_value(self):
-        raise NotImplementedError
+        defaults = {'size': [('die_size', None), ('dictionary_input', None)],
+                    'explosions': [('explosions', 2), ('explodes_on', None)]}
+        parser = Parser()
+        self.assertEqual(parser.limits_kwargs, defaults)
 
-    def test_add_explosions_limit_kwarg(self):
-        defaults = {'die_size_limits': ['die_size', 'dictionary_input'],
-                    'explosions_limits': ['explosions', 'explodes_on']}
+        parser.add_die_size_limit_kwarg('new_size_kwarg', 11)
+        answer = {'size': [('die_size', None), ('dictionary_input', None), ('new_size_kwarg', 11)],
+                  'explosions': [('explosions', 2), ('explodes_on', None)]}
+        self.assertEqual(parser.limits_kwargs, answer)
+
+    def test_add_explosions_limit_kwarg_no_default_value(self):
+        defaults = {'size': [('die_size', None), ('dictionary_input', None)],
+                    'explosions': [('explosions', 2), ('explodes_on', None)]}
         parser = Parser()
         self.assertEqual(parser.limits_kwargs, defaults)
 
         parser.add_explosions_limit_kwarg('new_explosions_kwarg')
-        answer = {'die_size_limits': ['die_size', 'dictionary_input'],
-                  'explosions_limits': ['explosions', 'explodes_on', 'new_explosions_kwarg']}
+        answer = {'size': [('die_size', None), ('dictionary_input', None)],
+                  'explosions': [('explosions', 2), ('explodes_on', None), ('new_explosions_kwarg', None)]}
         self.assertEqual(parser.limits_kwargs, answer)
 
     def test_add_explosions_limit_kwarg_with_default_value(self):
-        raise NotImplementedError
+        defaults = {'size': [('die_size', None), ('dictionary_input', None)],
+                    'explosions': [('explosions', 2), ('explodes_on', None)]}
+        parser = Parser()
+        self.assertEqual(parser.limits_kwargs, defaults)
+
+        parser.add_explosions_limit_kwarg('new_explosions_kwarg', 100)
+        answer = {'size': [('die_size', None), ('dictionary_input', None)],
+                  'explosions': [('explosions', 2), ('explodes_on', None), ('new_explosions_kwarg', 100)]}
+        self.assertEqual(parser.limits_kwargs, answer)
 
     def test_an_instance_of_parser_with_a_new_die(self):
         class StupidDie(Die):
@@ -691,6 +597,7 @@ class TestParser(unittest.TestCase):
                          DoubleDie(DoubleDie(Die(2), 4), 3))
         self.assertEqual(NewParser().parse_die('Die(3)'), Die(3))
 
+    # parse_within_limits_new_die
     def test_parse_within_limits_new_die_size_kwarg_int(self):
         class NewDie(Die):
             def __init__(self, funky_new_die_size):
@@ -699,8 +606,8 @@ class TestParser(unittest.TestCase):
         parser = Parser()
         parser.add_class(NewDie, ('int',))
         parser.add_die_size_limit_kwarg('funky_new_die_size')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'NewDie(5000)')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'Die(5000)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie(5000)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'Die(5000)')
 
     def test_parse_within_limits_new_die_size_kwarg_dict(self):
         class NewDie(WeightedDie):
@@ -710,8 +617,8 @@ class TestParser(unittest.TestCase):
         parser = Parser()
         parser.add_class(NewDie, ('int_dict',))
         parser.add_die_size_limit_kwarg('funky_new_die_dict')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'NewDie({5000: 1})')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'WeightedDie({5000: 1})')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie({5000: 1})')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'WeightedDie({5000: 1})')
 
     def test_parse_within_limits_new_die_size_kwarg_error(self):
         class NewDie(Die):
@@ -733,7 +640,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(e.exception.args[0],
                          'A kwarg declared as a "die size limit" is neither an int nor a dict of ints.')
 
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'WeightedDie({5000: 1})')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'WeightedDie({5000: 1})')
 
     def test_parse_within_limits_new_explosions_kwarg_int(self):
         class NewDie(ExplodingOn):
@@ -743,8 +650,8 @@ class TestParser(unittest.TestCase):
         parser = Parser()
         parser.add_class(NewDie, ('die', 'int_tuple', 'int'))
         parser.add_explosions_limit_kwarg('biiiiig_booooooms')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'NewDie(Die(5), (1, 2), 9)')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie(Die(5), (1, 2), 9)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
 
     def test_parse_within_limits_new_explosions_kwarg_int_tuple(self):
         class NewDie(ExplodingOn):
@@ -754,8 +661,8 @@ class TestParser(unittest.TestCase):
         parser = Parser()
         parser.add_class(NewDie, ('die', 'int_tuple', 'int'))
         parser.add_explosions_limit_kwarg('boom_points')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'NewDie(Die(5), (1, 2), 9)')
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie(Die(5), (1, 2), 9)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
 
     def test_parse_within_limits_new_explosions_kwarg_error(self):
         class NewDie(ExplodingOn):
@@ -777,10 +684,51 @@ class TestParser(unittest.TestCase):
         self.assertEqual(e.exception.args[0],
                          'A kwarg declared as an "explosions limit" is neither an int nor a tuple/list of ints.')
 
-        self.assertRaises(ParseError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'ExplodingOn(Die(5), (1, 2), 9)')
 
-    def test_parse_wihtin_limits_new_size_and_explosions_kwargs_with_defualts(self):
-        raise NotImplementedError
+    def test_parse_wihtin_limits_new_size_kwarg_with_defualts(self):
+        class NewDie(Die):
+            def __init__(self, funky_new_die_size=5000):
+                super(NewDie, self).__init__(funky_new_die_size)
+
+        parser = Parser()
+        parser.add_class(NewDie, ('int',))
+        parser.add_die_size_limit_kwarg('funky_new_die_size', 5000)
+        self.assertEqual(parser.parse_die('NewDie()'), NewDie())
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie()')
+
+    def test_parse_within_limits_new_explosions_kwarg_with_defaults(self):
+        class NewDie(ExplodingOn):
+            def __init__(self, input_die, explodes_on, biiiiig_booooooms=11):
+                super(NewDie, self).__init__(input_die, explodes_on, biiiiig_booooooms)
+
+        parser = Parser()
+        parser.add_class(NewDie, ('die', 'int_tuple', 'int'))
+        parser.add_explosions_limit_kwarg('biiiiig_booooooms', 11)
+        self.assertEqual(parser.parse_die('NewDie(Die(5), (1, 2))'), NewDie(Die(5), (1, 2)))
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie(Die(5), (1, 2))')
+
+    def test_parse_within_limits_kwarg_with_defaults_beyond_scope_ignoring_limits(self):
+        class NewDie(Die):
+            def __init__(self, funky_new_die_size=5000):
+                super(NewDie, self).__init__(funky_new_die_size)
+
+        parser = Parser()
+        parser.add_class(NewDie, ('int',))
+        parser.add_die_size_limit_kwarg('funky_new_die_size', 5)
+        self.assertEqual(parser.parse_die('NewDie()'), NewDie(5000))
+        self.assertEqual(parser.parse_die_within_limits('NewDie()'), NewDie(5000))
+
+    def test_parse_within_limits_kwarg_with_defaults_beyond_scope_catching_false_limits(self):
+        class NewDie(Die):
+            def __init__(self, funky_new_die_size=5):
+                super(NewDie, self).__init__(funky_new_die_size)
+
+        parser = Parser()
+        parser.add_class(NewDie, ('int',))
+        parser.add_die_size_limit_kwarg('funky_new_die_size', 5000)
+        self.assertEqual(parser.parse_die('NewDie()'), NewDie(5))
+        self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie()')
 
 
 if __name__ == '__main__':
