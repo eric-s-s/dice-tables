@@ -283,7 +283,7 @@ and **a** solution
 >>> parser.parse_die_within_limits('NewDie("5000")')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 500
+ParserLimitsError: Dude! NOT cool!
 >>> parser.parse_die_within_limits('Die(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>

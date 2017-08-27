@@ -296,7 +296,7 @@ class TestParser(unittest.TestCase):
         self.assertRaises(ParserLimitsError, Parser().parse_die_within_limits,
                           'ExplodingOn(Die(10), (1, 2, 3, 4, 5, 6, 7, 8, 9))')
 
-    def test_parse_wtihin_limits_unfilled_default_value_can_pass_limiter_and_fails_elsewhere(self):
+    def test_parse_within_limits_unfilled_default_value_can_pass_limiter_and_fails_elsewhere(self):
         self.assertRaises(TypeError, Parser().parse_die_within_limits, 'Die()')
         self.assertRaises(TypeError, Parser().parse_die_within_limits, 'WeightedDie()')
         self.assertRaises(TypeError, Parser().parse_die_within_limits, 'ExplodingOn(Die(6))')
