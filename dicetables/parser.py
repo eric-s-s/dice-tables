@@ -252,9 +252,13 @@ class Parser(object):
         self._param_types[param_type] = creation_method
 
     def add_die_size_limit_kwarg(self, new_key_word, default=None):
+        """If there is a default value and you do not add it or you add the incorrect one,
+        `parse_within_limits` will fail."""
         self._limits_values['size'].append((new_key_word, default))
 
     def add_explosions_limit_kwarg(self, new_key_word, default=None):
+        """If there is a default value and you do not add it or you add the incorrect one,
+        `parse_within_limits` will fail."""
         self._limits_values['explosions'].append((new_key_word, default))
 
 

@@ -744,6 +744,17 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parser.parse_die('NewDie()'), NewDie(5))
         self.assertRaises(ParserLimitsError, parser.parse_die_within_limits, 'NewDie()')
 
+    def test_parse_die_within_limits_failure_to_register_default_beyond_scope(self):
+        class NewDie(Die):
+            def __init__(self, funky_new_die_size=5000):
+                super(NewDie, self).__init__(funky_new_die_size)
+
+        parser = Parser()
+        parser.add_class(NewDie, ('int',))
+        parser.add_die_size_limit_kwarg('funky_new_die_size')
+        self.assertEqual(parser.parse_die('NewDie()'), NewDie(5000))
+        self.assertEqual(parser.parse_die_within_limits('NewDie()'), NewDie(5000))
+
 
 if __name__ == '__main__':
     unittest.main()
