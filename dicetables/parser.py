@@ -8,9 +8,9 @@ class ParseError(ValueError):
         super(ParseError, self).__init__(*args)
 
 
-class ParserLimitsError(ValueError):
+class ExceedsLimitsError(ValueError):
     def __init__(self, *args):
-        super(ParserLimitsError, self).__init__(*args)
+        super(ExceedsLimitsError, self).__init__(*args)
 
 
 class Parser(object):
@@ -80,7 +80,8 @@ class Parser(object):
         - explodes_on
 
         If your die classes use different kwargs to describe size or number of explosions, they will
-        be parsed as if there were no limits.
+        be parsed as if there were no limits. You may register those kwargs (and any default value) with
+        :code:`add_die_size_limit_kwarg` and :code:`add_explosions_limit_kwarg`.
         """
         ast_call_node = ast.parse(die_string).body[0].value
 
@@ -183,7 +184,7 @@ class Parser(object):
     def _check_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
             msg = 'Max number of nested dice: {}'.format(self.max_nested_dice)
-            raise ParserLimitsError(msg)
+            raise ExceedsLimitsError(msg)
 
     def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
         limits_kw_default = self._limits_values[param_types]
@@ -215,7 +216,7 @@ class Parser(object):
                 raise ValueError(msg)
 
             if size > self.max_size:
-                raise ParserLimitsError(msg)
+                raise ExceedsLimitsError(msg)
 
     def _check_explosions(self, explosions_params):
         msg = 'Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
@@ -233,7 +234,7 @@ class Parser(object):
                 raise ValueError(msg)
 
         if explosions > self.max_explosions:
-            raise ParserLimitsError(msg)
+            raise ExceedsLimitsError(msg)
 
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
         """

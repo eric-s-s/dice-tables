@@ -192,12 +192,12 @@ Die(500)
 >>> dt.Parser().parse_die_within_limits('Die(501)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 500
+ExceedsLimitsError: Max die_size: 500
 >>> stupid = 'StrongDie(' * 20 + 'Die(5)' + ', 2)' * 20
 >>> dt.Parser().parse_die_within_limits(stupid)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max number of nested dice: 5
+ExceedsLimitsError: Max number of nested dice: 5
 
 >>> class NewDie(dt.Die):
 ...    def __init__(self, funky_new_die_size=6):
@@ -214,7 +214,7 @@ NewDie(5000)
 >>> parser.parse_die_within_limits('Die(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 500
+ExceedsLimitsError: Max die_size: 500
 
 You can add your new and exciting key-words to the parser with :meth:`Parser.add_die_size_limit_kwarg` and
 :meth:`Parser.add_explosions_limit_kwarg`. If this has a default value, you can add that too.
@@ -226,11 +226,11 @@ You can add your new and exciting key-words to the parser with :meth:`Parser.add
 >>> new_parser.parse_die_within_limits('NewDie(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 500
+ExceedsLimitsError: Max die_size: 500
 >>> new_parser.parse_die_within_limits('Die(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 500
+ExceedsLimitsError: Max die_size: 500
 
 >>> new_parser.parse_die_within_limits('NewDie()')
 NewDie(6)
@@ -238,7 +238,7 @@ NewDie(6)
 >>> new_parser.parse_die_within_limits('NewDie()')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 5
+ExceedsLimitsError: Max die_size: 5
 
 The parser only knows how to evaluate size based on a parameter that represents size as an `int` or dictionary of
 `{int: int}` where the size is the highest key value. Similarly, the parser assumes that it can count the explosions
@@ -272,7 +272,7 @@ and **a** solution
 ...         other_params = [param for param in die_size_params if not isinstance(param, str)]
 ...         for number_str in string_params:
 ...             if int(number_str) > self.max_size:
-...                 raise dt.ParserLimitsError('Dude! NOT cool!')
+...                 raise dt.ExceedsLimitsError('Dude! NOT cool!')
 ...         super(NewParser, self)._check_die_size(other_params)
 ...
 >>> parser = NewParser()
@@ -283,8 +283,8 @@ and **a** solution
 >>> parser.parse_die_within_limits('NewDie("5000")')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Dude! NOT cool!
+ExceedsLimitsError: Dude! NOT cool!
 >>> parser.parse_die_within_limits('Die(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-ParserLimitsError: Max die_size: 500
+ExceedsLimitsError: Max die_size: 500
