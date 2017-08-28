@@ -8,9 +8,9 @@ class ParseError(ValueError):
         super(ParseError, self).__init__(*args)
 
 
-class ExceedsLimitsError(ValueError):
+class LimitsError(ValueError):
     def __init__(self, *args):
-        super(ExceedsLimitsError, self).__init__(*args)
+        super(LimitsError, self).__init__(*args)
 
 
 class Parser(object):
@@ -184,7 +184,7 @@ class Parser(object):
     def _check_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
             msg = 'Max number of nested dice: {}'.format(self.max_nested_dice)
-            raise ExceedsLimitsError(msg)
+            raise LimitsError(msg)
 
     def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
         limits_kw_default = self._limits_values[param_types]
@@ -216,7 +216,7 @@ class Parser(object):
                 raise ValueError(msg)
 
             if size > self.max_size:
-                raise ExceedsLimitsError(msg)
+                raise LimitsError(msg)
 
     def _check_explosions(self, explosions_params):
         msg = 'Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
@@ -234,7 +234,7 @@ class Parser(object):
                 raise ValueError(msg)
 
         if explosions > self.max_explosions:
-            raise ExceedsLimitsError(msg)
+            raise LimitsError(msg)
 
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
         """
