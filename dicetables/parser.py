@@ -8,6 +8,11 @@ class ParseError(ValueError):
         super(ParseError, self).__init__(*args)
 
 
+class LimitsError(ValueError):
+    def __init__(self, *args):
+        super(LimitsError, self).__init__(*args)
+
+
 class Parser(object):
     def __init__(self, ignore_case=False, disable_kwargs=False, max_size=500, max_explosions=10, max_nested_dice=5):
         """
@@ -32,8 +37,8 @@ class Parser(object):
                         StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
                         ExplodingOn: ('input_die', 'explodes_on', 'explosions')}
 
-        self._size_limit_kwargs = ['die_size', 'dictionary_input']
-        self._explosions_limit_kwargs = ['explosions', 'explodes_on']
+        self._limits_values = {'size': [('die_size', None), ('dictionary_input', None)],
+                               'explosions': [('explosions', 2), ('explodes_on', None)]}
 
         self.ignore_case = ignore_case
         self.disable_kwargs = disable_kwargs
@@ -58,8 +63,7 @@ class Parser(object):
 
     @property
     def limits_kwargs(self):
-        return {'explosions_limits': self._explosions_limit_kwargs[:],
-                'die_size_limits': self._size_limit_kwargs[:]}
+        return self._limits_values.copy()
 
     def parse_die(self, die_string):
         ast_call_node = ast.parse(die_string).body[0].value
@@ -76,7 +80,8 @@ class Parser(object):
         - explodes_on
 
         If your die classes use different kwargs to describe size or number of explosions, they will
-        be parsed as if there were no limits.
+        be parsed as if there were no limits. You may register those kwargs (and any default value) with
+        :code:`add_die_size_limit_kwarg` and :code:`add_explosions_limit_kwarg`.
         """
         ast_call_node = ast.parse(die_string).body[0].value
 
@@ -170,22 +175,34 @@ class Parser(object):
     def _check_limits(self, die_class, die_params, die_kwargs):
         self._check_nested_calls()
 
-        class_kwargs = self._kwargs[die_class]
-        size_params = [find_value(key_word, class_kwargs, die_params, die_kwargs)
-                       for key_word in self._size_limit_kwargs]
-        explosions_params = [find_value(key_word, class_kwargs, die_params, die_kwargs)
-                             for key_word in self._explosions_limit_kwargs]
+        size_params = self._get_limits_params('size', die_class, die_params, die_kwargs)
+        explosions_params = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
 
         self._check_die_size(size_params)
         self._check_explosions(explosions_params)
 
     def _check_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
-            msg = 'LIMITS EXCEEDED. Max number of nested dice: {}'.format(self.max_nested_dice)
-            raise ParseError(msg)
+            msg = 'Max number of nested dice: {}'.format(self.max_nested_dice)
+            raise LimitsError(msg)
+
+    def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
+        limits_kw_default = self._limits_values[param_types]
+        class_kwargs = self._kwargs[die_class]
+        answer = []
+        for kwarg_name, default in limits_kw_default:
+            if kwarg_name not in class_kwargs:
+                continue
+
+            index = class_kwargs.index(kwarg_name)
+            if len(die_params) > index:
+                answer.append(die_params[index])
+            else:
+                answer.append(die_kwargs.get(kwarg_name, default))
+        return answer
 
     def _check_die_size(self, die_size_params):
-        msg = 'LIMITS EXCEEDED. Max die_size: {}'.format(self.max_size)
+        msg = 'Max die_size: {}'.format(self.max_size)
         for param in die_size_params:
             if param is None:
                 continue
@@ -199,10 +216,10 @@ class Parser(object):
                 raise ValueError(msg)
 
             if size > self.max_size:
-                raise ParseError(msg)
+                raise LimitsError(msg)
 
     def _check_explosions(self, explosions_params):
-        msg = 'LIMITS EXCEEDED. Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
+        msg = 'Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
         explosions = 0
         for param in explosions_params:
             if param is None:
@@ -216,8 +233,8 @@ class Parser(object):
                 msg = 'A kwarg declared as an "explosions limit" is neither an int nor a tuple/list of ints.'
                 raise ValueError(msg)
 
-            if explosions > self.max_explosions:
-                raise ParseError(msg)
+        if explosions > self.max_explosions:
+            raise LimitsError(msg)
 
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
         """
@@ -235,11 +252,15 @@ class Parser(object):
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
 
-    def add_die_size_limit_kwarg(self, new_key_word):
-        self._size_limit_kwargs.append(new_key_word)
+    def add_die_size_limit_kwarg(self, new_key_word, default=None):
+        """If there is a default value and you do not add it or you add the incorrect one,
+        `parse_within_limits` will fail."""
+        self._limits_values['size'].append((new_key_word, default))
 
-    def add_explosions_limit_kwarg(self, new_key_word):
-        self._explosions_limit_kwargs.append(new_key_word)
+    def add_explosions_limit_kwarg(self, new_key_word, default=None):
+        """If there is a default value and you do not add it or you add the incorrect one,
+        `parse_within_limits` will fail."""
+        self._limits_values['explosions'].append((new_key_word, default))
 
 
 def make_int_dict(dict_node):
@@ -268,14 +289,3 @@ def _get_kwargs_from_init(class_):
         return kwargs[1:]
     except AttributeError:
         raise AttributeError('could not find the code for __init__ function at class_.__init__.__code__')
-
-
-def find_value(key_word, class_kwargs, die_params, die_kwargs):
-    if key_word not in class_kwargs:
-        return None
-
-    index = list(class_kwargs).index(key_word)
-    if len(die_params) > index:
-        return die_params[index]
-    else:
-        return die_kwargs[key_word]
