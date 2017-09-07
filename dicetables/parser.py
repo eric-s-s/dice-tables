@@ -66,6 +66,7 @@ class Parser(object):
         return self._limits_values.copy()
 
     def parse_die(self, die_string):
+        die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
         return self.make_die(ast_call_node)
 
@@ -83,6 +84,7 @@ class Parser(object):
         be parsed as if there were no limits. You may register those kwargs (and any default value) with
         :code:`add_die_size_limit_kwarg` and :code:`add_explosions_limit_kwarg`.
         """
+        die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
 
         self._use_limits = True

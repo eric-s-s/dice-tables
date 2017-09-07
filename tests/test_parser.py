@@ -235,6 +235,11 @@ class TestParser(unittest.TestCase):
             Parser(disable_kwargs=True).make_die(die_node)
         self.assertEqual(cm.exception.args[0], 'Tried to use kwargs on a Parser with disable_kwargs=True')
 
+    def test_parse_arbitrary_spacing(self):
+        self.assertEqual(Parser().parse_die('   Die  ( 5  )  '), Die(5))
+        self.assertEqual(Parser().parse_die('   Die  ( die_size = 5  )  '), Die(5))
+        self.assertEqual(Parser().parse_die('   Exploding ( Die  ( die_size = 5  ) , 1 ) '), Exploding(Die(5), 1))
+
     def test_parse_within_limits_max_size_int(self):
         self.assertEqual(Parser().parse_die_within_limits('Die(500)'), Die(500))
         self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'Die(501)')
