@@ -6,9 +6,6 @@ import unittest
 from dicetables import AdditiveEvents
 import dicetables.eventsinfo as ti
 
-from unittest import util
-
-unittest.util._MAX_LENGTH=2000
 
 class TestEventsInfo(unittest.TestCase):
 
@@ -435,9 +432,19 @@ class TestEventsInfo(unittest.TestCase):
         expected = ('1', '1', '1,000,000,001', '1,000,000,001', '1.000e-7')
         self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=9), expected)
 
+    def test_EventsCalculations_stats_strings_max_power_for_commaed_rounding(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 199986}))
+        expected = ('1', '2', '2.000e+5', '99,994', '0.001000')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=4), expected)
+
+        # once the first four digits round up (shown_digits defaults to 4), it switches to scientific notation.
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 199989}))
+        expected = ('1', '2', '2.000e+5', '1.000e+5', '0.001000')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=4), expected)
+
     def test_EventsCalculations_stats_strings_max_power_for_commaed_at_zero(self):
         calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 1}))
-        expected = ('1', '1', '2', '2.000', '5.000e+1')
+        expected = ('1', '1', '2', '2.000', '5.000e+1')  # The '2' is from an int. The '2.000' is from a float.
         self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=0), expected)
 
     def test_EventsCalculations_stats_strings_max_power_for_commaed_at_neg_one(self):
