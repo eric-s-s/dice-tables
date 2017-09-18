@@ -220,6 +220,36 @@ class TestEventsInfo(unittest.TestCase):
         calculator = ti.EventsCalculations(events)
         self.assertEqual(calculator.full_table_string(shown_digits=6), '10000: 1.00000e+1000\n')
 
+    def test_EventsCalculations_full_table_string_max_power_for_commaed(self):
+        events = AdditiveEvents({1: 9, 2: 99999, 3: 100000, 4: 999999})
+        calculator = ti.EventsCalculations(events)
+        expected = '1: 9\n2: 99,999\n3: 1.000e+5\n4: 1.000e+6\n'
+        self.assertEqual(calculator.full_table_string(max_power_for_commaed=4), expected)
+
+    def test_EventsCalculations_full_table_string_max_power_for_commaed_zero(self):
+        events = AdditiveEvents({1: 1, 2: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        expected = '1: 1\n2: 1.000e+1\n3: 1.000e+2\n'
+        self.assertEqual(calculator.full_table_string(max_power_for_commaed=0), expected)
+
+    def test_EventsCalculations_full_table_string_max_power_for_commaed_neg_one(self):
+        events = AdditiveEvents({1: 1, 2: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        expected = '1: 1.000e+0\n2: 1.000e+1\n3: 1.000e+2\n'
+        self.assertEqual(calculator.full_table_string(max_power_for_commaed=-1), expected)
+
+    def test_EventsCalculations_full_table_string_max_power_for_commaed_neg_many(self):
+        events = AdditiveEvents({1: 1, 2: 10, 3: 100})
+        calculator = ti.EventsCalculations(events)
+        expected = '1: 1.000e+0\n2: 1.000e+1\n3: 1.000e+2\n'
+        self.assertEqual(calculator.full_table_string(max_power_for_commaed=-10), expected)
+
+    def test_EventsCalculations_full_table_string_max_power_for_commaed_high(self):
+        events = AdditiveEvents({1: 10**10, 2: 10**11})
+        calculator = ti.EventsCalculations(events)
+        expected = '1: 10,000,000,000\n2: 1.000e+11\n'
+        self.assertEqual(calculator.full_table_string(max_power_for_commaed=10), expected)
+
     def test_get_fast_pct_number_zero(self):
         self.assertEqual(ti.get_fast_pct_number(0, 100), 0)
 
@@ -397,6 +427,64 @@ class TestEventsInfo(unittest.TestCase):
         expected = ('1', '1', '1.00000e+2000', '1.00000e+2000', '1.00000e-1998')
         self.assertEqual(calculator.stats_strings([1], shown_digits=6), expected)
 
+    def test_EventsCalculations_stats_strings_max_power_for_commaed(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 9}))
+        expected = ('1', '1', '1,000,000,001', '1,000,000,001', '1.000e-7')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=9), expected)
+
+    def test_EventsCalculations_stats_strings_max_power_for_commaed_rounding(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 199986}))
+        expected = ('1', '2', '2.000e+5', '99,994', '0.001000')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=4), expected)
+
+        # once the first four digits round up (shown_digits defaults to 4), it switches to scientific notation.
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 199989}))
+        expected = ('1', '2', '2.000e+5', '1.000e+5', '0.001000')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=4), expected)
+
+    def test_EventsCalculations_stats_strings_max_power_for_commaed_at_zero(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 1}))
+        expected = ('1', '1', '2', '2.000', '5.000e+1')  # The '2' is from an int. The '2.000' is from a float.
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=0), expected)
+
+    def test_EventsCalculations_stats_strings_max_power_for_commaed_at_neg_one(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 1}))
+        expected = ('1', '1.000e+0', '2.000e+0', '2.000e+0', '5.000e+1')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=-1), expected)
+
+    def test_EventsCalculations_stats_strings_max_power_for_commaed_at_high_neg(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 1}))
+        expected = ('1', '1.000e+0', '2.000e+0', '2.000e+0', '5.000e+1')
+        self.assertEqual(calculator.stats_strings([1], max_power_for_commaed=-100), expected)
+
+    def test_EventsCalculations_stats_strings_min_power_for_fixed_pt(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 6}))
+        expected = ('1', '1', '1,000,001', '1,000,001', '0.0001000')
+        self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=-4), expected)
+
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 7}))
+        expected = ('1', '1', '1.000e+7', '1.000e+7', '1.000e-5')
+        self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=-4), expected)
+
+    def test_EventsCalculations_stats_strings_min_power_for_fixed_pt_rounding(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 999, 2: 99999999}))
+        expected = ('1', '999', '1.000e+8', '100,101', '0.0009990')
+        self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=-4), expected)
+
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 999, 2: 99999999}))
+        expected = ('1', '999', '1.0e+8', '100,101', '0.0010')
+        self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=-4, shown_digits=2), expected)
+
+    def test_EventsCalculations_stats_strings_min_power_for_fixed_pt_at_zero(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 499}))
+        expected = ('1', '1', '500', '500.0', '2.000e-1')
+        self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=0), expected)
+
+    def test_EventsCalculations_stats_strings_min_power_for_fixed_pt_positive_number(self):
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 499}))
+        expected = ('1', '1', '500', '500.0', '2.000e-1')
+        self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=10), expected)
+
     def test_EventsCalculations_stats_strings_named_tuple_values(self):
 
         calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 10 ** 2000}))
@@ -465,6 +553,16 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 1})
         self.assertEqual(ti.stats(events, [1], shown_digits=5), ('1', '1', '1', '1.0000', '100.00'))
 
+    def test_stats_can_access_min_power_for_fixed_pt(self):
+        events = AdditiveEvents({1: 1, 2: 499})
+        expected = ('1', '1', '500', '500.0', '2.000e-1')
+        self.assertEqual(ti.stats(events, [1], min_power_for_fixed_pt=0), expected)
+
+    def test_stats_can_access_max_power_for_commaed(self):
+        events = AdditiveEvents({1: 1, 2: 1})
+        expected = ('1', '1', '2', '2.000', '5.000e+1')
+        self.assertEqual(ti.stats(events, [1], max_power_for_commaed=0), expected)
+
     def test_full_table_string_include_zeroes_true(self):
         events = AdditiveEvents({1: 1, 3: 1})
         self.assertEqual(ti.full_table_string(events, True), '1: 1\n2: 0\n3: 1\n')
@@ -476,6 +574,10 @@ class TestEventsInfo(unittest.TestCase):
     def test_full_table_string_can_access_shown_digits(self):
         events = AdditiveEvents({1: 10 ** 100})
         self.assertEqual(ti.full_table_string(events, False, shown_digits=5), '1: 1.0000e+100\n')
+
+    def test_full_table_string_can_access_max_power_for_commaed(self):
+        events = AdditiveEvents({1: 10})
+        self.assertEqual(ti.full_table_string(events, False, max_power_for_commaed=0), '1: 1.000e+1\n')
 
 
 if __name__ == '__main__':

@@ -21,7 +21,7 @@ Events class. Below the class docs are some code examples.
 54.0061725
 >>> calc.mean()
 3500.0
->>> the_stats = calc.stats_strings([3500], shown_digits=6)
+>>> the_stats = calc.stats_strings([3500], shown_digits=6) # Shown_digits defaults to 4.
 >>> the_stats
 StatsStrings(query_values='3,500',
              query_occurrences='1.04628e+776',
@@ -49,7 +49,7 @@ This is also correct. Rolls not in the middle 1000 collectively have a much smal
 100: 1.23457e+1006
 <BLANKLINE>
 
-EventsCalculations.include_zeroes is only settable at instantiation. It does
+`EventsCalculations.include_zeroes` is only settable at instantiation. It does
 exactly what it says. EventCalculations owns an EventsInformation. So
 instantiating EventsCalculations gets you
 two for the price of one. It's accessed with the property

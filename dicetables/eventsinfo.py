@@ -177,9 +177,15 @@ class EventsCalculations(object):
         else:
             return self._info.all_events()
 
-    def full_table_string(self, shown_digits=4):
+    def full_table_string(self, shown_digits=4, max_power_for_commaed=6):
+        """
+
+        :param shown_digits: How many digits in each scientific notation string.
+        :param max_power_for_commaed: The largest power to be represented in comma notation.
+            if set to -1, all numbers are in scientific notation.
+        """
         shown_digits = max(shown_digits, 1)
-        formatter = NumberFormatter(shown_digits=shown_digits)
+        formatter = NumberFormatter(shown_digits=shown_digits, max_comma_exp=max_power_for_commaed)
         right_just = self._get_right_just()
         out_str = ''
         for value, frequency in self._get_data_set():
@@ -191,18 +197,22 @@ class EventsCalculations(object):
         value_right_just = max(len(str(min_event)), len(str(max_event)))
         return value_right_just
 
-    def stats_strings(self, query_list, shown_digits=4):
+    def stats_strings(self, query_list, shown_digits=4, max_power_for_commaed=6, min_power_for_fixed_pt=-3):
         """
         Calculates the pct chance and one-in chance of any list of numbers,
         including numbers not in the Events.
 
         :param query_list: A list of ints. Calculates the chance of the list getting rolled.
         :param shown_digits: How many digits in each scientific notation number str.
+        :param max_power_for_commaed: The largest power to be represented in comma notation.
+            if set to -1, all numbers >= 1 are in scientific notation.
+        :param min_power_for_fixed_pt: The smallest power to be represented in fixed point notation.
+            If set to zero, all values < 1 represented in scientific notation.
         :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
-
         """
         shown_digits = max(shown_digits, 1)
-        formatter = NumberFormatter(shown_digits=shown_digits)
+        formatter = NumberFormatter(shown_digits=shown_digits, max_comma_exp=max_power_for_commaed,
+                                    min_fixed_pt_exp=min_power_for_fixed_pt)
 
         total_occurrences = self._info.total_occurrences()
         query_values_occurrences = self._get_query_values_occurrences(query_list)
@@ -267,9 +277,13 @@ def percentage_axes(events, include_zeroes=True):
     return EventsCalculations(events, include_zeroes).percentage_axes()
 
 
-def stats(events, query_values, shown_digits=4):
-    return EventsCalculations(events).stats_strings(query_values, shown_digits=shown_digits)
+def stats(events, query_values, shown_digits=4, max_power_for_commaed=6, min_power_for_fixed_pt=-3):
+    return EventsCalculations(events).stats_strings(query_values,
+                                                    shown_digits=shown_digits,
+                                                    max_power_for_commaed=max_power_for_commaed,
+                                                    min_power_for_fixed_pt=min_power_for_fixed_pt)
 
 
-def full_table_string(events, include_zeroes=True, shown_digits=4):
-    return EventsCalculations(events, include_zeroes).full_table_string(shown_digits=shown_digits)
+def full_table_string(events, include_zeroes=True, shown_digits=4, max_power_for_commaed=6):
+    return EventsCalculations(events, include_zeroes).full_table_string(shown_digits=shown_digits,
+                                                                        max_power_for_commaed=max_power_for_commaed)

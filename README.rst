@@ -7,7 +7,7 @@
 
 
 #################
-dicetables v2.4.3
+dicetables v2.4.4
 #################
 
 Calculate the Combinations For Any Set of Dice
@@ -157,10 +157,12 @@ since v2.2.0
 - Improved ExplodingOn speed.
 - Added `parse_die_within_limits` function to parser. Also added limit values. Changed getters to properties.
 
-from v2.4.0 to v2.4.3
+from v2.4.0 to v2.4.4
 
 - fixed error where `parse_die_within_limits` failed when using default values for dice.
 - `Parser` can parse strings with leading and trailing whitespaces.
 - `parse_die_within_limits` now raises `LimitsError`
+- added `max_power_for_commaed` option to `EventsCalculations.full_table_string`.
+- added `max_power_for_commaed` and `min_power_for_fixed_pt` to `EventsCalculations.stats_strings`.
 
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
