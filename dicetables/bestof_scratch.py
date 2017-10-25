@@ -155,6 +155,11 @@ def get_count2(lst):
     return count
 
 
+def get_size_of_gen_insort(die, times):
+    ans = 1
+    for number in range(die, die + times):
+        ans *= number
+    return ans // factorial(times)
 
 
 
@@ -247,11 +252,19 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from itertools import cycle
     colors = cycle('rbg')
-    for size in range(3, 10):
+    dots = cycle('o*x+')
+    for size in range(2, 10):
         color = next(colors)
+        dot = next(dots)
         name = 'size: {}'.format(size)
         times = []
-        for num in range(1, 38 - size*3):
+        xs = []
+        num = 0
+
+
+        len_val = size
+        while len_val < 20000:
+            num += 1
             start = clock()
             to_test = gen_insort(size, num)
             other = gen_insort_alt(size, num)
@@ -259,9 +272,14 @@ if __name__ == '__main__':
                 print(to_test, other, sep='\n', end='\n\n\n')
             to_add = clock() - start
             times.append(to_add)
+            xs.append(len_val)
+            len_val = get_size_of_gen_insort(size, num)
+            if (size == 2 and len_val > 500) or (size == 3 and len_val > 5000):
+                print('break at {} {}'.format(size, num))
+                break
 
 
-        plt.plot(times, '{}-o'.format(color), label=name)
+        plt.plot(xs, times, '{}-{}'.format(color, dot), label=name)
     plt.grid(True)
     plt.legend()
     plt.show()
