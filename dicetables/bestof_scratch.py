@@ -185,69 +185,10 @@ if __name__ == '__main__':
     for key, val in pct:
         print('{:>2}: {:>5.2f}'.format(key, val))
 
-    for key in range(3, 10):  # keys in 3D3
-        number_of_ones = 0
-        for dice in range(1, 4):  # 1, 2, or 3 dice containing ones
-            if dice + 3 * (3 - dice) >= key:
-                number_of_ones += 1
-        print('key ', key, 'ones ', number_of_ones)
-    # start = clock()
-    # master = {key: [] for key in range(3, 19)}
-    # other_master = {key: 0 for key in range(3, 19)}
-    # for a in range(1, 7):
-    #     for b in range(1, 7):
-    #         for c in range(1, 7):
-    #             for d in range(1, 7):
-    #                 lst = [a, b, c, d]
-    #                 key = sum(sorted(lst)[1:])
-    #                 val = ','.join([str(val) for val in lst])
-    #                 master[key].append(val)
-    #                 other_master[key] += 1
-    # print(other_master)
-    # print(other_master == x.get_dict())
-    # for key in range(3, 19):
-    #     print('{}:{}'.format(key, master[key]))
-    # for key in range(3, 19):
-    #     print('{:>2}: {}'.format(key, other_master[key]))
-    #
-    # master = {key: [] for key in range(2, 13)}
-    # other_master = {key: 0 for key in range(2, 13)}
-    # for a in range(1, 7):
-    #     for b in range(1, 7):
-    #         for c in range(1, 7):
-    #             for d in range(1, 7):
-    #                 lst = [a, b, c, d]
-    #                 key = sum(sorted(lst)[2:])
-    #                 val = ','.join([str(val) for val in lst])
-    #                 master[key].append(val)
-    #                 other_master[key] += 1
-    # print(other_master)
-    # print(other_master == x.get_dict())
-    # for key in range(2, 13):
-    #     print('{}:{}'.format(key, master[key]))
-    # for key in range(2, 13):
-    #     print('{:>2}: {}'.format(key, other_master[key]))
-    # print(clock() - start)
-    start = clock()
-    for val in combinations_with_replacement([1, 2, 3, 4, 5, 6, 7, 8], 5):
-        get_count2(val)
-    new_try = clock() - start
 
-    start = clock()
-    x = product([1, 2, 3, 4, 5, 6, 7, 8], repeat=5)
-    for val in x:
-        sorted(val)
-        sum(val)
-    sorting = clock() - start
 
-    start = clock()
-    x = product([1, 2, 3, 4, 5], repeat=5)
-    for val in x:
-        min(val)
-        sum(val)
-    minning = clock() - start
 
-    print(new_try, sorting, sep='\n', end='\n\n')
+
 
     import matplotlib.pyplot as plt
     from itertools import cycle
@@ -265,6 +206,8 @@ if __name__ == '__main__':
         len_val = size
         while len_val < 20000:
             num += 1
+            if size <= 4:
+                num += (6 - size)
             start = clock()
             to_test = gen_insort(size, num)
             other = gen_insort_alt(size, num)
