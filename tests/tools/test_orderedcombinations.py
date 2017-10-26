@@ -77,9 +77,9 @@ class TestOrderedCombinations(unittest.TestCase):
         answer = ordered_combinations_of_events(AdditiveEvents({1: 1, 2: 2, 3: 3}), 3)
         self.assertEqual(answer, {(1, 1, 1): 1,  # 3: 1
                                   (1, 1, 2): 6,  # 4: 6
-                                  (1, 2, 2): 12, (1, 1, 3): 9,  # 5: 21
-                                  (2, 2, 2): 8, (1, 2, 3): 36,  # 6: 44
-                                  (1, 3, 3): 27, (2, 2, 3): 36,  # 7: 63
+                                  (1, 2, 2): 12, (1, 1, 3): 9,  # 5: 12+9
+                                  (2, 2, 2): 8, (1, 2, 3): 36,  # 6: 8+36
+                                  (1, 3, 3): 27, (2, 2, 3): 36,  # 7: 27+36
                                   (2, 3, 3): 54,  # 8: 54
                                   (3, 3, 3): 27})  # 9: 27
         answer = AdditiveEvents.new().combine(AdditiveEvents({1: 1, 2: 2, 3: 3}), 3).get_dict()
@@ -90,6 +90,3 @@ class TestOrderedCombinations(unittest.TestCase):
         for times in range(1, 5):
             number_of_keys = len(ordered_combinations_of_events(events, times).keys())
             self.assertEqual(number_of_keys, count_unique_combination_keys(events, times))
-
-
-
