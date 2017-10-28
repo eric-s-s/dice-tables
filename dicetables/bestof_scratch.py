@@ -2,7 +2,9 @@ from dicetables import AdditiveEvents, EventsCalculations, DiceTable, Die, Modif
 from dicetables.eventsbases.integerevents import IntegerEvents
 from time import clock
 from itertools import product, combinations, permutations, combinations_with_replacement
+# TODO save relevant in timetrials
 
+# TODO's bestworstmid, , , README, setup, docs
 
 class BestOfCorrectButSlow(IntegerEvents):
 

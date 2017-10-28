@@ -2,7 +2,7 @@ from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
 from dicetables.dieevents import ProtoDie
 
-
+# TODO DOCUMENTATION  don't forget to include in docs and doctest
 class DicePool(ProtoDie):
     def __init__(self, input_die, pool_size, select):
         if select > pool_size:

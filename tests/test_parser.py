@@ -6,6 +6,8 @@ import ast
 import sys
 
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, Exploding, ExplodingOn
+from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 from dicetables.parser import Parser, ParseError, LimitsError, make_int, make_int_dict, make_int_tuple
 
@@ -84,7 +86,9 @@ class TestParser(unittest.TestCase):
     def test_classes(self):
         answer = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
                   WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
-                  ExplodingOn: ('die', 'int_tuple', 'int')}
+                  ExplodingOn: ('die', 'int_tuple', 'int'), BestOfDicePool: ('die', 'int', 'int'),
+                  WorstOfDicePool: ('die', 'int', 'int'), UpperMidOfDicePool: ('die', 'int', 'int'),
+                  LowerMidOfDicePool: ('die', 'int', 'int')}
         self.assertEqual(answer, Parser().classes)
         self.assertIsNot(answer, Parser().classes)
 
@@ -92,13 +96,21 @@ class TestParser(unittest.TestCase):
         answer = {Die: ('die_size',), ModDie: ('die_size', 'modifier'), Modifier: ('modifier',),
                   ModWeightedDie: ('dictionary_input', 'modifier'), WeightedDie: ('dictionary_input',),
                   StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
-                  ExplodingOn: ('input_die', 'explodes_on', 'explosions')}
+                  ExplodingOn: ('input_die', 'explodes_on', 'explosions'),
+                  BestOfDicePool: ('input_die', 'pool_size', 'select'),
+                  WorstOfDicePool: ('input_die', 'pool_size', 'select'),
+                  UpperMidOfDicePool: ('input_die', 'pool_size', 'select'),
+                  LowerMidOfDicePool: ('input_die', 'pool_size', 'select')
+                  }
         self.assertEqual(answer, Parser().kwargs)
         self.assertIsNot(answer, Parser().kwargs)
 
     def test_limits_kwargs(self):
         answer = {'size': [('die_size', None), ('dictionary_input', None)],
-                  'explosions': [('explosions', 2), ('explodes_on', None)]}
+                  'explosions': [('explosions', 2), ('explodes_on', None)],
+                  'input_die': [('input_die', None)],
+                  'pool_size': [('pool_size', None)]
+                  }
         self.assertEqual(Parser().limits_kwargs, answer)
 
     def test_make_die_raises_error_on_function_call_not_in_parser(self):
@@ -257,6 +269,107 @@ class TestParser(unittest.TestCase):
                          ExplodingOn(Die(6), (1, 2, 3), 7))
         self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'ExplodingOn(Die(6), (1, 2, 3), 8)')
 
+    def test_parse_within_limits_dice_pool_passes_and_fails(self):
+        self.assertEqual(Parser().parse_die_within_limits('BestOfDicePool(Die(2), 5, 1)'),
+                         BestOfDicePool(Die(2), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'BestOfDicePool(Die(2), 600, 1)')
+
+        self.assertEqual(Parser().parse_die_within_limits('WorstOfDicePool(Die(2), 5, 1)'),
+                         WorstOfDicePool(Die(2), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'WorstOfDicePool(Die(2), 600, 1)')
+
+        self.assertEqual(Parser().parse_die_within_limits('UpperMidOfDicePool(Die(2), 5, 1)'),
+                         UpperMidOfDicePool(Die(2), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'UpperMidOfDicePool(Die(2), 600, 1)')
+
+        self.assertEqual(Parser().parse_die_within_limits('LowerMidOfDicePool(Die(2), 5, 1)'),
+                         LowerMidOfDicePool(Die(2), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'LowerMidOfDicePool(Die(2), 600, 1)')
+
+    def test_parse_within_limits_white_box_test_of_dice_pool(self):
+        self.assertIsNone(Parser()._check_dice_pool([Die(2)], [5]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(2)], [600])
+
+    def test_parse_within_limits_white_box_test_of_dice_pool_uses_dict_size_not_dice_size(self):
+
+        die = WeightedDie({1: 2, 100: 2})
+        self.assertEqual(die.get_size(), 100)
+        self.assertEqual(len(die.get_dict()), 2)
+
+        self.assertIsNone(Parser()._check_dice_pool([die], [599]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [die], [600])
+
+        die = Exploding(Die(6))
+        self.assertEqual(die.get_size(), 6)
+        self.assertEqual(len(die.get_dict()), 16)
+
+        self.assertIsNone(Parser()._check_dice_pool([die], [7]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [die], [8])
+
+    def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(self):
+        """
+        self.dice_pool_combination_counts = {
+            2: 600, 3: 8700, 4: 30000, 5: 60000, 6: 70000,
+            7: 100000, 12: 200000, 30: 250000
+        }
+        """
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'BestOfDicePool(Die(1), 1)')
+        # 2: 600
+        self.assertEqual(count_unique_combination_keys(Die(2), 599), 600)
+        self.assertEqual(count_unique_combination_keys(Die(2), 600), 601)
+        self.assertIsNone(Parser()._check_dice_pool([Die(2)], [599]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(2)], [600])
+        # 3: 8700
+        self.assertEqual(count_unique_combination_keys(Die(3), 130), 8646)
+        self.assertEqual(count_unique_combination_keys(Die(3), 131), 8778)
+        self.assertIsNone(Parser()._check_dice_pool([Die(3)], [130]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(3)], [131])
+        # 4: 30000
+        self.assertEqual(count_unique_combination_keys(Die(4), 54), 29260)
+        self.assertEqual(count_unique_combination_keys(Die(4), 55), 30856)
+        self.assertIsNone(Parser()._check_dice_pool([Die(4)], [54]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(4)], [55])
+        # 5: 60000
+        self.assertEqual(count_unique_combination_keys(Die(5), 32), 58905)
+        self.assertEqual(count_unique_combination_keys(Die(5), 33), 66045)
+        self.assertIsNone(Parser()._check_dice_pool([Die(5)], [32]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(5)], [33])
+        # 6: 70000
+        self.assertEqual(count_unique_combination_keys(Die(6), 21), 65780)
+        self.assertEqual(count_unique_combination_keys(Die(6), 22), 80730)
+        self.assertIsNone(Parser()._check_dice_pool([Die(6)], [21]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(6)], [22])
+        # 7: 100000
+        self.assertEqual(count_unique_combination_keys(Die(7), 16), 74613)
+        self.assertEqual(count_unique_combination_keys(Die(7), 17), 100947)
+        self.assertIsNone(Parser()._check_dice_pool([Die(7)], [16]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(7)], [17])
+        # 7: 100000, # 12: 200000
+        self.assertEqual(count_unique_combination_keys(Die(11), 9), 92378)
+        self.assertEqual(count_unique_combination_keys(Die(11), 10), 184756)
+        self.assertIsNone(Parser()._check_dice_pool([Die(11)], [9]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(11)], [10])
+        # 12: 200000
+        self.assertEqual(count_unique_combination_keys(Die(12), 9), 167960)
+        self.assertEqual(count_unique_combination_keys(Die(12), 10), 352716)
+        self.assertIsNone(Parser()._check_dice_pool([Die(12)], [9]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(12)], [10])
+        # 12: 200000, # 30: 250000
+        self.assertEqual(count_unique_combination_keys(Die(29), 4), 35960)
+        self.assertEqual(count_unique_combination_keys(Die(29), 5), 237336)
+        self.assertIsNone(Parser()._check_dice_pool([Die(29)], [4]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(29)], [5])
+        # 30: 250000
+        self.assertEqual(count_unique_combination_keys(Die(30), 4), 40920)
+        self.assertEqual(count_unique_combination_keys(Die(30), 5), 278256)
+        self.assertIsNone(Parser()._check_dice_pool([Die(30)], [4]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(30)], [5])
+        # 30: 250000
+        self.assertEqual(count_unique_combination_keys(Die(100), 3), 171700)
+        self.assertEqual(count_unique_combination_keys(Die(100), 4), 4421275)
+        self.assertIsNone(Parser()._check_dice_pool([Die(100)], [3]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(100)], [4])
+
     def test_parse_within_limits_max_nested_dice(self):
         parser = Parser(max_nested_dice=3)
         depth_3 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
@@ -324,8 +437,14 @@ class TestParser(unittest.TestCase):
             parser.parse_die_within_limits('Exploding(Die(5), 3)')
         self.assertEqual(e.exception.args[0], 'Max number of explosions + len(explodes_on): 2')
 
+    def test_parse_within_limits_error_message_dice_pool(self):
+        with self.assertRaises(LimitsError) as e:
+            Parser().parse_die_within_limits('BestOfDicePool(Die(6), 100, 1)')
+        self.assertEqual(e.exception.args[0],
+                         ('Pool_size score: 70,000 exceeded for dict of size: 6\n' +
+                          'The score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * pool_size!]'))
+
     def test_Die(self):
-        self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
 
     def test_ModDie(self):
@@ -362,6 +481,20 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), (2,))'), ExplodingOn(Die(6), (2,)))
         self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), ())'), ExplodingOn(Die(6), ()))
 
+    def test_BestOfDicePool(self):
+        self.assertEqual(Parser().parse_die('BestOfDicePool(Die(2), 5, 2)'), BestOfDicePool(Die(2), 5, 2))
+        self.assertEqual(Parser().parse_die('BestOfDicePool(Die(2), 5, 5)'), BestOfDicePool(Die(2), 5, 5))
+        self.assertEqual(Parser().parse_die('BestOfDicePool(Die(2), 5, 0)'), BestOfDicePool(Die(2), 5, 0))
+
+    def test_WorstOfDicePool(self):
+        self.assertEqual(Parser().parse_die('WorstOfDicePool(Die(2), 5, 2)'), WorstOfDicePool(Die(2), 5, 2))
+
+    def test_UpperMidOfDicePool(self):
+        self.assertEqual(Parser().parse_die('UpperMidOfDicePool(Die(2), 5, 2)'), UpperMidOfDicePool(Die(2), 5, 2))
+
+    def test_LowerMidOfDicePool(self):
+        self.assertEqual(Parser().parse_die('LowerMidOfDicePool(Die(2), 5, 2)'), LowerMidOfDicePool(Die(2), 5, 2))
+
     def test_Die_with_kwargs(self):
         self.assertEqual(Parser().parse_die('Die(die_size=6)'), Die(6))
 
@@ -391,6 +524,22 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser().parse_die('ExplodingOn(Die(6), explodes_on=(2,))'),
                          ExplodingOn(Die(6), (2,)))
 
+    def test_BestOfDicePool_with_kwargs(self):
+        self.assertEqual(Parser().parse_die('BestOfDicePool(input_die=Die(2), pool_size=5, select=2)'),
+                         BestOfDicePool(Die(2), 5, 2))
+
+    def test_WorstOfDicePool_with_kwargs(self):
+        self.assertEqual(Parser().parse_die('WorstOfDicePool(input_die=Die(2), pool_size=5, select=2)'),
+                         WorstOfDicePool(Die(2), 5, 2))
+
+    def test_UpperMidOfDicePool_with_kwargs(self):
+        self.assertEqual(Parser().parse_die('UpperMidOfDicePool(input_die=Die(2), pool_size=5, select=2)'),
+                         UpperMidOfDicePool(Die(2), 5, 2))
+
+    def test_LowerMidOfDicePool_with_kwargs(self):
+        self.assertEqual(Parser().parse_die('LowerMidOfDicePool(input_die=Die(2), pool_size=5, select=2)'),
+                         LowerMidOfDicePool(Die(2), 5, 2))
+
     def test_nested_dice(self):
         self.assertEqual(Parser().parse_die('Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)'),
                          Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4))
@@ -404,13 +553,22 @@ class TestParser(unittest.TestCase):
 
         classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',), ModWeightedDie: ('int_dict', 'int'),
                    WeightedDie: ('int_dict',), StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
-                   ExplodingOn: ('die', 'int_tuple', 'int'), Thing: ('bogus', 'lame')}
+                   ExplodingOn: ('die', 'int_tuple', 'int'), BestOfDicePool: ('die', 'int', 'int'),
+                   WorstOfDicePool: ('die', 'int', 'int'), UpperMidOfDicePool: ('die', 'int', 'int'),
+                   LowerMidOfDicePool: ('die', 'int', 'int'),
+                   Thing: ('bogus', 'lame')
+                   }
         self.assertEqual(classes, parser.classes)
 
         kwargs = {Die: ('die_size',), ModDie: ('die_size', 'modifier'), Modifier: ('modifier',),
                   ModWeightedDie: ('dictionary_input', 'modifier'), WeightedDie: ('dictionary_input',),
                   StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
-                  ExplodingOn: ('input_die', 'explodes_on', 'explosions'), Thing: ()}
+                  ExplodingOn: ('input_die', 'explodes_on', 'explosions'),
+                  BestOfDicePool: ('input_die', 'pool_size', 'select'),
+                  WorstOfDicePool: ('input_die', 'pool_size', 'select'),
+                  UpperMidOfDicePool: ('input_die', 'pool_size', 'select'),
+                  LowerMidOfDicePool: ('input_die', 'pool_size', 'select'),
+                  Thing: ()}
         self.assertEqual(kwargs, parser.kwargs)
 
     def test_add_class_auto_detect_kwargs(self):
@@ -484,46 +642,106 @@ class TestParser(unittest.TestCase):
 
     def test_add_die_size_limit_kwarg_no_default_value(self):
         defaults = {'size': [('die_size', None), ('dictionary_input', None)],
-                    'explosions': [('explosions', 2), ('explodes_on', None)]}
+                    'explosions': [('explosions', 2), ('explodes_on', None)],
+                    'input_die': [('input_die', None)],
+                    'pool_size': [('pool_size', None)]
+                    }
         parser = Parser()
         self.assertEqual(parser.limits_kwargs, defaults)
 
         parser.add_die_size_limit_kwarg('new_size_kwarg')
         answer = {'size': [('die_size', None), ('dictionary_input', None), ('new_size_kwarg', None)],
-                  'explosions': [('explosions', 2), ('explodes_on', None)]}
+                  'explosions': [('explosions', 2), ('explodes_on', None)],
+                  'input_die': [('input_die', None)],
+                  'pool_size': [('pool_size', None)]
+                  }
         self.assertEqual(parser.limits_kwargs, answer)
 
     def test_add_die_size_limit_kwarg_with_default_value(self):
         defaults = {'size': [('die_size', None), ('dictionary_input', None)],
-                    'explosions': [('explosions', 2), ('explodes_on', None)]}
+                    'explosions': [('explosions', 2), ('explodes_on', None)],
+                    'input_die': [('input_die', None)],
+                    'pool_size': [('pool_size', None)]
+                    }
         parser = Parser()
         self.assertEqual(parser.limits_kwargs, defaults)
 
         parser.add_die_size_limit_kwarg('new_size_kwarg', 11)
         answer = {'size': [('die_size', None), ('dictionary_input', None), ('new_size_kwarg', 11)],
-                  'explosions': [('explosions', 2), ('explodes_on', None)]}
+                  'explosions': [('explosions', 2), ('explodes_on', None)],
+                  'input_die': [('input_die', None)],
+                  'pool_size': [('pool_size', None)]
+                  }
         self.assertEqual(parser.limits_kwargs, answer)
 
     def test_add_explosions_limit_kwarg_no_default_value(self):
         defaults = {'size': [('die_size', None), ('dictionary_input', None)],
-                    'explosions': [('explosions', 2), ('explodes_on', None)]}
+                    'explosions': [('explosions', 2), ('explodes_on', None)],
+                    'input_die': [('input_die', None)],
+                    'pool_size': [('pool_size', None)]
+                    }
         parser = Parser()
         self.assertEqual(parser.limits_kwargs, defaults)
 
         parser.add_explosions_limit_kwarg('new_explosions_kwarg')
         answer = {'size': [('die_size', None), ('dictionary_input', None)],
-                  'explosions': [('explosions', 2), ('explodes_on', None), ('new_explosions_kwarg', None)]}
+                  'explosions': [('explosions', 2), ('explodes_on', None), ('new_explosions_kwarg', None)],
+                  'input_die': [('input_die', None)],
+                  'pool_size': [('pool_size', None)]
+                  }
         self.assertEqual(parser.limits_kwargs, answer)
 
     def test_add_explosions_limit_kwarg_with_default_value(self):
         defaults = {'size': [('die_size', None), ('dictionary_input', None)],
-                    'explosions': [('explosions', 2), ('explodes_on', None)]}
+                    'explosions': [('explosions', 2), ('explodes_on', None)],
+                    'input_die': [('input_die', None)],
+                    'pool_size': [('pool_size', None)]
+                    }
         parser = Parser()
         self.assertEqual(parser.limits_kwargs, defaults)
 
         parser.add_explosions_limit_kwarg('new_explosions_kwarg', 100)
         answer = {'size': [('die_size', None), ('dictionary_input', None)],
-                  'explosions': [('explosions', 2), ('explodes_on', None), ('new_explosions_kwarg', 100)]}
+                  'explosions': [('explosions', 2), ('explodes_on', None), ('new_explosions_kwarg', 100)],
+                  'input_die': [('input_die', None)],
+                  'pool_size': [('pool_size', None)]
+                  }
+        self.assertEqual(parser.limits_kwargs, answer)
+
+    def test_add_dice_pool_limit_die_kwarg_default_and_no_default(self):
+        defaults = {'size': [('die_size', None), ('dictionary_input', None)],
+                    'explosions': [('explosions', 2), ('explodes_on', None)],
+                    'input_die': [('input_die', None)],
+                    'pool_size': [('pool_size', None)]
+                    }
+        parser = Parser()
+        self.assertEqual(parser.limits_kwargs, defaults)
+
+        parser.add_dice_pool_limit_die_kwarg('new_die_kwarg')
+        parser.add_dice_pool_limit_die_kwarg('another_kwarg', Die(5))
+        answer = {'size': [('die_size', None), ('dictionary_input', None)],
+                  'explosions': [('explosions', 2), ('explodes_on', None)],
+                  'input_die': [('input_die', None), ('new_die_kwarg', None), ('another_kwarg', Die(5))],
+                  'pool_size': [('pool_size', None)]
+                  }
+        self.assertEqual(parser.limits_kwargs, answer)
+
+    def test_add_dice_pool_limit_pool_size_kwarg_default_and_no_default(self):
+        defaults = {'size': [('die_size', None), ('dictionary_input', None)],
+                    'explosions': [('explosions', 2), ('explodes_on', None)],
+                    'input_die': [('input_die', None)],
+                    'pool_size': [('pool_size', None)]
+                    }
+        parser = Parser()
+        self.assertEqual(parser.limits_kwargs, defaults)
+
+        parser.add_dice_pool_limit_pool_size_kwarg('new_pool_kwarg')
+        parser.add_dice_pool_limit_pool_size_kwarg('another_kwarg', 5)
+        answer = {'size': [('die_size', None), ('dictionary_input', None)],
+                  'explosions': [('explosions', 2), ('explodes_on', None)],
+                  'input_die': [('input_die', None)],
+                  'pool_size': [('pool_size', None), ('new_pool_kwarg', None), ('another_kwarg', 5)]
+                  }
         self.assertEqual(parser.limits_kwargs, answer)
 
     def test_an_instance_of_parser_with_a_new_die(self):

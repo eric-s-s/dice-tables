@@ -166,3 +166,5 @@ from v2.4.0 to v2.4.4
 - added `max_power_for_commaed` and `min_power_for_fixed_pt` to `EventsCalculations.stats_strings`.
 
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
+
+# TODO update changelog AND VERSION

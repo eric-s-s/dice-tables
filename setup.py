@@ -1,5 +1,5 @@
 from setuptools import setup
-
+# TODO update version
 
 def readme():
     with open('README.rst') as f:

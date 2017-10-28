@@ -1,6 +1,8 @@
 import ast
 
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
+from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
 class ParseError(ValueError):
@@ -11,6 +13,8 @@ class ParseError(ValueError):
 class LimitsError(ValueError):
     def __init__(self, *args):
         super(LimitsError, self).__init__(*args)
+
+# TODO add pools!  don't forget limits
 
 
 class Parser(object):
@@ -28,23 +32,36 @@ class Parser(object):
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
                          ModWeightedDie: ('int_dict', 'int'), WeightedDie: ('int_dict',),
                          StrongDie: ('die', 'int'), Exploding: ('die', 'int'),
-                         ExplodingOn: ('die', 'int_tuple', 'int')}
+                         ExplodingOn: ('die', 'int_tuple', 'int'), BestOfDicePool: ('die', 'int', 'int'),
+                         WorstOfDicePool: ('die', 'int', 'int'), UpperMidOfDicePool: ('die', 'int', 'int'),
+                         LowerMidOfDicePool: ('die', 'int', 'int')}
         self._param_types = {'int': make_int, 'int_dict': make_int_dict,
                              'die': self.make_die, 'int_tuple': make_int_tuple}
 
         self._kwargs = {Die: ('die_size',), ModDie: ('die_size', 'modifier'), Modifier: ('modifier',),
                         ModWeightedDie: ('dictionary_input', 'modifier'), WeightedDie: ('dictionary_input',),
                         StrongDie: ('input_die', 'multiplier'), Exploding: ('input_die', 'explosions'),
-                        ExplodingOn: ('input_die', 'explodes_on', 'explosions')}
+                        ExplodingOn: ('input_die', 'explodes_on', 'explosions'),
+                        BestOfDicePool: ('input_die', 'pool_size', 'select'),
+                        WorstOfDicePool: ('input_die', 'pool_size', 'select'),
+                        UpperMidOfDicePool: ('input_die', 'pool_size', 'select'),
+                        LowerMidOfDicePool: ('input_die', 'pool_size', 'select')}
 
         self._limits_values = {'size': [('die_size', None), ('dictionary_input', None)],
-                               'explosions': [('explosions', 2), ('explodes_on', None)]}
+                               'explosions': [('explosions', 2), ('explodes_on', None)],
+                               'input_die': [('input_die', None)],
+                               'pool_size': [('pool_size', None)]}
 
         self.ignore_case = ignore_case
         self.disable_kwargs = disable_kwargs
         self.max_size = max_size
         self.max_explosions = max_explosions
         self.max_nested_dice = max_nested_dice
+
+        self.dice_pool_combination_counts = {
+            2: 600, 3: 8700, 4: 30000, 5: 60000, 6: 70000,
+            7: 100000, 12: 200000, 30: 250000
+        }
 
         self._nested_dice_counter = 0
         self._use_limits = False
@@ -179,9 +196,12 @@ class Parser(object):
 
         size_params = self._get_limits_params('size', die_class, die_params, die_kwargs)
         explosions_params = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
+        input_die = self._get_limits_params('input_die', die_class, die_params, die_kwargs)
+        pool_size = self._get_limits_params('pool_size', die_class, die_params, die_kwargs)
 
         self._check_die_size(size_params)
         self._check_explosions(explosions_params)
+        self._check_dice_pool(input_die, pool_size)
 
     def _check_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
@@ -238,6 +258,28 @@ class Parser(object):
         if explosions > self.max_explosions:
             raise LimitsError(msg)
 
+    def _check_dice_pool(self, input_die, pool):
+        if not input_die or not pool:
+            return None
+        die = input_die[0]
+        pool_size = pool[0]
+
+        if die is None or pool_size is None:
+            return None
+
+        dict_size = len(die.get_dict())
+        pool_limit = 0
+        for key, limit in sorted(self.dice_pool_combination_counts.items()):
+            if key > dict_size:
+                break
+            pool_limit = limit
+
+        score = count_unique_combination_keys(die, pool_size)
+        if score > pool_limit:
+            msg = 'Pool_size score: {:,} exceeded for dict of size: {}'.format(pool_limit, dict_size)
+            explanation = '\nThe score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * pool_size!]'
+            raise LimitsError(msg + explanation)
+
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
         """
 
@@ -263,6 +305,16 @@ class Parser(object):
         """If there is a default value and you do not add it or you add the incorrect one,
         `parse_within_limits` will fail."""
         self._limits_values['explosions'].append((new_key_word, default))
+
+    def add_dice_pool_limit_die_kwarg(self, new_key_word, default=None):
+        """If there is a default value and you do not add it or you add the incorrect one,
+        `parse_within_limits` will fail."""
+        self._limits_values['input_die'].append((new_key_word, default))
+
+    def add_dice_pool_limit_pool_size_kwarg(self, new_key_word, default=None):
+        """If there is a default value and you do not add it or you add the incorrect one,
+        `parse_within_limits` will fail."""
+        self._limits_values['pool_size'].append((new_key_word, default))
 
 
 def make_int_dict(dict_node):
