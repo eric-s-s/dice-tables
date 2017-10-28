@@ -14,8 +14,6 @@ class LimitsError(ValueError):
     def __init__(self, *args):
         super(LimitsError, self).__init__(*args)
 
-# TODO add pools!  don't forget limits
-
 
 class Parser(object):
     def __init__(self, ignore_case=False, disable_kwargs=False, max_size=500, max_explosions=10, max_nested_dice=5):
@@ -28,6 +26,9 @@ class Parser(object):
             :code:`parse_die_within_limits`
         :param max_nested_dice: 5: The maximum number of nested dice beyond first when :code:`parse_die_within_limits`.
             Ex: :code:`StrongDie(Exploding(Die(5), 2), 3)` has 2 nested dice.
+
+        For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, see
+        `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html>`_
         """
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
                          ModWeightedDie: ('int_dict', 'int'), WeightedDie: ('int_dict',),
@@ -58,7 +59,7 @@ class Parser(object):
         self.max_explosions = max_explosions
         self.max_nested_dice = max_nested_dice
 
-        self.dice_pool_combination_counts = {
+        self.max_dice_pool_combinations_per_dict_size = {
             2: 600, 3: 8700, 4: 30000, 5: 60000, 6: 70000,
             7: 100000, 12: 200000, 30: 250000
         }
@@ -96,6 +97,7 @@ class Parser(object):
         - dictionary_input
         - explosions
         - explodes_on
+        - input_die AND pool_size
 
         If your die classes use different kwargs to describe size or number of explosions, they will
         be parsed as if there were no limits. You may register those kwargs (and any default value) with
@@ -269,15 +271,15 @@ class Parser(object):
 
         dict_size = len(die.get_dict())
         pool_limit = 0
-        for key, limit in sorted(self.dice_pool_combination_counts.items()):
+        for key, limit in sorted(self.max_dice_pool_combinations_per_dict_size.items()):
             if key > dict_size:
                 break
             pool_limit = limit
 
         score = count_unique_combination_keys(die, pool_size)
         if score > pool_limit:
-            msg = 'Pool_size score: {:,} exceeded for dict of size: {}'.format(pool_limit, dict_size)
-            explanation = '\nThe score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * pool_size!]'
+            msg = 'Pool_size score: {:,} exceeded for dict of size: {}\n'.format(pool_limit, dict_size)
+            explanation = 'The score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * (pool_size)!]'
             raise LimitsError(msg + explanation)
 
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):

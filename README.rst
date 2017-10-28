@@ -7,7 +7,7 @@
 
 
 #################
-dicetables v2.4.4
+dicetables v2.5.0
 #################
 
 Calculate the Combinations For Any Set of Dice
@@ -149,7 +149,7 @@ since v2.1.0
 - New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
 - see `The Dice`_. and
   `Events info <http://dice-tables.readthedocs.io/en/latest/events_info.html>`_ for details
-- New object: `Parser <http://dice-tables.readthedocs.io/en/latest/nitt_gritty/parser.html>`_ -
+- New object: `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html>`_ -
   It converts strings to dice objects.
 
 since v2.2.0
@@ -165,6 +165,16 @@ from v2.4.0 to v2.4.4
 - added `max_power_for_commaed` option to `EventsCalculations.full_table_string`.
 - added `max_power_for_commaed` and `min_power_for_fixed_pt` to `EventsCalculations.stats_strings`.
 
+v2.5.0
+
+- added `DicePool`_ die objects:
+    - `BestOfDicePool`
+    - `WorstOfDicePool`
+    - `UpperMidOfDicePool`
+    - `LowerMidOfDicePool`
+
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
 
-# TODO update changelog AND VERSION
+.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#module-dicetables.bestworstmid
+
+TODO: confirm dicepool link.

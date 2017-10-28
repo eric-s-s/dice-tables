@@ -186,3 +186,13 @@ dt.WeightedDie({1:1, 3:3, 4:6}).get_raw_dict() returns {1: 1, 2: 0, 3: 3, 4: 4}
      (11, 1), (12, 3), (13, 4), (14, 4), (15, 4), (16, 4), (17, 3), (18, 1)]
 
     added methods:
+
+
+Dice Pools
+----------
+
+.. module:: dicetables.bestworstmid
+
+.. autoclass:: DicePool
+
+.. autoclass:: BestOfDicePool

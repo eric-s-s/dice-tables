@@ -308,7 +308,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(self):
         """
-        self.dice_pool_combination_counts = {
+        self.max_dice_pool_combinations_per_dict_size = {
             2: 600, 3: 8700, 4: 30000, 5: 60000, 6: 70000,
             7: 100000, 12: 200000, 30: 250000
         }
@@ -442,7 +442,7 @@ class TestParser(unittest.TestCase):
             Parser().parse_die_within_limits('BestOfDicePool(Die(6), 100, 1)')
         self.assertEqual(e.exception.args[0],
                          ('Pool_size score: 70,000 exceeded for dict of size: 6\n' +
-                          'The score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * pool_size!]'))
+                          'The score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * (pool_size)!]'))
 
     def test_Die(self):
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))
