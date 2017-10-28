@@ -35,7 +35,7 @@ class DicePool(ProtoDie):
         return self._input_die.get_weight() * self._select
 
     def weight_info(self):
-        original_weight_info = self._input_die.weight_info().replace(str(self._input_die), 'input die info:')
+        original_weight_info = self._input_die.weight_info().replace(str(self._input_die), 'input_die info:')
         return '{}\n{}'.format(self, original_weight_info)
 
     def multiply_str(self, number):
