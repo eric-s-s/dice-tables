@@ -1,9 +1,9 @@
 import unittest
 
 from dicetables import AdditiveEvents
-from dicetables.tools.orderedcombinations import (get_combination_occurrences,
-                                                  count_unique_combination_keys,
-                                                  ordered_combinations_of_events)
+from dicetables.tools.orderedcombinations import (get_combination_occurrences, ordered_combinations_of_events,
+                                                  count_unique_combination_keys, largest_permitted_pool_size
+                                                  )
 
 
 class TestOrderedCombinations(unittest.TestCase):
@@ -90,3 +90,25 @@ class TestOrderedCombinations(unittest.TestCase):
         for times in range(1, 5):
             number_of_keys = len(ordered_combinations_of_events(events, times).keys())
             self.assertEqual(number_of_keys, count_unique_combination_keys(events, times))
+
+    def test_largest_permitted_pool_size_zero(self):
+        events = AdditiveEvents(dict.fromkeys(range(3), 1))
+        max_keys = 2
+        self.assertEqual(largest_permitted_pool_size(events, max_keys), 0)
+
+    def test_largest_permitted_pool_size_keys_equal_pool_size(self):
+        events = AdditiveEvents(dict.fromkeys(range(3), 1))
+        pool_size = 5
+        self.assertEqual(count_unique_combination_keys(events, pool_size), 21)
+        max_keys = 21
+        self.assertEqual(largest_permitted_pool_size(events, max_keys), pool_size)
+
+    def test_largest_permitted_pool_size_keys_gt_pool_size(self):
+        events = AdditiveEvents(dict.fromkeys(range(3), 1))
+        pool_size = 5
+        next_pool_size = 6
+        self.assertEqual(count_unique_combination_keys(events, pool_size), 21)
+        self.assertEqual(count_unique_combination_keys(events, next_pool_size), 28)
+        for max_keys in range(22, 28):
+            self.assertEqual(largest_permitted_pool_size(events, max_keys), pool_size)
+        self.assertEqual(largest_permitted_pool_size(events, 28), next_pool_size)

@@ -1,8 +1,8 @@
 import ast
 
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
-from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
-from dicetables.tools.orderedcombinations import count_unique_combination_keys
+from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
 
 
 class ParseError(ValueError):
@@ -27,7 +27,8 @@ class Parser(object):
         :param max_nested_dice: 5: The maximum number of nested dice beyond first when :code:`parse_die_within_limits`.
             Ex: :code:`StrongDie(Exploding(Die(5), 2), 3)` has 2 nested dice.
 
-        For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, see
+        For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, and
+        `max_dice_pool_calls`, see
         `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html>`_
         """
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
@@ -63,8 +64,10 @@ class Parser(object):
             2: 600, 3: 8700, 4: 30000, 5: 60000, 6: 70000,
             7: 100000, 12: 200000, 30: 250000
         }
+        self.max_dice_pool_calls = 2
 
         self._nested_dice_counter = 0
+        self._dice_pool_counter = 0
         self._use_limits = False
 
     @property
@@ -86,6 +89,7 @@ class Parser(object):
     def parse_die(self, die_string):
         die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
+        self._use_limits = False
         return self.make_die(ast_call_node)
 
     def parse_die_within_limits(self, die_string):
@@ -108,10 +112,9 @@ class Parser(object):
 
         self._use_limits = True
         self._nested_dice_counter = 0
+        self._dice_pool_counter = 0
 
         die = self.make_die(ast_call_node)
-
-        self._use_limits = False
 
         return die
 
@@ -123,8 +126,11 @@ class Parser(object):
         die_params = self._get_params(param_nodes, die_class)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_class)
         if self._use_limits:
+            if issubclass(die_class, DicePool):
+                self._dice_pool_counter += 1
             self._check_limits(die_class, die_params, die_kwargs)
             self._nested_dice_counter += 1
+
         return die_class(*die_params, **die_kwargs)
 
     def _get_die_class(self, class_name):
@@ -195,6 +201,7 @@ class Parser(object):
 
     def _check_limits(self, die_class, die_params, die_kwargs):
         self._check_nested_calls()
+        self._check_dice_pool_calls()
 
         size_params = self._get_limits_params('size', die_class, die_params, die_kwargs)
         explosions_params = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
@@ -208,6 +215,11 @@ class Parser(object):
     def _check_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
             msg = 'Max number of nested dice: {}'.format(self.max_nested_dice)
+            raise LimitsError(msg)
+
+    def _check_dice_pool_calls(self):
+        if self._dice_pool_counter > self.max_dice_pool_calls:
+            msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
             raise LimitsError(msg)
 
     def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
@@ -278,8 +290,9 @@ class Parser(object):
 
         score = count_unique_combination_keys(die, pool_size)
         if score > pool_limit:
-            msg = 'Pool_size score: {:,} exceeded for dict of size: {}\n'.format(pool_limit, dict_size)
-            explanation = 'The score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * (pool_size)!]'
+            max_pool_size = largest_permitted_pool_size(die, pool_limit)
+            msg = '{!r} has a get_dict() of size: {}\n'.format(die, dict_size)
+            explanation = 'For this die, the largest permitted pool_size is {}'.format(max_pool_size)
             raise LimitsError(msg + explanation)
 
     def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):

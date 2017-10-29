@@ -2,13 +2,22 @@ from itertools import combinations_with_replacement
 from math import factorial
 
 
-def count_unique_combination_keys(events, times):
-    """calculates how large the set of keys will be for `ordered_combinations_of_events(events, times)`."""
+def count_unique_combination_keys(events, pool_size):
+    """calculates how large the set of keys will be for `ordered_combinations_of_events(events, pool_size)`."""
     ans = 1
     dict_size = len(events.get_dict())
-    for number in range(dict_size, dict_size + times):
+    for number in range(dict_size, dict_size + pool_size):
         ans *= number
-    return ans // factorial(times)
+    return ans // factorial(pool_size)
+
+
+def largest_permitted_pool_size(events, max_number_of_keys):
+    pool_size = 0
+    num_keys = 0
+    while num_keys <= max_number_of_keys:
+        pool_size += 1
+        num_keys = count_unique_combination_keys(events, pool_size)
+    return pool_size - 1
 
 
 def ordered_combinations_of_events(events, times):

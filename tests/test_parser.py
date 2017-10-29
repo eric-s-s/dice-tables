@@ -270,34 +270,34 @@ class TestParser(unittest.TestCase):
         self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'ExplodingOn(Die(6), (1, 2, 3), 8)')
 
     def test_parse_within_limits_dice_pool_passes_and_fails(self):
-        self.assertEqual(Parser().parse_die_within_limits('BestOfDicePool(Die(2), 5, 1)'),
-                         BestOfDicePool(Die(2), 5, 1))
-        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'BestOfDicePool(Die(2), 600, 1)')
+        self.assertEqual(Parser().parse_die_within_limits('BestOfDicePool(Die(3), 5, 1)'),
+                         BestOfDicePool(Die(3), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'BestOfDicePool(Die(3), 600, 1)')
 
-        self.assertEqual(Parser().parse_die_within_limits('WorstOfDicePool(Die(2), 5, 1)'),
-                         WorstOfDicePool(Die(2), 5, 1))
-        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'WorstOfDicePool(Die(2), 600, 1)')
+        self.assertEqual(Parser().parse_die_within_limits('WorstOfDicePool(Die(3), 5, 1)'),
+                         WorstOfDicePool(Die(3), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'WorstOfDicePool(Die(3), 600, 1)')
 
-        self.assertEqual(Parser().parse_die_within_limits('UpperMidOfDicePool(Die(2), 5, 1)'),
-                         UpperMidOfDicePool(Die(2), 5, 1))
-        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'UpperMidOfDicePool(Die(2), 600, 1)')
+        self.assertEqual(Parser().parse_die_within_limits('UpperMidOfDicePool(Die(3), 5, 1)'),
+                         UpperMidOfDicePool(Die(3), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'UpperMidOfDicePool(Die(3), 600, 1)')
 
-        self.assertEqual(Parser().parse_die_within_limits('LowerMidOfDicePool(Die(2), 5, 1)'),
-                         LowerMidOfDicePool(Die(2), 5, 1))
-        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'LowerMidOfDicePool(Die(2), 600, 1)')
+        self.assertEqual(Parser().parse_die_within_limits('LowerMidOfDicePool(Die(3), 5, 1)'),
+                         LowerMidOfDicePool(Die(3), 5, 1))
+        self.assertRaises(LimitsError, Parser().parse_die_within_limits, 'LowerMidOfDicePool(Die(3), 600, 1)')
 
     def test_parse_within_limits_white_box_test_of_dice_pool(self):
-        self.assertIsNone(Parser()._check_dice_pool([Die(2)], [5]))
-        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(2)], [600])
+        self.assertIsNone(Parser()._check_dice_pool([Die(3)], [5]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [Die(3)], [131])
 
     def test_parse_within_limits_white_box_test_of_dice_pool_uses_dict_size_not_dice_size(self):
 
-        die = WeightedDie({1: 2, 100: 2})
+        die = WeightedDie({1: 2, 2: 1, 100: 2})
         self.assertEqual(die.get_size(), 100)
-        self.assertEqual(len(die.get_dict()), 2)
+        self.assertEqual(len(die.get_dict()), 3)
 
-        self.assertIsNone(Parser()._check_dice_pool([die], [599]))
-        self.assertRaises(LimitsError, Parser()._check_dice_pool, [die], [600])
+        self.assertIsNone(Parser()._check_dice_pool([die], [130]))
+        self.assertRaises(LimitsError, Parser()._check_dice_pool, [die], [131])
 
         die = Exploding(Die(6))
         self.assertEqual(die.get_size(), 6)
@@ -377,6 +377,8 @@ class TestParser(unittest.TestCase):
 
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
         self.assertRaises(LimitsError, parser.parse_die_within_limits, repr(depth_4))
+        # Can be parsed if no limits.
+        self.assertEqual(parser.parse_die(repr(depth_4)), depth_4)
 
     def test_parse_die_within_limits_resets_nested_dice_counter_each_time(self):
         parser = Parser(max_nested_dice=3)
@@ -387,6 +389,35 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
         self.assertRaises(LimitsError, parser.parse_die_within_limits, repr(depth_4))
         self.assertEqual(parser.parse_die_within_limits(repr(depth_3)), depth_3)
+
+    def test_parse_within_limits_max_dice_pool_calls(self):
+        parser = Parser(max_nested_dice=3)
+        two_calls = BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2)
+        two_calls_alt = UpperMidOfDicePool(LowerMidOfDicePool(Die(2), 3, 2), 3, 2)
+        two_pools_three_nested_dice = BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)
+        three_calls = BestOfDicePool(BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2)
+
+        self.assertEqual(parser.parse_die_within_limits(repr(two_calls)), two_calls)
+        self.assertEqual(parser.parse_die_within_limits(repr(two_calls_alt)), two_calls_alt)
+        self.assertEqual(parser.parse_die_within_limits(repr(two_pools_three_nested_dice)), two_pools_three_nested_dice)
+        self.assertRaises(LimitsError, parser.parse_die_within_limits, repr(three_calls))
+        # Can be parsed if no limits.
+        self.assertEqual(parser.parse_die(repr(three_calls)), three_calls)
+
+    def test_parse_within_limits_dice_pool_calls_are_still_nested_die_calls(self):
+        parser = Parser(max_nested_dice=3)
+        depth_4 = BestOfDicePool(StrongDie(StrongDie(StrongDie(Die(2), 2), 2), 2), 2, 2)
+        self.assertRaises(LimitsError, parser.parse_die_within_limits, repr(depth_4))
+
+    def test_parse_die_within_limits_resets_dice_pool_counter_each_time(self):
+        parser = Parser(max_nested_dice=3)
+        two_calls = BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2)
+        three_calls = BestOfDicePool(BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2)
+
+        self.assertEqual(parser.parse_die_within_limits(repr(two_calls)), two_calls)
+        self.assertEqual(parser.parse_die_within_limits(repr(two_calls)), two_calls)
+        self.assertRaises(LimitsError, parser.parse_die_within_limits, repr(three_calls))
+        self.assertEqual(parser.parse_die_within_limits(repr(two_calls)), two_calls)
 
     def test_parse_within_limits_catches_violation_on_nested_call(self):
         exploding_on_error = 'StrongDie(ExplodingOn(Exploding(Die(500), 3), (1, 2), 9), 5)'
@@ -441,8 +472,14 @@ class TestParser(unittest.TestCase):
         with self.assertRaises(LimitsError) as e:
             Parser().parse_die_within_limits('BestOfDicePool(Die(6), 100, 1)')
         self.assertEqual(e.exception.args[0],
-                         ('Pool_size score: 70,000 exceeded for dict of size: 6\n' +
-                          'The score is determined by (dict_size + pool_size -1)! / [(dict_size - 1)! * (pool_size)!]'))
+                         ('Die(6) has a get_dict() of size: 6\n' +
+                          'For this die, the largest permitted pool_size is 21'))
+
+    def test_parse_within_limits_error_message_dice_pool_calls(self):
+        three_calls = BestOfDicePool(BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2)
+        with self.assertRaises(LimitsError) as e:
+            Parser().parse_die_within_limits(repr(three_calls))
+        self.assertEqual(e.exception.args[0], 'Max number of DicePool objects: 2')
 
     def test_Die(self):
         self.assertEqual(Parser().parse_die('Die(6)'), Die(6))

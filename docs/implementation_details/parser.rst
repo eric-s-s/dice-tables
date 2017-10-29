@@ -166,7 +166,8 @@ Limiting Max Values
 -------------------
 
 You can make the parser enforce limits with :meth:`Parser.parse_die_within_limits`. This uses the limits
-declared in :meth:`Parser.__init__`. It limits the size, explosions and number of nested dice in a die.
+declared in :meth:`Parser.__init__` (and two for DicePool not in the `init`. see: `Limits and DicePool objects`_).
+It limits the size, explosions and number of nested dice in a die.
 
 The size is limited according to the `die_size` parameter or the max value of the `dictionary_input` parameter.
 The explosions is limited according to `explosions` parameter and the `len` of the `explodes_on` parameter. The number
@@ -288,3 +289,41 @@ LimitsError: Dude! NOT cool!
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 LimitsError: Max die_size: 500
+
+Limits and DicePool objects
+---------------------------
+
+DicePool can take a surprisingly long time to calculate. See :doc:`../the_dice` for a proper explanation.
+Suffice it to say that the limits on any DicePool can be determined by :code:`len(input_die.get_dict())` and
+:code:`pool_size`. The parser uses a dictionary of {max_dict_len: max_unique_combination_keys} at
+:code:`Parser().max_dice_pool_combinations_per_dict_size`. This is determined from the input_die using,
+:func:`dicetables.tools.orderedcombinations.count_unique_combination_keys(events, pool_size)`. The current dictionary
+was determined using the extremely scientific approach of "trying different things and seeing how long they took". This
+is likely going to be different with whatever computer you will be using. That's why this a public variable.
+
+The other variable is :code:`Parser().max_dice_pool_calls`. Since
+
+
+
+
+
+
+They first calculate all the possible combinations of rolls
+and the frequency of each combination.  So, `BestOfDicePool(Die(3), 3, 2)` and `WorstOfDicePool(Die(3), 3, 1)`
+both need to first create the following dictionary::
+
+    {{(1, 1, 1): 1,
+     (1, 1, 2): 3,
+     (1, 1, 3): 3,
+     (1, 2, 2): 3,
+     (1, 2, 3): 6,
+     (1, 3, 3): 3,
+     (2, 2, 2): 1,
+     (2, 2, 3): 3,
+     (2, 3, 3): 3,
+     (3, 3, 3): 1}
+
+The number of keys in any one of these dictionaries relies on pool_size and
+dict_size(:code:`len(input_die.get_dict())`). The formula is (dict_size-1 + pool_size)!/(dict_size-1)! * 1/(pool_size)!
+and you can calculate it using :func:`dicetables.tools.orderedcombinations.count_unique_combination_keys`.
+

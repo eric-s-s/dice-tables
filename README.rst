@@ -53,6 +53,10 @@ The basic objects to use are DiceTable or DetailedDiceTable, and any of the dice
 - StrongDie
 - Exploding
 - ExplodingOn
+- BestOfDicePool
+- WorstOfDicePool
+- UpperMidOfDicePool
+- LowerMidOfDicePool
 
 for details about the dice, see `The Dice`_.
 for details about the dice-tables see
