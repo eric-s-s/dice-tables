@@ -62,7 +62,7 @@ class Parser(object):
         self.max_nested_dice = max_nested_dice
 
         self.max_dice_pool_combinations_per_dict_size = {
-            2: 600, 3: 8700, 4: 30000, 5: 60000, 6: 70000,
+            2: 600, 3: 8700, 4: 30000, 5: 55000, 6: 70000,
             7: 100000, 12: 200000, 30: 250000
         }
         self.max_dice_pool_calls = 2
@@ -90,6 +90,7 @@ class Parser(object):
     def parse_die(self, die_string):
         die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
+
         self._use_limits = False
         return self.make_die(ast_call_node)
 
@@ -104,9 +105,10 @@ class Parser(object):
         - explodes_on
         - input_die AND pool_size
 
-        If your die classes use different kwargs to describe size or number of explosions, they will
+        If your die classes use different kwargs to describe any of the above, they will
         be parsed as if there were no limits. You may register those kwargs (and any default value) with
-        :code:`add_die_size_limit_kwarg` and :code:`add_explosions_limit_kwarg`.
+        :code:`add_limits_kwarg_die_size`, :code:`add_limits_kwarg_explosions`, :code:`add_limits_kwarg_input_die`, and
+        :code:`add_limits_kwarg_pool_size`.
         """
         die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
@@ -127,11 +129,7 @@ class Parser(object):
         die_params = self._get_params(param_nodes, die_class)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_class)
         if self._use_limits:
-            if issubclass(die_class, DicePool):
-                self._dice_pool_counter += 1
             self._check_limits(die_class, die_params, die_kwargs)
-            self._nested_dice_counter += 1
-
         return die_class(*die_params, **die_kwargs)
 
     def _get_die_class(self, class_name):
@@ -202,7 +200,7 @@ class Parser(object):
 
     def _check_limits(self, die_class, die_params, die_kwargs):
         self._check_nested_calls()
-        self._check_dice_pool_calls()
+        self._check_dice_pool_calls(die_class)
 
         size_params = self._get_limits_params('size', die_class, die_params, die_kwargs)
         explosions_params = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
@@ -217,11 +215,14 @@ class Parser(object):
         if self._nested_dice_counter > self.max_nested_dice:
             msg = 'Max number of nested dice: {}'.format(self.max_nested_dice)
             raise LimitsError(msg)
+        self._nested_dice_counter += 1
 
-    def _check_dice_pool_calls(self):
-        if self._dice_pool_counter > self.max_dice_pool_calls:
-            msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
-            raise LimitsError(msg)
+    def _check_dice_pool_calls(self, die_class):
+        if issubclass(die_class, DicePool):
+            self._dice_pool_counter += 1
+            if self._dice_pool_counter > self.max_dice_pool_calls:
+                msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
+                raise LimitsError(msg)
 
     def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
         limits_kw_default = self._limits_values[param_types]
@@ -239,7 +240,7 @@ class Parser(object):
         return answer
 
     def _check_die_size(self, die_size_params):
-        msg = 'Max die_size: {}'.format(self.max_size)
+
         for param in die_size_params:
             if param is None:
                 continue
@@ -253,6 +254,7 @@ class Parser(object):
                 raise ValueError(msg)
 
             if size > self.max_size:
+                msg = 'Max die_size: {}'.format(self.max_size)
                 raise LimitsError(msg)
 
     def _check_explosions(self, explosions_params):
@@ -278,13 +280,11 @@ class Parser(object):
             return None
         die = input_die[0]
         pool_size = pool[0]
-
         if die is None or pool_size is None:
             return None
 
         if not isinstance(die, ProtoDie):
             raise ValueError('A kwarg declared as a "dice_pool_limit_die" does not inherit from ProtoDie.')
-
         if not isinstance(pool_size, int):
             raise ValueError('A kwarg declared as a "dice_pool_limit_pool_size" is not an int.')
 
@@ -319,22 +319,22 @@ class Parser(object):
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
 
-    def add_die_size_limit_kwarg(self, new_key_word, default=None):
+    def add_limits_kwarg_die_size(self, new_key_word, default=None):
         """If there is a default value and you do not add it or you add the incorrect one,
         `parse_within_limits` will fail."""
         self._limits_values['size'].append((new_key_word, default))
 
-    def add_explosions_limit_kwarg(self, new_key_word, default=None):
+    def add_limits_kwarg_explosions(self, new_key_word, default=None):
         """If there is a default value and you do not add it or you add the incorrect one,
         `parse_within_limits` will fail."""
         self._limits_values['explosions'].append((new_key_word, default))
 
-    def add_dice_pool_limit_die_kwarg(self, new_key_word, default=None):
+    def add_limits_kwarg_input_die(self, new_key_word, default=None):
         """If there is a default value and you do not add it or you add the incorrect one,
         `parse_within_limits` will fail."""
         self._limits_values['input_die'].append((new_key_word, default))
 
-    def add_dice_pool_limit_pool_size_kwarg(self, new_key_word, default=None):
+    def add_limits_kwarg_pool_size(self, new_key_word, default=None):
         """If there is a default value and you do not add it or you add the incorrect one,
         `parse_within_limits` will fail."""
         self._limits_values['pool_size'].append((new_key_word, default))

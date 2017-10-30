@@ -194,17 +194,23 @@ Dice Pools
 .. module:: dicetables.bestworstmid
 
 .. autoclass:: DicePool
+    :members: get_input_die, get_pool_size, get_select
+    :undoc-members:
 
 .. autoclass:: BestOfDicePool
 
+.. autoclass:: WorstOfDicePool
+
+.. autoclass:: UpperMidOfDicePool
+
+.. autoclass:: LowerMidOfDicePool
 
 
-
-They first calculate all the possible combinations of rolls
+All DicePool objects calculate all the possible combinations of rolls
 and the frequency of each combination.  So, `BestOfDicePool(Die(3), 3, 2)` and `WorstOfDicePool(Die(3), 3, 1)`
 both need to first create the following dictionary::
 
-    {{(1, 1, 1): 1,
+    {(1, 1, 1): 1,
      (1, 1, 2): 3,
      (1, 1, 3): 3,
      (1, 2, 2): 3,
@@ -215,7 +221,27 @@ both need to first create the following dictionary::
      (2, 3, 3): 3,
      (3, 3, 3): 1}
 
+This says that, with 3*Die(3), the roll: (1, 1, 1) happens once.  The roll: (1, 2, 3) happens 6 times.
+
 The number of keys in any one of these dictionaries relies on pool_size and
-dict_size(:code:`len(input_die.get_dict())`). The formula is (dict_size-1 + pool_size)!/(dict_size-1)! * 1/(pool_size)!
-and you can calculate it using :func:`dicetables.tools.orderedcombinations.count_unique_combination_keys`.
+:code:`dict_size = len(input_die.get_dict())`. The formula is
+`(dict_size-1 + pool_size)!/(dict_size-1)! * 1/(pool_size)!`
+and you can calculate it using `count_unique_combination_keys`. If you have a key_count, you can find the pool_size
+with `largest_permitted_pool_size`.
+
+>>> from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
+>>> count_unique_combination_keys(dt.Die(6), 10) == 3003
+True
+>>> count_unique_combination_keys(dt.Die(6), 20) == 53130
+True
+>>> count_unique_combination_keys(dt.Die(6), 30) == 324632
+True
+>>> largest_permitted_pool_size(dt.Die(6), 330000)
+30
+
+Below is graph of times vs number of keys in pool.  The black annotations are the pool sizes.
+
+.. image:: /_static/figure_3.png
+
+
 
