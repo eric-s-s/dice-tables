@@ -196,3 +196,26 @@ Dice Pools
 .. autoclass:: DicePool
 
 .. autoclass:: BestOfDicePool
+
+
+
+
+They first calculate all the possible combinations of rolls
+and the frequency of each combination.  So, `BestOfDicePool(Die(3), 3, 2)` and `WorstOfDicePool(Die(3), 3, 1)`
+both need to first create the following dictionary::
+
+    {{(1, 1, 1): 1,
+     (1, 1, 2): 3,
+     (1, 1, 3): 3,
+     (1, 2, 2): 3,
+     (1, 2, 3): 6,
+     (1, 3, 3): 3,
+     (2, 2, 2): 1,
+     (2, 2, 3): 3,
+     (2, 3, 3): 3,
+     (3, 3, 3): 1}
+
+The number of keys in any one of these dictionaries relies on pool_size and
+dict_size(:code:`len(input_die.get_dict())`). The formula is (dict_size-1 + pool_size)!/(dict_size-1)! * 1/(pool_size)!
+and you can calculate it using :func:`dicetables.tools.orderedcombinations.count_unique_combination_keys`.
+

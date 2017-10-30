@@ -2,9 +2,20 @@ from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
 from dicetables.dieevents import ProtoDie
 
-# TODO DOCUMENTATION  don't forget to include in docs and doctest
+
 class DicePool(ProtoDie):
+    """
+    The abstract class for all DicePool objects. A DicePool is a pool of one kind of die. Select determines how many
+    rolls are selected from the pool of total rolls. Different implementations determine which particular rolls
+    to select.
+    """
     def __init__(self, input_die, pool_size, select):
+        """
+
+        :param input_die: Any object that inherits from ProtoDie
+        :param pool_size: int > 0. How many total dice in the pool.
+        :param select: int <= `pool_size`. How many dice to select from the pool.
+        """
         if select > pool_size:
             raise ValueError('you cannot select more dice than the pool_size.')
         self._input_die = input_die
@@ -50,6 +61,10 @@ class DicePool(ProtoDie):
 
 
 class BestOfDicePool(DicePool):
+    """
+    Take the best [select] rolls from a pool of [pool_size] * [input_die].
+    BestOfDicePool(Die(6), 4, 3) is the best 3 rolls from four six-sided dice.
+    """
     def __init__(self, input_die, pool_size, select):
         super(BestOfDicePool, self).__init__(input_die, pool_size, select)
 
@@ -61,6 +76,10 @@ class BestOfDicePool(DicePool):
 
 
 class WorstOfDicePool(DicePool):
+    """
+    Take the worst [select] rolls from a pool of [pool_size] * [input_die].
+    WorstOfDicePool(Die(6), 4, 3) is the worst 3 rolls from four six-sided dice.
+    """
     def __init__(self, input_die, pool_size, select):
         super(WorstOfDicePool, self).__init__(input_die, pool_size, select)
 
@@ -72,6 +91,13 @@ class WorstOfDicePool(DicePool):
 
 
 class UpperMidOfDicePool(DicePool):
+    """
+    Take the middle [select] rolls from a pool of [pool_size] * [input_die].
+    UpperMidOfDicePool(Die(6), 5, 3) is the middle 3 rolls from five six-sided dice.
+
+    If there is no perfect middle, take the higher of two choices. For five dice that roll
+    (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (2, 3).
+    """
     def __init__(self, input_die, pool_size, select):
         super(UpperMidOfDicePool, self).__init__(input_die, pool_size, select)
 
@@ -84,6 +110,13 @@ class UpperMidOfDicePool(DicePool):
 
 
 class LowerMidOfDicePool(DicePool):
+    """
+    Take the middle [select] rolls from a pool of [pool_size] * [input_die].
+    LowerMidOfDicePool(Die(6), 5, 3) is the middle 3 rolls from five six-sided dice.
+
+    If there is no perfect middle, take the lower of two choices. For five dice that roll
+    (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (1, 2).
+    """
     def __init__(self, input_die, pool_size, select):
         super(LowerMidOfDicePool, self).__init__(input_die, pool_size, select)
 

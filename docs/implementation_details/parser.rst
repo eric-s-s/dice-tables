@@ -174,6 +174,8 @@ The explosions is limited according to `explosions` parameter and the `len` of t
 of nested dice is limited according to how many times the parser has to make a die while creating the die.
 :code:`StrongDie(Exploding(Die(4)), 3)` is a `StrongDie` containing two nested dice.
 
+.. _`kwargs issue`:
+
 The number of nested dice is calculated according to how many times :meth:`Parser.make_die` is called.
 In order to check the size and explosions, the parser must know what parameter name is assigned to values that
 control size and explosions. It recognizes the following kwarg names:
@@ -301,29 +303,31 @@ Suffice it to say that the limits on any DicePool can be determined by :code:`le
 was determined using the extremely scientific approach of "trying different things and seeing how long they took". This
 is likely going to be different with whatever computer you will be using. That's why this a public variable.
 
-The other variable is :code:`Parser().max_dice_pool_calls`. Since
+The other variable is :code:`Parser().max_dice_pool_calls`, currently set to "2". This is separate from
+`max_nested_dice`. A dice pool call is still counted against nested dice.
 
+>>> parser = dt.Parser(max_nested_dice=3)
+>>> two_pools_three_nested_dice = 'BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)'
+>>> parser.parse_die_within_limits(two_pools_three_nested_dice)
+BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)
+>>> three_pools = 'three_calls = BestOfDicePool(BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2)'
+>>> parser.parse_die_within_limits(three_pools)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+LimitsError: Max number of DicePool objects: 2
+>>> four_nested_dice = 'BestOfDicePool(StrongDie(StrongDie(StrongDie(Die(2), 2), 2), 2), 2, 2)'
+>>> parser.parse_die_within_limits(four_nested_dice)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+LimitsError: Max number of nested dice: 3
 
+With the current limits in place,
+an implementation of a dice pool could take up to 0.5s. If five calls were allowed, that would be 2.5s to parse a
+single die. It is hard to imagine any practical reason to use more than one pool.
+:code:`BestOfDicePool(WorstOfDicePool(Die(6), 4, 3), 2, 1)` would mean: "Roll 4D6 and take the worst three. Do that
+twice and take the best one". If the current limit of two feels too limiting, change it.
 
-
-
-
-They first calculate all the possible combinations of rolls
-and the frequency of each combination.  So, `BestOfDicePool(Die(3), 3, 2)` and `WorstOfDicePool(Die(3), 3, 1)`
-both need to first create the following dictionary::
-
-    {{(1, 1, 1): 1,
-     (1, 1, 2): 3,
-     (1, 1, 3): 3,
-     (1, 2, 2): 3,
-     (1, 2, 3): 6,
-     (1, 3, 3): 3,
-     (2, 2, 2): 1,
-     (2, 2, 3): 3,
-     (2, 3, 3): 3,
-     (3, 3, 3): 1}
-
-The number of keys in any one of these dictionaries relies on pool_size and
-dict_size(:code:`len(input_die.get_dict())`). The formula is (dict_size-1 + pool_size)!/(dict_size-1)! * 1/(pool_size)!
-and you can calculate it using :func:`dicetables.tools.orderedcombinations.count_unique_combination_keys`.
-
+Just as in `kwargs issue`_, the parser looks for the key-word arguments: "input_die" and "pool_size"
+to figure things out. If you make a new DicePool that doesn't use these variable names, you'll need to tell the
+parser.  use the methods: :meth:`Parser.add_dice_pool_limit_pool_size_kwarg` and
+:meth:`Parser.add_dice_pool_limit_die_kwarg`

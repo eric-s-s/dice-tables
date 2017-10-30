@@ -1,5 +1,6 @@
 import ast
 
+from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
 from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
 from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
@@ -281,6 +282,12 @@ class Parser(object):
         if die is None or pool_size is None:
             return None
 
+        if not isinstance(die, ProtoDie):
+            raise ValueError('A kwarg declared as a "dice_pool_limit_die" does not inherit from ProtoDie.')
+
+        if not isinstance(pool_size, int):
+            raise ValueError('A kwarg declared as a "dice_pool_limit_pool_size" is not an int.')
+
         dict_size = len(die.get_dict())
         pool_limit = 0
         for key, limit in sorted(self.max_dice_pool_combinations_per_dict_size.items()):
@@ -299,7 +306,8 @@ class Parser(object):
         """
 
         :param class_: the class you are adding
-        :param param_identifiers: a tuple of param_types according to Parser().param_types
+        :param param_identifiers: a tuple of param_types according to Parser().param_types. Defaults are:
+            'int', 'die', 'int_dict', 'int_tuple'
         :param auto_detect_kwargs: will try to detect kwargs of __init__ function. overrides kwargs param
         :param kwargs: (optional) a tuple of the kwarg names for instantiation of the new class.
         """
