@@ -202,17 +202,17 @@ class Parser(object):
     def _check_limits(self, die_class, die_params, die_kwargs):
         self._check_then_update_nested_calls()
 
-        size_param = self._get_limits_params('size', die_class, die_params, die_kwargs)
-        explosions_param = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
-        explodes_on_param = self._get_limits_params('explodes_on', die_class, die_params, die_kwargs)
         if issubclass(die_class, DicePool):
             self._update_then_check_dice_pool_calls()
             input_die = self._get_limits_params('input_die', die_class, die_params, die_kwargs)
             pool_size = self._get_limits_params('pool_size', die_class, die_params, die_kwargs)
             self._check_dice_pool(input_die, pool_size)
-        else:
-            self._check_die_size(size_param)
-            self._check_explosions(explosions_param, explodes_on_param)
+
+        size_param = self._get_limits_params('size', die_class, die_params, die_kwargs)
+        explosions_param = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
+        explodes_on_param = self._get_limits_params('explodes_on', die_class, die_params, die_kwargs)
+        self._check_die_size(size_param)
+        self._check_explosions(explosions_param, explodes_on_param)
 
     def _check_then_update_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
@@ -230,14 +230,13 @@ class Parser(object):
         limits_kw_default = self._limits_values[param_types]
         class_kwargs = self._kwargs[die_class]
         for kwarg_name, default in limits_kw_default:
-            if kwarg_name not in class_kwargs:
-                continue
+            if kwarg_name in class_kwargs:
+                index = class_kwargs.index(kwarg_name)
+                if len(die_params) > index:
+                    return die_params[index]
+                else:
+                    return die_kwargs.get(kwarg_name, default)
 
-            index = class_kwargs.index(kwarg_name)
-            if len(die_params) > index:
-                return die_params[index]
-            else:
-                return die_kwargs.get(kwarg_name, default)
         return None
 
     def _check_die_size(self, die_size_param):
@@ -246,30 +245,30 @@ class Parser(object):
             return None
 
         if isinstance(die_size_param, int):
-            size = die_size_param
+            size_value = die_size_param
         elif isinstance(die_size_param, dict):
-            size = max(die_size_param.keys())
+            size_value = max(die_size_param.keys())
         else:
             msg = 'A kwarg declared as a "die size limit" is neither an int nor a dict of ints.'
             raise ValueError(msg)
 
-        if size > self.max_size:
+        if size_value > self.max_size:
             msg = 'Max die_size: {}'.format(self.max_size)
             raise LimitsError(msg)
 
-    def _check_explosions(self, explosions_param, explodes_on_param):
-        explosions = 0
-        if explosions_param is not None:
-            if not isinstance(explosions_param, int):
-                raise ValueError('A kwarg declared as an "explosions" is not an int')
-            explosions += explosions_param
+    def _check_explosions(self, explosions, explodes_on):
+        explosions_value = 0
+        if explosions is not None:
+            if not isinstance(explosions, int):
+                raise ValueError('A kwarg declared as an "explosions" is not an int.')
+            explosions_value += explosions
 
-        if explodes_on_param is not None:
-            if not isinstance(explodes_on_param, (tuple, list)):
-                raise ValueError('A kwarg declared as an "explodes_on" is not a tuple')
-            explosions += len(explodes_on_param)
+        if explodes_on is not None:
+            if not isinstance(explodes_on, (tuple, list)):
+                raise ValueError('A kwarg declared as an "explodes_on" is not a tuple.')
+            explosions_value += len(explodes_on)
 
-        if explosions > self.max_explosions:
+        if explosions_value > self.max_explosions:
             msg = 'Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
             raise LimitsError(msg)
 
@@ -327,7 +326,7 @@ class Parser(object):
         - 'pool_size'
         """
         if existing_key not in self._limits_values.keys():
-            raise KeyError('key: {} not in self.limits_kwargs. Use add_limits_key.')
+            raise KeyError('key: "{}" not in self.limits_kwargs. Use add_limits_key.'.format(existing_key))
         self._limits_values[existing_key].append((new_key_word, default))
 
     def add_limits_key(self, new_key):
@@ -335,7 +334,7 @@ class Parser(object):
             raise ValueError('tried to add existing key to self.limits_kwargs')
         self._limits_values[new_key] = []
 
- 
+
 def make_int_dict(dict_node):
     keys = make_int_list(dict_node.keys)
     values = make_int_list(dict_node.values)
