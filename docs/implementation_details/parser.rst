@@ -328,5 +328,4 @@ twice and take the best one". If the current limit of two feels too limiting, ch
 
 Just as in `kwargs issue`_, the parser looks for the key-word arguments: "input_die" and "pool_size"
 to figure things out. If you make a new DicePool that doesn't use these variable names, you'll need to tell the
-parser.  use the methods: :meth:`Parser.add_limits_kwarg_pool_size` and
-:meth:`Parser.add_limits_kwarg_input_die`
+parser.  use the methods: :meth:`Parser.add_limits_kwarg` with the appropriate `existing_key`.
