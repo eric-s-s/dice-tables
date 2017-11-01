@@ -1,7 +1,4 @@
-
-
-# TODO's , , , README - confirm dicepool link, , docs - parser, die
-
+"""time trials from DicePool"""
 
 from itertools import cycle
 from time import clock

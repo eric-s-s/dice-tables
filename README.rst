@@ -177,8 +177,9 @@ v2.5.0
     - `UpperMidOfDicePool`
     - `LowerMidOfDicePool`
 
+- `Parser().add_die_size_limit_kwarg` and `Parser().add_explosions_limit_kwarg` are removed. Use
+  `Parser().add_limits_kwarg`
+
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
 
 .. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#module-dicetables.bestworstmid
-
-TODO: confirm dicepool link.
