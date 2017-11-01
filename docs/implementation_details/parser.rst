@@ -2,6 +2,7 @@ Parser
 ======
 - `Customizing Parser`_
 - `Limiting Max Values`_
+- `Limits and DicePool Objects`_
 
 
 .. module:: dicetables.parser
@@ -291,10 +292,10 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 LimitsError: Max die_size: 500
 
-Limits and DicePool objects
+Limits and DicePool Objects
 ---------------------------
 
-DicePool can take a surprisingly long time to calculate. See :doc:`../the_dice` for a proper explanation.
+DicePool can take a surprisingly long time to calculate. See :ref:`Dice Pools` for a proper explanation.
 Suffice it to say that the limits on any DicePool can be determined by :code:`len(input_die.get_dict())` and
 :code:`pool_size`. The parser uses a dictionary of {max_dict_len: max_unique_combination_keys} at
 :code:`Parser().max_dice_pool_combinations_per_dict_size`. This is determined from the input_die using,

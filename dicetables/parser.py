@@ -30,7 +30,7 @@ class Parser(object):
 
         For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, and
         `max_dice_pool_calls`, see
-        `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html>`_
+        `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html#limits-and-dicepool-objects>`_
         """
         self._classes = {Die: ('int',), ModDie: ('int', 'int'), Modifier: ('int',),
                          ModWeightedDie: ('int_dict', 'int'), WeightedDie: ('int_dict',),
@@ -108,8 +108,7 @@ class Parser(object):
 
         If your die classes use different kwargs to describe any of the above, they will
         be parsed as if there were no limits. You may register those kwargs (and any default value) with
-        :code:`add_limits_kwarg_die_size`, :code:`add_limits_kwarg_explosions`, :code:`add_limits_kwarg_input_die`, and
-        :code:`add_limits_kwarg_pool_size`.
+        :code:`add_limits_kwarg`.
         """
         die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
