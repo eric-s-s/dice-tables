@@ -2,6 +2,7 @@ Parser
 ======
 - `Customizing Parser`_
 - `Limiting Max Values`_
+- `Limits and DicePool Objects`_
 
 
 .. module:: dicetables.parser
@@ -166,12 +167,15 @@ Limiting Max Values
 -------------------
 
 You can make the parser enforce limits with :meth:`Parser.parse_die_within_limits`. This uses the limits
-declared in :meth:`Parser.__init__`. It limits the size, explosions and number of nested dice in a die.
+declared in :meth:`Parser.__init__` (and two for DicePool not in the `init`. see: `Limits and DicePool objects`_).
+It limits the size, explosions and number of nested dice in a die.
 
 The size is limited according to the `die_size` parameter or the max value of the `dictionary_input` parameter.
 The explosions is limited according to `explosions` parameter and the `len` of the `explodes_on` parameter. The number
 of nested dice is limited according to how many times the parser has to make a die while creating the die.
 :code:`StrongDie(Exploding(Die(4)), 3)` is a `StrongDie` containing two nested dice.
+
+.. _`kwargs issue`:
 
 The number of nested dice is calculated according to how many times :meth:`Parser.make_die` is called.
 In order to check the size and explosions, the parser must know what parameter name is assigned to values that
@@ -181,6 +185,8 @@ control size and explosions. It recognizes the following kwarg names:
 - 'dictionary_input'
 - 'explosions'
 - 'explodes_on'
+- 'input_die'
+- 'pool_size'
 
 If you make a die that doesn't use these key-word arguments, the parser will have no way to check limits for you and
 will simply parse the die string.
@@ -216,12 +222,12 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 LimitsError: Max die_size: 500
 
-You can add your new and exciting key-words to the parser with :meth:`Parser.add_die_size_limit_kwarg` and
-:meth:`Parser.add_explosions_limit_kwarg`. If this has a default value, you can add that too.
+You can add your new and exciting key-words to the parser with :meth:`Parser.add_limits_kwarg`.
+If this has a default value, you can add that too.
 
 >>> new_parser = dt.Parser()
 >>> new_parser.add_class(NewDie, ('int',))
->>> new_parser.add_die_size_limit_kwarg('funky_new_die_size', default=6)
+>>> new_parser.add_limits_kwarg('size', 'funky_new_die_size', default=6)
 
 >>> new_parser.parse_die_within_limits('NewDie(5000)')
 Traceback (most recent call last):
@@ -255,7 +261,7 @@ code and over-ride :meth:`Parser._check_die_size`, :meth:`Parser._check_explosio
 >>> parser = dt.Parser()
 >>> parser.add_param_type('string', make_string)
 >>> parser.add_class(NewDie, ('string',))
->>> parser.add_die_size_limit_kwarg('size_int_as_str')
+>>> parser.add_limits_kwarg('size', 'size_int_as_str')
 
 >>> parser.parse_die('NewDie("5")') == NewDie("5")
 True
@@ -267,24 +273,60 @@ ValueError: A kwarg declared as a "die size limit" is neither an int nor a dict 
 and **a** solution
 
 >>> class NewParser(dt.Parser):
-...     def _check_die_size(self, die_size_params):
-...         string_params = [param for param in die_size_params if isinstance(param, str)]
-...         other_params = [param for param in die_size_params if not isinstance(param, str)]
-...         for number_str in string_params:
-...             if int(number_str) > self.max_size:
-...                 raise dt.LimitsError('Dude! NOT cool!')
-...         super(NewParser, self)._check_die_size(other_params)
+...     def _check_die_size(self, die_size_param):
+...         if isinstance(die_size_param, str):
+...             die_size_param = int(die_size_param)
+...         super(NewParser, self)._check_die_size(die_size_param)
 ...
 >>> parser = NewParser()
 >>> parser.add_param_type('string', make_string)
 >>> parser.add_class(NewDie, ('string',))
->>> parser.add_die_size_limit_kwarg('size_int_as_str')
+>>> parser.add_limits_kwarg('size', 'size_int_as_str')
 
 >>> parser.parse_die_within_limits('NewDie("5000")')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-LimitsError: Dude! NOT cool!
+LimitsError: Max die_size: 500
 >>> parser.parse_die_within_limits('Die(5000)')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 LimitsError: Max die_size: 500
+
+Limits and DicePool Objects
+---------------------------
+
+DicePool can take a surprisingly long time to calculate. See :ref:`Dice Pools` for a proper explanation.
+Suffice it to say that the limits on any DicePool can be determined by :code:`len(input_die.get_dict())` and
+:code:`pool_size`. The parser uses a dictionary of {max_dict_len: max_unique_combination_keys} at
+:code:`Parser().max_dice_pool_combinations_per_dict_size`. This is determined from the input_die using,
+:func:`dicetables.tools.orderedcombinations.count_unique_combination_keys(events, pool_size)`. The current dictionary
+was determined using the extremely scientific approach of "trying different things and seeing how long they took". This
+is likely going to be different with whatever computer you will be using. That's why this a public variable.
+
+The other variable is :code:`Parser().max_dice_pool_calls`, currently set to "2". This is separate from
+`max_nested_dice`. A dice pool call is still counted against nested dice.
+
+>>> parser = dt.Parser(max_nested_dice=3)
+>>> two_pools_three_nested_dice = 'BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)'
+>>> parser.parse_die_within_limits(two_pools_three_nested_dice)
+BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)
+>>> three_pools = 'three_calls = BestOfDicePool(BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2)'
+>>> parser.parse_die_within_limits(three_pools)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+LimitsError: Max number of DicePool objects: 2
+>>> four_nested_dice = 'BestOfDicePool(StrongDie(StrongDie(StrongDie(Die(2), 2), 2), 2), 2, 2)'
+>>> parser.parse_die_within_limits(four_nested_dice)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+LimitsError: Max number of nested dice: 3
+
+With the current limits in place,
+an implementation of a dice pool could take up to 0.5s. If five calls were allowed, that would be 2.5s to parse a
+single die. It is hard to imagine any practical reason to use more than one pool.
+:code:`BestOfDicePool(WorstOfDicePool(Die(6), 4, 3), 2, 1)` would mean: "Roll 4D6 and take the worst three. Do that
+twice and take the best one". If the current limit of two feels too limiting, change it.
+
+Just as in `kwargs issue`_, the parser looks for the key-word arguments: "input_die" and "pool_size"
+to figure things out. If you make a new DicePool that doesn't use these variable names, you'll need to tell the
+parser.  use the methods: :meth:`Parser.add_limits_kwarg` with the appropriate `existing_key`.

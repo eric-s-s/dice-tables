@@ -1,6 +1,9 @@
 The Dice
 ========
 
+- `Die Classes`_
+- `Dice Pools`_
+
 A die class is a :py:class:`dicetables.eventsbases.protodie.ProtoDie`,
 which is a subclass of
 :py:class:`dicetables.eventsbases.integerevents.IntegerEvents`. It
@@ -24,7 +27,7 @@ All dice require implementations of the following methods:
     True
 
 - :code:`get_weight()`: The total weight of all the die rolls. Used mainly in
-  the :code:`__eq__` method to differentiate between various WeightedDie.
+  the :code:`__lt__` method to differentiate between dice of equal size.
 
 - :code:`weight_info()`: A string detailing the rolls and their weights.
 - :code:`multiply_str(number)` : The string representation for multiples of the die.
@@ -71,7 +74,8 @@ True
 >>> my_set == {dt.Die(6), dt.ModDie(6, 0)}
 True
 
-The dice:
+Die Classes
+-----------
 
 .. module:: dicetables.dieevents
 
@@ -101,14 +105,19 @@ The dice:
 
     added methods:
 
-get_raw_dict(): returns all values in die.get_size() even if they are zero.
-dt.WeightedDie({1:1, 3:3, 4:6}).get_raw_dict() returns {1: 1, 2: 0, 3: 3, 4: 4}
+`get_raw_dict()` returns something similar to the input dict with keys from 1 to `die.get_size()` even if they are zero.
+:code:`dt.WeightedDie({1: 1, 3: 3, 4: 6}).get_raw_dict()` returns :code:`{1: 1, 2: 0, 3: 3, 4: 4}`
 
 .. autoclass:: ModWeightedDie
     :members: get_raw_dict, get_modifier
     :undoc-members:
 
     added methods:
+
+>>> dt.WeightedDie({1: 1, 3: 3, 4: 6}).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 6}
+True
+>>> dt.ModWeightedDie({1: 1, 3: 3, 4: 6}, -100).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 6}
+True
 
 .. autoclass:: StrongDie
     :members: get_multiplier, get_input_die
@@ -186,3 +195,73 @@ dt.WeightedDie({1:1, 3:3, 4:6}).get_raw_dict() returns {1: 1, 2: 0, 3: 3, 4: 4}
      (11, 1), (12, 3), (13, 4), (14, 4), (15, 4), (16, 4), (17, 3), (18, 1)]
 
     added methods:
+
+.. _`Dice Pools`:
+
+Dice Pools
+----------
+
+Dice Pools are collections of a single die. They are treated as one giant Die with very funky rolling behavior.
+They all follow the basic form: :code:`<WhatToSelect>OfDicePool(input_die, pool_size, select)`.
+:code:`BestOfDicePool(Die(6), 4, 3)` means: Roll 4D6 and take the best three results from every roll. This object
+is also an 18-sided "Die"
+
+.. module:: dicetables.bestworstmid
+
+.. autoclass:: DicePool
+    :members: get_input_die, get_pool_size, get_select
+    :undoc-members:
+
+.. autoclass:: BestOfDicePool
+
+.. autoclass:: WorstOfDicePool
+
+.. autoclass:: UpperMidOfDicePool
+
+.. autoclass:: LowerMidOfDicePool
+
+
+All DicePool objects calculate all the possible combinations of rolls
+and the frequency of each combination.  So, `BestOfDicePool(Die(3), 3, 2)` and `WorstOfDicePool(Die(3), 3, 1)`
+both need to first create the following dictionary::
+
+    {(1, 1, 1): 1,
+     (1, 1, 2): 3,
+     (1, 1, 3): 3,
+     (1, 2, 2): 3,
+     (1, 2, 3): 6,
+     (1, 3, 3): 3,
+     (2, 2, 2): 1,
+     (2, 2, 3): 3,
+     (2, 3, 3): 3,
+     (3, 3, 3): 1}
+
+This says that, with 3*Die(3), the roll: (1, 1, 1) happens once.  The roll: (1, 2, 3) happens 6 times.
+
+The number of keys in any one of these dictionaries relies on pool_size and
+:code:`dict_size = len(input_die.get_dict())`. The formula is
+`(dict_size-1 + pool_size)!/(dict_size-1)! * 1/(pool_size)!`
+and you can calculate it using `count_unique_combination_keys`. If you have a key_count, you can find the pool_size
+with `largest_permitted_pool_size`.
+
+>>> from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
+>>> count_unique_combination_keys(dt.Die(3), 3) == 10  # The dictionary demonstrated above
+True
+>>> count_unique_combination_keys(dt.Die(6), 10) == 3003
+True
+>>> count_unique_combination_keys(dt.Die(6), 20) == 53130
+True
+>>> count_unique_combination_keys(dt.Die(6), 30) == 324632
+True
+>>> largest_permitted_pool_size(dt.Die(6), 330000)
+30
+
+This graph gives an idea of the times to instantiate different DicePools. It is time vs
+number-of-keys-needed-to-generate-the-pool.  The black annotations are the pool sizes.  Notice that each of these
+increases linearly with the underlying dictionary, but closer to exponentially with pool_size. Especially with larger
+dice, an increase of one in the pool size can have a surprisingly large effect.
+
+.. image:: /_static/figure_3.png
+
+
+

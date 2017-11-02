@@ -6,12 +6,17 @@ from dicetables.eventsbases.integerevents import IntegerEvents
 
 class ProtoDie(IntegerEvents):
     """
-    base object for any kind of die.
+    This is the basis for all the dice classes.
 
+    all Die objects need:
 
-    :all Die objects need: get_size(), get_weight(), weight_info(), multiply_str(), get_dict()
-    :get_dict(): must return {int: int >0}
-
+    - get_size() - returns: int > 0
+    - get_weight() - returns: int >= 0
+    - weight_info() - returns: str
+    - multiply_str() - returns: str
+    - get_dict() - returns: {int: int > 0}
+    - __repr__
+    - __str__
     """
     def __init__(self):
         super(ProtoDie, self).__init__()

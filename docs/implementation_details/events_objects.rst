@@ -30,7 +30,6 @@ Events Objects
 
 .. autoclass:: dicetables.eventsbases.protodie.ProtoDie
 
-    This is the basis for all the dice classes.
 
 .. autoclass:: dicetables.additiveevents.AdditiveEvents
     :members:

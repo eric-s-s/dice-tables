@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 setup(name='dicetables',
-      version='2.4.4',
+      version='2.5.0',
       description='get all combinations for any set of dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
