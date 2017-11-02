@@ -105,7 +105,7 @@ Die Classes
 
     added methods:
 
-`get_raw_dict()` with keys from 1 to `die.get_size()` even if they are zero.
+`get_raw_dict()` returns something similar to the input dict with keys from 1 to `die.get_size()` even if they are zero.
 :code:`dt.WeightedDie({1: 1, 3: 3, 4: 6}).get_raw_dict()` returns :code:`{1: 1, 2: 0, 3: 3, 4: 4}`
 
 .. autoclass:: ModWeightedDie
@@ -113,6 +113,11 @@ Die Classes
     :undoc-members:
 
     added methods:
+
+>>> dt.WeightedDie({1: 1, 3: 3, 4: 6}).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 4}
+True
+>>> dt.ModWeightedDie({1: 1, 3: 3, 4: 6}, -100).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 4}
+True
 
 .. autoclass:: StrongDie
     :members: get_multiplier, get_input_die
