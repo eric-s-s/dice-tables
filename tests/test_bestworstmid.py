@@ -16,6 +16,11 @@ class MockOfDicePool(DicePool):
 
 
 class TestBestWorstMid(unittest.TestCase):
+
+    def test_cannot_instantiate_DicePool(self):
+        #  Damn you coveralls!
+        self.assertRaises(NotImplementedError, DicePool, Die(6), 3, 2)
+
     def test_DicePool_init(self):
         test = MockOfDicePool(Die(6), 3, 2)
         self.assertEqual(test.get_input_die(), Die(6))

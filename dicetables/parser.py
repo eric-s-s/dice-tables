@@ -58,6 +58,7 @@ class Parser(object):
 
         self.ignore_case = ignore_case
         self.disable_kwargs = disable_kwargs
+
         self.max_size = max_size
         self.max_explosions = max_explosions
         self.max_nested_dice = max_nested_dice
@@ -272,6 +273,9 @@ class Parser(object):
             raise LimitsError(msg)
 
     def _check_dice_pool(self, input_die, pool_size):
+        if input_die is None or pool_size is None:
+            return None
+
         if not isinstance(input_die, ProtoDie):
             raise ValueError('A kwarg declared as an "input_die" does not inherit from ProtoDie.')
         if not isinstance(pool_size, int):

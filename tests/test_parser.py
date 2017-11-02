@@ -438,6 +438,37 @@ class TestParser(unittest.TestCase):
         self.assertRaises(LimitsError, parser.parse_die_within_limits, 'Die(5000)')
         self.assertEqual(NewDie(5000), parser.parse_die_within_limits('NewDie(5000)'))
 
+    def test_parse_within_limits_white_box_test_non_hardcoded_kwargs_for_dicepool(self):
+        """This could be run as a regular blackbox test, but it would take 0.5s for this single test."""
+        class IgnoresLimits(BestOfDicePool):
+            def __init__(self, a_die, pool_size, select):
+                super(IgnoresLimits, self).__init__(a_die, pool_size, select)
+
+        class AlsoIgnoresLimits(BestOfDicePool):
+            def __init__(self, input_die, poolio, select):
+                super(AlsoIgnoresLimits, self).__init__(input_die, poolio, select)
+
+        class CatchesLimits(BestOfDicePool):
+            def __init__(self, input_die, pool_size, selection):
+                super(CatchesLimits, self).__init__(input_die, pool_size, selection)
+
+        parser = Parser()
+        parser.add_class(IgnoresLimits, ('die', 'int', 'int'))
+        parser.add_class(AlsoIgnoresLimits, ('die', 'int', 'int'))
+        parser.add_class(CatchesLimits, ('die', 'int', 'int'))
+
+        self.assertEqual(parser._dice_pool_counter, 0)
+        self.assertIsNone(parser._check_limits(IgnoresLimits, (Die(6), 1000, 900), ()))
+        self.assertEqual(parser._dice_pool_counter, 1)  # It checked Limits for DicePool and passed
+
+        parser._dice_pool_counter = 0
+        self.assertIsNone(parser._check_limits(AlsoIgnoresLimits, (Die(6), 1000, 900), ()))
+        self.assertEqual(parser._dice_pool_counter, 1)  # It checked Limits for DicePool and passed
+
+        parser._dice_pool_counter = 0
+        self.assertRaises(LimitsError, parser._check_limits, CatchesLimits, (Die(6), 1000, 900), ())
+        self.assertEqual(parser._dice_pool_counter, 1)  # It checked Limits for DicePool and failed
+
     def test_parse_within_limits_unfilled_default_value(self):
         self.assertEqual(Parser().parse_die_within_limits('Exploding(Die(5))'), Exploding(Die(5)))
         self.assertEqual(Parser().parse_die_within_limits('ExplodingOn(Die(10), (1, 2, 3))'),
