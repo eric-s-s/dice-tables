@@ -114,9 +114,9 @@ Die Classes
 
     added methods:
 
->>> dt.WeightedDie({1: 1, 3: 3, 4: 6}).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 4}
+>>> dt.WeightedDie({1: 1, 3: 3, 4: 6}).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 6}
 True
->>> dt.ModWeightedDie({1: 1, 3: 3, 4: 6}, -100).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 4}
+>>> dt.ModWeightedDie({1: 1, 3: 3, 4: 6}, -100).get_raw_dict() == {1: 1, 2: 0, 3: 3, 4: 6}
 True
 
 .. autoclass:: StrongDie
