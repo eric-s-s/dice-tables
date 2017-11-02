@@ -272,9 +272,6 @@ class Parser(object):
             raise LimitsError(msg)
 
     def _check_dice_pool(self, input_die, pool_size):
-        if input_die is None or pool_size is None:
-            return None
-
         if not isinstance(input_die, ProtoDie):
             raise ValueError('A kwarg declared as an "input_die" does not inherit from ProtoDie.')
         if not isinstance(pool_size, int):
@@ -330,7 +327,7 @@ class Parser(object):
 
     def add_limits_key(self, new_key):
         if new_key in self._limits_values.keys():
-            raise ValueError('tried to add existing key to self.limits_kwargs')
+            raise ValueError('Tried to add existing key to self.limits_kwargs.')
         self._limits_values[new_key] = []
 
 

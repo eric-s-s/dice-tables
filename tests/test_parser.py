@@ -742,6 +742,12 @@ class TestParser(unittest.TestCase):
         expected['so_new'] = [('new!', None)]
         self.assertEqual(expected, parser.limits_kwargs)
 
+    def test_add_limits_key_error(self):
+        existing_key = 'size'
+        with self.assertRaises(ValueError) as e:
+            Parser().add_limits_key(existing_key)
+        self.assertEqual(e.exception.args[0], 'Tried to add existing key to self.limits_kwargs.')
+
     def test_an_instance_of_parser_with_a_new_die(self):
         class StupidDie(Die):
             def __init__(self, name, size):
