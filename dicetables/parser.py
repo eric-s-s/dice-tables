@@ -201,18 +201,17 @@ class Parser(object):
 
     def _check_limits(self, die_class, die_params, die_kwargs):
         self._check_then_update_nested_calls()
+        self._update_then_check_dice_pool_calls(die_class)
 
-        if issubclass(die_class, DicePool):
-            self._update_then_check_dice_pool_calls()
-            input_die = self._get_limits_params('input_die', die_class, die_params, die_kwargs)
-            pool_size = self._get_limits_params('pool_size', die_class, die_params, die_kwargs)
-            self._check_dice_pool(input_die, pool_size)
+        input_die = self._get_limits_params('input_die', die_class, die_params, die_kwargs)
+        pool_size = self._get_limits_params('pool_size', die_class, die_params, die_kwargs)
+        size_or_dict = self._get_limits_params('size', die_class, die_params, die_kwargs)
+        explosions = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
+        explodes_on = self._get_limits_params('explodes_on', die_class, die_params, die_kwargs)
 
-        size_param = self._get_limits_params('size', die_class, die_params, die_kwargs)
-        explosions_param = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
-        explodes_on_param = self._get_limits_params('explodes_on', die_class, die_params, die_kwargs)
-        self._check_die_size(size_param)
-        self._check_explosions(explosions_param, explodes_on_param)
+        self._check_dice_pool(input_die, pool_size)
+        self._check_die_size(size_or_dict)
+        self._check_explosions(explosions, explodes_on)
 
     def _check_then_update_nested_calls(self):
         if self._nested_dice_counter > self.max_nested_dice:
@@ -220,11 +219,12 @@ class Parser(object):
             raise LimitsError(msg)
         self._nested_dice_counter += 1
 
-    def _update_then_check_dice_pool_calls(self):
-        self._dice_pool_counter += 1
-        if self._dice_pool_counter > self.max_dice_pool_calls:
-            msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
-            raise LimitsError(msg)
+    def _update_then_check_dice_pool_calls(self, die_class):
+        if issubclass(die_class, DicePool):
+            self._dice_pool_counter += 1
+            if self._dice_pool_counter > self.max_dice_pool_calls:
+                msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
+                raise LimitsError(msg)
 
     def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
         limits_kw_default = self._limits_values[param_types]
@@ -239,15 +239,15 @@ class Parser(object):
 
         return None
 
-    def _check_die_size(self, die_size_param):
+    def _check_die_size(self, size_or_dict):
 
-        if die_size_param is None:
+        if size_or_dict is None:
             return None
 
-        if isinstance(die_size_param, int):
-            size_value = die_size_param
-        elif isinstance(die_size_param, dict):
-            size_value = max(die_size_param.keys())
+        if isinstance(size_or_dict, int):
+            size_value = size_or_dict
+        elif isinstance(size_or_dict, dict):
+            size_value = max(size_or_dict.keys())
         else:
             msg = 'A kwarg declared as a "die size limit" is neither an int nor a dict of ints.'
             raise ValueError(msg)
