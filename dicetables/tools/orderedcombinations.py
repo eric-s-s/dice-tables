@@ -45,3 +45,23 @@ def get_combination_occurrences(combination, base_dict):
         answer *= multiplier
 
     return answer
+
+from itertools import groupby
+# from functools import reduce
+# from operator import mul
+def get_combination_occurrences_alt(combination, base_dict):
+    """simple calculation over tuple of sorted values and possibly repeating value
+    to tell number of unique permutations.  so get_count((1, 2, 3)) = 3!.
+    get_count((1, 2, 2, 3, 3)) = 5!/(2!*2!)"""
+    answer = factorial(len(combination))
+    groups = groupby(combination)
+    for key, iterator in groups:
+        multiplier = base_dict[key]
+        number_of_elements = sum(iterator) // key
+        answer *= (multiplier ** number_of_elements)
+        answer //= factorial(number_of_elements)
+    return answer
+
+
+
+

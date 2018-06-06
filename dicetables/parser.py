@@ -226,8 +226,8 @@ class Parser(object):
                 msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
                 raise LimitsError(msg)
 
-    def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
-        limits_kw_default = self._limits_values[param_types]
+    def _get_limits_params(self, param_type, die_class, die_params, die_kwargs):
+        limits_kw_default = self._limits_values[param_type]
         class_kwargs = self._kwargs[die_class]
         for kwarg_name, default in limits_kw_default:
             if kwarg_name in class_kwargs:
