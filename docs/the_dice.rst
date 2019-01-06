@@ -1,8 +1,11 @@
 The Dice
 ========
 
+.. _Top:
+
 - `Die Classes`_
 - `Dice Pools`_
+- `Some Example Dice`_
 
 A die class is a :py:class:`dicetables.eventsbases.protodie.ProtoDie`,
 which is a subclass of
@@ -74,10 +77,13 @@ True
 >>> my_set == {dt.Die(6), dt.ModDie(6, 0)}
 True
 
+`Top`_
+
 Die Classes
 -----------
 
 .. module:: dicetables.dieevents
+
 
 .. autoclass:: Die
     :members:
@@ -196,7 +202,8 @@ True
 
     added methods:
 
-.. _`Dice Pools`:
+
+`Top`_
 
 Dice Pools
 ----------
@@ -261,7 +268,34 @@ number-of-keys-needed-to-generate-the-pool.  The black annotations are the pool 
 increases linearly with the underlying dictionary, but closer to exponentially with pool_size. Especially with larger
 dice, an increase of one in the pool size can have a surprisingly large effect.
 
-.. image:: /_static/figure_3.png
+.. image:: /_static/dice_pool_times.png
 
 
+Some Example Dice
+-----------------
+
+- :code:`ModDie(2, -1)` a coin where "1" is heads, and "0" is tails. The die roll will tell you the
+  number of heads rolled.
+
+- :code:`ModWeightedDie({1: 40, 2: 60}, -1)` a cheater's coin that rolls heads 60% of the time.
+
+- :code:`ModWeightedDie({1: 45, 2: 55}. -1)` a person who's likely to pick "1" 55% of the time.
+
+- :code:`StrongDie(ModWeightedDie({1: 10, 2: 90}, -1), 1000)` a thousand people who will almost
+  certainly choose "1" and will all vote as a block. whatever they choose, they're doing it as a team.
+
+- :code:`ModWeightedDie({1: 3, 2: 1, 3: 1, 4: 1}, -1)` a six-sided die with faces [0, 0, 0, 1, 2, 3].
+
+- :code:`WeightedDie({1: 3, 2: 4, 3: 4, 4: 4, 5: 4, 6: 5})` a mildly weighted die that has a
+  21% chance to roll a "6" (5/24), a 12.5% chance to roll a "1" and the rest are 1 in 6 (4/24).
+
+- :code:`BestOfDicePool(Die(6), 4, 3)` best 3 out of 4D6.
+
+- 2 :code:`Die(6)` and :code:`Modifier(3)` 2D6+3
+
+  >>> import dicetables as dt
+  >>> dt.DiceTable.new().add_die(dt.Die(6), 2).add_die(dt.Modifier(3))
+  <DiceTable containing [+3, 2D6]>
+
+`Top`_
 
