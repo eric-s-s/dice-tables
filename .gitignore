@@ -22,3 +22,5 @@ tox.ini
 !/time_trials/welcome_message.txt
 /docs/make.bat
 /docs/_build
+/_build
+run_sphinx.sh
