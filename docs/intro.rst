@@ -34,7 +34,7 @@ You could test this with a quick piece of python code, like so::
         return randint(1, 6)
 
     def ten_thousand_rolls_of_2d6():
-        answer = {2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0}
+        answer = {roll: 0 for roll in range(2, 13)}
         for _ in range(10000):
             roll1 = roll_six()
             roll2 = roll_six()
@@ -44,7 +44,7 @@ You could test this with a quick piece of python code, like so::
 
     print(ten_thousand_rolls_of_2d6())
 
-Running this scripts returns the following::
+Running this scripts returned the following::
 
     {2: 317,
      3: 572,
@@ -69,13 +69,16 @@ unmanageable. Imagine mapping out all the totals for 3D6 (there
 are 216 of them), or, even worse, having to keep track of 3 dice
 of 3 different sizes.
 
-Instead, Think of a six-sided die as a list of events. Each roll has an equal chance of occurring and could
-be represented by the dictionary :code:`{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}`.
-To combine this with another six-sided die, take each event from the second die, and create a new
-set of events by adding that number to the original die. So, :code:`{1: 1`  means take the original set
-and shift each event +1, like so :code:`{2:1 ,3: 1, 4: 1, 5: 1, 6: 1, 7: 1}`. Then for :code:`{... 2: 1 ...` create a
-new set of events that shifts each event +1, like so :code:`{3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1}`.
-Do this for each of the six events and you get::
+Instead, use dictionary of events having {roll: number_of_times_it_occurs}. On a six-sided die, each
+roll has an equal chance of occurring, so it's represented by the dictionary:
+:code:`{1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}`.
+
+To combine this with another six-sided die,
+you iterate through each die roll and create a new dictionary. When the second die rolls a "1",
+it bumps all the rolls up by one, making: :code:`{2: 1 ,3: 1, 4: 1, 5: 1, 6: 1, 7: 1}`. When
+the second die rolls a "2" it bumps all the die rolls up by two, making:
+:code:`{3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1}`. Keep doing this for each roll and add them up.
+::
 
     {2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1}
           {3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1}
@@ -86,11 +89,14 @@ Do this for each of the six events and you get::
     ---------------------------------------------------------------------
     {2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1}
 
-This list of events is the same as the visualization from above. '2' has one combination, '3' has two,
-'4' has three, etc...
+This dictionary of events is the spread of combinations for 2D6. It is the same as the other representation
+in the previous section. "2" has one combination, "3" has two combinations and "7" has six combinations.
 
-This method is much easier to add *another* D6 to. Simply use the result from above, and repeat
-it, adding one for each of the six sided dice::
+Using this method, adding another die to 2D6 becomes much more manageable. Simply take the
+dictionary of 2D6 above, and for each roll of the next six-sided die, create a new dictionary of events.
+So for a roll of 2, create the dictionary:
+:code:`{2+2: 1, 3+2: 2, 4+2: 3, 5+2: 4, 6+2: 5, 7+2: 6, 8+2: 5, 9+2: 4, 10+2: 3, 11+2: 2, 12+2: 1}`
+This makes::
 
     {3: 1, 4: 2, 5: 3, 6:  4, 7:  5, 8:  6, 9:  5, 10:  4, 11:  3, 12:  2, 13:  1}
           {4: 1, 5: 2, 6:  3, 7:  4, 8:  5, 9:  6, 10:  5, 11:  4, 12:  3, 13:  2, 14:  1}
@@ -105,10 +111,10 @@ it, adding one for each of the six sided dice::
 **Another example with 2D6:**
 
 Take 2d6 and add a different die to it. This time, it's a weighted 2-sided die that rolls
-two three times as often as one.  This die is represented by the dictionary: :code:`{1: 1, 2: 3}`
-for the :code:`{1: 1, ...`, you add 1 to each roll in your 2D6 events, like so:
+"2" three times as often as "1".  This die is represented by the dictionary: :code:`{1: 1, 2: 3}`.
+For the :code:`{1: 1, ...`, you add 1 to each roll in your 2D6 events, like so:
 :code:`{3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 5, 10: 4, 11: 3, 12: 2, 13: 1}`.
-Then you add 2 to each roll three times for :code:`...2: 3}` like so:
+For the :code:`..., 2: 3}`, you add two to the die rolls **three times**, and each time is:
 :code:`{4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 5, 11: 4, 12: 3, 13: 2, 14: 1}`
 this gives you::
 

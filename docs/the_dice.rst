@@ -274,6 +274,11 @@ dice, an increase of one in the pool size can have a surprisingly large effect.
 Some Example Dice
 -----------------
 
+- :code:`WeightedDie({1: 3, 2: 4, 3: 4, 4: 4, 5: 4, 6: 5})` a mildly weighted die that has a
+  21% chance to roll a "6" (5/24), a 12.5% chance to roll a "1" and the rest are 1 in 6 (4/24).
+
+- :code:`ModWeightedDie({1: 3, 2: 1, 3: 1, 4: 1}, -1)` a six-sided die with faces [0, 0, 0, 1, 2, 3].
+
 - :code:`ModDie(2, -1)` a coin where "1" is heads, and "0" is tails. The die roll will tell you the
   number of heads rolled.
 
@@ -283,11 +288,6 @@ Some Example Dice
 
 - :code:`StrongDie(ModWeightedDie({1: 10, 2: 90}, -1), 1000)` a thousand people who will almost
   certainly choose "1" and will all vote as a block. whatever they choose, they're doing it as a team.
-
-- :code:`ModWeightedDie({1: 3, 2: 1, 3: 1, 4: 1}, -1)` a six-sided die with faces [0, 0, 0, 1, 2, 3].
-
-- :code:`WeightedDie({1: 3, 2: 4, 3: 4, 4: 4, 5: 4, 6: 5})` a mildly weighted die that has a
-  21% chance to roll a "6" (5/24), a 12.5% chance to roll a "1" and the rest are 1 in 6 (4/24).
 
 - :code:`BestOfDicePool(Die(6), 4, 3)` best 3 out of 4D6.
 

@@ -1,7 +1,7 @@
 """time trials from DicePool"""
 
 from itertools import cycle
-from time import clock
+from time import perf_counter
 
 import matplotlib.pyplot as plt
 
@@ -39,9 +39,9 @@ def make_plots():
         pool_size = 2
         pool_entries = count_unique_combination_keys(die, pool_size)
         while pool_entries < limit:
-            start = clock()
+            start = perf_counter()
             BestOfDicePool(die, pool_size, pool_size - 1)
-            elapsed = clock() - start
+            elapsed = perf_counter() - start
 
             xs.append(pool_entries)
             ys.append(elapsed)
