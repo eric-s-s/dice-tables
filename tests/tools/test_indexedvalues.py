@@ -109,12 +109,6 @@ class TestIndexedValues(unittest.TestCase):
         self.assertEqual(iv.change_list_len_with_zeroes(higher, total_size, diff_in_start_indices),
                          [0, 0, 1, 2, 3, 0])
 
-    def test_add_many_empty(self):
-        self.assertEqual(iv.add_many(), 0)
-
-    def test_add_many_non_empty(self):
-        self.assertEqual(iv.add_many(-1, 0, 1, 2, 3), 5)
-
     def test_get_events_list_normal_case(self):
         occurrences = 3
         new_size = 6

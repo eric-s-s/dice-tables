@@ -42,6 +42,7 @@ class TestDictCombiner(unittest.TestCase):
     }
     {'first method': {size of input dict: {combine times: size of Dictcombiner.get_dict(), ...}, ...}, ... }
     """
+
     def test_DictCombiner_get_fastest_method_DictCombiner_sized_one_and_one_times_never_picks_indexed_values(self):
         accepted_choices = ('dictionary', 'flattened_list')
         for power_of_two in range(10):
@@ -226,7 +227,7 @@ class TestDictCombiner(unittest.TestCase):
         to_combine = {1: 1, 2: 2}
         new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 1)
         self.assertEqual(new_combiner.get_dict(), to_combine)
-    
+
     def test_DictCombiner_combine_by_flattened_list__many_combines(self):
         to_combine = {1: 1, 2: 2}
         new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
@@ -295,46 +296,6 @@ class TestDictCombiner(unittest.TestCase):
         to_combine = {1: 1, 2: 2}
         complex_events = DictCombiner({2: 1, 3: 4, 4: 4})
         new_combiner = complex_events.combine_by_indexed_values(to_combine, 1)
-        """
-        {2: 1, 3: 4, 4: 4}
-    
-        {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
-        """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
-
-    def test_DictCombiner_combine_by_np_indexed_values_identity(self):
-        to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_np_indexed_values(to_combine, 1)
-        self.assertEqual(new_combiner.get_dict(), to_combine)
-
-    def test_DictCombiner_combine_by_np_indexed_values_many_combines(self):
-        to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_np_indexed_values(to_combine, 3)
-        """
-        {1: 1, 2: 2}
-    
-        {2: 1, 3: 2} + {3: 2, 4: 4} = {2:1, 3: 4, 4: 4}
-    
-        {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
-        """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
-
-    def test_DictCombiner_combine_by_np_indexed_values_input_dict_has_spaces(self):
-        to_combine = {10: 1, 20: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_np_indexed_values(to_combine, 3)
-        """
-        {10: 1, 20: 2}
-
-        {20: 1, 30: 2} + {30: 2, 40: 4} = {20: 1, 30: 4, 40: 4}
-
-        {30: 1, 40: 4, 50: 4} + {40: 2, 50: 8, 60:8} = {30:1, 40: 6, 50: 12, 60: 8}
-        """
-        self.assertEqual(new_combiner.get_dict(), {30: 1, 40: 6, 50: 12, 60: 8})
-
-    def test_DictCombiner_combine_by_np_indexed_values_complex_DictCombiner(self):
-        to_combine = {1: 1, 2: 2}
-        complex_events = DictCombiner({2: 1, 3: 4, 4: 4})
-        new_combiner = complex_events.combine_by_np_indexed_values(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
     

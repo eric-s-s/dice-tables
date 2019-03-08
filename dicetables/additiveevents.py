@@ -42,6 +42,10 @@ class AdditiveEvents(IntegerEvents):
         dictionary = EventsDictCreator(self, events).create_using_combine_by_fastest(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
+    def combine_numpy(self, events, times=1):
+        dictionary = EventsDictCreator(self, events).create_using_combine_by_dictionary(times)
+        return EventsFactory.from_dictionary(self, dictionary)
+
     def combine_by_flattened_list(self, events, times=1):
         """
 
@@ -76,6 +80,10 @@ class EventsDictCreator(object):
 
     def create_using_combine_by_fastest(self, times_to_combine):
         new_dict_combiner = self.combiner.combine_by_fastest(self.to_combine_with, times_to_combine)
+        return new_dict_combiner.get_dict()
+
+    def create_using_combine_by_numpy(self, times_to_combine):
+        new_dict_combiner = self.combiner.combine_by_numpy(self.to_combine_with, times_to_combine)
         return new_dict_combiner.get_dict()
 
     def create_using_combine_by_dictionary(self, times_to_combine):

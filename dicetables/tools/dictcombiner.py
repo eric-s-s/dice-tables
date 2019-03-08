@@ -16,6 +16,7 @@ not mutate any dictionaries passed to it.)
 from __future__ import absolute_import
 
 from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
+from dicetables.tools.test_numpy_implementations import NumpyIndexedArray
 
 
 class DictCombiner(object):
@@ -69,6 +70,11 @@ class DictCombiner(object):
         for _ in range(times):
             new_indexed_values = new_indexed_values.combine_with_dictionary(dictionary)
         return DictCombiner(new_indexed_values.get_dict())
+
+    def combine_by_numpy(self, dictionary, times):
+        new_indexed_array = NumpyIndexedArray.from_dict(self._dict)
+        answer = new_indexed_array.combine_with_dict(dictionary, times)
+        return DictCombiner(answer.to_dict())
 
     def combine_by_indexed_values_np(self, dictionary, times):
         new_indexed_values = generate_indexed_values_from_dict(self._dict)
