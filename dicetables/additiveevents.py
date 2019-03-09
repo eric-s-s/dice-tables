@@ -43,7 +43,7 @@ class AdditiveEvents(IntegerEvents):
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_numpy(self, events, times=1):
-        dictionary = EventsDictCreator(self, events).create_using_combine_by_dictionary(times)
+        dictionary = EventsDictCreator(self, events).create_using_combine_by_numpy(times)
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_flattened_list(self, events, times=1):
