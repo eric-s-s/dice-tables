@@ -24,7 +24,6 @@ class TestRoller(unittest.TestCase):
     def test_roller_init(self):
         events = AdditiveEvents({1: 2, 3: 4, 5: 6})
         roller = Roller(events)
-        self.assertEqual(roller.events, events)
         alias_table = roller.alias_table
         # see tools/test_alias_table.py
         self.assertEqual(alias_table.height, 2 + 4 + 6)
@@ -53,15 +52,20 @@ class TestRoller(unittest.TestCase):
             self.assertEqual(roller.roll(), 0)
 
     def test_roller_with_distribution(self):
-        random.seed(34556)
+        random.seed(1346)
         events = AdditiveEvents({1: 1, 2: 2, 3: 1})
-        expected = [1, 2, 3, 1, 3, 2, 2, 2, 1, 3]
-        if VERSION < 3:
-            expected = [2, 2, 1, 1, 2, 2, 2, 1, 2, 1]
         roller = Roller(events)
-        for expected_roll in expected:
-            actual_roll = roller.roll()
-            self.assertEqual(expected_roll, actual_roll)
+
+        times = 100
+        rolls = [roller.roll() for _ in range(times)]
+        ones = rolls.count(1)
+        twos = rolls.count(2)
+        threes = rolls.count(3)
+        expected = [29, 50, 21]
+        if VERSION < 3:
+            expected = [25, 45, 30]
+        self.assertEqual([ones, twos, threes], expected)
+        self.assertEqual(sum(expected), times)
 
     def test_roller_with_custom_generator(self):
         class MyRandom(random.Random):
@@ -89,13 +93,19 @@ class TestRoller(unittest.TestCase):
 
     def test_roll_many_with_distribution(self):
         random.seed(9876541)
+        times = 100
+
         events = AdditiveEvents({1: 1, 2: 2, 3: 1})
         roller = Roller(events)
-        result = roller.roll_many(10)
-        expected = [2, 3, 2, 2, 2, 2, 2, 2, 1, 1]
+        result = roller.roll_many(times)
+        ones = result.count(1)
+        twos = result.count(2)
+        threes = result.count(3)
+        expected = [21, 54, 25]
         if VERSION < 3:
-            expected = [2, 2, 1, 2, 2, 1, 3, 3, 1, 1]
-        self.assertEqual(expected, result)
+            expected = [27, 46, 27]
+        self.assertEqual([ones, twos, threes], expected)
+        self.assertEqual(sum(expected), times)
 
     def test_roll_many_with_custom_generator(self):
         class MyRandom(random.Random):
@@ -122,12 +132,17 @@ class TestRoller(unittest.TestCase):
         random.seed(34889970)
         events = AdditiveEvents({1: 1, 2: 10 ** 1000, 3: 2 * 10 ** 1000})
         roller = Roller(events)
-        expected = [3, 2, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 3, 2]
+
+        times = 100
+        result = [roller.roll() for _ in range(times)]
+        ones = result.count(1)
+        twos = result.count(2)
+        threes = result.count(3)
+        expected = [0, 36, 64]
         if VERSION < 3:
-            expected = [2, 2, 3, 2, 2, 2, 2, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 2, 2]
-        for expected_roll in expected:
-            actual_roll = roller.roll()
-            self.assertEqual(expected_roll, actual_roll)
+            expected = [0, 34, 66]
+        self.assertEqual([ones, twos, threes], expected)
+        self.assertEqual(sum(expected), times)
 
     def test_roll_with_large_numbers_still_has_remote_possibility_to_roll_small_number(self):
         class MyRandom(random.Random):

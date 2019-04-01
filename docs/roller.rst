@@ -12,4 +12,4 @@ Events class. Below the class docs are some code examples.
     :undoc-members:
 
 >>> import dicetables as dt
->>> TODO
+>>> #TODO

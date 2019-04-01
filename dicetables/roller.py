@@ -10,15 +10,10 @@ class Roller(object):
         :param events: any IntegerEvents
         :param random_generator: any instance of random.Random. defaults to python default random instance
         """
-        self._events = events
-        self._alias_table = AliasTable(self._events.get_dict())
+        self._alias_table = AliasTable(events.get_dict())
         self._random_generator = random_generator
         if not self._random_generator:
             self._random_generator = random
-
-    @property
-    def events(self):
-        return self._events
 
     @property
     def alias_table(self):
