@@ -1,6 +1,5 @@
-from dicetables.tools.orderedcombinations import ordered_combinations_of_events
-
 from dicetables.dieevents import ProtoDie
+from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
 
 class DicePool(ProtoDie):
@@ -9,6 +8,7 @@ class DicePool(ProtoDie):
     rolls are selected from the pool of total rolls. Different implementations determine which particular rolls
     to select.
     """
+
     def __init__(self, input_die, pool_size, select):
         """
 
@@ -65,6 +65,7 @@ class BestOfDicePool(DicePool):
     Take the best [select] rolls from a pool of [pool_size] * [input_die].
     BestOfDicePool(Die(6), 4, 3) is the best 3 rolls from four six-sided dice.
     """
+
     def __init__(self, input_die, pool_size, select):
         super(BestOfDicePool, self).__init__(input_die, pool_size, select)
 
@@ -80,6 +81,7 @@ class WorstOfDicePool(DicePool):
     Take the worst [select] rolls from a pool of [pool_size] * [input_die].
     WorstOfDicePool(Die(6), 4, 3) is the worst 3 rolls from four six-sided dice.
     """
+
     def __init__(self, input_die, pool_size, select):
         super(WorstOfDicePool, self).__init__(input_die, pool_size, select)
 
@@ -98,6 +100,7 @@ class UpperMidOfDicePool(DicePool):
     If there is no perfect middle, take the higher of two choices. For five dice that roll
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (2, 3).
     """
+
     def __init__(self, input_die, pool_size, select):
         super(UpperMidOfDicePool, self).__init__(input_die, pool_size, select)
 
@@ -117,6 +120,7 @@ class LowerMidOfDicePool(DicePool):
     If there is no perfect middle, take the lower of two choices. For five dice that roll
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (1, 2).
     """
+
     def __init__(self, input_die, pool_size, select):
         super(LowerMidOfDicePool, self).__init__(input_die, pool_size, select)
 

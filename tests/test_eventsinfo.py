@@ -3,8 +3,9 @@
 from __future__ import absolute_import
 
 import unittest
-from dicetables import AdditiveEvents
+
 import dicetables.eventsinfo as ti
+from dicetables import AdditiveEvents
 
 
 class TestEventsInfo(unittest.TestCase):
@@ -201,22 +202,22 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(calculator.full_table_string(), '0: 1\n')
 
     def test_EventsCalculations_full_table_string_uses_NumberFormatter_on_occurrences_only(self):
-        events = AdditiveEvents({10000: 10**1000})
+        events = AdditiveEvents({10000: 10 ** 1000})
         calculator = ti.EventsCalculations(events)
         self.assertEqual(calculator.full_table_string(), '10000: 1.000e+1000\n')
 
     def test_EventsCalculations_full_table_string_shown_digits_lt_one(self):
-        events = AdditiveEvents({10000: 10**1000})
+        events = AdditiveEvents({10000: 10 ** 1000})
         calculator = ti.EventsCalculations(events)
         self.assertEqual(calculator.full_table_string(shown_digits=-5), '10000: 1e+1000\n')
 
     def test_EventsCalculations_full_table_string_shown_digits_lt_four(self):
-        events = AdditiveEvents({10000: 10**1000})
+        events = AdditiveEvents({10000: 10 ** 1000})
         calculator = ti.EventsCalculations(events)
         self.assertEqual(calculator.full_table_string(shown_digits=2), '10000: 1.0e+1000\n')
 
     def test_EventsCalculations_full_table_string_show_digits_gt_four(self):
-        events = AdditiveEvents({10000: 10**1000})
+        events = AdditiveEvents({10000: 10 ** 1000})
         calculator = ti.EventsCalculations(events)
         self.assertEqual(calculator.full_table_string(shown_digits=6), '10000: 1.00000e+1000\n')
 
@@ -245,7 +246,7 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(calculator.full_table_string(max_power_for_commaed=-10), expected)
 
     def test_EventsCalculations_full_table_string_max_power_for_commaed_high(self):
-        events = AdditiveEvents({1: 10**10, 2: 10**11})
+        events = AdditiveEvents({1: 10 ** 10, 2: 10 ** 11})
         calculator = ti.EventsCalculations(events)
         expected = '1: 10,000,000,000\n2: 1.000e+11\n'
         self.assertEqual(calculator.full_table_string(max_power_for_commaed=10), expected)
@@ -257,16 +258,16 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(ti.get_fast_pct_number(10, 100), 10.0)
 
     def test_get_fast_pct_number_small_denominator_big_numerator(self):
-        self.assertEqual(ti.get_fast_pct_number(10, 10**500), 0)
+        self.assertEqual(ti.get_fast_pct_number(10, 10 ** 500), 0)
 
     def test_get_fast_pct_number_big_denominator_big_numerator(self):
-        self.assertEqual(ti.get_fast_pct_number(10**499, 10**500), 10.0)
+        self.assertEqual(ti.get_fast_pct_number(10 ** 499, 10 ** 500), 10.0)
 
     def test_get_fast_pct_still_pretty_good(self):
-        self.assertAlmostEqual(ti.get_fast_pct_number(4, 7), 400./7., places=10)
-        self.assertAlmostEqual(ti.get_fast_pct_number(4*10**500, 7*10**500), 400./7., places=10)
-        self.assertNotAlmostEqual(ti.get_fast_pct_number(4, 7), 400./7., places=15)
-        self.assertNotAlmostEqual(ti.get_fast_pct_number(4*10**500, 7*10**500), 400./7., places=15)
+        self.assertAlmostEqual(ti.get_fast_pct_number(4, 7), 400. / 7., places=10)
+        self.assertAlmostEqual(ti.get_fast_pct_number(4 * 10 ** 500, 7 * 10 ** 500), 400. / 7., places=10)
+        self.assertNotAlmostEqual(ti.get_fast_pct_number(4, 7), 400. / 7., places=15)
+        self.assertNotAlmostEqual(ti.get_fast_pct_number(4 * 10 ** 500, 7 * 10 ** 500), 400. / 7., places=15)
 
     def test_get_exact_pct_number_zero(self):
         self.assertEqual(ti.get_exact_pct_number(0, 100), 0)
@@ -275,14 +276,14 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(ti.get_exact_pct_number(10, 100), 10.0)
 
     def test_get_exact_pct_number_small_denominator_big_numerator(self):
-        self.assertEqual(ti.get_exact_pct_number(10, 10**500), 0)
+        self.assertEqual(ti.get_exact_pct_number(10, 10 ** 500), 0)
 
     def test_get_exact_pct_number_big_denominator_big_numerator(self):
-        self.assertEqual(ti.get_exact_pct_number(10**499, 10**500), 10.0)
+        self.assertEqual(ti.get_exact_pct_number(10 ** 499, 10 ** 500), 10.0)
 
     def test_get_exact_pct_is_exact(self):
-        self.assertEqual(ti.get_exact_pct_number(4, 7), 400./7.)
-        self.assertEqual(ti.get_exact_pct_number(4*10**500, 7*10**500), 400./7.)
+        self.assertEqual(ti.get_exact_pct_number(4, 7), 400. / 7.)
+        self.assertEqual(ti.get_exact_pct_number(4 * 10 ** 500, 7 * 10 ** 500), 400. / 7.)
 
     def test_EventsCalculations_percentage_points(self):
         events = AdditiveEvents({1: 1, 3: 3})
@@ -298,8 +299,8 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 3, 3: 4})
         calculator = ti.EventsCalculations(events, False)
         three_sevenths, four_sevenths = calculator.percentage_points()
-        self.assertAlmostEqual(three_sevenths[1], 300./7., places=10)
-        self.assertAlmostEqual(four_sevenths[1], 400./7., places=10)
+        self.assertAlmostEqual(three_sevenths[1], 300. / 7., places=10)
+        self.assertAlmostEqual(four_sevenths[1], 400. / 7., places=10)
 
     def test_EventsCalculations_percentage_axes(self):
         events = AdditiveEvents({1: 1, 3: 3})
@@ -315,8 +316,8 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 3, 3: 4})
         calculator = ti.EventsCalculations(events, False)
         three_sevenths, four_sevenths = calculator.percentage_axes()[1]
-        self.assertAlmostEqual(three_sevenths, 300./7., places=10)
-        self.assertAlmostEqual(four_sevenths, 400./7., places=10)
+        self.assertAlmostEqual(three_sevenths, 300. / 7., places=10)
+        self.assertAlmostEqual(four_sevenths, 400. / 7., places=10)
 
     def test_EventsCalculations_percentage_points_exact(self):
         events = AdditiveEvents({1: 1, 3: 3})
@@ -332,8 +333,8 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 3, 3: 4})
         calculator = ti.EventsCalculations(events, False)
         three_sevenths, four_sevenths = calculator.percentage_points_exact()
-        self.assertAlmostEqual(three_sevenths[1], 300./7., places=10)
-        self.assertAlmostEqual(four_sevenths[1], 400./7., places=10)
+        self.assertAlmostEqual(three_sevenths[1], 300. / 7., places=10)
+        self.assertAlmostEqual(four_sevenths[1], 400. / 7., places=10)
 
     def test_EventsCalculations_percentage_axes_exact(self):
         events = AdditiveEvents({1: 1, 3: 3})
@@ -349,8 +350,8 @@ class TestEventsInfo(unittest.TestCase):
         events = AdditiveEvents({1: 3, 3: 4})
         calculator = ti.EventsCalculations(events, False)
         three_sevenths, four_sevenths = calculator.percentage_axes_exact()[1]
-        self.assertEqual(three_sevenths, 300./7.)
-        self.assertEqual(four_sevenths, 400./7.)
+        self.assertEqual(three_sevenths, 300. / 7.)
+        self.assertEqual(four_sevenths, 400. / 7.)
 
     def test_EventsCalculations_log10_points_include_zeroes_is_false(self):
         events = AdditiveEvents({1: 10, 3: 100})
@@ -408,7 +409,7 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(calculator.stats_strings([1]), expected)
 
     def test_EventsCalculations_stats_strings_pct_much_less_than_zero(self):
-        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10**2000}))
+        calculator = ti.EventsCalculations(AdditiveEvents({1: 1, 2: 10 ** 2000}))
         expected = ('1', '1', '1.000e+2000', '1.000e+2000', '1.000e-1998')
         self.assertEqual(calculator.stats_strings([1]), expected)
 
@@ -486,7 +487,6 @@ class TestEventsInfo(unittest.TestCase):
         self.assertEqual(calculator.stats_strings([1], min_power_for_fixed_pt=10), expected)
 
     def test_EventsCalculations_stats_strings_named_tuple_values(self):
-
         calculator = ti.EventsCalculations(AdditiveEvents({1: 2, 2: 10 ** 2000}))
         test_result = calculator.stats_strings([1])
         query_values = '1'
@@ -513,6 +513,7 @@ class TestEventsInfo(unittest.TestCase):
     note: the following are wrapper functions. These tests simply confirm that the presets work.
     For full test see above and (for format_number) test_numberformatter.py
     """
+
     def test_events_range(self):
         events = AdditiveEvents({1: 1, 2: 3, 5: 7})
         self.assertEqual(ti.events_range(events), (1, 5))

@@ -184,5 +184,6 @@ class TestProtoDie(unittest.TestCase):
         hash_str = 'hash of REPR, 2, 3, {4: 5}'
         self.assertEqual(hash(DummyDie(2, 3, {4: 5}, 'REPR')), hash(hash_str))
 
+
 if __name__ == '__main__':
     unittest.main()

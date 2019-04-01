@@ -3,7 +3,6 @@ DiceTable and DetailedDiceTable compute combination of Die events
 """
 from __future__ import absolute_import
 
-
 from dicetables.additiveevents import AdditiveEvents, EventsDictCreator
 from dicetables.eventsinfo import EventsCalculations
 from dicetables.factory.eventsfactory import EventsFactory

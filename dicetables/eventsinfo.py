@@ -11,14 +11,15 @@ For getting and computing details for any IntegerEvents, including:
 Can be accessed through objects or wrapper functions.
 """
 
-
 from __future__ import absolute_import
 
-from decimal import Decimal
-from math import log10
 from collections import namedtuple
-from dicetables.tools.numberforamtter import NumberFormatter
+from decimal import Decimal
+
+from math import log10
+
 from dicetables.tools.listtostring import get_string_from_list_of_ints
+from dicetables.tools.numberforamtter import NumberFormatter
 
 
 def safe_true_div(numerator, denominator):
@@ -69,7 +70,7 @@ class EventsInformation(object):
         :return: (event, occurrences) for first event with highest occurrences
         """
         highest_occurrences = max(self._dict.values())
-        for event, occurrences in sorted(self._dict.items()):
+        for event, occurrences in sorted(self._dict.items()):  # pragma: no branch
             if occurrences == highest_occurrences:
                 return event, highest_occurrences
 
@@ -80,7 +81,7 @@ class EventsInformation(object):
         """
         highest_occurrences = max(self._dict.values())
         output = []
-        for event, occurrences in sorted(self._dict.items()):
+        for event, occurrences in self._dict.items():
             if occurrences == highest_occurrences:
                 output.append((event, occurrences))
         return sorted(output)

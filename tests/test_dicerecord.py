@@ -175,5 +175,6 @@ class TestDiceRecord(unittest.TestCase):
         possible_reprs = ('DiceRecord({Die(2): 2, Die(3): 5})', 'DiceRecord({Die(3): 5, Die(2): 2})')
         self.assertIn(repr(record), possible_reprs)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -72,8 +72,8 @@ class TestNumberFormatter(unittest.TestCase):
         formatter = NumberFormatter()
         self.assertEqual(formatter.get_exponent(50), 1)
         self.assertEqual(formatter.get_exponent(-50), 1)
-        self.assertEqual(formatter.get_exponent(5*10**1000), 1000)
-        self.assertEqual(formatter.get_exponent(-5*10**1000), 1000)
+        self.assertEqual(formatter.get_exponent(5 * 10 ** 1000), 1000)
+        self.assertEqual(formatter.get_exponent(-5 * 10 ** 1000), 1000)
 
     def test_NumberFormatter_get_exponent__rounding(self):
         four_digits = NumberFormatter()
@@ -167,13 +167,13 @@ class TestNumberFormatter(unittest.TestCase):
 
     def test_NumberFormatter_format_as_exponent_remove_extra_zero(self):
         formatter = NumberFormatter()
-        test = 1.23456789*10**5
+        test = 1.23456789 * 10 ** 5
         self.assertEqual('{:.3e}'.format(test), '1.235e+05')
         self.assertEqual(formatter.format_exponent(test), '1.235e+5')
 
     def test_NumberFormatter_format_as_exponent_negative_number(self):
         formatter = NumberFormatter()
-        test = -1.23456789*10**5
+        test = -1.23456789 * 10 ** 5
         self.assertEqual(formatter.format_exponent(test), '-1.235e+5')
 
     def test_NumberFormatter_format_as_exponent_lt_one(self):
@@ -189,29 +189,29 @@ class TestNumberFormatter(unittest.TestCase):
 
     def test_NumberFormatter_format_huge_int_pos_rounds(self):
         formatter = NumberFormatter()
-        test_1 = 123449*10**500
-        test_2 = 123451*10**500
+        test_1 = 123449 * 10 ** 500
+        test_2 = 123451 * 10 ** 500
         self.assertEqual(formatter.format_exponent(test_1), '1.234e+505')
         self.assertEqual(formatter.format_exponent(test_2), '1.235e+505')
 
     def test_NumberFormatter_format_huge_int_neg_rounds(self):
         formatter = NumberFormatter()
-        test_1 = -123449*10**500
-        test_2 = -123451*10**500
+        test_1 = -123449 * 10 ** 500
+        test_2 = -123451 * 10 ** 500
         self.assertEqual(formatter.format_exponent(test_1), '-1.234e+505')
         self.assertEqual(formatter.format_exponent(test_2), '-1.235e+505')
 
     def test_NumberFormatter_format_huge_int_round_to_next_power(self):
         four_digits = NumberFormatter()
         eight_digits = NumberFormatter(shown_digits=8)
-        test = 999951*10**500
+        test = 999951 * 10 ** 500
         self.assertEqual(four_digits.format_exponent(test), '1.000e+506')
         self.assertEqual(eight_digits.format(test), '9.9995100e+505')
 
     def test_NumberFormatter_format_huge_int_round_to_next_power_negative_number(self):
         four_digits = NumberFormatter()
         eight_digits = NumberFormatter(shown_digits=8)
-        test = -999951*10**500
+        test = -999951 * 10 ** 500
         self.assertEqual(four_digits.format_exponent(test), '-1.000e+506')
         self.assertEqual(eight_digits.format(test), '-9.9995100e+505')
 
@@ -239,8 +239,8 @@ class TestNumberFormatter(unittest.TestCase):
 
     def test_NumberFormatter_max_comma_exp_ridiculous_case(self):
         test = NumberFormatter(max_comma_exp=1000)
-        num = int('9'*999)
-        num_string = '999,'*333
+        num = int('9' * 999)
+        num_string = '999,' * 333
         num_string = num_string.rstrip(',')
         self.assertEqual(test.format(num), num_string)
 
@@ -282,7 +282,7 @@ class TestNumberFormatter(unittest.TestCase):
         self.assert_format_number(-99999999, '-1.000e+8')
         self.assert_format_number(999999999, '1.000e+9')
         self.assert_format_number(9999999999, '1.000e+10')
-        self.assert_format_number(123451*10**1000, '1.235e+1005')
+        self.assert_format_number(123451 * 10 ** 1000, '1.235e+1005')
 
     def test_NumberFormatter_is_special_case_zero(self):
         self.assertTrue(NumberFormatter().is_special_case(0))
@@ -298,7 +298,7 @@ class TestNumberFormatter(unittest.TestCase):
 
     def test_NumberFormatter_is_special_case_false(self):
         self.assertFalse(NumberFormatter().is_special_case(1.23))
-        self.assertFalse(NumberFormatter().is_special_case(-10*1111))
+        self.assertFalse(NumberFormatter().is_special_case(-10 * 1111))
         self.assertFalse(NumberFormatter().is_special_case(Decimal('1e-1000')))
         self.assertFalse(NumberFormatter().is_special_case(Decimal('1e+1000')))
         self.assertFalse(NumberFormatter().is_special_case(Decimal('-1e+1000')))

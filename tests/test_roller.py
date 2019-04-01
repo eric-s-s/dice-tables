@@ -61,9 +61,9 @@ class TestRoller(unittest.TestCase):
         ones = rolls.count(1)
         twos = rolls.count(2)
         threes = rolls.count(3)
-        expected = [29, 50, 21]
+        expected = [21, 50, 29]
         if VERSION < 3:
-            expected = [25, 45, 30]
+            expected = [30, 45, 25]
         self.assertEqual([ones, twos, threes], expected)
         self.assertEqual(sum(expected), times)
 
@@ -101,7 +101,7 @@ class TestRoller(unittest.TestCase):
         ones = result.count(1)
         twos = result.count(2)
         threes = result.count(3)
-        expected = [21, 54, 25]
+        expected = [25, 54, 21]
         if VERSION < 3:
             expected = [27, 46, 27]
         self.assertEqual([ones, twos, threes], expected)
@@ -138,9 +138,9 @@ class TestRoller(unittest.TestCase):
         ones = result.count(1)
         twos = result.count(2)
         threes = result.count(3)
-        expected = [0, 36, 64]
+        expected = [0, 29, 71]
         if VERSION < 3:
-            expected = [0, 34, 66]
+            expected = [0, 31, 69]
         self.assertEqual([ones, twos, threes], expected)
         self.assertEqual(sum(expected), times)
 

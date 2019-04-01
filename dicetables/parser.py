@@ -1,8 +1,8 @@
 import ast
 
-from dicetables.eventsbases.protodie import ProtoDie
-from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
 from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
+from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
 
 

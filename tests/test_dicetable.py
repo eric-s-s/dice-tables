@@ -3,10 +3,10 @@ from __future__ import absolute_import
 
 import unittest
 
+from dicetables.dicerecord import DiceRecord
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die, ModWeightedDie, ModDie, StrongDie, Modifier
 from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
-from dicetables.dicerecord import DiceRecord
 
 
 class TestDiceTable(unittest.TestCase):
@@ -280,7 +280,7 @@ class TestDiceTable(unittest.TestCase):
         table = DetailedDiceTable({1: 1}, DiceRecord.new(), calc_includes_zeroes=False)
         new = table.add_die(Die(2), 1)
         self.assertFalse(new.calc.include_zeroes)
-    
+
     def test_DetailedDiceTable_info_property(self):
         table = DetailedDiceTable({1: 1}, DiceRecord.new(), calc_includes_zeroes=False)
         self.assertEqual(table.info.all_events(), [(1, 1)])
@@ -407,6 +407,7 @@ class TestDiceTable(unittest.TestCase):
         table = DetailedDiceTable({1: 1}, dice_record)
         self.assertEqual(repr(table),
                          '<DetailedDiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>')
+
 
 if __name__ == '__main__':
     unittest.main()

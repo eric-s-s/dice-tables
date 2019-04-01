@@ -2,10 +2,11 @@
 from __future__ import absolute_import
 
 import unittest
-from dicetables.factory.factorytools import StaticDict, Getter
-from dicetables.dicetable import DetailedDiceTable
+
 from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicerecord import DiceRecord
+from dicetables.dicetable import DetailedDiceTable
+from dicetables.factory.factorytools import StaticDict, Getter
 
 
 class TestFactoryTools(unittest.TestCase):

@@ -168,7 +168,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(WeightedDie({1: 1, 3: 0}).get_size(), 3)
 
     def test_WeightedDie_get_weight(self):
-        self.assertEqual(WeightedDie({1: 2, 3: 5}).get_weight(), 2+5)
+        self.assertEqual(WeightedDie({1: 2, 3: 5}).get_weight(), 2 + 5)
 
     def test_WeightedDie_get_dict(self):
         self.assertEqual(WeightedDie({1: 2, 3: 4}).get_dict(), {1: 2, 3: 4})
@@ -522,7 +522,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertRaises(ValueError, ExplodingOn, Die(3), (1,), -1)
 
     def test_ExplodingOn_get_dict_one_explodes_on_value(self):
-        die = ExplodingOn(Die(3), (2, ))
+        die = ExplodingOn(Die(3), (2,))
         self.assertEqual(die.get_dict(), {1: 9, 3: 12, 5: 4, 6: 1, 7: 1})
 
     def test_ExplodingOn_get_dict_regular_die_different_numbers(self):
@@ -576,13 +576,13 @@ class TestDieEvents(unittest.TestCase):
         die = ExplodingOn(WeightedDie({1: 1, 2: 2, 3: 3}), (2, 3), explosions=3)
 
         level_zero = {1: 216}
-        level_one = [{3: 36*2}, {4: 36*3}]  # 2 + roll / 3 + roll
+        level_one = [{3: 36 * 2}, {4: 36 * 3}]  # 2 + roll / 3 + roll
         level_two = [{5: 4 * 6},  # 2 + 2 + roll
                      {6: 6 * 6},  # 2 + 3 + roll
                      {6: 6 * 6},  # 3 + 2 + roll
                      {7: 9 * 6}]  # 3 + 3 + roll
-        level_three = [{7: 8, 8: 8*2, 9: 8*3},  # 2 + 2 + 2 + roll
-                       {8: 12, 9: 12*2, 10: 12*3},  # 2 + 2 + 3 + roll
+        level_three = [{7: 8, 8: 8 * 2, 9: 8 * 3},  # 2 + 2 + 2 + roll
+                       {8: 12, 9: 12 * 2, 10: 12 * 3},  # 2 + 2 + 3 + roll
                        {8: 12, 9: 12 * 2, 10: 12 * 3},  # 2 + 3 + 2 + roll
                        {9: 18, 10: 18 * 2, 11: 18 * 3},  # 2 + 3 + 3 + roll
                        {8: 12, 9: 12 * 2, 10: 12 * 3},  # 3 + 2 + 2 + roll
@@ -593,8 +593,8 @@ class TestDieEvents(unittest.TestCase):
         for sub_dict in level_one + level_two + level_three:
             answer = add_dicts(answer, sub_dict)
 
-        self.assertEqual(answer, {1: 216, 3: 72, 4: 108, 5: 24, 6: 72, 7: 62, 8: 16 + 12*3, 9: 24*4+18*3,
-                                  10: 36*6+27, 11: 162+54, 12: 81})
+        self.assertEqual(answer, {1: 216, 3: 72, 4: 108, 5: 24, 6: 72, 7: 62, 8: 16 + 12 * 3, 9: 24 * 4 + 18 * 3,
+                                  10: 36 * 6 + 27, 11: 162 + 54, 12: 81})
         self.assertEqual(answer, die.get_dict())
 
     def test_ExplodingOn_get_dict_edge_case_empty_explodes_on(self):
@@ -618,7 +618,7 @@ class TestDieEvents(unittest.TestCase):
     def test_ExplodingOn_get_size(self):
         dice = [Die(3), ModDie(3, 1), WeightedDie({1: 2, 2: 4}), ModWeightedDie({1: 2, 3: 4}, -1), StrongDie(Die(4), 2)]
         for die in dice:
-            self.assertEqual(ExplodingOn(die, (2, ), 3).get_size(), die.get_size())
+            self.assertEqual(ExplodingOn(die, (2,), 3).get_size(), die.get_size())
 
     def test_ExplodingOn_get_weight_changes_according_to_len_explodes_on(self):
         weight_zero = Die(6)
@@ -626,22 +626,22 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(weight_zero.get_weight(), 0)
         self.assertEqual(weight_six.get_weight(), 6)
 
-        self.assertEqual(ExplodingOn(weight_zero, (1, )).get_weight(), 1)
+        self.assertEqual(ExplodingOn(weight_zero, (1,)).get_weight(), 1)
         self.assertEqual(ExplodingOn(weight_zero, (1, 2)).get_weight(), 2)
         self.assertEqual(ExplodingOn(weight_zero, (1, 3, 5)).get_weight(), 3)
 
-        self.assertEqual(ExplodingOn(weight_six, (1, )).get_weight(), 7)
+        self.assertEqual(ExplodingOn(weight_six, (1,)).get_weight(), 7)
         self.assertEqual(ExplodingOn(weight_six, (1, 2)).get_weight(), 8)
         self.assertEqual(ExplodingOn(weight_six, (1, 3, 5)).get_weight(), 9)
 
     def test_ExplodingOn_get_input_die(self):
         dice = [Die(3), ModDie(3, 1), WeightedDie({1: 2, 2: 4}), ModWeightedDie({1: 2, 3: 4}, -1), StrongDie(Die(4), 2)]
         for die in dice:
-            self.assertEqual(ExplodingOn(die, (2, ), 3).get_input_die(), die)
+            self.assertEqual(ExplodingOn(die, (2,), 3).get_input_die(), die)
 
     def test_ExplodingOn_get_explosions(self):
-        two = ExplodingOn(Modifier(1), (1, ))
-        five = ExplodingOn(Modifier(1), (1, ), 5)
+        two = ExplodingOn(Modifier(1), (1,))
+        five = ExplodingOn(Modifier(1), (1,), 5)
         self.assertEqual(two.get_explosions(), 2)
         self.assertEqual(five.get_explosions(), 5)
 
@@ -690,5 +690,4 @@ class TestDieEvents(unittest.TestCase):
 
 
 if __name__ == '__main__':
-
     unittest.main()

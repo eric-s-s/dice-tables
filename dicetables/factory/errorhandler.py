@@ -1,5 +1,3 @@
-
-
 class EventsFactoryError(AssertionError):
     pass
 

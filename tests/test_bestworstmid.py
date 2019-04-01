@@ -1,10 +1,9 @@
 import unittest
 
-from dicetables.tools.orderedcombinations import ordered_combinations_of_events
+from dicetables import Die, WeightedDie, ModDie
 from dicetables.bestworstmid import (DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool,
                                      LowerMidOfDicePool, generate_events_dict)
-
-from dicetables import Die, WeightedDie, ModDie
+from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
 
 class MockOfDicePool(DicePool):
@@ -80,9 +79,9 @@ class TestBestWorstMid(unittest.TestCase):
 
         test = MockOfDicePool(WeightedDie({1: 2, 2: 4}), 5, 2)
         expected = (
-            'Mock 2 of 5D2  W:6\ninput_die info:\n' +
-            '    a roll of 1 has a weight of 2\n' +
-            '    a roll of 2 has a weight of 4'
+                'Mock 2 of 5D2  W:6\ninput_die info:\n' +
+                '    a roll of 1 has a weight of 2\n' +
+                '    a roll of 2 has a weight of 4'
         )
         self.assertEqual(test.weight_info(), expected)
 
@@ -121,10 +120,11 @@ class TestBestWorstMid(unittest.TestCase):
 
     def test_BestOfDicePool_get_dict_WeightedDie(self):
         test = BestOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 2)
-        self.assertEqual(test.get_dict(), {2: 1*(2*2*2), 4: 3*(2*2*3), 6: 3*(2*3*3)+1*(3*3*3)})
+        self.assertEqual(test.get_dict(),
+                         {2: 1 * (2 * 2 * 2), 4: 3 * (2 * 2 * 3), 6: 3 * (2 * 3 * 3) + 1 * (3 * 3 * 3)})
 
         test = BestOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 1)
-        self.assertEqual(test.get_dict(), {1: 8, 3: 3*(2*2*3)+3*(2*3*3)+1*(3*3*3)})
+        self.assertEqual(test.get_dict(), {1: 8, 3: 3 * (2 * 2 * 3) + 3 * (2 * 3 * 3) + 1 * (3 * 3 * 3)})
 
     def test_BestOfDicePool_str(self):
         self.assertEqual(str(BestOfDicePool(Die(2), 2, 1)), 'Best 1 of 2D2')
@@ -162,10 +162,10 @@ class TestBestWorstMid(unittest.TestCase):
 
     def test_WorstOfDicePool_get_dict_WeightedDie(self):
         test = WorstOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 2)
-        self.assertEqual(test.get_dict(), {2: (2*2*2)+3*(2*2*3), 4: 3*(2*3*3), 6: 1*(3*3*3)})
+        self.assertEqual(test.get_dict(), {2: (2 * 2 * 2) + 3 * (2 * 2 * 3), 4: 3 * (2 * 3 * 3), 6: 1 * (3 * 3 * 3)})
 
         test = WorstOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 1)
-        self.assertEqual(test.get_dict(), {1: 8+3*(2*2*3)+3*(2*3*3), 3: 1*(3*3*3)})
+        self.assertEqual(test.get_dict(), {1: 8 + 3 * (2 * 2 * 3) + 3 * (2 * 3 * 3), 3: 1 * (3 * 3 * 3)})
 
     def test_WorstOfDicePool_str(self):
         self.assertEqual(str(WorstOfDicePool(Die(2), 2, 1)), 'Worst 1 of 2D2')
@@ -239,10 +239,10 @@ class TestBestWorstMid(unittest.TestCase):
          (3, 3, 3): 27}
         """
         test = UpperMidOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 2)
-        self.assertEqual(test.get_dict(), {2: 8, 4: 36, 6: 54+27})
+        self.assertEqual(test.get_dict(), {2: 8, 4: 36, 6: 54 + 27})
 
         test = UpperMidOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 1)
-        self.assertEqual(test.get_dict(), {1: 44, 3: 54+27})
+        self.assertEqual(test.get_dict(), {1: 44, 3: 54 + 27})
 
     def test_UpperMidOfDicePool_str(self):
         self.assertEqual(str(UpperMidOfDicePool(Die(2), 2, 1)), 'UpperMid 1 of 2D2')
@@ -317,10 +317,10 @@ class TestBestWorstMid(unittest.TestCase):
          (3, 3, 3): 27}
         """
         test = LowerMidOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 2)
-        self.assertEqual(test.get_dict(), {2: 8+36, 4: 54, 6: 27})
+        self.assertEqual(test.get_dict(), {2: 8 + 36, 4: 54, 6: 27})
 
         test = LowerMidOfDicePool(WeightedDie({1: 2, 3: 3}), 3, 1)
-        self.assertEqual(test.get_dict(), {1: 44, 3: 54+27})
+        self.assertEqual(test.get_dict(), {1: 44, 3: 54 + 27})
 
     def test_LowerMidOfDicePool_str(self):
         self.assertEqual(str(LowerMidOfDicePool(Die(2), 2, 1)), 'LowerMid 1 of 2D2')

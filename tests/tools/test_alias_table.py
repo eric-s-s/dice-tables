@@ -7,11 +7,11 @@ class TestAliasTable(unittest.TestCase):
     def test_alias(self):
         primary = 1
         alternate = 2
-        primary_max = 3
-        alias = Alias(primary=primary, alternate=alternate, primary_max=primary_max)
+        primary_height = 3
+        alias = Alias(primary=primary, alternate=alternate, primary_height=primary_height)
         self.assertEqual(alias.primary, primary)
         self.assertEqual(alias.alternate, alternate)
-        self.assertEqual(alias.primary_max, primary_max)
+        self.assertEqual(alias.primary_height, primary_height)
 
     def assert_alias_table_has_expected_counts(self, alias_table, expected_counts):
         actual_counts = dict.fromkeys(expected_counts.keys(), 0)
@@ -62,25 +62,26 @@ class TestAliasTable(unittest.TestCase):
         input_dict = {1: 1, 2: 2, 3: 2, 4: 3}
         alias_table = AliasTable(input_dict)
         expected_list = [
-            Alias(primary=1, alternate=4, primary_max=4),
-            Alias(primary=2, alternate=4, primary_max=8),
-            Alias(primary=3, alternate=4, primary_max=8),
-            Alias(primary=4, alternate=4, primary_max=8)
+            Alias(primary=1, alternate=4, primary_height=4),
+            Alias(primary=4, alternate=4, primary_height=8),
+            Alias(primary=3, alternate=3, primary_height=8),
+            Alias(primary=2, alternate=2, primary_height=8)
         ]
         self.assertEqual(alias_table.to_list(), expected_list)
 
-    def test_alias_table_to_list_silly_test_so_that_i_can_visualize_algorithm_better(self):
+    def test_alias_table_to_list_silly_test_so_that_i_can_visualize_Vose_algorithm_better(self):
         input_dict = {1: 1, 2: 3, 3: 4, 4: 6, 5: 7}
         alias_table = AliasTable(input_dict)
         self.assertEqual(alias_table.height, 21)
         self.assert_alias_table_has_expected_counts(alias_table, {1: 5, 2: 15, 3: 20, 4: 30, 5: 35})
-
+        # small = [(1, 5), (2, 15), (3, 20)]
+        # big = [(4, 30), (5, 35)]
         expected_list = [
-            Alias(primary=1, alternate=5, primary_max=5),  # {2: 15, 3: 20, 4: 30, 5: 19 (35-16)}
-            Alias(primary=2, alternate=4, primary_max=15),  # {3: 20, 4: 24 (30-6), 5: 19}
-            Alias(primary=5, alternate=4, primary_max=19),  # {3: 20, 4: 24-2, 5: 19}
-            Alias(primary=3, alternate=4, primary_max=20),  # {3: 20, 4: 22}
-            Alias(primary=4, alternate=4, primary_max=21)
+            Alias(primary=3, alternate=5, primary_height=20),  # small[(1, 5), (2, 15)], big[(4, 30), (5, 35-1)]
+            Alias(primary=2, alternate=5, primary_height=15),  # small[(1, 5)], big[(4, 30), (5, 34-6)]
+            Alias(primary=1, alternate=5, primary_height=5),  # small[(5, 28-16)], big[(4, 30)]
+            Alias(primary=5, alternate=4, primary_height=12),  # small[], big[(4, 30-9)]
+            Alias(primary=4, alternate=4, primary_height=21)
         ]
         self.assertEqual(alias_table.to_list(), expected_list)
 
