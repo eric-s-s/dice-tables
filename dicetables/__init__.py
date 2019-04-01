@@ -10,3 +10,4 @@ from dicetables.eventsinfo import (EventsCalculations, EventsInformation,
                                    events_range, mean, stddev, percentage_points, percentage_axes, stats,
                                    full_table_string)
 from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.roller import Roller

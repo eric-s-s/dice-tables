@@ -1,8 +1,11 @@
 import random
 import unittest
+from sys import version
 
 from dicetables.additiveevents import AdditiveEvents
 from dicetables.roller import Roller
+
+VERSION = int(version[0])
 
 
 class TestRoller(unittest.TestCase):
@@ -53,6 +56,8 @@ class TestRoller(unittest.TestCase):
         random.seed(34556)
         events = AdditiveEvents({1: 1, 2: 2, 3: 1})
         expected = [1, 2, 3, 1, 3, 2, 2, 2, 1, 3]
+        if VERSION < 3:
+            expected = [2, 2, 1, 1, 2, 2, 2, 1, 2, 1]
         roller = Roller(events)
         for expected_roll in expected:
             actual_roll = roller.roll()
@@ -88,6 +93,8 @@ class TestRoller(unittest.TestCase):
         roller = Roller(events)
         result = roller.roll_many(10)
         expected = [2, 3, 2, 2, 2, 2, 2, 2, 1, 1]
+        if VERSION < 3:
+            expected = [2, 2, 1, 2, 2, 1, 3, 3, 1, 1]
         self.assertEqual(expected, result)
 
     def test_roll_many_with_custom_generator(self):
@@ -116,6 +123,8 @@ class TestRoller(unittest.TestCase):
         events = AdditiveEvents({1: 1, 2: 10 ** 1000, 3: 2 * 10 ** 1000})
         roller = Roller(events)
         expected = [3, 2, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 3, 2]
+        if VERSION < 3:
+            expected = [2, 2, 3, 2, 2, 2, 2, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 2, 2]
         for expected_roll in expected:
             actual_roll = roller.roll()
             self.assertEqual(expected_roll, actual_roll)

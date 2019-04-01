@@ -11,10 +11,10 @@
 /*.egg
 
 # other
-tox.ini
 *.npy
 *.spec
 *.txt
+.coverage
 .tox
 .idea
 /time_trials/best_time_data
@@ -24,3 +24,5 @@ tox.ini
 /docs/_build
 /_build
 run_sphinx.sh
+venv/
+
