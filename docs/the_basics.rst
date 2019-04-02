@@ -111,3 +111,10 @@ StatsStrings(query_values='1,000-1,500',
              total_occurrences='1.417e+778',
              one_in_chance='5.809e+365',
              pct_chance='1.722e-364')
+
+You can roll events with a :doc:`roller`
+
+>>> events = dt.DiceTable.new().add_die(dt.Die(6))
+>>> roller = dt.Roller(events)
+>>> roller.roll() in [1, 2, 3, 4, 5, 6]
+True

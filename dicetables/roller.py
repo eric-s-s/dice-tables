@@ -35,4 +35,9 @@ class Roller(object):
         return self._alias_table.get(length, height)
 
     def roll_many(self, times):
+        """
+
+        :param times: int - how many times to roll
+        :return: [int,..] - the value of each roll
+        """
         return [self.roll() for _ in range(times)]

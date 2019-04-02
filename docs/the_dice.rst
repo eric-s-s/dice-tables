@@ -205,6 +205,8 @@ True
 
 `Top`_
 
+.. _Dice-Pools-Section:
+
 Dice Pools
 ----------
 
