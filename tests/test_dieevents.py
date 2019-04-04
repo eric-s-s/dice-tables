@@ -347,16 +347,16 @@ class TestDieEvents(unittest.TestCase):
 
     def test_Exploding_get_dict_on_WeightedDie(self):
         die = Exploding(WeightedDie({1: 2, 2: 1, 3: 3}))
-        self.assertEqual(die.get_dict(), {1: 1 * 36 * 2, 2: 1 * 36 * 1,
-                                          4: 3 * 6 * 2, 5: 3 * 6 * 1,
-                                          7: 9 * 1 * 2, 8: 9 * 1 * 1, 9: 9 * 1 * 3})
+        self.assertEqual(die.get_dict(), {1: 1*36*2, 2: 1*36*1,
+                                          4: 3*6*2, 5: 3*6*1,
+                                          7: 9*1*2, 8: 9*1*1, 9: 9*1*3})
 
     def test_Exploding_get_dict_on_ModWeightedDieDie_set_explosions(self):
         die = Exploding(ModWeightedDie({1: 2, 2: 1, 3: 3}, -1), explosions=3)
-        self.assertEqual(die.get_dict(), {0: 1 * 216 * 2, 1: 1 * 216 * 1,
-                                          2: 3 * 36 * 2, 3: 3 * 36 * 1,
-                                          4: 9 * 6 * 2, 5: 9 * 6 * 1,
-                                          6: 27 * 1 * 2, 7: 27 * 1 * 1, 8: 27 * 1 * 3})
+        self.assertEqual(die.get_dict(), {0: 1*216*2, 1: 1*216*1,
+                                          2: 3*36*2, 3: 3*36*1,
+                                          4: 9*6*2, 5: 9*6*1,
+                                          6: 27*1*2, 7: 27*1*1, 8: 27*1*3})
 
     def test_Exploding_works_according_to_get_dict_and_not_get_size(self):
         silly_die = WeightedDie({1: 1, 2: 1, 3: 0})
@@ -576,25 +576,25 @@ class TestDieEvents(unittest.TestCase):
         die = ExplodingOn(WeightedDie({1: 1, 2: 2, 3: 3}), (2, 3), explosions=3)
 
         level_zero = {1: 216}
-        level_one = [{3: 36 * 2}, {4: 36 * 3}]  # 2 + roll / 3 + roll
+        level_one = [{3: 36*2}, {4: 36*3}]  # 2+roll / 3+roll
         level_two = [{5: 4 * 6},  # 2 + 2 + roll
                      {6: 6 * 6},  # 2 + 3 + roll
                      {6: 6 * 6},  # 3 + 2 + roll
                      {7: 9 * 6}]  # 3 + 3 + roll
-        level_three = [{7: 8, 8: 8 * 2, 9: 8 * 3},  # 2 + 2 + 2 + roll
-                       {8: 12, 9: 12 * 2, 10: 12 * 3},  # 2 + 2 + 3 + roll
-                       {8: 12, 9: 12 * 2, 10: 12 * 3},  # 2 + 3 + 2 + roll
-                       {9: 18, 10: 18 * 2, 11: 18 * 3},  # 2 + 3 + 3 + roll
-                       {8: 12, 9: 12 * 2, 10: 12 * 3},  # 3 + 2 + 2 + roll
-                       {9: 18, 10: 18 * 2, 11: 18 * 3},  # 3 + 2 + 3 + roll
-                       {9: 18, 10: 18 * 2, 11: 18 * 3},  # 3 + 3 + 2 + roll
-                       {10: 27, 11: 27 * 2, 12: 27 * 3}]  # 3 + 3 + 3 + roll
+        level_three = [{7: 8, 8: 8*2, 9: 8*3},  # 2+2+2+roll
+                       {8: 12, 9: 12*2, 10: 12*3},  # 2+2+3+roll
+                       {8: 12, 9: 12*2, 10: 12*3},  # 2+3+2+roll
+                       {9: 18, 10: 18*2, 11: 18*3},  # 2+3+3+roll
+                       {8: 12, 9: 12*2, 10: 12*3},  # 3+2+2+roll
+                       {9: 18, 10: 18*2, 11: 18*3},  # 3+2+3+roll
+                       {9: 18, 10: 18*2, 11: 18*3},  # 3+3+2+roll
+                       {10: 27, 11: 27*2, 12: 27*3}]  # 3+3+3+roll
         answer = level_zero.copy()
         for sub_dict in level_one + level_two + level_three:
             answer = add_dicts(answer, sub_dict)
 
-        self.assertEqual(answer, {1: 216, 3: 72, 4: 108, 5: 24, 6: 72, 7: 62, 8: 16 + 12 * 3, 9: 24 * 4 + 18 * 3,
-                                  10: 36 * 6 + 27, 11: 162 + 54, 12: 81})
+        self.assertEqual(answer, {1: 216, 3: 72, 4: 108, 5: 24, 6: 72, 7: 62, 8: 16+12*3, 9: 24*4+18*3,
+                                  10: 36*6+27, 11: 162+54, 12: 81})
         self.assertEqual(answer, die.get_dict())
 
     def test_ExplodingOn_get_dict_edge_case_empty_explodes_on(self):

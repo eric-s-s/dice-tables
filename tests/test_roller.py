@@ -46,7 +46,7 @@ class TestRoller(unittest.TestCase):
         self.assertEqual(roller.random_generator, my_random)
 
     def test_roller_roll_only_one_roll(self):
-        events = AdditiveEvents.new()
+        events = AdditiveEvents({0: 1})
         roller = Roller(events)
         for _ in range(10):
             self.assertEqual(roller.roll(), 0)

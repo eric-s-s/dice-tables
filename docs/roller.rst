@@ -20,9 +20,8 @@ has a 1 in 6**1000 chance of occurring (a 7.059e-777% chance).  The roller can a
     my_roll = roller.roll()
 
 `my_roll` actually has a chance of being `1000`, although if that actually happened ...  er ...
-um ... hmmm ... get your computer checked. Seriously! You probably have a higher chance of the Heart Of Gold
-actually existing **and** getting picked up by Zaphod Beeblebrox in interstellar space just after escaping
-the Vogon destruction of Planet Earth than of rolling `1000`.
+um ... hmmm ... get your computer checked. Seriously! You probably have a higher chance of winning the lottery while
+getting eaten by a shark as you're struck by lightning.  
 
 .. module:: dicetables.roller
 

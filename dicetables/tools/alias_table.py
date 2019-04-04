@@ -19,7 +19,7 @@ class AliasTable(object):
         self._aliases = self._create_aliases(input_dict)
 
     def _create_aliases(self, input_dict):
-        big_heights, small_heights = self._get_ge_height_and_le_height_lists(input_dict)
+        big_heights, small_heights = self._get_height_sorted_lists(input_dict)
 
         alias_list = []
         while small_heights:
@@ -41,7 +41,7 @@ class AliasTable(object):
         else:
             big_heights.append((event, event_height))
 
-    def _get_ge_height_and_le_height_lists(self, input_dict):
+    def _get_height_sorted_lists(self, input_dict):
         less_than_height = []
         greater_than_or_equal_height = []
         for event, frequency in sorted(input_dict.items()):
