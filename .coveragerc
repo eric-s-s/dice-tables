@@ -1,0 +1,11 @@
+[run]
+branch = True
+source = .
+omit =
+    tests/*
+    .tox/*
+    setup.py
+    venv/*
+    time_trials/*
+    doctests.py
+

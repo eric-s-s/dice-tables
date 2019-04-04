@@ -18,6 +18,7 @@ class ProtoDie(IntegerEvents):
     - __repr__
     - __str__
     """
+
     def __init__(self):
         super(ProtoDie, self).__init__()
 
@@ -53,8 +54,8 @@ class ProtoDie(IntegerEvents):
 
     def __lt__(self, other):
         return (
-            (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) <
-            (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))
+                (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) <
+                (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))
         )
 
     def __eq__(self, other):

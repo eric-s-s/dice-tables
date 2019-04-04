@@ -7,8 +7,9 @@ fast consistent and programmable object to convert all number types to strings.
 """
 from __future__ import absolute_import
 
-from math import log10
 from sys import version_info
+
+from math import log10
 
 if version_info[0] < 3:
     from dicetables.tools.py2funcs import is_int

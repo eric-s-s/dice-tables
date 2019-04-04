@@ -7,7 +7,7 @@
 
 
 #################
-dicetables v2.5.0
+dicetables v2.6.0
 #################
 
 Calculate the Combinations For Any Set of Dice
@@ -139,6 +139,13 @@ StatsStrings(query_values='8-19, 35, 50-62',
 5999: 1,000
 6000: 1
 
+You can now roll events with a `Roller`
+
+>>> events = dt.DiceTable.new().add_die(dt.Die(6))
+>>> roller = dt.Roller(events)
+>>> roller.roll() in [1, 2, 3, 4, 5, 6]
+True
+
 That should get you started. For details see
 `<http://dice-tables.readthedocs.io/en/latest/>`_
 
@@ -179,6 +186,10 @@ v2.5.0
 
 - `Parser().add_die_size_limit_kwarg` and `Parser().add_explosions_limit_kwarg` are removed. Use
   `Parser().add_limits_kwarg`
+
+v2.6.0
+
+- added `Roller`
 
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
 

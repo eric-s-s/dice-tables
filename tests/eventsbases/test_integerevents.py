@@ -4,8 +4,8 @@ from __future__ import absolute_import
 import unittest
 from sys import version_info
 
-from dicetables.eventsbases.integerevents import IntegerEvents, EventsVerifier
 from dicetables.eventsbases.eventerrors import InvalidEventsError
+from dicetables.eventsbases.integerevents import IntegerEvents, EventsVerifier
 
 
 class DummyEvents(IntegerEvents):

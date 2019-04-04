@@ -1,11 +1,11 @@
 """
 A factory class for creating instances of AdditiveEvent and its descendants.
 """
+from dicetables.dicerecord import DiceRecord
 from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
 from dicetables.factory.errorhandler import EventsFactoryErrorHandler
 from dicetables.factory.factorytools import StaticDict, Getter
 from dicetables.factory.warninghandler import EventsFactoryWarningHandler
-from dicetables.dicerecord import DiceRecord
 
 
 class LoaderError(AttributeError):
@@ -32,7 +32,6 @@ class Loader(object):
 
 
 class EventsFactory(object):
-
     __default_getters = {'get_dict': Getter('get_dict', {0: 1}),
                          'dice_data': Getter('dice_data', DiceRecord.new()),
                          'calc_includes_zeroes': Getter('calc_includes_zeroes', True, is_property=True)}

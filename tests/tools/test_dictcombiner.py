@@ -42,6 +42,7 @@ class TestDictCombiner(unittest.TestCase):
     }
     {'first method': {size of input dict: {combine times: size of Dictcombiner.get_dict(), ...}, ...}, ... }
     """
+
     def test_DictCombiner_get_fastest_method_DictCombiner_sized_one_and_one_times_never_picks_indexed_values(self):
         accepted_choices = ('dictionary', 'flattened_list')
         for power_of_two in range(10):
@@ -226,7 +227,7 @@ class TestDictCombiner(unittest.TestCase):
         to_combine = {1: 1, 2: 2}
         new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 1)
         self.assertEqual(new_combiner.get_dict(), to_combine)
-    
+
     def test_DictCombiner_combine_by_flattened_list__many_combines(self):
         to_combine = {1: 1, 2: 2}
         new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
@@ -261,12 +262,12 @@ class TestDictCombiner(unittest.TestCase):
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
-    
+
     def test_DictCombiner_combine_by_indexed_values_identity(self):
         to_combine = {1: 1, 2: 2}
         new_combiner = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 1)
         self.assertEqual(new_combiner.get_dict(), to_combine)
-    
+
     def test_DictCombiner_combine_by_indexed_values_many_combines(self):
         to_combine = {1: 1, 2: 2}
         new_combiner = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 3)

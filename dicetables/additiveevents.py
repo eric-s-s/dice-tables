@@ -3,10 +3,9 @@ AdditiveEvents is the general case for DiceTable - an IntegerEvents that can com
 """
 from __future__ import absolute_import
 
-
+from dicetables.eventsbases.integerevents import IntegerEvents
 from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.tools.dictcombiner import DictCombiner
-from dicetables.eventsbases.integerevents import IntegerEvents
 
 
 def scrub_zeroes(dictionary):

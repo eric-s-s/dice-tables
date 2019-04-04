@@ -26,6 +26,7 @@ Contents:
    the_dice.rst
    the_dicetable.rst
    events_info.rst
+   roller.rst
    implementation_details/index.rst
 
 

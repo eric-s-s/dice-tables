@@ -1,15 +1,14 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
 from __future__ import absolute_import
 
-import unittest
 import ast
 import sys
+import unittest
 
-from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, Exploding, ExplodingOn
 from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
-from dicetables.tools.orderedcombinations import count_unique_combination_keys
-
+from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, Exploding, ExplodingOn
 from dicetables.parser import Parser, ParseError, LimitsError, make_int, make_int_dict, make_int_tuple
+from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
 class TestParser(unittest.TestCase):
@@ -134,8 +133,8 @@ class TestParser(unittest.TestCase):
             parser.make_die(die_node)
         self.assertEqual(
             cm.exception.args[0], (
-                "Failed to create die: <StupidDie> with param types: ('string', 'int'). " +
-                "One or more param types not recognized."
+                    "Failed to create die: <StupidDie> with param types: ('string', 'int'). " +
+                    "One or more param types not recognized."
             )
         )
 
@@ -440,6 +439,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_within_limits_white_box_test_non_hardcoded_kwargs_for_dicepool(self):
         """This could be run as a regular blackbox test, but it would take 0.5s for this single test."""
+
         class IgnoresLimits(BestOfDicePool):
             def __init__(self, a_die, pool_size, select):
                 super(IgnoresLimits, self).__init__(a_die, pool_size, select)

@@ -3,9 +3,8 @@ An immutable record of dice added to and removed from DiceTable
 """
 from sys import version_info
 
-from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.eventsbases.eventerrors import DiceRecordError
-
+from dicetables.eventsbases.protodie import ProtoDie
 
 if version_info[0] < 3:
     from dicetables.tools.py2funcs import is_int

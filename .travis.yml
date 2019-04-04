@@ -12,10 +12,12 @@ install:
 
 script:
 
-  - coverage run --source=dicetables setup.py test
+  - COVERALLS_PARALLEL=true
+  - coverage run -a --source=dicetables setup.py test
   - coverage report -m
   # Run the doctests
   - python doctests.py
 
 after_success:
+  - COVERALLS_PARALLEL=true
   - coveralls

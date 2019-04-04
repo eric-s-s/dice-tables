@@ -1,5 +1,3 @@
-
-
 class EventsFactoryError(AssertionError):
     pass
 
@@ -26,7 +24,7 @@ class EventsFactoryErrorHandler(object):
         }
         """
         self._assign_parameters(error_code, params)
-        self._assign_additional_kwargs(error_code)
+        self._assign_kwargs_from_factory_class()
 
     def _assign_parameters(self, error_code, params):
         param_values = {
@@ -39,26 +37,18 @@ class EventsFactoryErrorHandler(object):
         for index, key_name in enumerate(param_values[error_code]):
             self._format_kwargs[key_name] = params[index]
 
-    def _assign_additional_kwargs(self, error_code):
-        additional_params = {
-            'CLASS OVERWRITE': 'class_keys',
-            'MISSING GETTER': 'current_getters',
-            'GETTER OVERWRITE': 'factory_getter',
-            'SIGNATURES DIFFERENT': 'class_keys',
-            'WTF': 'factory_classes'
+    def _assign_kwargs_from_factory_class(self):
+        factory_classes, current_getters = self._factory.get_keys()
+        kwargs_from_factory = {
+            'factory_classes': factory_classes,
+            'current_getters': current_getters
         }
-        new_key = additional_params[error_code]
-        new_value = None
-        if new_key == 'class_keys':
-            new_value = self._factory.get_class_params(self._format_kwargs['events_class'])
-        elif new_key == 'factory_getter':
-            new_value = self._factory.get_getter_string(self._format_kwargs['getter_key'])
-        elif new_key == 'factory_classes':
-            new_value = self._factory.get_keys()[0]
-        elif new_key == 'current_getters':
-            new_value = self._factory.get_keys()[1]
+        if 'events_class' in self._format_kwargs:
+            kwargs_from_factory['class_keys'] = self._factory.get_class_params(self._format_kwargs['events_class'])
+        if 'getter_key' in self._format_kwargs:
+            kwargs_from_factory['factory_getter'] = self._factory.get_getter_string(self._format_kwargs['getter_key'])
 
-        self._format_kwargs[new_key] = new_value
+        self._format_kwargs.update(kwargs_from_factory)
 
     def create_header(self, error_code, bad_param):
         msg_start = 'Error Code: {}\nFactory:    {}\nError At:   '.format(error_code, self._factory)

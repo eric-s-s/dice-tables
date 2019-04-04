@@ -72,5 +72,6 @@ class TestListToString(unittest.TestCase):
         the_list = [5, 3, 7, 1, 3, 6, 8, 9, 10, 2]
         self.assertEqual(l2s.get_string_from_list_of_ints(the_list), '1-3, 5-10')
 
+
 if __name__ == '__main__':
     unittest.main()

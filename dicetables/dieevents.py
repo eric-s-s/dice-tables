@@ -3,7 +3,6 @@ All the descendants of ProtoDie.  These are IntegerEvents that represent differe
 """
 import itertools
 
-
 from dicetables.eventsbases.protodie import ProtoDie
 
 
@@ -13,6 +12,7 @@ class Modifier(ProtoDie):
     :code:`Modifier(-3)` rolls -3 and only -3. A Modifier's size and weight are
     always 0.
     """
+
     def __init__(self, modifier):
         self._mod = modifier
         super(Modifier, self).__init__()
@@ -47,6 +47,7 @@ class Die(ProtoDie):
     stores and returns info for a basic Die.
     :code:`Die(4)` rolls 1, 2, 3, 4 with equal weight
     """
+
     def __init__(self, die_size):
         """
 
@@ -83,6 +84,7 @@ class ModDie(Die):
     that changes the values of the rolls.
     :code:`ModDie(4, -1)` rolls 0, 1, 2, 3 with equal weight
     """
+
     def __init__(self, die_size, modifier):
         """
 
@@ -113,6 +115,7 @@ class WeightedDie(ProtoDie):
     stores and returns info for die with different chances for different rolls.
     :code:`WeightedDie({1:1, 2:5})` rolls 1 once for every five times that 2 is rolled.
     """
+
     def __init__(self, dictionary_input):
         """
 
@@ -350,6 +353,7 @@ class ExplodingOn(ProtoDie):
     instantiation VERY slow. Time is proportional to explosion**(len(explodes_on)). It's also linear
     with size which gets overshadowed by the first factor.
     """
+
     def __init__(self, input_die, explodes_on, explosions=2):
         """
 

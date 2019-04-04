@@ -62,9 +62,9 @@ class TestOrderedCombinations(unittest.TestCase):
     def test_count_number_of_combination_different_values(self):
         to_use = {key: key for key in range(1, 11)}
         self.assertEqual(get_combination_occurrences((1, 2), to_use), 4)
-        self.assertEqual(get_combination_occurrences((1, 2, 2, 3), to_use), 12*4*3)
-        self.assertEqual(get_combination_occurrences((2, 2, 3, 3), to_use), 6*4*9)
-        self.assertEqual(get_combination_occurrences((5, 5, 10, 10), to_use), 6*25*100)
+        self.assertEqual(get_combination_occurrences((1, 2, 2, 3), to_use), 12 * 4 * 3)
+        self.assertEqual(get_combination_occurrences((2, 2, 3, 3), to_use), 6 * 4 * 9)
+        self.assertEqual(get_combination_occurrences((5, 5, 10, 10), to_use), 6 * 25 * 100)
 
     def test_ordered_combinations_of_events_all_single_weight_simple_case(self):
         answer = ordered_combinations_of_events(AdditiveEvents({1: 1, 2: 1}), 3)
