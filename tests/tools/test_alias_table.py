@@ -58,6 +58,17 @@ class TestAliasTable(unittest.TestCase):
         self.assertEqual(alias_table.height, 6)
         self.assert_alias_table_has_expected_counts(alias_table, expected_counts)
 
+    def test_alias_table_to_list_flat_chances(self):
+        input_dict = {1:1, 2: 1, 3: 1}
+        alias_table = AliasTable(input_dict)
+        result = alias_table.to_list()
+        expected = [
+            Alias(primary=3, alternate=3, primary_height=3),
+            Alias(primary=2, alternate=2, primary_height=3),
+            Alias(primary=1, alternate=1, primary_height=3)
+        ]
+        self.assertEqual(result, expected)
+
     def test_alias_table_to_list(self):
         input_dict = {1: 1, 2: 2, 3: 2, 4: 3}
         alias_table = AliasTable(input_dict)
