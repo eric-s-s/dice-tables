@@ -41,7 +41,8 @@ class TestParser(unittest.TestCase):
     def test_make_int_with_unary_operation_node_python_3_vs_2(self):
         unary_operation = ast.parse('-2').body[0].value
         if sys.version_info[0] > 2:
-            self.assertEqual(ast.dump(unary_operation), 'UnaryOp(op=USub(), operand=Num(n=2))')
+            self.assertIsInstance(unary_operation.op, ast.USub)
+            self.assertEqual(unary_operation.operand.n, 2)
             self.assertIsInstance(unary_operation, ast.UnaryOp)
         else:
             self.assertEqual(ast.dump(unary_operation), 'Num(n=-2)')
