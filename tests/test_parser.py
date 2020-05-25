@@ -41,7 +41,8 @@ class TestParser(unittest.TestCase):
     def test_make_int_with_unary_operation_node_python_3_vs_2(self):
         unary_operation = ast.parse('-2').body[0].value
         if sys.version_info[0] > 2:
-            self.assertEqual(ast.dump(unary_operation), 'UnaryOp(op=USub(), operand=Num(n=2))')
+            self.assertIsInstance(unary_operation.op, ast.USub)
+            self.assertEqual(unary_operation.operand.n, 2)
             self.assertIsInstance(unary_operation, ast.UnaryOp)
         else:
             self.assertEqual(ast.dump(unary_operation), 'Num(n=-2)')
@@ -179,11 +180,6 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser(ignore_case=True).make_die(die_node), StrongDie(Die(6), 3))
 
     def test_make_die_ignore_case_false_basic_die(self):
-        with self.assertRaises(ParseError) as e:
-            die_node = ast.parse('dIe(6)').body[0].value
-            Parser(ignore_case=False).make_die(die_node)
-        self.assertEqual(e.exception.args[0], 'Die class: <dIe> not recognized by parser.')
-
         die_node = ast.parse('dIe(6)').body[0].value
         self.assertRaises(ParseError, Parser(ignore_case=False).make_die, die_node)
 
@@ -191,9 +187,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(Parser(ignore_case=False).make_die(die_node), Die(6))
 
     def test_make_die_ignore_case_false_recursive_call(self):
-        with self.assertRaises(ParseError):
-            die_node = ast.parse('strONgdIE(diE(6), 3)').body[0].value
-            Parser(ignore_case=False).make_die(die_node)
+        die_node = ast.parse('strONgdIE(diE(6), 3)').body[0].value
+        self.assertRaises(ParseError, Parser(ignore_case=False).make_die, die_node)
 
         die_node = ast.parse('StrongDie(Die(6), 3)').body[0].value
         self.assertEqual(Parser(ignore_case=False).make_die(die_node), StrongDie(Die(6), 3))

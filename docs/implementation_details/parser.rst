@@ -68,12 +68,15 @@ the appropriate Nodes. Then you assign the functions to the parser.
     it does, use :code:`ast.dump(ast.parse(<your_string>))`.  Create and test nodes by using
     :code:`my_node = ast.parse(<your_string>).body[0].value`
 
+    Note that before py3.8 the elipsis below will be classes "Num" and "Str".
+    After 3.8 they are "Constant".
+
     >>> import ast
     >>> ast.dump(ast.parse('{1: "a", 2: "b"}'))
-    "Module(body=[Expr(value=Dict(keys=[Num(n=1), Num(n=2)], values=[Str(s='a'), Str(s='b')]))])"
+    "Module(body=[Expr(value=Dict(keys=[...], values=[...]))]...)"
     >>> my_list_node = ast.parse('[1, "A"]').body[0].value
     >>> ast.dump(my_list_node)
-    "List(elts=[Num(n=1), Str(s='A')], ctx=Load())"
+    "List(elts=[...], ctx=Load())"
 
     This says that the List node points to its elts:
 
