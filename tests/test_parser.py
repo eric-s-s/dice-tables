@@ -44,7 +44,6 @@ class TestParser(unittest.TestCase):
             self.assertIsInstance(unary_operation.op, ast.USub)
             self.assertEqual(unary_operation.operand.n, 2)
             self.assertIsInstance(unary_operation, ast.UnaryOp)
-            self.assertEqual(1, 2)
         else:
             self.assertEqual(ast.dump(unary_operation), 'Num(n=-2)')
             self.assertIsInstance(unary_operation, ast.Num)
