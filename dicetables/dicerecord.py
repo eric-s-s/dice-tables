@@ -1,21 +1,16 @@
 """
 An immutable record of dice added to and removed from DiceTable
 """
-from sys import version_info
+from typing import Dict
 
 from dicetables.eventsbases.eventerrors import DiceRecordError
 from dicetables.eventsbases.protodie import ProtoDie
-
-if version_info[0] < 3:
-    from dicetables.tools.py2funcs import is_int
-else:
-    from dicetables.tools.py3funcs import is_int
 
 
 class RecordVerifier(object):
     @staticmethod
     def check_types(die_input):
-        if any(not isinstance(die, ProtoDie) or not is_int(num) for die, num in die_input.items()):
+        if any(not isinstance(die, ProtoDie) or not isinstance(num, int) for die, num in die_input.items()):
             raise DiceRecordError('input must be {ProtoDie: int, ...}')
 
     @staticmethod
@@ -35,28 +30,28 @@ def scrub_zeroes(input_dict):
 
 
 class DiceRecord(object):
-    def __init__(self, dice_number_dict):
+    def __init__(self, dice_number_dict: Dict[ProtoDie, int]):
         RecordVerifier.check_types(dice_number_dict)
         RecordVerifier.check_negative(dice_number_dict)
         self._record = scrub_zeroes(dice_number_dict)
 
     @classmethod
-    def new(cls):
+    def new(cls) -> 'DiceRecord':
         return cls({})
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[ProtoDie, int]:
         return self._record.copy()
 
-    def get_number(self, query_die):
+    def get_number(self, query_die: ProtoDie) -> int:
         return self._record.get(query_die, 0)
 
-    def add_die(self, die, times):
+    def add_die(self, die: ProtoDie, times: int) -> 'DiceRecord':
         RecordVerifier.check_number(times)
         new = self._record.copy()
         new[die] = times + self.get_number(die)
         return DiceRecord(new)
 
-    def remove_die(self, die, times):
+    def remove_die(self, die: ProtoDie, times: int) -> 'DiceRecord':
         RecordVerifier.check_number(times)
         new = self._record.copy()
         new[die] = self.get_number(die) - times

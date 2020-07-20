@@ -104,7 +104,7 @@ class EventsCalculations(object):
         return self._include_zeroes
 
     @property
-    def info(self):
+    def info(self) -> EventsInformation:
         return self._info
 
     def mean(self):

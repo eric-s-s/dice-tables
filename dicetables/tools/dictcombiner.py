@@ -19,16 +19,16 @@ from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
 
 
 class DictCombiner(object):
-    def __init__(self, dictionary):
+    def __init__(self, dictionary: dict):
         """
         :dictionary: {int: int>0, ...}
         """
         self._dict = dictionary
 
-    def get_dict(self):
+    def get_dict(self) -> dict:
         return self._dict.copy()
 
-    def combine_by_flattened_list(self, dictionary, times):
+    def combine_by_flattened_list(self, dictionary: dict, times: int) -> dict:
         """
         :dictionary: {int: int>0, ...}
         """
@@ -36,23 +36,23 @@ class DictCombiner(object):
         flattened_list = flatten_events_tuples(dictionary)
         for _ in range(times):
             new_combiner = new_combiner.combine_once_with_flattened_list(flattened_list)
-        return new_combiner
+        return new_combiner.get_dict()
 
-    def combine_once_with_flattened_list(self, flattened_list):
+    def combine_once_with_flattened_list(self, flattened_list) -> 'DictCombiner':
         new_dict = {}
         for event, current_frequency in self._dict.items():
             for new_event in flattened_list:
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_dictionary(self, dictionary, times):
+    def combine_by_dictionary(self, dictionary: dict, times: int) -> dict:
         """
         :dictionary: {int: int>0, ...}
         """
         new_combiner = DictCombiner(self.get_dict())
         for _ in range(times):
             new_combiner = new_combiner.combine_once_with_dictionary(dictionary)
-        return new_combiner
+        return new_combiner.get_dict()
 
     def combine_once_with_dictionary(self, dictionary):
         new_dict = {}
@@ -61,16 +61,16 @@ class DictCombiner(object):
                 new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + frequency * current_frequency)
         return DictCombiner(new_dict)
 
-    def combine_by_indexed_values(self, dictionary, times):
+    def combine_by_indexed_values(self, dictionary: dict, times: int) -> dict:
         """
         :dictionary: {int: int>0, ...}
         """
         new_indexed_values = generate_indexed_values_from_dict(self._dict)
         for _ in range(times):
             new_indexed_values = new_indexed_values.combine_with_dictionary(dictionary)
-        return DictCombiner(new_indexed_values.get_dict())
+        return new_indexed_values.get_dict()
 
-    def combine_by_fastest(self, dictionary, times):
+    def combine_by_fastest(self, dictionary: dict, times: int) -> dict:
         """
         :dictionary: {int: int>0, ...}
         """
@@ -120,7 +120,7 @@ class DictCombiner(object):
         new_events = DictCombiner(self.get_dict())
         for _ in range(times):
             new_events = new_events.remove_once_by_tuple_list(events_tuples)
-        return new_events
+        return new_events.get_dict()
 
     def remove_once_by_tuple_list(self, events_tuples):
         new_dict_max, new_dict_min = self.get_new_dict_range(events_tuples)

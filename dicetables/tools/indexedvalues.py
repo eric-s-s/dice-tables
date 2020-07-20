@@ -15,7 +15,7 @@ def generate_indexed_values(sorted_tuple_list):
     return IndexedValues(start_val, values)
 
 
-def generate_indexed_values_from_dict(input_dict):
+def generate_indexed_values_from_dict(input_dict) -> 'IndexedValues':
     """
 
     :param input_dict: may not be empty.\n
