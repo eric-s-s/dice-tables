@@ -1,6 +1,7 @@
 """
 The abstract class for sets of events that can be represented by integers.
 """
+from typing import Dict
 
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
@@ -30,14 +31,13 @@ class IntegerEvents(object):
         super(IntegerEvents, self).__init__()
         EventsVerifier().verify_get_dict(self.get_dict())
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         """
 
         :return: {event: occurrences}
         """
-        message = ('get_dict() must return a dictionary\n' +
-                   '{event: occurrences, ...} event=int, occurrence=int>0.')
-        raise NotImplementedError(message)
+        raise NotImplementedError(('get_dict() must return a dictionary\n'
+                                   '{event: occurrences, ...} event=int, occurrence=int>0.'))
 
     def __eq__(self, other):
         return type(self) is type(other) and self.get_dict() == other.get_dict()

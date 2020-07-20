@@ -17,7 +17,9 @@ from collections import namedtuple
 from decimal import Decimal
 
 from math import log10
+from typing import List, Tuple
 
+from dicetables.eventsbases.integerevents import IntegerEvents
 from dicetables.tools.listtostring import get_string_from_list_of_ints
 from dicetables.tools.numberforamtter import NumberFormatter
 
@@ -37,7 +39,7 @@ def _convert_decimal_to_float_or_int(num):
 
 
 class EventsInformation(object):
-    def __init__(self, events):
+    def __init__(self, events: IntegerEvents):
         self._dict = events.get_dict()
 
     def get_items(self):
@@ -47,14 +49,14 @@ class EventsInformation(object):
         """
         return self._dict.items()
 
-    def events_keys(self):
+    def events_keys(self) -> List[int]:
         return sorted(self._dict.keys())
 
-    def events_range(self):
+    def events_range(self) -> Tuple[int, int]:
         all_keys = self.events_keys()
         return all_keys[0], all_keys[-1]
 
-    def total_occurrences(self):
+    def total_occurrences(self) -> int:
         return sum(self._dict.values())
 
     def all_events(self):
@@ -64,7 +66,7 @@ class EventsInformation(object):
         start, stop = self.events_range()
         return self.get_range_of_events(start, stop + 1)
 
-    def biggest_event(self):
+    def biggest_event(self) -> Tuple[int, int]:
         """
 
         :return: (event, occurrences) for first event with highest occurrences
@@ -74,7 +76,7 @@ class EventsInformation(object):
             if occurrences == highest_occurrences:
                 return event, highest_occurrences
 
-    def biggest_events_all(self):
+    def biggest_events_all(self) -> List[Tuple[int, int]]:
         """
 
         :return: the list of all events that have biggest occurrence
@@ -86,33 +88,33 @@ class EventsInformation(object):
                 output.append((event, occurrences))
         return sorted(output)
 
-    def get_event(self, event):
+    def get_event(self, event: int) -> Tuple[int,  int]:
         return event, self._dict.get(event, 0)
 
-    def get_range_of_events(self, start, stop_before):
+    def get_range_of_events(self, start: int, stop_before: int) -> List[Tuple[int, int]]:
         return [self.get_event(event) for event in range(start, stop_before)]
 
 
 class EventsCalculations(object):
 
-    def __init__(self, events, include_zeroes=True):
+    def __init__(self, events: IntegerEvents, include_zeroes: bool = True):
         self._info = EventsInformation(events)
         self._include_zeroes = include_zeroes
 
     @property
-    def include_zeroes(self):
+    def include_zeroes(self) -> int:
         return self._include_zeroes
 
     @property
     def info(self) -> EventsInformation:
         return self._info
 
-    def mean(self):
+    def mean(self) -> float:
         numerator = sum((value * freq) for value, freq in self._info.get_items())
         denominator = self._info.total_occurrences()
         return safe_true_div(numerator, denominator)
 
-    def stddev(self, decimal_place=4):
+    def stddev(self, decimal_place=4) -> float:
         avg = self.mean()
         factor_to_truncate_digits = self._get_truncation_factor(decimal_place)
         truncated_deviations = 0
@@ -131,13 +133,13 @@ class EventsCalculations(object):
             factor_to_truncate_digits = 10 ** (largest_exponent - required_exp_for_accuracy)
         return factor_to_truncate_digits
 
-    def percentage_points(self):
+    def percentage_points(self) -> List[Tuple[int, float]]:
         """
         Very fast, but only good to ten decimal places.
         """
         return self._percentage_points_by_method('fast')
 
-    def percentage_points_exact(self):
+    def percentage_points_exact(self) -> List[Tuple[int, float]]:
         return self._percentage_points_by_method('exact')
 
     def percentage_axes(self):
@@ -149,7 +151,7 @@ class EventsCalculations(object):
     def percentage_axes_exact(self):
         return list(zip(*self.percentage_points_exact()))
 
-    def log10_points(self, log10_of_zero_value=-100.0):
+    def log10_points(self, log10_of_zero_value=-100.0) -> List[Tuple[int, float]]:
         """
         returns log10 of the occurrences.
 
