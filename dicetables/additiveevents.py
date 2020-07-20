@@ -69,4 +69,3 @@ class AdditiveEvents(IntegerEvents):
         """
         dictionary = DictCombiner(self.get_dict()).remove_by_tuple_list(events.get_dict(), times)
         return EventsFactory.from_dictionary(self, dictionary)
-

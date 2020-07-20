@@ -1,5 +1,5 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-from __future__ import absolute_import
+
 
 import ast
 import sys

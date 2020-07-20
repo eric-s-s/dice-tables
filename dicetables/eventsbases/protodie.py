@@ -1,8 +1,6 @@
 """
 The abstract class for any die represented by a set of events
 """
-from typing import Dict
-
 from dicetables.eventsbases.integerevents import IntegerEvents
 
 

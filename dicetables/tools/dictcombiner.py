@@ -13,8 +13,6 @@ not mutate any dictionaries passed to it.)
 :variable - times: int >=0
 :variable - dictionary: {int: int>0, ...}
 """
-from __future__ import absolute_import
-
 from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
 
 

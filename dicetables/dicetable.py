@@ -11,7 +11,6 @@ from dicetables.eventsinfo import EventsCalculations, EventsInformation
 from dicetables.factory.eventsfactory import EventsFactory
 from dicetables.tools.dictcombiner import DictCombiner
 
-
 T = TypeVar('T', bound='DiceTable')
 
 

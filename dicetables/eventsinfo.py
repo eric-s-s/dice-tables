@@ -11,11 +11,8 @@ For getting and computing details for any IntegerEvents, including:
 Can be accessed through objects or wrapper functions.
 """
 
-from __future__ import absolute_import
-
 from collections import namedtuple
 from decimal import Decimal
-
 from math import log10
 from typing import List, Tuple
 
@@ -88,7 +85,7 @@ class EventsInformation(object):
                 output.append((event, occurrences))
         return sorted(output)
 
-    def get_event(self, event: int) -> Tuple[int,  int]:
+    def get_event(self, event: int) -> Tuple[int, int]:
         return event, self._dict.get(event, 0)
 
     def get_range_of_events(self, start: int, stop_before: int) -> List[Tuple[int, int]]:
