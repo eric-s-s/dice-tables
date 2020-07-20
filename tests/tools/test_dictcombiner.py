@@ -185,12 +185,12 @@ class TestDictCombiner(unittest.TestCase):
 
     def test_DictCombiner_combine_by_dictionary_identity(self):
         to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 1)
-        self.assertEqual(new_combiner.get_dict(), to_combine)
+        new_dict = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 1)
+        self.assertEqual(new_dict, to_combine)
 
     def test_DictCombiner_combine_by_dictionary_many_combines(self):
         to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 3)
+        new_dict = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 3)
         """
         {1: 1, 2: 2}
     
@@ -198,11 +198,11 @@ class TestDictCombiner(unittest.TestCase):
     
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
+        self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
 
     def test_DictCombiner_combine_by_dictionary_input_dict_has_spaces(self):
         to_combine = {10: 1, 20: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 3)
+        new_dict = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 3)
         """
         {10: 1, 20: 2}
 
@@ -210,27 +210,27 @@ class TestDictCombiner(unittest.TestCase):
 
         {30: 1, 40: 4, 50: 4} + {40: 2, 50: 8, 60:8} = {30:1, 40: 6, 50: 12, 60: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {30: 1, 40: 6, 50: 12, 60: 8})
+        self.assertEqual(new_dict, {30: 1, 40: 6, 50: 12, 60: 8})
 
     def test_DictCombiner_combine_by_dictionary_complex_DictCombiner(self):
         to_combine = {1: 1, 2: 2}
         complex_events = DictCombiner({2: 1, 3: 4, 4: 4})
-        new_combiner = complex_events.combine_by_dictionary(to_combine, 1)
+        new_dict = complex_events.combine_by_dictionary(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
     
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3: 1, 4: 6, 5: 12, 6: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
+        self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
 
     def test_DictCombiner_combine_by_flattened_list_identity(self):
         to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 1)
-        self.assertEqual(new_combiner.get_dict(), to_combine)
+        new_dict = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 1)
+        self.assertEqual(new_dict, to_combine)
 
     def test_DictCombiner_combine_by_flattened_list__many_combines(self):
         to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
+        new_dict = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
         """
         {1: 1, 2: 2}
     
@@ -238,11 +238,11 @@ class TestDictCombiner(unittest.TestCase):
     
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
+        self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
 
     def test_DictCombiner_combine_by_flattened_list_input_dict_has_spaces(self):
         to_combine = {10: 1, 20: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
+        new_dict = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
         """
         {10: 1, 20: 2}
 
@@ -250,27 +250,27 @@ class TestDictCombiner(unittest.TestCase):
 
         {30: 1, 40: 4, 50: 4} + {40: 2, 50: 8, 60:8} = {30:1, 40: 6, 50: 12, 60: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {30: 1, 40: 6, 50: 12, 60: 8})
+        self.assertEqual(new_dict, {30: 1, 40: 6, 50: 12, 60: 8})
 
     def test_DictCombiner_combine_by_flattened_list_complex_DictCombiner(self):
         to_combine = {1: 1, 2: 2}
         complex_events = DictCombiner({2: 1, 3: 4, 4: 4})
-        new_combiner = complex_events.combine_by_flattened_list(to_combine, 1)
+        new_dict = complex_events.combine_by_flattened_list(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
     
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
+        self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
 
     def test_DictCombiner_combine_by_indexed_values_identity(self):
         to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 1)
-        self.assertEqual(new_combiner.get_dict(), to_combine)
+        new_dict = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 1)
+        self.assertEqual(new_dict, to_combine)
 
     def test_DictCombiner_combine_by_indexed_values_many_combines(self):
         to_combine = {1: 1, 2: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 3)
+        new_dict = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 3)
         """
         {1: 1, 2: 2}
     
@@ -278,11 +278,11 @@ class TestDictCombiner(unittest.TestCase):
     
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
+        self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
 
     def test_DictCombiner_combine_by_indexed_values_input_dict_has_spaces(self):
         to_combine = {10: 1, 20: 2}
-        new_combiner = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 3)
+        new_dict = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 3)
         """
         {10: 1, 20: 2}
 
@@ -290,36 +290,36 @@ class TestDictCombiner(unittest.TestCase):
 
         {30: 1, 40: 4, 50: 4} + {40: 2, 50: 8, 60:8} = {30:1, 40: 6, 50: 12, 60: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {30: 1, 40: 6, 50: 12, 60: 8})
+        self.assertEqual(new_dict, {30: 1, 40: 6, 50: 12, 60: 8})
 
     def test_DictCombiner_combine_by_indexed_values_complex_DictCombiner(self):
         to_combine = {1: 1, 2: 2}
         complex_events = DictCombiner({2: 1, 3: 4, 4: 4})
-        new_combiner = complex_events.combine_by_indexed_values(to_combine, 1)
+        new_dict = complex_events.combine_by_indexed_values(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
     
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
-        self.assertEqual(new_combiner.get_dict(), {3: 1, 4: 6, 5: 12, 6: 8})
+        self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
 
     def test_DictCombiner_combine_by_fastest_works_with_flattened_list(self):
         to_add = {1: 1, 2: 1}
         identity = DictCombiner({0: 1})
         self.assertEqual(identity.get_fastest_combine_method(to_add, 1), 'flattened_list')
-        self.assertEqual(identity.combine_by_fastest(to_add, 1).get_dict(), to_add)
+        self.assertEqual(identity.combine_by_fastest(to_add, 1), to_add)
 
     def test_DictCombiner_combine_by_fastest_works_with_dictionary(self):
         to_add = {1: 10, 2: 10}
         identity = DictCombiner({0: 1})
         self.assertEqual(identity.get_fastest_combine_method(to_add, 1), 'dictionary')
-        self.assertEqual(identity.combine_by_fastest(to_add, 1).get_dict(), to_add)
+        self.assertEqual(identity.combine_by_fastest(to_add, 1), to_add)
 
     def test_DictCombiner_combine_by_fastest_works_with_indexed_values(self):
         to_add = dict.fromkeys(range(100), 1)
-        answer = self.combiner_size_of_one.combine_by_flattened_list(to_add, 2).get_dict()
+        answer = self.combiner_size_of_one.combine_by_flattened_list(to_add, 2)
         self.assertEqual(self.combiner_size_of_one.get_fastest_combine_method(to_add, 2), 'indexed_values')
-        self.assertEqual(self.combiner_size_of_one.combine_by_fastest(to_add, 2).get_dict(), answer)
+        self.assertEqual(self.combiner_size_of_one.combine_by_fastest(to_add, 2), answer)
 
     def test_DictCombiner_remove_by_tuple_list(self):
         """
@@ -331,7 +331,7 @@ class TestDictCombiner(unittest.TestCase):
         """
         start = DictCombiner({3: 1, 4: 6, 5: 12, 6: 8})
         new = start.remove_by_tuple_list({1: 1, 2: 2}, 1)
-        self.assertEqual(new.get_dict(), {2: 1, 3: 4, 4: 4})
+        self.assertEqual(new, {2: 1, 3: 4, 4: 4})
 
     def test_DictCombiner_remove_by_tuple_list_many_removes(self):
         """
@@ -343,7 +343,7 @@ class TestDictCombiner(unittest.TestCase):
         """
         start = DictCombiner({3: 1, 4: 6, 5: 12, 6: 8})
         new = start.remove_by_tuple_list({1: 1, 2: 2}, 3)
-        self.assertEqual(new.get_dict(), {0: 1})
+        self.assertEqual(new, {0: 1})
 
     def test_DictCombiner_remove_by_tuple_list_dict_has_spaces_zeroes_not_included(self):
         """
@@ -355,7 +355,7 @@ class TestDictCombiner(unittest.TestCase):
         """
         start = DictCombiner({30: 1, 40: 6, 50: 12, 60: 8})
         new = start.remove_by_tuple_list({10: 1, 20: 2}, 2)
-        self.assertEqual(new.get_dict(), {10: 1, 20: 2})
+        self.assertEqual(new, {10: 1, 20: 2})
 
 
 def input_dict_generator():

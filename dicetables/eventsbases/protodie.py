@@ -22,20 +22,20 @@ class ProtoDie(IntegerEvents):
     def __init__(self):
         super(ProtoDie, self).__init__()
 
-    def get_size(self):
+    def get_size(self) -> int:
         raise NotImplementedError
 
-    def get_weight(self):
+    def get_weight(self) -> int:
         raise NotImplementedError
 
     def get_dict(self):
         super(ProtoDie, self).get_dict()
 
-    def weight_info(self):
+    def weight_info(self) -> str:
         """return detailed info of how the die is weighted"""
         raise NotImplementedError
 
-    def multiply_str(self, number):
+    def multiply_str(self, number: int) -> str:
         """return a string that is the die string multiplied by a number. i.e.,
         D6+1 times 3 is '3D6+3' """
         raise NotImplementedError

@@ -2,6 +2,7 @@
 All the descendants of ProtoDie.  These are IntegerEvents that represent different types of dice.
 """
 import itertools
+from typing import Dict, Iterable, Tuple
 
 from dicetables.eventsbases.protodie import ProtoDie
 
@@ -13,11 +14,11 @@ class Modifier(ProtoDie):
     always 0.
     """
 
-    def __init__(self, modifier):
+    def __init__(self, modifier: int):
         self._mod = modifier
         super(Modifier, self).__init__()
 
-    def get_modifier(self):
+    def get_modifier(self) -> int:
         return self._mod
 
     def get_size(self):
@@ -48,7 +49,7 @@ class Die(ProtoDie):
     :code:`Die(4)` rolls 1, 2, 3, 4 with equal weight
     """
 
-    def __init__(self, die_size):
+    def __init__(self, die_size: int):
         """
 
         :param die_size: int > 0
@@ -62,7 +63,7 @@ class Die(ProtoDie):
     def get_weight(self):
         return 0
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return dict.fromkeys(range(1, self._die_size + 1), 1)
 
     def weight_info(self):
@@ -85,7 +86,7 @@ class ModDie(Die):
     :code:`ModDie(4, -1)` rolls 0, 1, 2, 3 with equal weight
     """
 
-    def __init__(self, die_size, modifier):
+    def __init__(self, die_size: int, modifier: int):
         """
 
         :param die_size: int >0
@@ -94,10 +95,10 @@ class ModDie(Die):
         self._mod = modifier
         super(ModDie, self).__init__(die_size)
 
-    def get_modifier(self):
+    def get_modifier(self) -> int:
         return self._mod
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return dict.fromkeys(range(1 + self._mod, self.get_size() + 1 + self._mod), 1)
 
     def multiply_str(self, number):
@@ -116,7 +117,7 @@ class WeightedDie(ProtoDie):
     :code:`WeightedDie({1:1, 2:5})` rolls 1 once for every five times that 2 is rolled.
     """
 
-    def __init__(self, dictionary_input):
+    def __init__(self, dictionary_input: Dict[int, int]):
         """
 
         :param dictionary_input: {roll: weight} roll: int>1, weight: int>=0\n
@@ -138,7 +139,7 @@ class WeightedDie(ProtoDie):
         if any(roll < 1 for roll in dictionary):
             raise ValueError('rolls may not be less than 1. use ModWeightedDie')
 
-    def get_raw_dict(self):
+    def get_raw_dict(self) -> Dict[int, int]:
         return self._raw_dic.copy()
 
     def get_size(self):
@@ -147,7 +148,7 @@ class WeightedDie(ProtoDie):
     def get_weight(self):
         return sum(self._raw_dic.values())
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return {key: value for key, value in self._raw_dic.items() if value}
 
     def weight_info(self):
@@ -175,7 +176,7 @@ class ModWeightedDie(WeightedDie):
     rolls 0 once for every five times that 2 is rolled.
     """
 
-    def __init__(self, dictionary_input, modifier):
+    def __init__(self, dictionary_input: Dict[int, int], modifier: int):
         """
 
         :param dictionary_input: {roll: weight} roll: int, weight: int>=0\n
@@ -185,7 +186,7 @@ class ModWeightedDie(WeightedDie):
         self._mod = modifier
         super(ModWeightedDie, self).__init__(dictionary_input)
 
-    def get_modifier(self):
+    def get_modifier(self) -> int:
         return self._mod
 
     def get_dict(self):
@@ -210,7 +211,7 @@ class StrongDie(ProtoDie):
     :code:`StrongDie(ModDie(3, -1), 2)` rolls (1-1)*2, (2-1)*2, (3-1)*2 with equal weight.
     """
 
-    def __init__(self, input_die, multiplier):
+    def __init__(self, input_die: ProtoDie, multiplier: int):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
@@ -229,11 +230,11 @@ class StrongDie(ProtoDie):
     def get_multiplier(self):
         return self._multiplier
 
-    def get_input_die(self):
+    def get_input_die(self) -> ProtoDie:
         """returns an instance of the original die"""
         return self._original
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return {roll * self._multiplier: weight for roll, weight in self._original.get_dict().items()}
 
     def weight_info(self):
@@ -266,7 +267,7 @@ class Exploding(ProtoDie):
     instantiation VERY slow. The time is proportional to explosions and die_size.
     """
 
-    def __init__(self, input_die, explosions=2):
+    def __init__(self, input_die: ProtoDie, explosions: int = 2):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
@@ -312,14 +313,14 @@ class Exploding(ProtoDie):
     def get_weight(self):
         return self._original.get_weight() + 1
 
-    def get_explosions(self):
+    def get_explosions(self) -> int:
         return self._explosions
 
-    def get_input_die(self):
+    def get_input_die(self) -> ProtoDie:
         """returns an instance of the original die"""
         return self._original
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return self._dict.copy()
 
     def weight_info(self):
@@ -354,7 +355,7 @@ class ExplodingOn(ProtoDie):
     with size which gets overshadowed by the first factor.
     """
 
-    def __init__(self, input_die, explodes_on, explosions=2):
+    def __init__(self, input_die: ProtoDie, explodes_on: Iterable, explosions=2):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
@@ -421,14 +422,14 @@ class ExplodingOn(ProtoDie):
     def get_explosions(self):
         return self._explosions
 
-    def get_explodes_on(self):
+    def get_explodes_on(self) -> Tuple[int, ...]:
         return self._explodes_on
 
-    def get_input_die(self):
+    def get_input_die(self) -> ProtoDie:
         """returns an instance of the original die"""
         return self._original
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return self._dict.copy()
 
     def weight_info(self):

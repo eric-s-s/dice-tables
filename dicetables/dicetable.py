@@ -1,19 +1,25 @@
 """
 DiceTable and DetailedDiceTable compute combination of Die events
 """
-from __future__ import absolute_import
 
-from dicetables.additiveevents import AdditiveEvents, EventsDictCreator
-from dicetables.eventsinfo import EventsCalculations
+from typing import TypeVar
+
+from dicetables import DiceRecord
+from dicetables.additiveevents import AdditiveEvents
+from dicetables.eventsbases.protodie import ProtoDie
+from dicetables.eventsinfo import EventsCalculations, EventsInformation
 from dicetables.factory.eventsfactory import EventsFactory
+from dicetables.tools.dictcombiner import DictCombiner
+
+T = TypeVar('T', bound='DiceTable')
 
 
 class DiceTable(AdditiveEvents):
-    def __init__(self, events_dict, dice_record):
+    def __init__(self, events_dict: dict, dice_record: DiceRecord):
         self._record = dice_record
         super(DiceTable, self).__init__(events_dict)
 
-    def dice_data(self):
+    def dice_data(self) -> DiceRecord:
         return self._record
 
     def get_list(self):
@@ -23,7 +29,7 @@ class DiceTable(AdditiveEvents):
         """
         return sorted(self._record.get_dict().items())
 
-    def number_of_dice(self, query_die):
+    def number_of_dice(self, query_die: ProtoDie) -> int:
         return self._record.get_number(query_die)
 
     def weights_info(self):
@@ -45,7 +51,7 @@ class DiceTable(AdditiveEvents):
         dice = str(self).replace('\n', ', ')
         return '<{} containing [{}]>'.format(class_name, dice)
 
-    def add_die(self, die, times=1):
+    def add_die(self: T, die: ProtoDie, times: int = 1) -> T:
         """
 
         :param die: any subclass of ProtoDie: Die, ModDie, WeightedDie, ModWeightedDie, Modifier,
@@ -53,10 +59,10 @@ class DiceTable(AdditiveEvents):
         :param times: int>= 0
         """
         dice_data = self._record.add_die(die, times)
-        dictionary = EventsDictCreator(self, die).create_using_combine_by_fastest(times)
+        dictionary = DictCombiner(self.get_dict()).combine_by_fastest(die.get_dict(), times)
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_data)
 
-    def remove_die(self, die, times=1):
+    def remove_die(self: T, die: ProtoDie, times=1) -> T:
         """
 
         :param die: any subclass of ProtoDie: Die, ModDie, WeightedDie, ModWeightedDie, Modifier,
@@ -64,7 +70,7 @@ class DiceTable(AdditiveEvents):
         :param times: 0 <= int <= number of "die" in table
         """
         dice_data = self._record.remove_die(die, times)
-        dictionary = EventsDictCreator(self, die).create_using_remove_by_tuple_list(times)
+        dictionary = DictCombiner(self.get_dict()).remove_by_tuple_list(die.get_dict(), times)
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_data)
 
     def __eq__(self, other):
@@ -78,23 +84,23 @@ def format_die_info(die, number):
 
 
 class DetailedDiceTable(DiceTable):
-    def __init__(self, events_dict, dice_record, calc_includes_zeroes=True):
+    def __init__(self, events_dict: dict, dice_record: DiceRecord, calc_includes_zeroes: bool = True):
         super(DetailedDiceTable, self).__init__(events_dict, dice_record)
         self._calc = EventsCalculations(self, calc_includes_zeroes)
 
     @property
-    def info(self):
+    def info(self) -> EventsInformation:
         return self._calc.info
 
     @property
-    def calc(self):
+    def calc(self) -> EventsCalculations:
         return self._calc
 
     @property
-    def calc_includes_zeroes(self):
+    def calc_includes_zeroes(self) -> bool:
         return self._calc.include_zeroes
 
-    def switch_boolean(self):
+    def switch_boolean(self: T) -> T:
         """
 
         :return: a new DetailedDiceTable with the `calc_includes_zeroes` boolean switched

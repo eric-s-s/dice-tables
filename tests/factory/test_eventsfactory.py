@@ -6,13 +6,14 @@ import warnings
 from itertools import cycle
 from sys import version_info
 
-from dicetables.additiveevents import AdditiveEvents, EventsDictCreator
+from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicerecord import DiceRecord
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die
 from dicetables.factory.errorhandler import EventsFactoryError
 from dicetables.factory.eventsfactory import EventsFactory, Loader, LoaderError
 from dicetables.factory.warninghandler import EventsFactoryWarning
+from dicetables.tools.dictcombiner import DictCombiner
 
 
 class NewDiceTableSameInitNoUpdate(DiceTable):
@@ -671,11 +672,11 @@ class TestEventsFactory(unittest.TestCase):
                 return self._additive.get_dict()
 
             def combine(self, events, times=1):
-                new_alt_dict = EventsDictCreator(self._additive, events).create_using_combine_by_fastest(times)
+                new_alt_dict = DictCombiner(self._additive.get_dict()).combine_by_fastest(events.get_dict(), times)
                 return EventsFactory.from_params(self, {'get_dict_alt': new_alt_dict})
 
             def remove(self, events, times=1):
-                new_alt_dict = EventsDictCreator(self._additive, events).create_using_remove_by_tuple_list(times)
+                new_alt_dict = DictCombiner(self._additive.get_dict()).remove_by_tuple_list(events.get_dict(), times)
                 return EventsFactory.from_params(self, {'get_dict_alt': new_alt_dict})
 
         new = DoubleTable.new()
@@ -752,7 +753,7 @@ class TestEventsFactory(unittest.TestCase):
             def change_mod(self, new_modifier):
                 change = new_modifier - self._mod
                 change_events = AdditiveEvents({change: 1})
-                new_dict = EventsDictCreator(self, change_events).create_using_combine_by_dictionary(1)
+                new_dict = DictCombiner(self.get_dict()).combine_by_dictionary(change_events.get_dict(), 1)
                 return EventsFactory.from_params(self, {'get_dict': new_dict, 'modifier': new_modifier})
 
         to_test = ModifierTable.new()

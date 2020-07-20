@@ -5,16 +5,8 @@ fast consistent and programmable object to convert all number types to strings.
 - can do exponential notation for ints over 10**310 significantly faster than Decimal
 - can be set to automatically change from fixed to commaed to exponential notation at specified cutoffs.
 """
-from __future__ import absolute_import
-
-from sys import version_info
 
 from math import log10
-
-if version_info[0] < 3:
-    from dicetables.tools.py2funcs import is_int
-else:
-    from dicetables.tools.py3funcs import is_int
 
 
 class NumberFormatter(object):
@@ -102,7 +94,7 @@ class NumberFormatter(object):
         return self._special_cases[number]
 
     def get_exponent(self, number):
-        if is_int(number):
+        if isinstance(number, int):
             return int(log10(abs(number)))
         return int('{:.{}e}'.format(number, self.shown_digits - 1).split('e')[1])
 
@@ -110,7 +102,7 @@ class NumberFormatter(object):
         return '{:.{}f}'.format(number, self.shown_digits - 1 - exponent)
 
     def _format_number_and_exponent_to_commas(self, number, exponent):
-        if is_int(number):
+        if isinstance(number, int):
             return '{:,}'.format(number)
         else:
             return '{:,.{}f}'.format(number, max(0, self.shown_digits - 1 - exponent))

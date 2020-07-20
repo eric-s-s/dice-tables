@@ -1,3 +1,5 @@
+from typing import Dict
+
 from dicetables.dieevents import ProtoDie
 from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
@@ -9,7 +11,7 @@ class DicePool(ProtoDie):
     to select.
     """
 
-    def __init__(self, input_die, pool_size, select):
+    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
         """
 
         :param input_die: Any object that inherits from ProtoDie
@@ -27,22 +29,22 @@ class DicePool(ProtoDie):
     def _generate_dict(self):
         raise NotImplementedError
 
-    def get_input_die(self):
+    def get_input_die(self) -> ProtoDie:
         return self._input_die
 
-    def get_pool_size(self):
+    def get_pool_size(self) -> int:
         return self._pool
 
-    def get_select(self):
+    def get_select(self) -> int:
         return self._select
 
-    def get_dict(self):
+    def get_dict(self) -> Dict[int, int]:
         return self._dict.copy()
 
-    def get_size(self):
+    def get_size(self) -> int:
         return self._input_die.get_size() * self._select
 
-    def get_weight(self):
+    def get_weight(self) -> int:
         return self._input_die.get_weight() * self._select
 
     def weight_info(self):
@@ -132,7 +134,7 @@ class LowerMidOfDicePool(DicePool):
         return generate_events_dict(ordered_combinations, start_at, stop_before)
 
 
-def generate_events_dict(ordered_combinations, start_at, stop_before):
+def generate_events_dict(ordered_combinations, start_at, stop_before) -> Dict[int, int]:
     master_dict = {}
     for key, val in ordered_combinations.items():
         master_key = sum(key[start_at:stop_before])

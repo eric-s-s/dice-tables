@@ -1,9 +1,11 @@
 from itertools import combinations_with_replacement
-
 from math import factorial
+from typing import Dict
+
+from dicetables.eventsbases.integerevents import IntegerEvents
 
 
-def count_unique_combination_keys(events, pool_size):
+def count_unique_combination_keys(events: IntegerEvents, pool_size: int) -> int:
     """calculates how large the set of keys will be for `ordered_combinations_of_events(events, pool_size)`."""
     ans = 1
     dict_size = len(events.get_dict())
@@ -21,7 +23,7 @@ def largest_permitted_pool_size(events, max_number_of_keys):
     return pool_size - 1
 
 
-def ordered_combinations_of_events(events, times):
+def ordered_combinations_of_events(events: IntegerEvents, times: int) -> Dict[int, int]:
     base_dict = events.get_dict()
     ordered_combinations = combinations_with_replacement(sorted(base_dict.keys()), times)
     return {key: get_combination_occurrences(key, base_dict) for key in ordered_combinations}

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from dicetables.additiveevents import AdditiveEvents
 from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
 from dicetables.dicerecord import DiceRecord

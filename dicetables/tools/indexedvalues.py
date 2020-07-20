@@ -2,7 +2,6 @@
 tool for combining dictionaries.
 IndexedValues is a list with a start index.  It is for simulating dictionaries of {int: int>0}
 """
-from __future__ import absolute_import
 
 
 def generate_indexed_values(sorted_tuple_list):
@@ -15,7 +14,7 @@ def generate_indexed_values(sorted_tuple_list):
     return IndexedValues(start_val, values)
 
 
-def generate_indexed_values_from_dict(input_dict):
+def generate_indexed_values_from_dict(input_dict) -> 'IndexedValues':
     """
 
     :param input_dict: may not be empty.\n
