@@ -33,7 +33,7 @@ class TestRoller(unittest.TestCase):
     def test_roller_init_default_random_instance(self):
         events = AdditiveEvents.new()
         roller = Roller(events)
-        self.assertEqual(roller.random_generator, random)
+        self.assertIsInstance(roller.random_generator, random.Random)
 
     def test_roller_init_new_random_instance(self):
         events = AdditiveEvents.new()
@@ -52,9 +52,9 @@ class TestRoller(unittest.TestCase):
             self.assertEqual(roller.roll(), 0)
 
     def test_roller_with_distribution(self):
-        random.seed(1346)
+        rng = random.Random(1346)
         events = AdditiveEvents({1: 1, 2: 2, 3: 1})
-        roller = Roller(events)
+        roller = Roller(events, rng)
 
         times = 100
         rolls = [roller.roll() for _ in range(times)]
@@ -92,11 +92,11 @@ class TestRoller(unittest.TestCase):
             self.assertEqual(roller.roll(), 1)
 
     def test_roll_many_with_distribution(self):
-        random.seed(9876541)
+        rng = random.Random(9876541)
         times = 100
 
         events = AdditiveEvents({1: 1, 2: 2, 3: 1})
-        roller = Roller(events)
+        roller = Roller(events, rng)
         result = roller.roll_many(times)
         ones = result.count(1)
         twos = result.count(2)
@@ -129,9 +129,9 @@ class TestRoller(unittest.TestCase):
         self.assertEqual([1] * 10, roller.roll_many(10))
 
     def test_roll_with_large_numbers(self):
-        random.seed(34889970)
+        rng = random.Random(34889970)
         events = AdditiveEvents({1: 1, 2: 10 ** 1000, 3: 2 * 10 ** 1000})
-        roller = Roller(events)
+        roller = Roller(events, rng)
 
         times = 100
         result = [roller.roll() for _ in range(times)]
