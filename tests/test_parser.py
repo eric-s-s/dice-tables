@@ -185,11 +185,11 @@ def test_make_die_raises_error_on_die_with_bad_param_types():
 
 def test_make_die_on_die_with_bad_param_values():
     die_node = ast.parse('WeightedDie({"K":2})').body[0].value
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, AttributeError)):
         Parser().make_die(die_node)
 
     die_node = ast.parse("Die(12.00)").body[0].value
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, AttributeError)):
         Parser().make_die(die_node)
 
 
