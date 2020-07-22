@@ -14,7 +14,7 @@ install:
 script:
 
   - COVERALLS_PARALLEL=true
-  - coverage run -a --source=dicetables setup.py test
+  - coverage run -m pytest
   - coverage report -m
   # Run the doctests
   - python doctests.py
