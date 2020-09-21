@@ -13,7 +13,6 @@
 # other
 *.npy
 *.spec
-*.txt
 .coverage
 .tox
 .idea
