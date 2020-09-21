@@ -8,13 +8,12 @@ python:
 
 
 install:
-  - pip install coverage
-  - pip install coveralls
+  - pip install -r dev.requirements.txt
 
 script:
 
   - COVERALLS_PARALLEL=true
-  - coverage run -a --source=dicetables setup.py test
+  - coverage run -m pytest tests/
   - coverage report -m
   # Run the doctests
   - python doctests.py

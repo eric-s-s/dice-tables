@@ -7,7 +7,7 @@
 
 
 #################
-dicetables v2.6.0
+dicetables v3.0.0
 #################
 
 Calculate the Combinations For Any Set of Dice
@@ -154,29 +154,26 @@ and the github repository at `<https://github.com/eric-s-s/dice-tables>`_
 ---------
 ChangeLog
 ---------
-since v2.1.0
 
-- EventsCalculations added functions log10_points and log10_axes
-- New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
-- see `The Dice`_. and
-  `Events info <http://dice-tables.readthedocs.io/en/latest/events_info.html>`_ for details
-- New object: `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html>`_ -
-  It converts strings to dice objects.
+v3.0.0
+------
 
-since v2.2.0
+Breaking change!  Python 2 is no longer supported
 
-- Improved ExplodingOn speed.
-- Added `parse_die_within_limits` function to parser. Also added limit values. Changed getters to properties.
+Type hints have been added!
 
-from v2.4.0 to v2.4.4
+v2.6.0
+------
 
-- fixed error where `parse_die_within_limits` failed when using default values for dice.
-- `Parser` can parse strings with leading and trailing whitespaces.
-- `parse_die_within_limits` now raises `LimitsError`
-- added `max_power_for_commaed` option to `EventsCalculations.full_table_string`.
-- added `max_power_for_commaed` and `min_power_for_fixed_pt` to `EventsCalculations.stats_strings`.
+- added `Roller`
+
+.. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
+
+.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#module-dicetables.bestworstmid
+
 
 v2.5.0
+------
 
 - added `DicePool`_ die objects:
     - `BestOfDicePool`
@@ -187,10 +184,27 @@ v2.5.0
 - `Parser().add_die_size_limit_kwarg` and `Parser().add_explosions_limit_kwarg` are removed. Use
   `Parser().add_limits_kwarg`
 
-v2.6.0
+from v2.4.0 to v2.4.4
+---------------------
 
-- added `Roller`
+- fixed error where `parse_die_within_limits` failed when using default values for dice.
+- `Parser` can parse strings with leading and trailing whitespaces.
+- `parse_die_within_limits` now raises `LimitsError`
+- added `max_power_for_commaed` option to `EventsCalculations.full_table_string`.
+- added `max_power_for_commaed` and `min_power_for_fixed_pt` to `EventsCalculations.stats_strings`.
 
-.. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
+since v2.2.0
+------------
 
-.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#module-dicetables.bestworstmid
+- Improved ExplodingOn speed.
+- Added `parse_die_within_limits` function to parser. Also added limit values. Changed getters to properties.
+
+since v2.1.0
+------------
+
+- EventsCalculations added functions log10_points and log10_axes
+- New dice: Exploding(other_die, explosions=2), ExplodingOn(other_die, explodes_on, explosions=2)
+- see `The Dice`_. and
+  `Events info <http://dice-tables.readthedocs.io/en/latest/events_info.html>`_ for details
+- New object: `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html>`_ -
+  It converts strings to dice objects.
