@@ -13,7 +13,7 @@ install:
 script:
 
   - COVERALLS_PARALLEL=true
-  - coverage run pytest tests/
+  - coverage run -m pytest tests/
   - coverage report -m
   # Run the doctests
   - python doctests.py
