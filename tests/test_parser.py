@@ -58,29 +58,36 @@ def test_init_setting_limits():
     assert Parser(max_size=100).max_size == 100
 
 
-def test_make_int():
-    assert make_int(ast.parse("3").body[0].value) == 3
-    assert make_int(ast.parse("-3").body[0].value) == -3
-    assert make_int(ast.parse("0").body[0].value) == 0
+@pytest.mark.parametrize('input_value', ["2", "-2", "0"])
+def test_make_int(input_value):
+    assert make_int(ast.parse(input_value).body[0].value) == int(input_value)
 
 
-def test_make_int_tuple():
-    empty_node = ast.parse("()").body[0].value
-    assert make_int_tuple(empty_node) == ()
-
-    tuple_node = ast.parse("(-2,)").body[0].value
-    assert make_int_tuple(tuple_node) == (-2,)
-
-    tuple_node = ast.parse("(-2, 2, 0)").body[0].value
-    assert make_int_tuple(tuple_node) == (-2, 2, 0)
+def test_make_int_error():
+    with pytest.raises(ValueError):
+        make_int(ast.parse("'a'").body[0].value)
 
 
-def test_make_int_dict():
-    dict_node = ast.parse("{-1: 1, 0: 0, 1: -1}").body[0].value
-    assert make_int_dict(dict_node) == {-1: 1, 0: 0, 1: -1}
+@pytest.mark.parametrize('tuple_value', [(), (2,), (-2, 2, 0)])
+def test_make_int_tuple(tuple_value):
+    node = ast.parse(str(tuple_value)).body[0].value
+    assert make_int_tuple(node) == tuple_value
 
-    empty_dict_node = ast.parse("{}").body[0].value
-    assert make_int_dict(empty_dict_node) == {}
+
+def test_make_int_tuple_error():
+    with pytest.raises(ValueError):
+        make_int_tuple(ast.parse("('a', 1, 2)").body[0].value)
+
+
+@pytest.mark.parametrize('dict_value', [dict(), {-1: -2, 0: 0, 3: 4}])
+def test_make_int_dict(dict_value):
+    node = ast.parse(str(dict_value)).body[0].value
+    assert make_int_dict(node) == dict_value
+
+
+def test_make_int_dict_error():
+    with pytest.raises(ValueError):
+        make_int_dict(ast.parse("{'a': 'b'}").body[0].value)
 
 
 def test_param_types():
@@ -178,18 +185,18 @@ def test_make_die_raises_error_on_die_with_bad_param_types():
     with pytest.raises(ParseError) as cm:
         parser.make_die(die_node)
     assert cm.value.args[0] == (
-        "Failed to create die: <StupidDie> with param types: ('string', 'int'). "
-        + "One or more param types not recognized."
+            "Failed to create die: <StupidDie> with param types: ('string', 'int'). "
+            + "One or more param types not recognized."
     )
 
 
 def test_make_die_on_die_with_bad_param_values():
     die_node = ast.parse('WeightedDie({"K":2})').body[0].value
-    with pytest.raises((TypeError, AttributeError)):
+    with pytest.raises(ValueError):
         Parser().make_die(die_node)
 
     die_node = ast.parse("Die(12.00)").body[0].value
-    with pytest.raises((TypeError, AttributeError)):
+    with pytest.raises(ValueError):
         Parser().make_die(die_node)
 
 
@@ -270,8 +277,8 @@ def test_make_die_kwargs_in_recursive_call():
 def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
     die_node = (
         ast.parse("StrongDie(input_die=ModDie(6, modifier=-1), multiplier=3)")
-        .body[0]
-        .value
+            .body[0]
+            .value
     )
     assert Parser().make_die(die_node) == StrongDie(ModDie(6, -1), 3)
 
@@ -414,7 +421,7 @@ def test_parse_within_limits_white_box_test_of_dice_pool_uses_dict_size_not_dice
     ],
 )
 def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(
-    die_size, die_pool, max_combinations
+        die_size, die_pool, max_combinations
 ):
     """
     self.max_dice_pool_combinations_per_dict_size = {
@@ -470,8 +477,8 @@ def test_parse_within_limits_max_dice_pool_calls():
     assert parser.parse_die_within_limits(repr(two_calls)) == two_calls
     assert parser.parse_die_within_limits(repr(two_calls_alt)) == two_calls_alt
     assert (
-        parser.parse_die_within_limits(repr(two_pools_three_nested_dice))
-        == two_pools_three_nested_dice
+            parser.parse_die_within_limits(repr(two_pools_three_nested_dice))
+            == two_pools_three_nested_dice
     )
     with pytest.raises(LimitsError):
         parser.parse_die_within_limits(repr(three_calls))

@@ -336,23 +336,27 @@ class Parser(object):
 
 
 def make_int_dict(dict_node):
-    keys = make_int_list(dict_node.keys)
-    values = make_int_list(dict_node.values)
+    keys = _make_int_list(dict_node.keys)
+    values = _make_int_list(dict_node.values)
     return dict(zip(keys, values))
 
 
 def make_int_tuple(tuple_node):
-    return tuple(make_int_list(tuple_node.elts))
+    return tuple(_make_int_list(tuple_node.elts))
 
 
-def make_int_list(num_node_list):
+def _make_int_list(num_node_list):
     return [make_int(num_node) for num_node in num_node_list]
 
 
 def make_int(num_node):
     if isinstance(num_node, ast.UnaryOp) and isinstance(num_node.op, ast.USub):
-        return num_node.operand.n * -1
-    return num_node.n
+        value = num_node.operand.n * -1
+    else:
+        value = num_node.n
+    if not isinstance(value, int):
+        raise ValueError(f"Expected an in integer, but got: {value!r}")
+    return value
 
 
 def _get_kwargs_from_init(class_):
