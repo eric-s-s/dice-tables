@@ -7,7 +7,7 @@ def readme():
 
 
 setup(name='dicetables',
-      version='2.6.0',
+      version='3.0.0',
       description='get all combinations for any set of dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
@@ -23,7 +23,6 @@ setup(name='dicetables',
           'Topic :: Games/Entertainment :: Role-Playing',
           'License :: OSI Approved :: MIT License',
           'Programming Language :: Python',
-          'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
       ],
       packages=find_packages(exclude=['tests', 'time_trials', 'docs']),
