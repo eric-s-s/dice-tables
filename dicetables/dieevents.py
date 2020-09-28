@@ -355,7 +355,7 @@ class ExplodingOn(ProtoDie):
     with size which gets overshadowed by the first factor.
     """
 
-    def __init__(self, input_die: ProtoDie, explodes_on: Iterable, explosions=2):
+    def __init__(self, input_die: ProtoDie, explodes_on: Iterable[int], explosions: int=2):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie

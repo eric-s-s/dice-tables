@@ -1,5 +1,6 @@
 import ast
-from typing import Dict, Tuple
+from typing import Dict, Tuple, get_type_hints, List, Iterable
+from inspect import signature, Parameter, BoundArguments, Signature
 
 from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
@@ -31,8 +32,13 @@ class NewParser(object):
                          WorstOfDicePool, UpperMidOfDicePool,
                          LowerMidOfDicePool}
         self._param_types = {int: make_int, Dict[int, int]: make_int_dict,
-                             ProtoDie: self.make_die, Tuple[int, ...]: make_int_tuple}
+                             ProtoDie: self.make_die, Iterable[int]: make_int_tuple}
 
+        self._limits_kwargs = {'size': ['die_size', 'dictionary_input'],
+                               'explosions': ['explosions'],
+                               'explodes_on': ['explodes_on'],
+                               'input_die': ['input_die'],
+                               'pool_size': ['pool_size']}
         self.ignore_case = ignore_case
 
         self.max_size = max_size
@@ -95,10 +101,19 @@ class NewParser(object):
         param_nodes = call_node.args
         kwarg_nodes = call_node.keywords
         die_class = self._get_die_class(die_class_name)
-        die_params = self._get_params(param_nodes, die_class)
-        die_kwargs = self._get_kwargs(kwarg_nodes, die_class)
+
+        new_die = die_class.__new__(die_class)
+        die_signature = signature(die_class.__init__)
+
+        self._raise_error_for_missing_type(die_signature)
+        die_params = self._get_params(param_nodes, die_signature)
+        die_kwargs = self._get_kwargs(kwarg_nodes, die_signature)
+
+        bound_args = die_signature.bind(new_die, *die_params, **die_kwargs)
+        bound_args.apply_defaults()
+
         if self._use_limits:
-            self._check_limits(die_class, die_params, die_kwargs)
+            self._check_limits(die_class, bound_args)
         return die_class(*die_params, **die_kwargs)
 
     def _get_die_class(self, class_name):
@@ -114,63 +129,54 @@ class NewParser(object):
             return search_str.lower()
         return search_str
 
-    def _get_params(self, param_nodes, die_class):
+    def _get_params(self, param_nodes, die_signature: Signature):
         params = []
-        param_types = self._classes[die_class]
-        self._raise_error_for_missing_methods(param_types, die_class)
-        for index, node in enumerate(param_nodes):
-            type_key = param_types[index]
-            conversion_method = self._param_types[type_key]
-            params.append(conversion_method(node))
+        class_params: List[Parameter] = list(die_signature.parameters.values())[1:]
+        for node, param in zip(param_nodes, class_params):
+            type_hint = param.annotation
+            converter = self._param_types[type_hint]
+            params.append(converter(node))
         return params
 
-    def _raise_error_for_missing_methods(self, param_types, die_class):
-        if any(type_key not in self._param_types for type_key in param_types):
-            raise ParseError('Failed to create die: <{}> with param types: {}. One or more param types not recognized.'
-                             .format(die_class.__name__, param_types))
+    def _raise_error_for_missing_type(self, die_signature: Signature):
+        if any(type_key not in self._param_types for type_key in (param.annotation for param in list(die_signature.parameters.values())[1:])):
+            raise ParseError('The signature: {} has one or more un-recognized param types'
+                             .format(die_signature))
 
-    def _get_kwargs(self, kwarg_nodes, die_class):
+    def _get_kwargs(self, kwarg_nodes, die_signature):
         out = {}
-        self._raise_error_for_bad_kwarg(kwarg_nodes, die_class)
         for kwarg_node in kwarg_nodes:
-            kwarg_name, value = self._get_kwarg_value(die_class, kwarg_node)
+            kwarg_name, value = self._get_kwarg_value(die_signature, kwarg_node)
             out[kwarg_name] = value
         return out
-
-    def _raise_error_for_bad_kwarg(self, kwarg_nodes, die_class):
-        die_kwargs = self._update_search_tuple(self._kwargs[die_class])
-        if any(self._update_search_string(node.arg) not in die_kwargs for node in kwarg_nodes):
-            raise ParseError('One or more kwargs not in kwarg_list: {} for die: <{}>'.format(
-                die_kwargs, die_class.__name__))
 
     def _update_search_tuple(self, search_tuple):
         return tuple(map(self._update_search_string, search_tuple))
 
-    def _get_kwarg_value(self, die_class, kwarg_node):
+    def _get_kwarg_value(self, die_signature, kwarg_node):
         kwarg_name_to_search_for = self._update_search_string(kwarg_node.arg)
         value_node = kwarg_node.value
 
-        class_param_types = self._classes[die_class]
-        true_kwarg_names = self._kwargs[die_class]
-        kwarg_names_to_search = self._update_search_tuple(true_kwarg_names)
+        class_params = die_signature.parameters
+        param_mapping = {self._update_search_string(key): value for key, value in class_params.items()}
 
-        index = kwarg_names_to_search.index(kwarg_name_to_search_for)
+        try:
+            param = param_mapping[kwarg_name_to_search_for]
+        except KeyError:
+            raise ParseError("The keyword: {} is not in the die signature: {}".format(kwarg_node.arg, die_signature))
+        converter = self._param_types[param.annotation]
 
-        kwarg_type = class_param_types[index]
-        value = self._param_types[kwarg_type](value_node)
+        return param.name, converter(value_node)
 
-        true_kwarg_name = true_kwarg_names[index]
-        return true_kwarg_name, value
-
-    def _check_limits(self, die_class, die_params, die_kwargs):
+    def _check_limits(self, die_class, bound_args: BoundArguments):
         self._check_then_update_nested_calls()
         self._update_then_check_dice_pool_calls(die_class)
 
-        input_die = self._get_limits_params('input_die', die_class, die_params, die_kwargs)
-        pool_size = self._get_limits_params('pool_size', die_class, die_params, die_kwargs)
-        size_or_dict = self._get_limits_params('size', die_class, die_params, die_kwargs)
-        explosions = self._get_limits_params('explosions', die_class, die_params, die_kwargs)
-        explodes_on = self._get_limits_params('explodes_on', die_class, die_params, die_kwargs)
+        input_die = self._get_limits_params('input_die', bound_args)
+        pool_size = self._get_limits_params('pool_size', bound_args)
+        size_or_dict = self._get_limits_params('size', bound_args)
+        explosions = self._get_limits_params('explosions', bound_args)
+        explodes_on = self._get_limits_params('explodes_on', bound_args)
 
         self._check_dice_pool(input_die, pool_size)
         self._check_die_size(size_or_dict)
@@ -189,16 +195,12 @@ class NewParser(object):
                 msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
                 raise LimitsError(msg)
 
-    def _get_limits_params(self, param_types, die_class, die_params, die_kwargs):
-        limits_kw_default = self._limits_values[param_types]
-        class_kwargs = self._kwargs[die_class]
-        for kwarg_name, default in limits_kw_default:
-            if kwarg_name in class_kwargs:
-                index = class_kwargs.index(kwarg_name)
-                if len(die_params) > index:
-                    return die_params[index]
-                else:
-                    return die_kwargs.get(kwarg_name, default)
+    def _get_limits_params(self, param_types, bound_args: BoundArguments):
+        limit_keywords = self._limits_kwargs[param_types]
+        arguments = bound_args.arguments
+        for kwarg_name in limit_keywords:
+            if kwarg_name in arguments:
+                return arguments[kwarg_name]
 
         return None
 
@@ -288,14 +290,14 @@ class NewParser(object):
         - 'input_die'
         - 'pool_size'
         """
-        if existing_key not in self._limits_values.keys():
+        if existing_key not in self._limits_kwargs.keys():
             raise KeyError('key: "{}" not in self.limits_kwargs. Use add_limits_key.'.format(existing_key))
-        self._limits_values[existing_key].append((new_key_word, default))
+        self._limits_kwargs[existing_key].append((new_key_word, default))
 
     def add_limits_key(self, new_key):
-        if new_key in self._limits_values.keys():
+        if new_key in self._limits_kwargs.keys():
             raise ValueError('Tried to add existing key to self.limits_kwargs.')
-        self._limits_values[new_key] = []
+        self._limits_kwargs[new_key] = []
 
 
 def make_int_dict(dict_node):

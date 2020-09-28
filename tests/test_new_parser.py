@@ -3,6 +3,7 @@
 
 import ast
 import re
+from typing import Dict, Tuple, Iterable
 
 import pytest
 
@@ -22,20 +23,22 @@ from dicetables.dieevents import (
     Exploding,
     ExplodingOn,
 )
+from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.parser import (
     ParseError,
     LimitsError,
+)
+from dicetables.new_parser import (
+    NewParser,
     make_int,
     make_int_dict,
     make_int_tuple,
 )
-from dicetables.new_parser import NewParser
 from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
 def test_init_default():
     assert not NewParser().ignore_case
-    assert not NewParser().disable_kwargs
 
     assert NewParser().max_nested_dice == 5
     assert NewParser().max_size == 500
@@ -45,11 +48,6 @@ def test_init_default():
 def test_init_setting_ignore_case():
     assert not NewParser(False).ignore_case
     assert NewParser(True).ignore_case
-
-
-def test_init_setting_disable_kwargs():
-    assert not NewParser(disable_kwargs=False).disable_kwargs
-    assert NewParser(disable_kwargs=True).disable_kwargs
 
 
 def test_init_setting_limits():
@@ -93,10 +91,10 @@ def test_make_int_dict_error():
 def test_param_types():
     the_parser = NewParser()
     answer = {
-        "int": make_int,
-        "int_dict": make_int_dict,
-        "die": the_parser.make_die,
-        "int_tuple": make_int_tuple,
+        int: make_int,
+        Dict[int, int]: make_int_dict,
+        ProtoDie: the_parser.make_die,
+        Iterable[int]: make_int_tuple,
     }
 
     assert the_parser.param_types == answer
@@ -229,9 +227,8 @@ def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
 def test_make_die_incorrect_kwargs():
     die_node = ast.parse("ModDie(die_size=6, MODIFIER=-1)").body[0].value
     msg = re.escape(
-        "One or more kwargs not in kwarg_list: ('die_size', 'modifier') for die: <ModDie>"
+        "The keyword: MODIFIER is not in the die signature: (self, die_size: int, modifier: int)"
     )
-    # with pytest.raises(ParseError, match=msg):
     with pytest.raises(ParseError, match=msg):
         NewParser().make_die(die_node), ModDie(6, -1)
 
@@ -239,26 +236,6 @@ def test_make_die_incorrect_kwargs():
 def test_make_die_ignore_case_applies_to_kwargs():
     die_node = ast.parse("MODDIE(DIE_SIZE=6, MODIFIER=-1)").body[0].value
     assert NewParser(ignore_case=True).make_die(die_node) == ModDie(6, -1)
-
-
-def test_make_die_ignore_case_applies_to_kwargs_with_mixed_case():
-    class OddDie(Die):
-        def __init__(self, dIe_SiZE):
-            super(OddDie, self).__init__(dIe_SiZE)
-
-    parser = NewParser(ignore_case=True)
-    parser.add_class(OddDie, ("int",))
-    assert parser.kwargs[OddDie] == ("dIe_SiZE",)
-
-    die_node = ast.parse("ODDDIE(DIE_SIZE=6)").body[0].value
-    assert parser.make_die(die_node) == OddDie(6)
-
-
-def test_make_die_disable_kwargs_raises_error():
-    die_node = ast.parse("Die(die_size=6)").body[0].value
-    msg = "Tried to use kwargs on a NewParser with disable_kwargs=True"
-    with pytest.raises(ParseError, match=msg):
-        NewParser(disable_kwargs=True).make_die(die_node)
 
 
 def test_parse_arbitrary_spacing():
@@ -368,7 +345,7 @@ def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(
     }
     """
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("BestOfDicePool(Die(1), 1)")
+        NewParser().parse_die_within_limits("BestOfDicePool(Die(1), 1, 1)")
 
     assert count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
     assert count_unique_combination_keys(Die(die_size), die_pool + 1) > max_combinations
@@ -458,7 +435,7 @@ def test_parse_within_limits_does_not_catch_non_hardcoded_kwargs():
             super(NewDie, self).__init__(funky_new_die_size)
 
     parser = NewParser()
-    parser.add_class(NewDie, ("int",))
+    parser.add_class(NewDie)
 
     with pytest.raises(LimitsError):
         parser.parse_die_within_limits("Die(5000)")

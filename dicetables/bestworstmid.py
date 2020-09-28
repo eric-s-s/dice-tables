@@ -68,7 +68,7 @@ class BestOfDicePool(DicePool):
     BestOfDicePool(Die(6), 4, 3) is the best 3 rolls from four six-sided dice.
     """
 
-    def __init__(self, input_die, pool_size, select):
+    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
         super(BestOfDicePool, self).__init__(input_die, pool_size, select)
 
     def _generate_dict(self):
@@ -84,7 +84,7 @@ class WorstOfDicePool(DicePool):
     WorstOfDicePool(Die(6), 4, 3) is the worst 3 rolls from four six-sided dice.
     """
 
-    def __init__(self, input_die, pool_size, select):
+    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
         super(WorstOfDicePool, self).__init__(input_die, pool_size, select)
 
     def _generate_dict(self):
@@ -103,7 +103,7 @@ class UpperMidOfDicePool(DicePool):
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (2, 3).
     """
 
-    def __init__(self, input_die, pool_size, select):
+    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
         super(UpperMidOfDicePool, self).__init__(input_die, pool_size, select)
 
     def _generate_dict(self):
@@ -123,7 +123,7 @@ class LowerMidOfDicePool(DicePool):
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (1, 2).
     """
 
-    def __init__(self, input_die, pool_size, select):
+    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
         super(LowerMidOfDicePool, self).__init__(input_die, pool_size, select)
 
     def _generate_dict(self):
