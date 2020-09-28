@@ -96,25 +96,28 @@ class NewParser(object):
 
         return die
 
-    def make_die(self, call_node):
+    def make_die(self, call_node: ast.Call):
         die_class_name = call_node.func.id
         param_nodes = call_node.args
         kwarg_nodes = call_node.keywords
         die_class = self._get_die_class(die_class_name)
 
-        new_die = die_class.__new__(die_class)
-        die_signature = signature(die_class.__init__)
+        instance_for_signature = die_class.__new__(die_class)
+        die_signature = signature(instance_for_signature.__init__)
 
         self._raise_error_for_missing_type(die_signature)
         die_params = self._get_params(param_nodes, die_signature)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_signature)
 
-        bound_args = die_signature.bind(new_die, *die_params, **die_kwargs)
+        bound_args = die_signature.bind(*die_params, **die_kwargs)
         bound_args.apply_defaults()
 
         if self._use_limits:
             self._check_limits(die_class, bound_args)
         return die_class(*die_params, **die_kwargs)
+
+    def walk_dice_calls(self, call_node: ast.AST):
+        return (self._get_die_class(node.func.id) for node in ast.walk(call_node) if isinstance(node, ast.Call))
 
     def _get_die_class(self, class_name):
         class_name = self._update_search_string(class_name)
@@ -131,15 +134,14 @@ class NewParser(object):
 
     def _get_params(self, param_nodes, die_signature: Signature):
         params = []
-        class_params: List[Parameter] = list(die_signature.parameters.values())[1:]
-        for node, param in zip(param_nodes, class_params):
+        for node, param in zip(param_nodes, die_signature.parameters.values()):
             type_hint = param.annotation
             converter = self._param_types[type_hint]
             params.append(converter(node))
         return params
 
     def _raise_error_for_missing_type(self, die_signature: Signature):
-        if any(type_key not in self._param_types for type_key in (param.annotation for param in list(die_signature.parameters.values())[1:])):
+        if any(param.annotation not in self._param_types for param in die_signature.parameters.values()):
             raise ParseError('The signature: {} has one or more un-recognized param types'
                              .format(die_signature))
 

@@ -3,7 +3,7 @@
 
 import ast
 import re
-from typing import Dict, Tuple, Iterable
+from typing import Dict, Iterable
 
 import pytest
 
@@ -227,7 +227,7 @@ def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
 def test_make_die_incorrect_kwargs():
     die_node = ast.parse("ModDie(die_size=6, MODIFIER=-1)").body[0].value
     msg = re.escape(
-        "The keyword: MODIFIER is not in the die signature: (self, die_size: int, modifier: int)"
+        "The keyword: MODIFIER is not in the die signature: (die_size: int, modifier: int)"
     )
     with pytest.raises(ParseError, match=msg):
         NewParser().make_die(die_node), ModDie(6, -1)
@@ -246,10 +246,54 @@ def test_parse_arbitrary_spacing():
     ) == Exploding(Die(5), 1)
 
 
+def test_walk_dice_calls():
+    parser = NewParser()
+    multiplier = 20
+    die_string = ('StrongDie(' * multiplier) + 'Die(6)' + (', 3)' * multiplier)
+    result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
+    expected_die = 1
+    expected_strong_die = multiplier
+    result_list = list(result)
+    assert result_list.count(Die) == expected_die
+    assert result_list.count(StrongDie) == expected_strong_die
+    assert len(result_list) == expected_die + expected_strong_die
+
+
+def test_walk_dice_calls_complex():
+    die = 'Die'
+    strong_die = 'StrongDie'
+    mod_die = 'ModDie'
+    parser = NewParser()
+    die_string = f"{die}({strong_die}(), {mod_die}(3, {die}({strong_die}(3))))"
+    result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
+    expected_die = 2
+    expected_strong_die = 2
+    expected_mod_die = 1
+    result_list = list(result)
+    assert result_list.count(Die) == expected_die
+    assert result_list.count(StrongDie) == expected_strong_die
+    assert result_list.count(ModDie) == expected_mod_die
+    assert len(result_list) == expected_die + expected_strong_die + expected_mod_die
+
+
+def test_walk_dice_calls_bad_value():
+    parser = NewParser()
+    result = parser.walk_dice_calls(ast.parse('Die(Oops(3))').body[0].value)
+    with pytest.raises(ParseError):
+        list(result)
+
+
 def test_parse_within_limits_max_size_int():
     assert NewParser().parse_die_within_limits("Die(500)") == Die(500)
     with pytest.raises(LimitsError):
         NewParser().parse_die_within_limits("Die(501)")
+
+
+def test_parse_within_limits_and_then_regular_parse():
+    parser = NewParser()
+    parser.parse_die_within_limits('Die(500)')
+    expected = parser.parse_die('Die(501)')
+    assert expected == Die(501)
 
 
 def test_parse_within_limits_max_size_dict():
