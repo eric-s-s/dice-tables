@@ -2,6 +2,7 @@ Events Objects
 ==============
 
 .. module:: dicetables
+    :noindex:
 
 
 .. autoclass:: dicetables.eventsbases.integerevents.IntegerEvents

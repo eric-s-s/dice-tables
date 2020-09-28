@@ -355,7 +355,7 @@ def make_int(num_node):
     else:
         value = num_node.n
     if not isinstance(value, int):
-        raise ValueError(f"Expected an in integer, but got: {value!r}")
+        raise ValueError(f"Expected an integer, but got: {value!r}")
     return value
 
 

@@ -101,19 +101,11 @@ def test_param_types():
 
     assert the_parser.param_types == answer
     assert the_parser.param_types is not answer
-    assert Parser().param_types != answer
 
 
-def test_param_types_is_specific_to_each_instance_due_to_value_at_die():
-    the_parser = Parser()
-    answer = {
-        "int": make_int,
-        "int_dict": make_int_dict,
-        "die": the_parser.make_die,
-        "int_tuple": make_int_tuple,
-    }
-
-    assert Parser().param_types != answer
+def test_param_types_is_specific_to_each_instance():
+    parser = Parser()
+    assert Parser().param_types != parser.param_types
 
 
 def test_classes():
