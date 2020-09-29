@@ -1,6 +1,6 @@
 import ast
 from typing import Dict, Tuple, get_type_hints, List, Iterable
-from inspect import signature, Parameter, BoundArguments, Signature
+from inspect import signature, _empty, BoundArguments, Signature
 
 from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
@@ -262,19 +262,21 @@ class NewParser(object):
             explanation = 'For this die, the largest permitted pool_size is {}'.format(max_pool_size)
             raise LimitsError(msg + explanation)
 
-    def add_class(self, class_, param_identifiers, auto_detect_kwargs=True, kwargs=()):
+    def add_class(self, class_: object):
         """
 
         :param class_: the class you are adding
-        :param param_identifiers: a tuple of param_types according to Parser().param_types. Defaults are:
-            'int', 'die', 'int_dict', 'int_tuple'
-        :param auto_detect_kwargs: will try to detect kwargs of __init__ function. overrides kwargs param
-        :param kwargs: (optional) a tuple of the kwarg names for instantiation of the new class.
         """
-        self._classes[class_] = param_identifiers
-        if auto_detect_kwargs:
-            kwargs = _get_kwargs_from_init(class_)
-        self._kwargs[class_] = kwargs
+        new_instance = class_.__new__(class_)
+        die_signature = signature(new_instance.__init__)
+        self._raise_error_for_missing_annotation(die_signature)
+        self._raise_error_for_missing_type(die_signature)
+        self._classes.add(class_)
+
+    @staticmethod
+    def _raise_error_for_missing_annotation(die_signature: Signature):
+        if any(param.annotation == _empty for param in die_signature.parameters.values()):
+            raise ParseError(f"The signature: {die_signature} is missing type annotations")
 
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
@@ -320,7 +322,10 @@ def make_int(num_node):
     if isinstance(num_node, ast.UnaryOp) and isinstance(num_node.op, ast.USub):
         value = num_node.operand.n * -1
     else:
-        value = num_node.n
+        value = None
+        for key, val in ast.iter_fields(num_node):
+            if key != 'kind':
+                value = val
     if not isinstance(value, int):
         raise ValueError(f"Expected an integer, but got: {value!r}")
     return value

@@ -113,23 +113,6 @@ def test_make_die_raises_error_on_function_call_not_in_parser():
     assert cm.value.args[0] == "Die class: <NotThere> not recognized by parser."
 
 
-def test_make_die_raises_error_on_die_with_bad_param_types():
-    class StupidDie(Die):
-        def __init__(self, name: str, size: int):
-            self.name = name
-            super(StupidDie, self).__init__(size)
-
-    parser = NewParser()
-    parser.add_class(StupidDie)
-
-    die_node = ast.parse('StupidDie("Ishmael", 6)').body[0].value
-    with pytest.raises(ParseError) as cm:
-        parser.make_die(die_node)
-    assert cm.value.args[0] == (
-            "Failed to create die: <StupidDie> with param types: ('string', 'int'). "
-            + "One or more param types not recognized."
-    )
-
 
 def test_make_die_on_die_with_bad_param_values():
     die_node = ast.parse('WeightedDie({"K":2})').body[0].value
@@ -226,9 +209,7 @@ def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
 
 def test_make_die_incorrect_kwargs():
     die_node = ast.parse("ModDie(die_size=6, MODIFIER=-1)").body[0].value
-    msg = re.escape(
-        "The keyword: MODIFIER is not in the die signature: (die_size: int, modifier: int)"
-    )
+    msg = r"The keyword: MODIFIER is not in the die signature: \(die_size: ?int, modifier: ?int\)"
     with pytest.raises(ParseError, match=msg):
         NewParser().make_die(die_node), ModDie(6, -1)
 
@@ -742,6 +723,30 @@ def test_lower_mid_of_dice_pool_with_kwargs():
 def test_nested_dice():
     actual = NewParser().parse_die("Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)")
     assert actual == Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)
+
+
+def test_add_class_un_recognized_param_types_raises_error():
+    class StupidDie(Die):
+        def __init__(self, name: str, size: int):
+            self.name = name
+            super(StupidDie, self).__init__(size)
+
+    parser = NewParser()
+    msg = r"The signature: \(name: ?str, size: ?int\) has one or more un-recognized param types"
+    with pytest.raises(ParseError, match=msg):
+        parser.add_class(StupidDie)
+
+
+def test_add_class_missing_type_hint_raises_error():
+    class StupidDie(Die):
+        def __init__(self, name, size: int):
+            self.name = name
+            super(StupidDie, self).__init__(size)
+
+    parser = NewParser()
+    msg = r"The signature: \(name, size: ?int\) is missing type annotations"
+    with pytest.raises(ParseError, match=msg):
+        parser.add_class(StupidDie)
 
 
 def test_add_class_auto_detect_kwargs():
