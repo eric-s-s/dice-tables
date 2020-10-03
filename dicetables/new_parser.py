@@ -5,13 +5,22 @@ from inspect import signature, _empty, BoundArguments, Signature
 from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
 from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
 from dicetables.eventsbases.protodie import ProtoDie
+from dicetables.tools.limit_checker import AbstractLimitChecker, NoOpLimitChecker
 from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
 
 from dicetables.parser import ParseError, LimitsError
 
 
+
+# TODO
+
+
+
 class NewParser(object):
-    def __init__(self, ignore_case=False, max_size=500, max_explosions=10, max_nested_dice=5):
+    def __init__(self, ignore_case=False, checker: AbstractLimitChecker=NoOpLimitChecker()):
+        pass
+    @classmethod
+    def with_limits(cls, ignore_case=False, max_size=500, max_explosions=10, max_nested_dice=5):
         """
 
         :param ignore_case: False: Can the parser ignore case on die names and kwargs.
