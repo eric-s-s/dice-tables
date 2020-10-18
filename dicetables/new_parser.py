@@ -1,68 +1,98 @@
 import ast
-from typing import Dict, Tuple, get_type_hints, List, Iterable
+from typing import Dict, Tuple, get_type_hints, List, Iterable, Type
 from inspect import signature, _empty, BoundArguments, Signature
 
-from dicetables.bestworstmid import DicePool, BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
-from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, WeightedDie, StrongDie, Exploding, ExplodingOn
+from dicetables.bestworstmid import (
+    DicePool,
+    BestOfDicePool,
+    WorstOfDicePool,
+    UpperMidOfDicePool,
+    LowerMidOfDicePool,
+)
+from dicetables.dieevents import (
+    Die,
+    ModDie,
+    Modifier,
+    ModWeightedDie,
+    WeightedDie,
+    StrongDie,
+    Exploding,
+    ExplodingOn,
+)
 from dicetables.eventsbases.protodie import ProtoDie
-from dicetables.tools.limit_checker import AbstractLimitChecker, NoOpLimitChecker
-from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
+from dicetables.tools.limit_checker import (
+    AbstractLimitChecker,
+    NoOpLimitChecker,
+    LimitChecker,
+)
+from dicetables.tools.orderedcombinations import (
+    count_unique_combination_keys,
+    largest_permitted_pool_size,
+)
 
 from dicetables.parser import ParseError, LimitsError
 
 
-
-# TODO
-
-
-
 class NewParser(object):
-    def __init__(self, ignore_case=False, checker: AbstractLimitChecker=NoOpLimitChecker()):
-        pass
+    def __init__(
+        self,
+        ignore_case: bool = False,
+        checker: AbstractLimitChecker = NoOpLimitChecker(),
+    ):
+        self.checker = checker
+        self.ignore_case = ignore_case
+
+        self._classes = {
+            Die,
+            ModDie,
+            Modifier,
+            ModWeightedDie,
+            WeightedDie,
+            StrongDie,
+            Exploding,
+            ExplodingOn,
+            BestOfDicePool,
+            WorstOfDicePool,
+            UpperMidOfDicePool,
+            LowerMidOfDicePool,
+        }
+        self._param_types = {
+            int: make_int,
+            Dict[int, int]: make_int_dict,
+            ProtoDie: self.make_die,
+            Iterable[int]: make_int_tuple,
+        }
+
     @classmethod
-    def with_limits(cls, ignore_case=False, max_size=500, max_explosions=10, max_nested_dice=5):
+    def with_limits(
+        cls,
+        ignore_case: bool = False,
+        max_size: int = 500,
+        max_explosions: int = 10,
+        max_dice: int = 6,
+        max_dice_pools: int = 2,
+    ) -> "NewParser":
         """
 
         :param ignore_case: False: Can the parser ignore case on die names and kwargs.
         :param max_size: 500: The maximum allowed die size when :code:`parse_die_within_limits`
         :param max_explosions: 10: The maximum allowed (explosions + len(explodes_on)) when
             :code:`parse_die_within_limits`
-        :param max_nested_dice: 5: The maximum number of nested dice beyond first when :code:`parse_die_within_limits`.
-            Ex: :code:`StrongDie(Exploding(Die(5), 2), 3)` has 2 nested dice.
+        :param max_dice: 6: The maximum number of dice calls when :code:`parse`.
+            Ex: :code:`StrongDie(Exploding(Die(5), 2), 3)` has 3 dice calls.
+        :param max_dice_pools: 2: The maximum number of allowed dice_pool calls
 
         For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, and
         `max_dice_pool_calls`, see
         `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html#limits-and-dicepool-objects>`_
         """
-        self._classes = {Die, ModDie, Modifier,
-                         ModWeightedDie, WeightedDie,
-                         StrongDie, Exploding,
-                         ExplodingOn, BestOfDicePool,
-                         WorstOfDicePool, UpperMidOfDicePool,
-                         LowerMidOfDicePool}
-        self._param_types = {int: make_int, Dict[int, int]: make_int_dict,
-                             ProtoDie: self.make_die, Iterable[int]: make_int_tuple}
-
-        self._limits_kwargs = {'size': ['die_size', 'dictionary_input'],
-                               'explosions': ['explosions'],
-                               'explodes_on': ['explodes_on'],
-                               'input_die': ['input_die'],
-                               'pool_size': ['pool_size']}
-        self.ignore_case = ignore_case
-
-        self.max_size = max_size
-        self.max_explosions = max_explosions
-        self.max_nested_dice = max_nested_dice
-
-        self.max_dice_pool_combinations_per_dict_size = {
-            2: 600, 3: 8700, 4: 30000, 5: 55000, 6: 70000,
-            7: 100000, 12: 200000, 30: 250000
-        }
-        self.max_dice_pool_calls = 2
-
-        self._nested_dice_counter = 0
-        self._dice_pool_counter = 0
-        self._use_limits = False
+        checker = LimitChecker(
+            max_dice_pools=max_dice_pools,
+            max_dice=max_dice,
+            max_explosions=max_explosions,
+            max_size=max_size,
+        )
+        return cls(ignore_case=ignore_case, checker=checker)
 
     @property
     def param_types(self):
@@ -76,34 +106,11 @@ class NewParser(object):
         die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
 
-        self._use_limits = False
+        self.checker.assert_numbers_of_calls_within_limits(
+            self.walk_dice_calls(ast_call_node)
+        )
+
         return self.make_die(ast_call_node)
-
-    def parse_die_within_limits(self, die_string):
-        """
-        Checks to see if limits are exceeded. If not, parses string. This only works with die classes that contain the
-        following key-word arguments:
-
-        - die_size
-        - dictionary_input
-        - explosions
-        - explodes_on
-        - input_die AND pool_size
-
-        If your die classes use different kwargs to describe any of the above, they will
-        be parsed as if there were no limits. You may register those kwargs (and any default value) with
-        :code:`add_limits_kwarg`.
-        """
-        die_string = die_string.strip()
-        ast_call_node = ast.parse(die_string).body[0].value
-
-        self._use_limits = True
-        self._nested_dice_counter = 0
-        self._dice_pool_counter = 0
-
-        die = self.make_die(ast_call_node)
-
-        return die
 
     def make_die(self, call_node: ast.Call):
         die_class_name = call_node.func.id
@@ -114,19 +121,24 @@ class NewParser(object):
         instance_for_signature = die_class.__new__(die_class)
         die_signature = signature(instance_for_signature.__init__)
 
-        self._raise_error_for_missing_type(die_signature)
         die_params = self._get_params(param_nodes, die_signature)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_signature)
 
         bound_args = die_signature.bind(*die_params, **die_kwargs)
         bound_args.apply_defaults()
 
-        if self._use_limits:
-            self._check_limits(die_class, bound_args)
+        self.checker.assert_explosions_within_limits(bound_args)
+        self.checker.assert_dice_pool_within_limits(bound_args)
+        self.checker.assert_die_size_within_limits(bound_args)
+
         return die_class(*die_params, **die_kwargs)
 
-    def walk_dice_calls(self, call_node: ast.AST):
-        return (self._get_die_class(node.func.id) for node in ast.walk(call_node) if isinstance(node, ast.Call))
+    def walk_dice_calls(self, call_node: ast.AST) -> Iterable[Type[ProtoDie]]:
+        return (
+            self._get_die_class(node.func.id)
+            for node in ast.walk(call_node)
+            if isinstance(node, ast.Call)
+        )
 
     def _get_die_class(self, class_name):
         class_name = self._update_search_string(class_name)
@@ -134,7 +146,7 @@ class NewParser(object):
             test_against = self._update_search_string(die_class.__name__)
             if class_name == test_against:
                 return die_class
-        raise ParseError('Die class: <{}> not recognized by parser.'.format(class_name))
+        raise ParseError("Die class: <{}> not recognized by parser.".format(class_name))
 
     def _update_search_string(self, search_str):
         if self.ignore_case:
@@ -150,9 +162,15 @@ class NewParser(object):
         return params
 
     def _raise_error_for_missing_type(self, die_signature: Signature):
-        if any(param.annotation not in self._param_types for param in die_signature.parameters.values()):
-            raise ParseError('The signature: {} has one or more un-recognized param types'
-                             .format(die_signature))
+        if any(
+            param.annotation not in self._param_types
+            for param in die_signature.parameters.values()
+        ):
+            raise ParseError(
+                "The signature: {} has one or more un-recognized param types".format(
+                    die_signature
+                )
+            )
 
     def _get_kwargs(self, kwarg_nodes, die_signature):
         out = {}
@@ -169,12 +187,19 @@ class NewParser(object):
         value_node = kwarg_node.value
 
         class_params = die_signature.parameters
-        param_mapping = {self._update_search_string(key): value for key, value in class_params.items()}
+        param_mapping = {
+            self._update_search_string(key): value
+            for key, value in class_params.items()
+        }
 
         try:
             param = param_mapping[kwarg_name_to_search_for]
         except KeyError:
-            raise ParseError("The keyword: {} is not in the die signature: {}".format(kwarg_node.arg, die_signature))
+            raise ParseError(
+                "The keyword: {} is not in the die signature: {}".format(
+                    kwarg_node.arg, die_signature
+                )
+            )
         converter = self._param_types[param.annotation]
 
         return param.name, converter(value_node)
@@ -183,28 +208,15 @@ class NewParser(object):
         self._check_then_update_nested_calls()
         self._update_then_check_dice_pool_calls(die_class)
 
-        input_die = self._get_limits_params('input_die', bound_args)
-        pool_size = self._get_limits_params('pool_size', bound_args)
-        size_or_dict = self._get_limits_params('size', bound_args)
-        explosions = self._get_limits_params('explosions', bound_args)
-        explodes_on = self._get_limits_params('explodes_on', bound_args)
+        input_die = self._get_limits_params("input_die", bound_args)
+        pool_size = self._get_limits_params("pool_size", bound_args)
+        size_or_dict = self._get_limits_params("size", bound_args)
+        explosions = self._get_limits_params("explosions", bound_args)
+        explodes_on = self._get_limits_params("explodes_on", bound_args)
 
         self._check_dice_pool(input_die, pool_size)
         self._check_die_size(size_or_dict)
         self._check_explosions(explosions, explodes_on)
-
-    def _check_then_update_nested_calls(self):
-        if self._nested_dice_counter > self.max_nested_dice:
-            msg = 'Max number of nested dice: {}'.format(self.max_nested_dice)
-            raise LimitsError(msg)
-        self._nested_dice_counter += 1
-
-    def _update_then_check_dice_pool_calls(self, die_class):
-        if issubclass(die_class, DicePool):
-            self._dice_pool_counter += 1
-            if self._dice_pool_counter > self.max_dice_pool_calls:
-                msg = 'Max number of DicePool objects: {}'.format(self.max_dice_pool_calls)
-                raise LimitsError(msg)
 
     def _get_limits_params(self, param_types, bound_args: BoundArguments):
         limit_keywords = self._limits_kwargs[param_types]
@@ -229,7 +241,7 @@ class NewParser(object):
             raise ValueError(msg)
 
         if size_value > self.max_size:
-            msg = 'Max die_size: {}'.format(self.max_size)
+            msg = "Max die_size: {}".format(self.max_size)
             raise LimitsError(msg)
 
     def _check_explosions(self, explosions, explodes_on):
@@ -245,7 +257,9 @@ class NewParser(object):
             explosions_value += len(explodes_on)
 
         if explosions_value > self.max_explosions:
-            msg = 'Max number of explosions + len(explodes_on): {}'.format(self.max_explosions)
+            msg = "Max number of explosions + len(explodes_on): {}".format(
+                self.max_explosions
+            )
             raise LimitsError(msg)
 
     def _check_dice_pool(self, input_die, pool_size):
@@ -253,7 +267,9 @@ class NewParser(object):
             return None
 
         if not isinstance(input_die, ProtoDie):
-            raise ValueError('A kwarg declared as an "input_die" does not inherit from ProtoDie.')
+            raise ValueError(
+                'A kwarg declared as an "input_die" does not inherit from ProtoDie.'
+            )
         if not isinstance(pool_size, int):
             raise ValueError('A kwarg declared as a "pool_size" is not an int.')
 
@@ -267,8 +283,10 @@ class NewParser(object):
         score = count_unique_combination_keys(input_die, pool_size)
         if score > pool_limit:
             max_pool_size = largest_permitted_pool_size(input_die, pool_limit)
-            msg = '{!r} has a get_dict() of size: {}\n'.format(input_die, dict_size)
-            explanation = 'For this die, the largest permitted pool_size is {}'.format(max_pool_size)
+            msg = "{!r} has a get_dict() of size: {}\n".format(input_die, dict_size)
+            explanation = "For this die, the largest permitted pool_size is {}".format(
+                max_pool_size
+            )
             raise LimitsError(msg + explanation)
 
     def add_class(self, class_: object):
@@ -284,8 +302,12 @@ class NewParser(object):
 
     @staticmethod
     def _raise_error_for_missing_annotation(die_signature: Signature):
-        if any(param.annotation == _empty for param in die_signature.parameters.values()):
-            raise ParseError(f"The signature: {die_signature} is missing type annotations")
+        if any(
+            param.annotation == _empty for param in die_signature.parameters.values()
+        ):
+            raise ParseError(
+                f"The signature: {die_signature} is missing type annotations"
+            )
 
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
@@ -304,12 +326,16 @@ class NewParser(object):
         - 'pool_size'
         """
         if existing_key not in self._limits_kwargs.keys():
-            raise KeyError('key: "{}" not in self.limits_kwargs. Use add_limits_key.'.format(existing_key))
+            raise KeyError(
+                'key: "{}" not in self.limits_kwargs. Use add_limits_key.'.format(
+                    existing_key
+                )
+            )
         self._limits_kwargs[existing_key].append((new_key_word, default))
 
     def add_limits_key(self, new_key):
         if new_key in self._limits_kwargs.keys():
-            raise ValueError('Tried to add existing key to self.limits_kwargs.')
+            raise ValueError("Tried to add existing key to self.limits_kwargs.")
         self._limits_kwargs[new_key] = []
 
 
@@ -333,7 +359,7 @@ def make_int(num_node):
     else:
         value = None
         for key, val in ast.iter_fields(num_node):
-            if key != 'kind':
+            if key != "kind":
                 value = val
     if not isinstance(value, int):
         raise ValueError(f"Expected an integer, but got: {value!r}")
@@ -345,4 +371,6 @@ def _get_kwargs_from_init(class_):
         kwargs = class_.__init__.__code__.co_varnames
         return kwargs[1:]
     except AttributeError:
-        raise AttributeError('could not find the code for __init__ function at class_.__init__.__code__')
+        raise AttributeError(
+            "could not find the code for __init__ function at class_.__init__.__code__"
+        )

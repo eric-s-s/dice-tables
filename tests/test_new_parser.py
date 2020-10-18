@@ -37,26 +37,12 @@ from dicetables.new_parser import (
 from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
-def test_init_default():
-    assert not NewParser().ignore_case
-
-    assert NewParser().max_nested_dice == 5
-    assert NewParser().max_size == 500
-    assert NewParser().max_explosions == 10
-
-
 def test_init_setting_ignore_case():
     assert not NewParser(False).ignore_case
     assert NewParser(True).ignore_case
 
 
-def test_init_setting_limits():
-    assert NewParser(max_nested_dice=10).max_nested_dice == 10
-    assert NewParser(max_explosions=100).max_explosions == 100
-    assert NewParser(max_size=100).max_size == 100
-
-
-@pytest.mark.parametrize('input_value', ["2", "-2", "0"])
+@pytest.mark.parametrize("input_value", ["2", "-2", "0"])
 def test_make_int(input_value):
     assert make_int(ast.parse(input_value).body[0].value) == int(input_value)
 
@@ -66,7 +52,7 @@ def test_make_int_error():
         make_int(ast.parse("'a'").body[0].value)
 
 
-@pytest.mark.parametrize('tuple_value', [(), (2,), (-2, 2, 0)])
+@pytest.mark.parametrize("tuple_value", [(), (2,), (-2, 2, 0)])
 def test_make_int_tuple(tuple_value):
     node = ast.parse(str(tuple_value)).body[0].value
     assert make_int_tuple(node) == tuple_value
@@ -77,7 +63,7 @@ def test_make_int_tuple_error():
         make_int_tuple(ast.parse("('a', 1, 2)").body[0].value)
 
 
-@pytest.mark.parametrize('dict_value', [dict(), {-1: -2, 0: 0, 3: 4}])
+@pytest.mark.parametrize("dict_value", [dict(), {-1: -2, 0: 0, 3: 4}])
 def test_make_int_dict(dict_value):
     node = ast.parse(str(dict_value)).body[0].value
     assert make_int_dict(node) == dict_value
@@ -111,7 +97,6 @@ def test_make_die_raises_error_on_function_call_not_in_parser():
     with pytest.raises(ParseError) as cm:
         NewParser().make_die(die_node)
     assert cm.value.args[0] == "Die class: <NotThere> not recognized by parser."
-
 
 
 def test_make_die_on_die_with_bad_param_values():
@@ -201,8 +186,8 @@ def test_make_die_kwargs_in_recursive_call():
 def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
     die_node = (
         ast.parse("StrongDie(input_die=ModDie(6, modifier=-1), multiplier=3)")
-            .body[0]
-            .value
+        .body[0]
+        .value
     )
     assert NewParser().make_die(die_node) == StrongDie(ModDie(6, -1), 3)
 
@@ -230,7 +215,7 @@ def test_parse_arbitrary_spacing():
 def test_walk_dice_calls():
     parser = NewParser()
     multiplier = 20
-    die_string = ('StrongDie(' * multiplier) + 'Die(6)' + (', 3)' * multiplier)
+    die_string = ("StrongDie(" * multiplier) + "Die(6)" + (", 3)" * multiplier)
     result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
     expected_die = 1
     expected_strong_die = multiplier
@@ -241,9 +226,9 @@ def test_walk_dice_calls():
 
 
 def test_walk_dice_calls_complex():
-    die = 'Die'
-    strong_die = 'StrongDie'
-    mod_die = 'ModDie'
+    die = "Die"
+    strong_die = "StrongDie"
+    mod_die = "ModDie"
     parser = NewParser()
     die_string = f"{die}({strong_die}(), {mod_die}(3, {die}({strong_die}(3))))"
     result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
@@ -259,73 +244,73 @@ def test_walk_dice_calls_complex():
 
 def test_walk_dice_calls_bad_value():
     parser = NewParser()
-    result = parser.walk_dice_calls(ast.parse('Die(Oops(3))').body[0].value)
+    result = parser.walk_dice_calls(ast.parse("Die(Oops(3))").body[0].value)
     with pytest.raises(ParseError):
         list(result)
 
 
 def test_parse_within_limits_max_size_int():
-    assert NewParser().parse_die_within_limits("Die(500)") == Die(500)
+    assert NewParser.with_limits().parse_die("Die(500)") == Die(500)
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("Die(501)")
+        NewParser.with_limits().parse_die("Die(501)")
 
 
 def test_parse_within_limits_and_then_regular_parse():
-    parser = NewParser()
-    parser.parse_die_within_limits('Die(500)')
-    expected = parser.parse_die('Die(501)')
+    parser = NewParser.with_limits()
+    parser.parse_die("Die(500)")
+    expected = parser.parse_die("Die(501)")
     assert expected == Die(501)
 
 
 def test_parse_within_limits_max_size_dict():
-    assert NewParser().parse_die_within_limits("WeightedDie({500:1})") == WeightedDie(
+    assert NewParser.with_limits().parse_die("WeightedDie({500:1})") == WeightedDie(
         {500: 1}
     )
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("WeightedDie({501: 1})")
+        NewParser.with_limits().parse_die("WeightedDie({501: 1})")
 
 
 def test_parse_within_limits_max_explosions_only_explosions():
-    assert NewParser().parse_die_within_limits("Exploding(Die(6),  10)") == Exploding(
+    assert NewParser.with_limits().parse_die("Exploding(Die(6),  10)") == Exploding(
         Die(6), 10
     )
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("Exploding(Die(6), 11)")
+        NewParser.with_limits().parse_die("Exploding(Die(6), 11)")
 
 
 def test_parse_within_limits_max_explosions_explosions_and_explodes_on():
-    actual = NewParser().parse_die_within_limits("ExplodingOn(Die(6), (1, 2, 3), 7)")
+    actual = NewParser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 7)")
     assert actual == ExplodingOn(Die(6), (1, 2, 3), 7)
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("ExplodingOn(Die(6), (1, 2, 3), 8)")
+        NewParser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 8)")
 
 
 def test_parse_within_limits_dice_pool_passes_and_fails():
-    actual = NewParser().parse_die_within_limits("BestOfDicePool(Die(3), 5, 1)")
+    actual = NewParser.with_limits().parse_die("BestOfDicePool(Die(3), 5, 1)")
     assert actual == BestOfDicePool(Die(3), 5, 1)
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("BestOfDicePool(Die(3), 600, 1)")
+        NewParser.with_limits().parse_die("BestOfDicePool(Die(3), 600, 1)")
 
-    actual = NewParser().parse_die_within_limits("WorstOfDicePool(Die(3), 5, 1)")
+    actual = NewParser.with_limits().parse_die("WorstOfDicePool(Die(3), 5, 1)")
     assert actual == WorstOfDicePool(Die(3), 5, 1)
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("WorstOfDicePool(Die(3), 600, 1)")
+        NewParser.with_limits().parse_die("WorstOfDicePool(Die(3), 600, 1)")
 
-    actual = NewParser().parse_die_within_limits("UpperMidOfDicePool(Die(3), 5, 1)")
+    actual = NewParser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 5, 1)")
     assert actual == UpperMidOfDicePool(Die(3), 5, 1)
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("UpperMidOfDicePool(Die(3), 600, 1)")
+        NewParser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 600, 1)")
 
-    actual = NewParser().parse_die_within_limits("LowerMidOfDicePool(Die(3), 5, 1)")
+    actual = NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 5, 1)")
     assert actual == LowerMidOfDicePool(Die(3), 5, 1)
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("LowerMidOfDicePool(Die(3), 600, 1)")
+        NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 600, 1)")
 
 
 def test_parse_within_limits_white_box_test_of_dice_pool():
-    assert NewParser()._check_dice_pool(Die(3), 5) is None
+    assert NewParser.with_limits()._check_dice_pool(Die(3), 5) is None
     with pytest.raises(LimitsError):
-        NewParser()._check_dice_pool(Die(3), 131)
+        NewParser.with_limits()._check_dice_pool(Die(3), 131)
 
 
 def test_parse_within_limits_white_box_test_of_dice_pool_uses_dict_size_not_dice_size():
@@ -361,7 +346,7 @@ def test_parse_within_limits_white_box_test_of_dice_pool_uses_dict_size_not_dice
     ],
 )
 def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(
-        die_size, die_pool, max_combinations
+    die_size, die_pool, max_combinations
 ):
     """
     self.max_dice_pool_combinations_per_dict_size = {
@@ -370,7 +355,7 @@ def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(
     }
     """
     with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits("BestOfDicePool(Die(1), 1, 1)")
+        NewParser.with_limits().parse_die("BestOfDicePool(Die(1), 1, 1)")
 
     assert count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
     assert count_unique_combination_keys(Die(die_size), die_pool + 1) > max_combinations
@@ -417,8 +402,8 @@ def test_parse_within_limits_max_dice_pool_calls():
     assert parser.parse_die_within_limits(repr(two_calls)) == two_calls
     assert parser.parse_die_within_limits(repr(two_calls_alt)) == two_calls_alt
     assert (
-            parser.parse_die_within_limits(repr(two_pools_three_nested_dice))
-            == two_pools_three_nested_dice
+        parser.parse_die_within_limits(repr(two_pools_three_nested_dice))
+        == two_pools_three_nested_dice
     )
     with pytest.raises(LimitsError):
         parser.parse_die_within_limits(repr(three_calls))
@@ -570,7 +555,9 @@ def test_mod_die():
 
 
 def test_weighted_die():
-    assert NewParser().parse_die("WeightedDie({1: 2, 3: 4})") == WeightedDie({1: 2, 3: 4})
+    assert NewParser().parse_die("WeightedDie({1: 2, 3: 4})") == WeightedDie(
+        {1: 2, 3: 4}
+    )
 
 
 def test_mod_weighted_die():
@@ -610,7 +597,9 @@ def test_exploding_on():
     assert NewParser().parse_die("ExplodingOn(Die(6), (2, 6), 0)") == ExplodingOn(
         Die(6), (2, 6), 0
     )
-    assert NewParser().parse_die("ExplodingOn(Die(6), (2,))") == ExplodingOn(Die(6), (2,))
+    assert NewParser().parse_die("ExplodingOn(Die(6), (2,))") == ExplodingOn(
+        Die(6), (2,)
+    )
     assert NewParser().parse_die("ExplodingOn(Die(6), ())") == ExplodingOn(Die(6), ())
 
 
@@ -633,15 +622,15 @@ def test_worst_of_dice_pool():
 
 
 def test_upper_mid_of_dice_pool():
-    assert NewParser().parse_die("UpperMidOfDicePool(Die(2), 5, 2)") == UpperMidOfDicePool(
-        Die(2), 5, 2
-    )
+    assert NewParser().parse_die(
+        "UpperMidOfDicePool(Die(2), 5, 2)"
+    ) == UpperMidOfDicePool(Die(2), 5, 2)
 
 
 def test_lower_mid_of_dice_pool():
-    assert NewParser().parse_die("LowerMidOfDicePool(Die(2), 5, 2)") == LowerMidOfDicePool(
-        Die(2), 5, 2
-    )
+    assert NewParser().parse_die(
+        "LowerMidOfDicePool(Die(2), 5, 2)"
+    ) == LowerMidOfDicePool(Die(2), 5, 2)
 
 
 def test_die_with_kwargs():
@@ -676,9 +665,9 @@ def test_modifier_with_kwargs():
 
 
 def test_exploding_with_kwargs():
-    assert NewParser().parse_die("Exploding(input_die=Die(6), explosions=0)") == Exploding(
-        Die(6), 0
-    )
+    assert NewParser().parse_die(
+        "Exploding(input_die=Die(6), explosions=0)"
+    ) == Exploding(Die(6), 0)
     assert NewParser().parse_die("Exploding(input_die=Die(6))") == Exploding(Die(6))
 
 
@@ -687,9 +676,9 @@ def test_exploding_on_with_kwargs():
         "ExplodingOn(input_die=Die(6), explodes_on=(2, 6), explosions=0)"
     )
     assert actual == ExplodingOn(Die(6), (2, 6), 0)
-    assert NewParser().parse_die("ExplodingOn(Die(6), explodes_on=(2,))") == ExplodingOn(
-        Die(6), (2,)
-    )
+    assert NewParser().parse_die(
+        "ExplodingOn(Die(6), explodes_on=(2,))"
+    ) == ExplodingOn(Die(6), (2,))
 
 
 def test_best_of_dice_pool_with_kwargs():
@@ -721,7 +710,9 @@ def test_lower_mid_of_dice_pool_with_kwargs():
 
 
 def test_nested_dice():
-    actual = NewParser().parse_die("Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)")
+    actual = NewParser().parse_die(
+        "Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)"
+    )
     assert actual == Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)
 
 
@@ -759,8 +750,8 @@ def test_add_class_auto_detect_kwargs():
 
     parser = NewParser()
     parser.add_class(Thing)
-    actual = parser.parse_die('Thing(num=3)')
-    other_actual = parser.parse_die('Thing(3)')
+    actual = parser.parse_die("Thing(num=3)")
+    other_actual = parser.parse_die("Thing(3)")
     expected = Thing(3)
     assert actual == expected
     assert other_actual == expected
