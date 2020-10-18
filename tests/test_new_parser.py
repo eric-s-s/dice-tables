@@ -26,7 +26,6 @@ from dicetables.dieevents import (
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.parser import (
     ParseError,
-    LimitsError,
 )
 from dicetables.new_parser import (
     NewParser,
@@ -34,6 +33,7 @@ from dicetables.new_parser import (
     make_int_dict,
     make_int_tuple,
 )
+from dicetables.tools.limit_checker import LimitsError
 from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
@@ -307,85 +307,26 @@ def test_parse_within_limits_dice_pool_passes_and_fails():
         NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 600, 1)")
 
 
-def test_parse_within_limits_white_box_test_of_dice_pool():
-    assert NewParser.with_limits()._check_dice_pool(Die(3), 5) is None
-    with pytest.raises(LimitsError):
-        NewParser.with_limits()._check_dice_pool(Die(3), 131)
-
-
-def test_parse_within_limits_white_box_test_of_dice_pool_uses_dict_size_not_dice_size():
-    die = WeightedDie({1: 2, 2: 1, 100: 2})
-    assert die.get_size() == 100
-    assert len(die.get_dict()) == 3
-
-    assert NewParser()._check_dice_pool(die, 130) is None
-    with pytest.raises(LimitsError):
-        NewParser()._check_dice_pool(die, 131)
-
-    die = Exploding(Die(6))
-    assert die.get_size() == 6
-    assert len(die.get_dict()) == 16
-
-    assert NewParser()._check_dice_pool(die, 7) is None
-    with pytest.raises(LimitsError):
-        NewParser()._check_dice_pool(die, 8)
-
-
-@pytest.mark.parametrize(
-    "die_size,die_pool,max_combinations",
-    [
-        (2, 599, 600),
-        (3, 130, 8700),
-        (4, 54, 30000),
-        (5, 31, 55000),
-        (6, 21, 70000),
-        (7, 16, 100000),
-        (12, 9, 200000),
-        (30, 4, 250000),
-        (100, 3, 250000),
-    ],
-)
-def test_parse_within_limits_white_box_test_dice_pool_each_dictionary_limit(
-    die_size, die_pool, max_combinations
-):
-    """
-    self.max_dice_pool_combinations_per_dict_size = {
-        2: 600, 3: 8700, 4: 30000, 5: 55000, 6: 70000,
-        7: 100000, 12: 200000, 30: 250000
-    }
-    """
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("BestOfDicePool(Die(1), 1, 1)")
-
-    assert count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
-    assert count_unique_combination_keys(Die(die_size), die_pool + 1) > max_combinations
-    assert NewParser()._check_dice_pool(Die(die_size), die_pool) is None
-    with pytest.raises(LimitsError):
-        NewParser()._check_dice_pool(Die(die_size), die_pool + 1)
-
-
 def test_parse_within_limits_max_nested_dice():
-    parser = NewParser(max_nested_dice=3)
-    depth_3 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
-    depth_4 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
+    parser = NewParser.with_limits(max_dice=4)
+    depth_4 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
+    depth_5 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
 
-    assert parser.parse_die_within_limits(repr(depth_3)) == depth_3
-    with pytest.raises(LimitsError):
-        parser.parse_die_within_limits(repr(depth_4))
-    # Can be parsed if no limits.
     assert parser.parse_die(repr(depth_4)) == depth_4
+    with pytest.raises(LimitsError):
+        parser.parse_die(repr(depth_5))
 
 
 def test_parse_die_within_limits_resets_nested_dice_counter_each_time():
-    parser = NewParser(max_nested_dice=3)
-    depth_3 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
-    depth_4 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
+    parser = NewParser.with_limits(max_dice=4)
+    depth_4 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
+    depth_5 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
 
-    assert parser.parse_die_within_limits(repr(depth_3)) == depth_3
-    assert parser.parse_die_within_limits(repr(depth_3)) == depth_3
+    assert parser.parse_die(repr(depth_4)) == depth_4
+    assert parser.parse_die(repr(depth_4)) == depth_4
     with pytest.raises(LimitsError):
-        parser.parse_die_within_limits(repr(depth_4))
-    assert parser.parse_die_within_limits(repr(depth_3)) == depth_3
+        parser.parse_die(repr(depth_5))
+    assert parser.parse_die(repr(depth_4)) == depth_4
 
 
 def test_parse_within_limits_max_dice_pool_calls():

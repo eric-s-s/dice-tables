@@ -6,9 +6,9 @@ import pytest
 from dicetables import (
     Die,
     BestOfDicePool,
-LowerMidOfDicePool,
-UpperMidOfDicePool,
-WorstOfDicePool,
+    LowerMidOfDicePool,
+    UpperMidOfDicePool,
+    WorstOfDicePool,
     ModDie,
     ModWeightedDie,
     Exploding,
@@ -158,10 +158,10 @@ class TestLimitChecker(object):
         bound_args = signature(Die).bind(1000)
         checker.assert_dice_pool_within_limits(bound_args)
 
-    @pytest.mark.parametrize("dice_pool_class",
-                             [
-                                 BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
-                             ])
+    @pytest.mark.parametrize(
+        "dice_pool_class",
+        [BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool],
+    )
     @pytest.mark.parametrize(
         "die_size,die_pool,max_combinations",
         [
@@ -177,7 +177,7 @@ class TestLimitChecker(object):
         ],
     )
     def test_assert_dice_pool_within_limits_on_dice_pool(
-            self, die_size, die_pool, max_combinations, dice_pool_class
+        self, die_size, die_pool, max_combinations, dice_pool_class
     ):
         """
         self.max_dice_pool_combinations_per_dict_size = {
@@ -185,30 +185,29 @@ class TestLimitChecker(object):
             7: 100000, 12: 200000, 30: 250000
         }
         """
-        # with pytest.raises(LimitsError):
-        #     NewParser.with_limits().parse_die("BestOfDicePool(Die(1), 1, 1)")
         checker = LimitChecker()
         bound_args_passing = signature(dice_pool_class).bind(Die(die_size), die_pool, 1)
-        bound_args_failing = signature(dice_pool_class).bind(Die(die_size), die_pool + 1, 1)
-        assert count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
+        bound_args_failing = signature(dice_pool_class).bind(
+            Die(die_size), die_pool + 1, 1
+        )
+        assert (
+            count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
+        )
         checker.assert_dice_pool_within_limits(bound_args_passing)
 
-        assert count_unique_combination_keys(Die(die_size), die_pool + 1) > max_combinations
+        assert (
+            count_unique_combination_keys(Die(die_size), die_pool + 1)
+            > max_combinations
+        )
         with pytest.raises(LimitsError):
             checker.assert_dice_pool_within_limits(bound_args_failing)
 
-    @pytest.mark.parametrize("dice_pool_class", [BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool])
+    @pytest.mark.parametrize(
+        "dice_pool_class",
+        [BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool],
+    )
     def test_assert_dice_pool_within_limits_pool_of_one_fails(self, dice_pool_class):
         checker = LimitChecker()
         bound_args = signature(dice_pool_class).bind(Die(1), 1, 1)
         with pytest.raises(LimitsError):
             checker.assert_dice_pool_within_limits(bound_args)
-"""
-
-        self._limits_values = {'size': [('die_size', None), ('dictionary_input', None)],
-                               'explosions': [('explosions', 2)],
-                               'explodes_on': [('explodes_on', None)],
-                               'input_die': [('input_die', None)],
-                               'pool_size': [('pool_size', None)]}
-
-"""

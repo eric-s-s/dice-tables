@@ -5,7 +5,10 @@ from typing import Iterable, Type, Optional, Any
 
 from dicetables.bestworstmid import DicePool
 from dicetables.eventsbases.protodie import ProtoDie
-from dicetables.tools.orderedcombinations import count_unique_combination_keys, largest_permitted_pool_size
+from dicetables.tools.orderedcombinations import (
+    count_unique_combination_keys,
+    largest_permitted_pool_size,
+)
 
 
 class LimitsError(ValueError):

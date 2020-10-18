@@ -1,9 +1,8 @@
 import ast
-from typing import Dict, Tuple, get_type_hints, List, Iterable, Type
-from inspect import signature, _empty, BoundArguments, Signature
+from typing import Dict, Iterable, Type
+from inspect import signature, _empty, Signature
 
 from dicetables.bestworstmid import (
-    DicePool,
     BestOfDicePool,
     WorstOfDicePool,
     UpperMidOfDicePool,
@@ -25,12 +24,8 @@ from dicetables.tools.limit_checker import (
     NoOpLimitChecker,
     LimitChecker,
 )
-from dicetables.tools.orderedcombinations import (
-    count_unique_combination_keys,
-    largest_permitted_pool_size,
-)
 
-from dicetables.parser import ParseError, LimitsError
+from dicetables.parser import ParseError
 
 
 class NewParser(object):
@@ -204,91 +199,6 @@ class NewParser(object):
 
         return param.name, converter(value_node)
 
-    def _check_limits(self, die_class, bound_args: BoundArguments):
-        self._check_then_update_nested_calls()
-        self._update_then_check_dice_pool_calls(die_class)
-
-        input_die = self._get_limits_params("input_die", bound_args)
-        pool_size = self._get_limits_params("pool_size", bound_args)
-        size_or_dict = self._get_limits_params("size", bound_args)
-        explosions = self._get_limits_params("explosions", bound_args)
-        explodes_on = self._get_limits_params("explodes_on", bound_args)
-
-        self._check_dice_pool(input_die, pool_size)
-        self._check_die_size(size_or_dict)
-        self._check_explosions(explosions, explodes_on)
-
-    def _get_limits_params(self, param_types, bound_args: BoundArguments):
-        limit_keywords = self._limits_kwargs[param_types]
-        arguments = bound_args.arguments
-        for kwarg_name in limit_keywords:
-            if kwarg_name in arguments:
-                return arguments[kwarg_name]
-
-        return None
-
-    def _check_die_size(self, size_or_dict):
-
-        if size_or_dict is None:
-            return None
-
-        if isinstance(size_or_dict, int):
-            size_value = size_or_dict
-        elif isinstance(size_or_dict, dict):
-            size_value = max(size_or_dict.keys())
-        else:
-            msg = 'A kwarg declared as a "die size limit" is neither an int nor a dict of ints.'
-            raise ValueError(msg)
-
-        if size_value > self.max_size:
-            msg = "Max die_size: {}".format(self.max_size)
-            raise LimitsError(msg)
-
-    def _check_explosions(self, explosions, explodes_on):
-        explosions_value = 0
-        if explosions is not None:
-            if not isinstance(explosions, int):
-                raise ValueError('A kwarg declared as an "explosions" is not an int.')
-            explosions_value += explosions
-
-        if explodes_on is not None:
-            if not isinstance(explodes_on, (tuple, list)):
-                raise ValueError('A kwarg declared as an "explodes_on" is not a tuple.')
-            explosions_value += len(explodes_on)
-
-        if explosions_value > self.max_explosions:
-            msg = "Max number of explosions + len(explodes_on): {}".format(
-                self.max_explosions
-            )
-            raise LimitsError(msg)
-
-    def _check_dice_pool(self, input_die, pool_size):
-        if input_die is None or pool_size is None:
-            return None
-
-        if not isinstance(input_die, ProtoDie):
-            raise ValueError(
-                'A kwarg declared as an "input_die" does not inherit from ProtoDie.'
-            )
-        if not isinstance(pool_size, int):
-            raise ValueError('A kwarg declared as a "pool_size" is not an int.')
-
-        dict_size = len(input_die.get_dict())
-        pool_limit = 0
-        for key, limit in sorted(self.max_dice_pool_combinations_per_dict_size.items()):
-            if key > dict_size:
-                break
-            pool_limit = limit
-
-        score = count_unique_combination_keys(input_die, pool_size)
-        if score > pool_limit:
-            max_pool_size = largest_permitted_pool_size(input_die, pool_limit)
-            msg = "{!r} has a get_dict() of size: {}\n".format(input_die, dict_size)
-            explanation = "For this die, the largest permitted pool_size is {}".format(
-                max_pool_size
-            )
-            raise LimitsError(msg + explanation)
-
     def add_class(self, class_: object):
         """
 
@@ -311,32 +221,6 @@ class NewParser(object):
 
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
-
-    def add_limits_kwarg(self, existing_key, new_key_word, default=None):
-        """
-        If there is a default value and you do not add it or you add the incorrect one,
-        `parse_within_limits` will fail.
-
-        current keys are:
-
-        - 'size'
-        - 'explosions'
-        - 'explodes_on'
-        - 'input_die'
-        - 'pool_size'
-        """
-        if existing_key not in self._limits_kwargs.keys():
-            raise KeyError(
-                'key: "{}" not in self.limits_kwargs. Use add_limits_key.'.format(
-                    existing_key
-                )
-            )
-        self._limits_kwargs[existing_key].append((new_key_word, default))
-
-    def add_limits_key(self, new_key):
-        if new_key in self._limits_kwargs.keys():
-            raise ValueError("Tried to add existing key to self.limits_kwargs.")
-        self._limits_kwargs[new_key] = []
 
 
 def make_int_dict(dict_node):
