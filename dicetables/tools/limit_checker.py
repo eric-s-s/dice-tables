@@ -47,28 +47,28 @@ class AbstractLimitChecker(ABC):
         """
         :raises LimitsError:
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def assert_die_size_within_limits(self, bound_args: BoundArguments) -> None:
         """
         :raises LimitsError:
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def assert_explosions_within_limits(self, bound_args: BoundArguments) -> None:
         """
         :raises LimitsError:
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def assert_dice_pool_within_limits(self, bound_args: BoundArguments) -> None:
         """
         :raises LimitsError:
         """
-        pass
+        raise NotImplementedError
 
 
 class NoOpLimitChecker(AbstractLimitChecker):

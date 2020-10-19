@@ -2,7 +2,6 @@
 
 
 import ast
-import re
 from typing import Dict, Iterable
 
 import pytest
@@ -34,12 +33,18 @@ from dicetables.new_parser import (
     make_int_tuple,
 )
 from dicetables.tools.limit_checker import LimitsError
-from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
 def test_init_setting_ignore_case():
     assert not NewParser(False).ignore_case
     assert NewParser(True).ignore_case
+
+
+def test_classes_property():
+    parser = NewParser()
+    assert parser.classes == {Die, Modifier, ModDie, WeightedDie, ModWeightedDie, StrongDie, Exploding, ExplodingOn,
+                              BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool}
+    assert parser.classes is not parser.classes
 
 
 @pytest.mark.parametrize("input_value", ["2", "-2", "0"])
@@ -249,329 +254,98 @@ def test_walk_dice_calls_bad_value():
         list(result)
 
 
-def test_parse_within_limits_max_size_int():
-    assert NewParser.with_limits().parse_die("Die(500)") == Die(500)
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("Die(501)")
+class TestParserWithLimits(object):
+    def test_parse_within_limits_max_size_int(self):
+        assert NewParser.with_limits().parse_die("Die(500)") == Die(500)
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("Die(501)")
 
-
-def test_parse_within_limits_and_then_regular_parse():
-    parser = NewParser.with_limits()
-    parser.parse_die("Die(500)")
-    expected = parser.parse_die("Die(501)")
-    assert expected == Die(501)
-
-
-def test_parse_within_limits_max_size_dict():
-    assert NewParser.with_limits().parse_die("WeightedDie({500:1})") == WeightedDie(
-        {500: 1}
-    )
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("WeightedDie({501: 1})")
-
-
-def test_parse_within_limits_max_explosions_only_explosions():
-    assert NewParser.with_limits().parse_die("Exploding(Die(6),  10)") == Exploding(
-        Die(6), 10
-    )
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("Exploding(Die(6), 11)")
-
-
-def test_parse_within_limits_max_explosions_explosions_and_explodes_on():
-    actual = NewParser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 7)")
-    assert actual == ExplodingOn(Die(6), (1, 2, 3), 7)
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 8)")
-
-
-def test_parse_within_limits_dice_pool_passes_and_fails():
-    actual = NewParser.with_limits().parse_die("BestOfDicePool(Die(3), 5, 1)")
-    assert actual == BestOfDicePool(Die(3), 5, 1)
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("BestOfDicePool(Die(3), 600, 1)")
-
-    actual = NewParser.with_limits().parse_die("WorstOfDicePool(Die(3), 5, 1)")
-    assert actual == WorstOfDicePool(Die(3), 5, 1)
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("WorstOfDicePool(Die(3), 600, 1)")
-
-    actual = NewParser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 5, 1)")
-    assert actual == UpperMidOfDicePool(Die(3), 5, 1)
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 600, 1)")
-
-    actual = NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 5, 1)")
-    assert actual == LowerMidOfDicePool(Die(3), 5, 1)
-    with pytest.raises(LimitsError):
-        NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 600, 1)")
-
-
-def test_parse_within_limits_max_nested_dice():
-    parser = NewParser.with_limits(max_dice=4)
-    depth_4 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
-    depth_5 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
-
-    assert parser.parse_die(repr(depth_4)) == depth_4
-    with pytest.raises(LimitsError):
-        parser.parse_die(repr(depth_5))
-
-
-def test_parse_die_within_limits_resets_nested_dice_counter_each_time():
-    parser = NewParser.with_limits(max_dice=4)
-    depth_4 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
-    depth_5 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
-
-    assert parser.parse_die(repr(depth_4)) == depth_4
-    assert parser.parse_die(repr(depth_4)) == depth_4
-    with pytest.raises(LimitsError):
-        parser.parse_die(repr(depth_5))
-    assert parser.parse_die(repr(depth_4)) == depth_4
-
-
-def test_parse_within_limits_max_dice_pool_calls():
-    parser = NewParser(max_nested_dice=3)
-    two_calls = BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2)
-    two_calls_alt = UpperMidOfDicePool(LowerMidOfDicePool(Die(2), 3, 2), 3, 2)
-    two_pools_three_nested_dice = BestOfDicePool(
-        StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2
-    )
-    three_calls = BestOfDicePool(
-        BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2
-    )
-
-    assert parser.parse_die_within_limits(repr(two_calls)) == two_calls
-    assert parser.parse_die_within_limits(repr(two_calls_alt)) == two_calls_alt
-    assert (
-        parser.parse_die_within_limits(repr(two_pools_three_nested_dice))
-        == two_pools_three_nested_dice
-    )
-    with pytest.raises(LimitsError):
-        parser.parse_die_within_limits(repr(three_calls))
-    # Can be parsed if no limits.
-    assert parser.parse_die(repr(three_calls)) == three_calls
-
-
-def test_parse_within_limits_dice_pool_calls_are_still_nested_die_calls():
-    parser = NewParser(max_nested_dice=3)
-    depth_4 = BestOfDicePool(StrongDie(StrongDie(StrongDie(Die(2), 2), 2), 2), 2, 2)
-    with pytest.raises(LimitsError):
-        parser.parse_die_within_limits(repr(depth_4))
-
-
-def test_parse_die_within_limits_resets_dice_pool_counter_each_time():
-    parser = NewParser(max_nested_dice=3)
-    two_calls = BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2)
-    three_calls = BestOfDicePool(
-        BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2
-    )
-
-    assert parser.parse_die_within_limits(repr(two_calls)) == two_calls
-    assert parser.parse_die_within_limits(repr(two_calls)) == two_calls
-    with pytest.raises(LimitsError):
-        parser.parse_die_within_limits(repr(three_calls))
-    assert parser.parse_die_within_limits(repr(two_calls)) == two_calls
-
-
-def test_parse_within_limits_catches_violation_on_nested_call():
-    exploding_on_error = "StrongDie(ExplodingOn(Exploding(Die(500), 3), (1, 2), 9), 5)"
-    msg = re.escape("Max number of explosions + len(explodes_on): 10")
-    with pytest.raises(LimitsError, match=msg):
-        NewParser().parse_die_within_limits(exploding_on_error)
-
-
-def test_parse_within_limits_does_not_catch_non_hardcoded_kwargs():
-    class NewDie(Die):
-        def __init__(self, funky_new_die_size):
-            super(NewDie, self).__init__(funky_new_die_size)
-
-    parser = NewParser()
-    parser.add_class(NewDie)
-
-    with pytest.raises(LimitsError):
-        parser.parse_die_within_limits("Die(5000)")
-    assert NewDie(5000) == parser.parse_die_within_limits("NewDie(5000)")
-
-
-def test_parse_within_limits_white_box_test_non_hardcoded_kwargs_for_dicepool():
-    """This could be run as a regular blackbox test, but it would take 0.5s for this single test."""
-
-    class IgnoresLimits(BestOfDicePool):
-        def __init__(self, a_die, pool_size, select):
-            super(IgnoresLimits, self).__init__(a_die, pool_size, select)
-
-    class AlsoIgnoresLimits(BestOfDicePool):
-        def __init__(self, input_die, poolio, select):
-            super(AlsoIgnoresLimits, self).__init__(input_die, poolio, select)
-
-    class CatchesLimits(BestOfDicePool):
-        def __init__(self, input_die, pool_size, selection):
-            super(CatchesLimits, self).__init__(input_die, pool_size, selection)
-
-    parser = NewParser()
-    parser.add_class(IgnoresLimits, ("die", "int", "int"))
-    parser.add_class(AlsoIgnoresLimits, ("die", "int", "int"))
-    parser.add_class(CatchesLimits, ("die", "int", "int"))
-
-    assert parser._dice_pool_counter == 0
-    assert parser._check_limits(IgnoresLimits, (Die(6), 1000, 900), ()) is None
-    assert parser._dice_pool_counter == 1  # It checked Limits for DicePool and passed
-
-    parser._dice_pool_counter = 0
-    assert parser._check_limits(AlsoIgnoresLimits, (Die(6), 1000, 900), ()) is None
-    assert parser._dice_pool_counter == 1  # It checked Limits for DicePool and passed
-
-    parser._dice_pool_counter = 0
-    with pytest.raises(LimitsError):
-        parser._check_limits(CatchesLimits, (Die(6), 1000, 900), ())
-    assert parser._dice_pool_counter == 1  # It checked Limits for DicePool and failed
-
-
-def test_parse_within_limits_unfilled_default_value():
-    assert NewParser().parse_die_within_limits("Exploding(Die(5))") == Exploding(Die(5))
-    actual = NewParser().parse_die_within_limits("ExplodingOn(Die(10), (1, 2, 3))")
-    assert actual == ExplodingOn(Die(10), (1, 2, 3))
-
-    with pytest.raises(LimitsError):
-        NewParser().parse_die_within_limits(
-            "ExplodingOn(Die(10), (1, 2, 3, 4, 5, 6, 7, 8, 9))"
+    def test_parse_within_limits_max_size_dict(self):
+        assert NewParser.with_limits().parse_die("WeightedDie({500:1})") == WeightedDie(
+            {500: 1}
         )
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("WeightedDie({501: 1})")
+
+    def test_parse_within_limits_max_explosions_only_explosions(self):
+        assert NewParser.with_limits().parse_die("Exploding(Die(6),  10)") == Exploding(
+            Die(6), 10
+        )
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("Exploding(Die(6), 11)")
+
+    def test_parse_within_limits_max_explosions_explosions_and_explodes_on(self):
+        actual = NewParser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 7)")
+        assert actual == ExplodingOn(Die(6), (1, 2, 3), 7)
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 8)")
+
+    def test_parse_within_limits_dice_pool_passes_and_fails(self):
+        actual = NewParser.with_limits().parse_die("BestOfDicePool(Die(3), 5, 1)")
+        assert actual == BestOfDicePool(Die(3), 5, 1)
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("BestOfDicePool(Die(3), 600, 1)")
+
+        actual = NewParser.with_limits().parse_die("WorstOfDicePool(Die(3), 5, 1)")
+        assert actual == WorstOfDicePool(Die(3), 5, 1)
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("WorstOfDicePool(Die(3), 600, 1)")
+
+        actual = NewParser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 5, 1)")
+        assert actual == UpperMidOfDicePool(Die(3), 5, 1)
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 600, 1)")
+
+        actual = NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 5, 1)")
+        assert actual == LowerMidOfDicePool(Die(3), 5, 1)
+        with pytest.raises(LimitsError):
+            NewParser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 600, 1)")
+
+    def test_parse_within_limits_max_nested_dice(self):
+        parser = NewParser.with_limits(max_dice=4)
+        depth_4 = StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2)
+        depth_5 = StrongDie(StrongDie(StrongDie(StrongDie(Die(4), 2), 2), 2), 2)
+
+        assert parser.parse_die(repr(depth_4)) == depth_4
+        with pytest.raises(LimitsError):
+            parser.parse_die(repr(depth_5))
 
 
-def test_parse_within_limits_unfilled_default_value_can_pass_limiter_and_fails_elsewhere():
-    with pytest.raises(TypeError):
-        NewParser().parse_die_within_limits("Die()")
-    with pytest.raises(TypeError):
-        NewParser().parse_die_within_limits("WeightedDie()")
-    with pytest.raises(TypeError):
-        NewParser().parse_die_within_limits("ExplodingOn(Die(6))")
-
-
-def test_parse_within_limits_error_message_nested_calls():
-    parser = NewParser(max_nested_dice=1)
-    msg = "Max number of nested dice: 1"
-    with pytest.raises(LimitsError, match=msg):
-        parser.parse_die_within_limits("StrongDie(StrongDie(Die(6), 2), 2)")
-
-
-def test_parse_within_limits_error_message_max_size():
-    parser = NewParser(max_size=10)
-    msg = "Max die_size: 10"
-    with pytest.raises(LimitsError, match=msg):
-        parser.parse_die_within_limits("Die(11)")
-
-
-def test_parse_within_limits_error_message_max_explosions():
-    parser = NewParser(max_explosions=2)
-    msg = re.escape("Max number of explosions + len(explodes_on): 2")
-    with pytest.raises(LimitsError, match=msg):
-        parser.parse_die_within_limits("Exploding(Die(5), 3)")
-
-
-def test_parse_within_limits_error_message_dice_pool():
-    msg = re.escape(
-        "Die(6) has a get_dict() of size: 6\nFor this die, the largest permitted pool_size is 21"
-    )
-    with pytest.raises(LimitsError, match=msg):
-        NewParser().parse_die_within_limits("BestOfDicePool(Die(6), 100, 1)")
-
-
-def test_parse_within_limits_error_message_dice_pool_calls():
-    three_calls = BestOfDicePool(
-        BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2
-    )
-    msg = "Max number of DicePool objects: 2"
-    with pytest.raises(LimitsError, match=msg):
-        NewParser().parse_die_within_limits(repr(three_calls))
-
-
-def test_die():
-    assert NewParser().parse_die("Die(6)") == Die(6)
-
-
-def test_mod_die():
-    assert NewParser().parse_die("ModDie(6, 2)") == ModDie(6, 2)
-    assert NewParser().parse_die("ModDie(6, -2)") == ModDie(6, -2)
-    assert NewParser().parse_die("ModDie(6, 0)") == ModDie(6, 0)
-
-
-def test_weighted_die():
-    assert NewParser().parse_die("WeightedDie({1: 2, 3: 4})") == WeightedDie(
-        {1: 2, 3: 4}
-    )
-
-
-def test_mod_weighted_die():
-    assert NewParser().parse_die("ModWeightedDie({1: 2, 3: 4}, 3)") == ModWeightedDie(
-        {1: 2, 3: 4}, 3
-    )
-    assert NewParser().parse_die("ModWeightedDie({1: 2, 3: 4}, -3)") == ModWeightedDie(
-        {1: 2, 3: 4}, -3
-    )
-    assert NewParser().parse_die("ModWeightedDie({1: 2, 3: 4}, 0)") == ModWeightedDie(
-        {1: 2, 3: 4}, 0
-    )
-
-
-def test_strong_die():
-    assert NewParser().parse_die("StrongDie(Die(6), 2)") == StrongDie(Die(6), 2)
-    assert NewParser().parse_die("StrongDie(Die(6), -2)") == StrongDie(Die(6), -2)
-    assert NewParser().parse_die("StrongDie(Die(6), 0)") == StrongDie(Die(6), 0)
-
-
-def test_modifier():
-    assert NewParser().parse_die("Modifier(6)") == Modifier(6)
-    assert NewParser().parse_die("Modifier(-6)") == Modifier(-6)
-    assert NewParser().parse_die("Modifier(0)") == Modifier(0)
-
-
-def test_exploding():
-    assert NewParser().parse_die("Exploding(Die(6), 3)") == Exploding(Die(6), 3)
-    assert NewParser().parse_die("Exploding(Die(6), 0)") == Exploding(Die(6), 0)
-    assert NewParser().parse_die("Exploding(Die(6))") == Exploding(Die(6))
-
-
-def test_exploding_on():
-    assert NewParser().parse_die("ExplodingOn(Die(6), (2, 6), 3)") == ExplodingOn(
-        Die(6), (2, 6), 3
-    )
-    assert NewParser().parse_die("ExplodingOn(Die(6), (2, 6), 0)") == ExplodingOn(
-        Die(6), (2, 6), 0
-    )
-    assert NewParser().parse_die("ExplodingOn(Die(6), (2,))") == ExplodingOn(
-        Die(6), (2,)
-    )
-    assert NewParser().parse_die("ExplodingOn(Die(6), ())") == ExplodingOn(Die(6), ())
-
-
-def test_best_of_dice_pool():
-    assert NewParser().parse_die("BestOfDicePool(Die(2), 5, 2)") == BestOfDicePool(
-        Die(2), 5, 2
-    )
-    assert NewParser().parse_die("BestOfDicePool(Die(2), 5, 5)") == BestOfDicePool(
-        Die(2), 5, 5
-    )
-    assert NewParser().parse_die("BestOfDicePool(Die(2), 5, 0)") == BestOfDicePool(
-        Die(2), 5, 0
-    )
-
-
-def test_worst_of_dice_pool():
-    assert NewParser().parse_die("WorstOfDicePool(Die(2), 5, 2)") == WorstOfDicePool(
-        Die(2), 5, 2
-    )
-
-
-def test_upper_mid_of_dice_pool():
-    assert NewParser().parse_die(
-        "UpperMidOfDicePool(Die(2), 5, 2)"
-    ) == UpperMidOfDicePool(Die(2), 5, 2)
-
-
-def test_lower_mid_of_dice_pool():
-    assert NewParser().parse_die(
-        "LowerMidOfDicePool(Die(2), 5, 2)"
-    ) == LowerMidOfDicePool(Die(2), 5, 2)
+@pytest.mark.parametrize(
+    "die",
+    [
+        Die(6),
+        ModDie(6, 2),
+        ModDie(6, 0),
+        ModDie(6, -2),
+        WeightedDie({1: 2, 3: 4}),
+        ModWeightedDie({1: 2, 3: 4}, 2),
+        ModWeightedDie({1: 2, 3: 4}, 0),
+        ModWeightedDie({1: 2, 3: 4}, -2),
+        StrongDie(Die(6), 2),
+        StrongDie(Die(6), 0),
+        StrongDie(Die(6), -2),
+        Modifier(4),
+        Modifier(0),
+        Modifier(-4),
+        Exploding(Die(6), 3),
+        Exploding(Die(6), 0),
+        Exploding(Die(6)),
+        ExplodingOn(Die(6), (2, 6), 3),
+        ExplodingOn(Die(6), (2, 6), 0),
+        ExplodingOn(Die(6), (2,)),
+        ExplodingOn(Die(6), ()),
+        BestOfDicePool(Die(2), 5, 2),
+        BestOfDicePool(Die(2), 5, 5),
+        BestOfDicePool(Die(2), 5, 0),
+        WorstOfDicePool(Die(2), 5, 2),
+        UpperMidOfDicePool(Die(2), 5, 2),
+        LowerMidOfDicePool(Die(2), 5, 2),
+    ],
+    ids=lambda el: repr(el),
+)
+def test_parse_die(die):
+    assert NewParser().parse_die(repr(die)) == die
 
 
 def test_die_with_kwargs():
@@ -698,13 +472,11 @@ def test_add_class_auto_detect_kwargs():
     assert other_actual == expected
 
 
-def test_add_class_auto_detect_raises_error_if_no_init_code():
+def test_add_class_okay_if_init_parameters():
     class Thing(object):
         pass
 
-    msg = "could not find the code for __init__ function at class_.__init__.__code__"
-    with pytest.raises(AttributeError, match=msg):
-        NewParser().add_class(Thing)
+    NewParser().add_class(Thing)
 
 
 def test_add_class_raises_error_if_no_type_hinting():
@@ -712,505 +484,81 @@ def test_add_class_raises_error_if_no_type_hinting():
         def __init__(self, num):
             self.num = num
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ParseError):
         NewParser().add_class(Thing)
 
 
-# def test_add_param_type():
-#     def a_func(x):
-#         return x
-#
-#     parser = NewParser()
-#     parser.add_param_type(, a_func)
-#
-#     answer = {
-#         "int": make_int,
-#         "int_dict": make_int_dict,
-#         "make_funkiness": a_func,
-#         "die": parser.make_die,
-#         "int_tuple": make_int_tuple,
-#     }
-#     assert answer == parser.param_types
-#
-#
-# def test_add_class_override_key():
-#     new_parser = NewParser()
-#     new_parser.add_class(Die, ("nonsense",))
-#
-#     assert new_parser.classes[Die] == ("nonsense",)
-#
-#
-# def test_add_param_type_override_key():
-#     new_parser = NewParser()
-#     new_parser.add_param_type("int", int)
-#
-#     assert new_parser.param_types["int"] == int
-#
-#
-# def test_add_limits_kwarg_no_default_value():
-#     defaults = {
-#         "size": [("die_size", None), ("dictionary_input", None)],
-#         "explosions": [("explosions", 2)],
-#         "explodes_on": [("explodes_on", None)],
-#         "input_die": [("input_die", None)],
-#         "pool_size": [("pool_size", None)],
-#     }
-#     parser = NewParser()
-#     assert parser.limits_kwargs == defaults
-#
-#     parser.add_limits_kwarg("size", "new_size_kwarg")
-#     answer = {
-#         "size": [
-#             ("die_size", None),
-#             ("dictionary_input", None),
-#             ("new_size_kwarg", None),
-#         ],
-#         "explosions": [("explosions", 2)],
-#         "explodes_on": [("explodes_on", None)],
-#         "input_die": [("input_die", None)],
-#         "pool_size": [("pool_size", None)],
-#     }
-#     assert parser.limits_kwargs == answer
-#
-#     parser.add_limits_kwarg("pool_size", "new_pool")
-#     answer["pool_size"].append(("new_pool", None))
-#     assert parser.limits_kwargs == answer
-#
-#
-# def test_add_limits_kwarg_with_default_value():
-#     parser = NewParser()
-#     parser.add_limits_kwarg("size", "new_size_kwarg", 11)
-#     answer = {
-#         "size": [
-#             ("die_size", None),
-#             ("dictionary_input", None),
-#             ("new_size_kwarg", 11),
-#         ],
-#         "explosions": [("explosions", 2)],
-#         "explodes_on": [("explodes_on", None)],
-#         "input_die": [("input_die", None)],
-#         "pool_size": [("pool_size", None)],
-#     }
-#     assert parser.limits_kwargs == answer
-#
-#
-# def test_add_limits_kwarg_all_keys():
-#     parser = NewParser()
-#     answer = parser.limits_kwargs.copy()
-#     for key in answer.keys():
-#         new_kwarg = "new_{}".format(key)
-#         default = 1
-#         parser.add_limits_kwarg(key, new_kwarg, default)
-#         answer[key].append((new_kwarg, default))
-#     assert parser.limits_kwargs == answer
-#
-#
-# def test_add_limits_kwarg_key_not_present():
-#     parser = NewParser()
-#     expected = parser.limits_kwargs.copy()
-#     msg = 'key: "oops" not in self.limits_kwargs. Use add_limits_key.'
-#     with pytest.raises(KeyError, match=msg):
-#         parser.add_limits_kwarg("oops", "sie", "daisy")
-#     assert parser.limits_kwargs == expected
-#
-#
-# def test_add_limits_key():
-#     parser = NewParser()
-#     expected = parser.limits_kwargs.copy()
-#     parser.add_limits_key("so_new")
-#     expected["so_new"] = []
-#     assert expected == parser.limits_kwargs
-#
-#     parser.add_limits_kwarg("so_new", "new!")
-#
-#     expected["so_new"] = [("new!", None)]
-#     assert expected == parser.limits_kwargs
-#
-#
-# def test_add_limits_key_error():
-#     existing_key = "size"
-#     msg = "Tried to add existing key to self.limits_kwargs."
-#     with pytest.raises(ValueError, match=msg):
-#         NewParser().add_limits_key(existing_key)
-#
-#
-# def test_an_instance_of_parser_with_a_new_die():
-#     class StupidDie(Die):
-#         def __init__(self, name, size):
-#             self.name = name
-#             super(StupidDie, self).__init__(size)
-#
-#         def __eq__(self, other):
-#             return super(StupidDie, self).__eq__(other) and self.name == other.name
-#
-#     new_parser = NewParser()
-#     new_parser.add_param_type("string", lambda str_node: str_node.s)
-#     new_parser.add_class(StupidDie, ("string", "int"))
-#
-#     assert new_parser.parse_die('StupidDie("hello", 3)') == StupidDie("hello", 3)
-#     assert new_parser.parse_die("Die(3)") == Die(3)
-#
-#
-# def test_new_parser_class_with_new_die():
-#     class StupidDie(Die):
-#         def __init__(self, name, size):
-#             self.name = name
-#             super(StupidDie, self).__init__(size)
-#
-#         def __eq__(self, other):
-#             return super(StupidDie, self).__eq__(other) and self.name == other.name
-#
-#     def make_string(str_node):
-#         return str_node.s
-#
-#     class NewNewParser(Parser):
-#         def __init__(self, ignore_case=False, disable_kwargs=False):
-#             super(NewNewParser, self).__init__(
-#                 ignore_case=ignore_case, disable_kwargs=disable_kwargs
-#             )
-#             self.add_class(StupidDie, ("string", "int"))
-#             self.add_param_type("string", make_string)
-#
-#     assert NewNewParser().parse_die('StupidDie("hello", 3)') == StupidDie("hello", 3)
-#     assert NewNewParser().parse_die("Die(3)") == Die(3)
-#
-#
-# def test_new_parser_class_with_new_die_and_kwargs():
-#     class StupidDie(Die):
-#         def __init__(self, name, size):
-#             self.name = name
-#             super(StupidDie, self).__init__(size)
-#
-#         def __eq__(self, other):
-#             return super(StupidDie, self).__eq__(other) and self.name == other.name
-#
-#     def make_string(str_node):
-#         return str_node.s
-#
-#     class NewNewParser(Parser):
-#         def __init__(self, ignore_case=False, disable_kwargs=False):
-#             super(NewNewParser, self).__init__(
-#                 ignore_case=ignore_case, disable_kwargs=disable_kwargs
-#             )
-#             self.add_class(StupidDie, ("string", "int"), kwargs=("name", "size"))
-#             self.add_param_type("string", make_string)
-#
-#     assert NewNewParser().parse_die('StupidDie(name="hello", size=3)') == StupidDie(
-#         "hello", 3
-#     )
-#     assert NewNewParser().parse_die("Die(3)") == Die(3)
-#
-#
-# def test_new_parser_class_with_new_die_that_calls_die():
-#     class DoubleDie(Die):
-#         def __init__(self, die, size):
-#             self.die = die
-#             super(DoubleDie, self).__init__(size)
-#
-#         def __eq__(self, other):
-#             return super(DoubleDie, self).__eq__(other) and self.die == other.die
-#
-#     class NewNewParser(Parser):
-#         def __init__(self, ignore_case=False, disable_kwargs=False):
-#             super(NewNewParser, self).__init__(
-#                 ignore_case=ignore_case, disable_kwargs=disable_kwargs
-#             )
-#             self.add_class(DoubleDie, ("die", "int"))
-#
-#     assert NewNewParser().parse_die("DoubleDie(DoubleDie(Die(2), 4), 3)") == DoubleDie(
-#         DoubleDie(Die(2), 4), 3
-#     )
-#     assert NewNewParser().parse_die("Die(3)") == Die(3)
-#
-#
-# # parse_within_limits_new_die
-# def test_parse_within_limits_new_die_preserves_original_kwargs():
-#     class NewDie(Die):
-#         def __init__(self, name, die_size):
-#             self.name = name
-#             super(NewDie, self).__init__(die_size=die_size)
-#
-#     def make_string(str_node):
-#         return str_node.s
-#
-#     parser = NewParser()
-#     parser.add_param_type("string", make_string)
-#     parser.add_class(NewDie, ("string", "int"))
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits('NewDie("bob", 501)')
-#
-#
-# def test_parse_within_limits_new_die_size_kwarg_int():
-#     class NewDie(Die):
-#         def __init__(self, funky_new_die_size):
-#             super(NewDie, self).__init__(funky_new_die_size)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int",))
-#     parser.add_limits_kwarg("size", "funky_new_die_size")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(5000)")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("Die(5000)")
-#
-#
-# def test_parse_within_limits_new_die_size_kwarg_dict():
-#     class NewDie(WeightedDie):
-#         def __init__(self, funky_new_die_dict):
-#             super(NewDie, self).__init__(funky_new_die_dict)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int_dict",))
-#     parser.add_limits_kwarg("size", "funky_new_die_dict")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie({5000: 1})")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("WeightedDie({5000: 1})")
-#
-#
-# def test_parse_within_limits_new_die_size_kwarg_error():
-#     class NewDie(Die):
-#         def __init__(self, size_int_as_str):
-#             super(NewDie, self).__init__(int(size_int_as_str))
-#
-#     def make_string(str_node):
-#         return str_node.s
-#
-#     parser = NewParser()
-#     parser.add_param_type("string", make_string)
-#     parser.add_class(NewDie, ("string",))
-#     parser.add_limits_kwarg("size", "size_int_as_str")
-#
-#     assert parser.parse_die('NewDie("5")') == NewDie("5")
-#
-#     msg = 'A kwarg declared as a "die size limit" is neither an int nor a dict of ints.'
-#     with pytest.raises(ValueError, match=msg):
-#         parser.parse_die_within_limits('NewDie("5")')
-#
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("WeightedDie({5000: 1})")
-#
-#
-# def test_parse_within_limits_new_explosions_kwarg_int():
-#     class NewDie(ExplodingOn):
-#         def __init__(self, input_die, explodes_on, biiiiig_booooooms=2):
-#             super(NewDie, self).__init__(input_die, explodes_on, biiiiig_booooooms)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int_tuple", "int"))
-#     parser.add_limits_kwarg("explosions", "biiiiig_booooooms")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(Die(5), (1, 2), 9)")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("ExplodingOn(Die(5), (1, 2), 9)")
-#
-#
-# def test_parse_within_limits_new_explosions_kwarg_int_tuple():
-#     class NewDie(ExplodingOn):
-#         def __init__(self, input_die, boom_points, explosions=2):
-#             super(NewDie, self).__init__(input_die, boom_points, explosions)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int_tuple", "int"))
-#     parser.add_limits_kwarg("explodes_on", "boom_points")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(Die(5), (1, 2), 9)")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("ExplodingOn(Die(5), (1, 2), 9)")
-#
-#
-# def test_parse_within_limits_new_explosions_kwarg_error():
-#     class NewDie(ExplodingOn):
-#         def __init__(self, input_die, explodes_on, str_splosions="2"):
-#             super(NewDie, self).__init__(input_die, explodes_on, int(str_splosions))
-#
-#     def make_string(str_node):
-#         return str_node.s
-#
-#     parser = NewParser()
-#     parser.add_param_type("string", make_string)
-#     parser.add_class(NewDie, ("die", "int_tuple", "string"))
-#     parser.add_limits_kwarg("explosions", "str_splosions")
-#
-#     assert parser.parse_die('NewDie(Die(5), (1, 2), "5")') == NewDie(
-#         Die(5), (1, 2), "5"
-#     )
-#
-#     msg = 'A kwarg declared as an "explosions" is not an int.'
-#     with pytest.raises(ValueError, match=msg):
-#         parser.parse_die_within_limits('NewDie(Die(5), (1, 2), "9")')
-#
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("ExplodingOn(Die(5), (1, 2), 9)")
-#
-#
-# def test_parse_within_limits_new_explodes_on_kwarg_error():
-#     class NewDie(ExplodingOn):
-#         def __init__(self, input_die, on_range, explosions=2):
-#             super(NewDie, self).__init__(
-#                 input_die, tuple(range(1, on_range)), explosions
-#             )
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int", "int"))
-#     parser.add_limits_kwarg("explodes_on", "on_range")
-#
-#     assert parser.parse_die("NewDie(Die(5), 2)") == NewDie(Die(5), 2)
-#
-#     msg = 'A kwarg declared as an "explodes_on" is not a tuple.'
-#     with pytest.raises(ValueError, match=msg):
-#         parser.parse_die_within_limits("NewDie(Die(5), 2)")
-#
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("ExplodingOn(Die(5), (1, 2), 9)")
-#
-#
-# def test_parse_within_limits_new_input_die_kwarg():
-#     class NewDie(BestOfDicePool):
-#         def __init__(self, funky_new_die, pool_size, select):
-#             super(NewDie, self).__init__(funky_new_die, pool_size, select)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int", "int"))
-#     parser.add_limits_kwarg("input_die", "funky_new_die")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(Die(100), 5, 4)")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("BestOfDicePool(Die(100), 5, 4)")
-#
-#
-# def test_parse_within_limits_new_input_kwarg_error():
-#     class NewDie(BestOfDicePool):
-#         def __init__(self, a_die_size, pool_size, select):
-#             die = Die(a_die_size)
-#             super(NewDie, self).__init__(die, pool_size, select)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int", "int", "int"))
-#     parser.add_limits_kwarg("input_die", "a_die_size")
-#
-#     assert parser.parse_die("NewDie(5, 2, 1)") == NewDie(5, 2, 1)
-#
-#     msg = 'A kwarg declared as an "input_die" does not inherit from ProtoDie.'
-#     with pytest.raises(ValueError, match=msg):
-#         parser.parse_die_within_limits("NewDie(5, 4, 1)")
-#
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("WeightedDie({5000: 1})")
-#
-#
-# def test_parse_within_limits_new_pool_size_kwarg():
-#     class NewDie(BestOfDicePool):
-#         def __init__(self, input_die, funky_new_pool, select):
-#             super(NewDie, self).__init__(input_die, funky_new_pool, select)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int", "int"))
-#     parser.add_limits_kwarg("pool_size", "funky_new_pool")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(Die(100), 5, 4)")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("BestOfDicePool(Die(100), 5, 4)")
-#
-#
-# def test_parse_within_limits_new_pool_size_kwarg_error():
-#     class NewDie(BestOfDicePool):
-#         def __init__(self, input_die, pool_str, select):
-#             super(NewDie, self).__init__(input_die, int(pool_str), select)
-#
-#     def make_string(str_node):
-#         return str_node.s
-#
-#     parser = NewParser()
-#     parser.add_param_type("string", make_string)
-#     parser.add_class(NewDie, ("die", "string", "int"))
-#     parser.add_limits_kwarg("pool_size", "pool_str")
-#
-#     assert parser.parse_die('NewDie(Die(5), "2", 1)') == NewDie(Die(5), "2", 1)
-#
-#     msg = 'A kwarg declared as a "pool_size" is not an int.'
-#     with pytest.raises(ValueError, match=msg):
-#         parser.parse_die_within_limits('NewDie(Die(5), "4", 1)')
-#
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("WeightedDie({5000: 1})")
-#
-#
-# def test_parse_within_limits_new_size_kwarg_with_defaults():
-#     class NewDie(Die):
-#         def __init__(self, funky_new_die_size=5000):
-#             super(NewDie, self).__init__(funky_new_die_size)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int",))
-#     parser.add_limits_kwarg("size", "funky_new_die_size", 5000)
-#     assert parser.parse_die("NewDie()") == NewDie()
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie()")
-#
-#
-# def test_parse_within_limits_new_explosions_kwarg_with_defaults():
-#     class NewDie(ExplodingOn):
-#         def __init__(self, input_die, explodes_on, biiiiig_booooooms=11):
-#             super(NewDie, self).__init__(input_die, explodes_on, biiiiig_booooooms)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int_tuple", "int"))
-#     parser.add_limits_kwarg("explosions", "biiiiig_booooooms", 11)
-#     assert parser.parse_die("NewDie(Die(5), (1, 2))") == NewDie(Die(5), (1, 2))
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(Die(5), (1, 2))")
-#
-#
-# def test_parse_within_limits_new_dice_pool_limit_kwargs_with_defaults():
-#     class NewDie(BestOfDicePool):
-#         def __init__(self, funky_new_die=Die(6), funky_new_pool_size=4):
-#             select = funky_new_pool_size - 1
-#             super(NewDie, self).__init__(funky_new_die, funky_new_pool_size, select)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("die", "int"))
-#     parser.add_limits_kwarg("pool_size", "funky_new_pool_size", 4)
-#     parser.add_limits_kwarg("input_die", "funky_new_die", Die(6))
-#     assert parser.parse_die("NewDie()") == NewDie(Die(6), 4)
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(Die(600))")
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie(funky_new_pool_size=5000)")
-#
-#
-# def test_parse_within_limits_kwarg_with_defaults_beyond_scope_ignoring_limits():
-#     class NewDie(Die):
-#         def __init__(self, funky_new_die_size=5000):
-#             super(NewDie, self).__init__(funky_new_die_size)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int",))
-#     parser.add_limits_kwarg("size", "funky_new_die_size", 5)
-#     assert parser.parse_die("NewDie()") == NewDie(5000)
-#     assert parser.parse_die_within_limits("NewDie()") == NewDie(5000)
-#
-#
-# def test_parse_within_limits_kwarg_with_defaults_beyond_scope_catching_false_limits():
-#     class NewDie(Die):
-#         def __init__(self, funky_new_die_size=5):
-#             super(NewDie, self).__init__(funky_new_die_size)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int",))
-#     parser.add_limits_kwarg("size", "funky_new_die_size", 5000)
-#     assert parser.parse_die("NewDie()") == NewDie(5)
-#     with pytest.raises(LimitsError):
-#         parser.parse_die_within_limits("NewDie()")
-#
-#
-# def test_parse_die_within_limits_failure_to_register_default_beyond_scope():
-#     class NewDie(Die):
-#         def __init__(self, funky_new_die_size=5000):
-#             super(NewDie, self).__init__(funky_new_die_size)
-#
-#     parser = NewParser()
-#     parser.add_class(NewDie, ("int",))
-#     parser.add_limits_kwarg("size", "funky_new_die_size")
-#     assert parser.parse_die("NewDie()") == NewDie(5000)
-#     assert parser.parse_die_within_limits("NewDie()") == NewDie(5000)
+def test_add_param_type():
+    def a_func(x):
+        return x
+
+    parser = NewParser()
+    parser.add_param_type(str, a_func)
+
+    answer = {
+        int: make_int,
+        Dict[int, int]: make_int_dict,
+        str: a_func,
+        ProtoDie: parser.make_die,
+        Iterable[int]: make_int_tuple,
+    }
+    assert answer == parser.param_types
+
+
+def test_new_parser_class_with_new_die():
+    class StupidDie(Die):
+        def __init__(self, name: str, size: int):
+            self.name = name
+            super(StupidDie, self).__init__(size)
+
+        def __eq__(self, other):
+            return super(StupidDie, self).__eq__(other) and self.name == other.name
+
+    def make_string(str_node):
+        return str_node.s
+
+    class NewNewParser(NewParser):
+        def __init__(self, *args, **kwargs):
+            super(NewNewParser, self).__init__(*args, **kwargs)
+            self.add_param_type(str, make_string)
+            self.add_class(StupidDie)
+
+    assert NewNewParser().parse_die('StupidDie("hello", 3)') == StupidDie("hello", 3)
+    assert NewNewParser().parse_die('StupidDie(name="hello", size=3)') == StupidDie(
+        "hello", 3
+    )
+    assert NewNewParser().parse_die("Die(3)") == Die(3)
+
+
+def test_new_parser_class_with_new_die_that_calls_die():
+    class DoubleDie(Die):
+        def __init__(self, die: ProtoDie, size: int):
+            self.die = die
+            super(DoubleDie, self).__init__(size)
+
+        def __eq__(self, other):
+            return super(DoubleDie, self).__eq__(other) and self.die == other.die
+
+    class NewNewParser(NewParser):
+        def __init__(self, *args, **kwargs):
+            super(NewNewParser, self).__init__(*args, **kwargs)
+            self.add_class(DoubleDie)
+
+    assert NewNewParser().parse_die("DoubleDie(DoubleDie(Die(2), 4), 3)") == DoubleDie(
+        DoubleDie(Die(2), 4), 3
+    )
+    assert NewNewParser().parse_die("Die(3)") == Die(3)
+
+
+def test_parser_with_limits_fails_to_check_size_with_new_key_word():
+    class NewDie(Die):
+        def __init__(self, kwazy_size: int):
+            super(NewDie, self).__init__(kwazy_size)
+
+    parser = NewParser.with_limits(max_size=5)
+    parser.add_class(NewDie)
+
+    with pytest.raises(LimitsError):
+        parser.parse_die("Die(6)")
+
+    parser.parse_die("NewDie(6)")

@@ -113,8 +113,7 @@ class NewParser(object):
         kwarg_nodes = call_node.keywords
         die_class = self._get_die_class(die_class_name)
 
-        instance_for_signature = die_class.__new__(die_class)
-        die_signature = signature(instance_for_signature.__init__)
+        die_signature = signature(die_class)
 
         die_params = self._get_params(param_nodes, die_signature)
         die_kwargs = self._get_kwargs(kwarg_nodes, die_signature)
@@ -174,9 +173,6 @@ class NewParser(object):
             out[kwarg_name] = value
         return out
 
-    def _update_search_tuple(self, search_tuple):
-        return tuple(map(self._update_search_string, search_tuple))
-
     def _get_kwarg_value(self, die_signature, kwarg_node):
         kwarg_name_to_search_for = self._update_search_string(kwarg_node.arg)
         value_node = kwarg_node.value
@@ -204,8 +200,7 @@ class NewParser(object):
 
         :param class_: the class you are adding
         """
-        new_instance = class_.__new__(class_)
-        die_signature = signature(new_instance.__init__)
+        die_signature = signature(class_)
         self._raise_error_for_missing_annotation(die_signature)
         self._raise_error_for_missing_type(die_signature)
         self._classes.add(class_)
@@ -249,12 +244,3 @@ def make_int(num_node):
         raise ValueError(f"Expected an integer, but got: {value!r}")
     return value
 
-
-def _get_kwargs_from_init(class_):
-    try:
-        kwargs = class_.__init__.__code__.co_varnames
-        return kwargs[1:]
-    except AttributeError:
-        raise AttributeError(
-            "could not find the code for __init__ function at class_.__init__.__code__"
-        )
