@@ -449,7 +449,7 @@ class ExplodingOn(ProtoDie):
         return 'ExplodingOn({!r}, {}, {})'.format(self._original, self._explodes_on, self._explosions)
 
 
-def remove_duplicates(input_tuple):
+def remove_duplicates(input_tuple: Iterable[int]) -> Tuple[int, ...]:
     list_version = []
     for val in input_tuple:
         if val not in list_version:

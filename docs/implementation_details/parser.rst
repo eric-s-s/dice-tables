@@ -24,7 +24,6 @@ Parser
     ModDie(6, 1)
 
     It can ignore case or not.  This applies to dice names and kwarg names. It defaults to ignore_case=False.
-    You can also disable allowing kwargs. It defaults to disable_kwargs=False.
 
     >>> dt.Parser().parse_die('die(6)')
     Traceback (most recent call last):
@@ -34,17 +33,9 @@ Parser
     >>> dt.Parser(ignore_case=True).parse_die('stronGdie(dIE(6), MULTIPLIER=4)')
     StrongDie(Die(6), 4)
 
-    >>> parser = dt.Parser(disable_kwargs=True)
-    >>> parser.parse_die('Die(6)')
-    Die(6)
-    >>> parser.parse_die('Die(die_size=6)')
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ParseError: Tried to use kwargs on a Parser with disable_kwargs=True
-
     The Parser can parse all dice in the library: Die, ModDie, WeightedDie, ModWeightedDie, Modifier, StrongDie,
-    Exploding and ExplodingOn. It is possible to add other dice to an instance of Parser or make a new class that
-    can parse other dice.
+    Exploding, ExplodingOn and all of the DicePools. It is possible to add other dice to an instance of
+    Parser or make a new class that can parse other dice.
 
 Customizing Parser
 ------------------
@@ -52,9 +43,11 @@ Customizing Parser
 Parser can only parse very specific types of parameters.
 
 >>> from dicetables.parser import make_int, make_int_dict, make_int_tuple
+>>> from typing import Dict, Iterable
+>>> from dicetables.eventsbases.protodie import ProtoDie
 >>> parser = dt.Parser()
->>> parser.param_types == {'int': make_int, 'int_dict': make_int_dict,
-...                        'die': parser.make_die, 'int_tuple': make_int_tuple}
+>>> parser.param_types == {int: make_int, Dict[int, int]: make_int_dict,
+...                        ProtoDie: parser.make_die, Iterable[int]: make_int_tuple}
 True
 
 If, for example, you need Parser to know how to parse a string, a list of strings and
@@ -112,18 +105,25 @@ and here are conversion methods.
 True
 
 Now you tell the parser that a key of your choice corresponds to the method.
+Notice that we are specifically setting the typing to List and not Iterable.  If we also
+want to be able to handle `Iterable[str]`, we will need to explicitly add that. Our use-case takes a list
+and copies it.  That requires a `List`. But the case where we just need an iterable would be different.
 
+>>> from typing import List
 >>> parser = dt.Parser()
->>> parser.add_param_type('str', make_str)
->>> parser.add_param_type('str_list', make_str_list)
->>> parser.add_param_type('str_int_dict', make_str_int_dict)
+>>> parser.add_param_type(str, make_str)
+>>> parser.add_param_type(List[str], make_str_list)
+>>> parser.add_param_type(Dict[str, int], make_str_int_dict)
 
 To add a new dice class to the parser, give the parser the class and a tuple of the param_types keys for each parameter.
 The parser will assume you're adding a class with an __init__ function and will try to auto_detect kwargs. You can
 disable this and add your own kwargs (or not).
 
+To add a new dice class to the parser, **you must use type hints**. The parser uses the annotations in the `__init__`
+to parse a die
+
 >>> class NamedDie(dt.Die):
-...     def __init__(self, name, buddys_names, stats, size):
+...     def __init__(self, name: str, buddys_names: List[str], stats: Dict[str, int], size: int):
 ...         self.name = name
 ...         self.best_buds = buddys_names[:]
 ...         self.stats = stats.copy()
@@ -135,36 +135,29 @@ disable this and add your own kwargs (or not).
 ...                 self.best_buds == other.best_buds and
 ...                 self.stats == other.stats)
 
->>> parser.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'))
+>>> parser.add_class(NamedDie)
 >>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], stats={"friends": 2, "coolness_factor": 10}, size=4)'
 >>> die = NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 >>> parser.parse_die(die_str) == die
 True
 
-You can make a new parser class instead of a specific instance of Parser. Notice that I turned off the auto_detect and
-told it some bad kwarg names.
+You can make a new parser class instead of a specific instance of Parser.
 
 >>> class MyParser(dt.Parser):
 ...     def __init__(self, ignore_case=False):
 ...         super(MyParser, self).__init__(ignore_case)
-...         self.add_param_type('str', make_str)
-...         self.add_param_type('str_list', make_str_list)
-...         self.add_param_type('str_int_dict', make_str_int_dict)
-...         self.add_class(NamedDie, ('str', 'str_list', 'str_int_dict', 'int'),
-...                        auto_detect_kwargs=False, kwargs=('oops', 'wrong', 'not_enough'))
+...         self.add_param_type(str, make_str)
+...         self.add_param_type(List[str], make_str_list)
+...         self.add_param_type(Dict[str, int], make_str_int_dict)
+...         self.add_class(NamedDie)
 
 >>> die_str = 'NamedDie("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
 >>> t_d_and_h_4_eva = NamedDie('Tom', ['Dick', 'Harry'], {'friends': 2, 'coolness_factor': 10}, 4)
 >>> MyParser().parse_die(die_str) == t_d_and_h_4_eva
 True
->>> upper_lower_who_cares = 'nAmeDdIE("Tom", ["Dick", "Harry"], {"friends": 2, "coolness_factor": 10}, 4)'
+>>> upper_lower_who_cares = 'nAmeDdIE("Tom", ["Dick", "Harry"], stats={"friends": 2, "coolness_factor": 10}, size=4)'
 >>> MyParser(ignore_case=True).parse_die(upper_lower_who_cares) == t_d_and_h_4_eva
 True
->>> with_kwargs = 'NamedDie("Tom", ["D", "H"], stats={}, size=4)'
->>> MyParser().parse_die(with_kwargs)
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-ParseError: One or more kwargs not in kwarg_list: ('oops', 'wrong', 'not_enough') for die: <NamedDie>
 
 Limiting Max Values
 -------------------
