@@ -36,6 +36,12 @@ class Parser(object):
         ignore_case: bool = False,
         checker: AbstractLimitChecker = NoOpLimitChecker(),
     ):
+        """
+
+        :param ignore_case: False: Can the parser ignore case on die names and kwargs.
+        :param checker: `dicetables.tools.limit_checker.NoOpLimitChecker`: How limits will be enforced
+            for parsing.  This defaults to a limit checker that does not check limits.
+        """
         self.checker = checker
         self.ignore_case = ignore_case
 
@@ -70,6 +76,10 @@ class Parser(object):
         max_dice_pools: int = 2,
     ) -> "Parser":
         """
+        Creates a parser with a functioning limit checker from `dicetables.tools.limit_checker.LimitChecker`
+        For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, and
+        `max_dice_pool_calls`, see
+        `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html#limits-and-dicepool-objects>`_
 
         :param ignore_case: False: Can the parser ignore case on die names and kwargs.
         :param max_size: 500: The maximum allowed die size when :code:`parse_die_within_limits`
@@ -78,10 +88,6 @@ class Parser(object):
         :param max_dice: 6: The maximum number of dice calls when :code:`parse`.
             Ex: :code:`StrongDie(Exploding(Die(5), 2), 3)` has 3 dice calls.
         :param max_dice_pools: 2: The maximum number of allowed dice_pool calls
-
-        For explanation of how or why to change `max_dice_pool_combinations_per_dict_size`, and
-        `max_dice_pool_calls`, see
-        `Parser <http://dice-tables.readthedocs.io/en/latest/implementation_details/parser.html#limits-and-dicepool-objects>`_
         """
         checker = LimitChecker(
             max_dice_pools=max_dice_pools,

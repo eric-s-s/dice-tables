@@ -16,7 +16,7 @@ class LimitsError(ValueError):
         super(LimitsError, self).__init__(*args)
 
 
-class LimitType(Enum):
+class ArgumentType(Enum):
     SIZE = auto()
     EXPLOSIONS = auto()
     EXPLODES_ON = auto()
@@ -24,13 +24,13 @@ class LimitType(Enum):
     POOL_SIZE = auto()
 
 
-def get_bound_args(arg_type: LimitType, bound_args: BoundArguments) -> Optional[Any]:
+def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Optional[Any]:
     arg_names = {
-        LimitType.SIZE: ("die_size", "dictionary_input"),
-        LimitType.EXPLOSIONS: ("explosions",),
-        LimitType.EXPLODES_ON: ("explodes_on",),
-        LimitType.INPUT_DIE: ("input_die",),
-        LimitType.POOL_SIZE: ("pool_size",),
+        ArgumentType.SIZE: ("die_size", "dictionary_input"),
+        ArgumentType.EXPLOSIONS: ("explosions",),
+        ArgumentType.EXPLODES_ON: ("explodes_on",),
+        ArgumentType.INPUT_DIE: ("input_die",),
+        ArgumentType.POOL_SIZE: ("pool_size",),
     }
     possible_args = arg_names[arg_type]
     for arg_name, arg_value in bound_args.arguments.items():
@@ -45,6 +45,9 @@ class AbstractLimitChecker(ABC):
         self, die_classes: Iterable[Type[ProtoDie]]
     ) -> None:
         """
+        asserts that the number of `dicetables.ProtoDie` calls and the number of
+        `dicetables.bestworstmid.DicePool` calls are within limits.
+
         :raises LimitsError:
         """
         raise NotImplementedError
@@ -52,6 +55,12 @@ class AbstractLimitChecker(ABC):
     @abstractmethod
     def assert_die_size_within_limits(self, bound_args: BoundArguments) -> None:
         """
+        Checks the bound arguments for the size of the die and asserts they are
+        within limits.
+
+        This typically uses `dicetables.tools.limit_checker.get_bound_args` to determine what
+        is a `dicetables.tools.limit_checker.ArgumentType.SIZE` argument.
+
         :raises LimitsError:
         """
         raise NotImplementedError
@@ -59,6 +68,13 @@ class AbstractLimitChecker(ABC):
     @abstractmethod
     def assert_explosions_within_limits(self, bound_args: BoundArguments) -> None:
         """
+        Asserts that the number of explosions on an `dicetables.Exploding` or an `dicetables.ExplodingOn`
+        has a number of explosions withing limits.
+
+        This typically uses `dicetables.tools.limit_checker.get_bound_args` to determine what
+        is a `dicetables.tools.limit_checker.ArgumentType.EXPLOSIONS` and
+        a `dicetables.tools.limit_checker.ArgumentType.EXPLODES_ON` argument.
+
         :raises LimitsError:
         """
         raise NotImplementedError
@@ -66,6 +82,14 @@ class AbstractLimitChecker(ABC):
     @abstractmethod
     def assert_dice_pool_within_limits(self, bound_args: BoundArguments) -> None:
         """
+        asserts that the size of a dice pool is within limits.  Dice pools can be very expensive
+        to calculate. see:
+
+        `DicePools <http://dice-tables.readthedocs.io/en/latest/the_dice.html#dice-pools>`_
+
+        This typically uses `dicetables.tools.limit_checker.get_bound_args` to determine what
+        is a `dicetables.tools.limit_checker.ArgumentType.POOL_SIZE` argument.
+
         :raises LimitsError:
         """
         raise NotImplementedError
@@ -127,7 +151,7 @@ class LimitChecker(AbstractLimitChecker):
             raise LimitsError(msg)
 
     def assert_die_size_within_limits(self, bound_args: BoundArguments) -> None:
-        sized_value = get_bound_args(LimitType.SIZE, bound_args)
+        sized_value = get_bound_args(ArgumentType.SIZE, bound_args)
         if isinstance(sized_value, dict):
             size = max(sized_value.keys())
         else:
@@ -139,8 +163,8 @@ class LimitChecker(AbstractLimitChecker):
             )
 
     def assert_explosions_within_limits(self, bound_args: BoundArguments) -> None:
-        explosions = get_bound_args(LimitType.EXPLOSIONS, bound_args)
-        explodes_on = get_bound_args(LimitType.EXPLODES_ON, bound_args)
+        explosions = get_bound_args(ArgumentType.EXPLOSIONS, bound_args)
+        explodes_on = get_bound_args(ArgumentType.EXPLODES_ON, bound_args)
         if explodes_on:
             explosions += len(explodes_on)
 
@@ -150,8 +174,8 @@ class LimitChecker(AbstractLimitChecker):
             )
 
     def assert_dice_pool_within_limits(self, bound_args: BoundArguments) -> None:
-        input_die = get_bound_args(LimitType.INPUT_DIE, bound_args)
-        pool_size = get_bound_args(LimitType.POOL_SIZE, bound_args)
+        input_die = get_bound_args(ArgumentType.INPUT_DIE, bound_args)
+        pool_size = get_bound_args(ArgumentType.POOL_SIZE, bound_args)
         if input_die is None or pool_size is None:
             return
 
