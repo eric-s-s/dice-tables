@@ -246,7 +246,7 @@ def make_int(num_node):
     else:
         value = None
         for key, val in ast.iter_fields(num_node):
-            if key != "kind":
+            if key != "kind":  # pragma no branch
                 value = val
     if not isinstance(value, int):
         raise ValueError(f"Expected an integer, but got: {value!r}")
