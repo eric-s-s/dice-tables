@@ -355,7 +355,7 @@ class ExplodingOn(ProtoDie):
     with size which gets overshadowed by the first factor.
     """
 
-    def __init__(self, input_die: ProtoDie, explodes_on: Iterable, explosions=2):
+    def __init__(self, input_die: ProtoDie, explodes_on: Iterable[int], explosions: int=2):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
@@ -449,7 +449,7 @@ class ExplodingOn(ProtoDie):
         return 'ExplodingOn({!r}, {}, {})'.format(self._original, self._explodes_on, self._explosions)
 
 
-def remove_duplicates(input_tuple):
+def remove_duplicates(input_tuple: Iterable[int]) -> Tuple[int, ...]:
     list_version = []
     for val in input_tuple:
         if val not in list_version:
