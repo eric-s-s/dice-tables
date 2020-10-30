@@ -144,9 +144,9 @@ class LimitChecker(AbstractLimitChecker):
             or len(dice_pool_list) > self.max_dice_pool_calls
         ):
             msg = (
-                f"Limits exceeded. Max dice calls: {self.max_dice_calls}. "
-                f"Max dice pool calls: {self.max_dice_pool_calls}. "
-                f"Calls requested: {class_list}"
+                "Limits exceeded. Max dice calls: {}. ".format(self.max_dice_calls) +
+                "Max dice pool calls: {}. ".format(self.max_dice_pool_calls) +
+                "Calls requested: {}".format(class_list)
             )
             raise LimitsError(msg)
 
@@ -159,7 +159,8 @@ class LimitChecker(AbstractLimitChecker):
 
         if size and size > self.max_size:
             raise LimitsError(
-                f"A die of size: {size} is greater than the allowed max: {self.max_size}"
+                "A die of size: {} is greater than the allowed ".format(size) +
+                "max: {}".format(self.max_size)
             )
 
     def assert_explosions_within_limits(self, bound_args: BoundArguments) -> None:
@@ -170,7 +171,11 @@ class LimitChecker(AbstractLimitChecker):
 
         if explosions and explosions > self.max_explosions:
             raise LimitsError(
-                f"Explosions: {explosions} + len({explodes_on}) is greater than allowed max: {self.max_explosions}"
+                (
+                    "Explosions: {} + ".format(explosions) +
+                    "len({}) is greater than allowed ".format(explodes_on) +
+                    "max: {}".format(self.max_explosions)
+                )
             )
 
     def assert_dice_pool_within_limits(self, bound_args: BoundArguments) -> None:

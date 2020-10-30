@@ -219,7 +219,7 @@ class Parser(object):
             param.annotation == _empty for param in die_signature.parameters.values()
         ):
             raise ParseError(
-                f"The signature: {die_signature} is missing type annotations"
+                "The signature: {} is missing type annotations".format(die_signature)
             )
 
     def add_param_type(self, param_type, creation_method):
@@ -249,6 +249,6 @@ def make_int(num_node):
             if key != "kind":  # pragma no branch
                 value = val
     if not isinstance(value, int):
-        raise ValueError(f"Expected an integer, but got: {value!r}")
+        raise ValueError("Expected an integer, but got: {!r}".format(value))
     return value
 

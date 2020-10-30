@@ -235,7 +235,11 @@ def test_walk_dice_calls_complex():
     strong_die = "StrongDie"
     mod_die = "ModDie"
     parser = Parser()
-    die_string = f"{die}({strong_die}(), {mod_die}(3, {die}({strong_die}(3))))"
+    die_string = (
+        "{}({}(), ".format(die, strong_die) +
+        "{}(3, {}".format(mod_die, die) +
+        "({}(3))))".format(strong_die)
+    )
     result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
     expected_die = 2
     expected_strong_die = 2
