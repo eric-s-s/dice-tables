@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum, auto
+from enum import Enum
 from inspect import BoundArguments
 from typing import Iterable, Type, Optional, Any
 
@@ -17,11 +17,11 @@ class LimitsError(ValueError):
 
 
 class ArgumentType(Enum):
-    SIZE = auto()
-    EXPLOSIONS = auto()
-    EXPLODES_ON = auto()
-    INPUT_DIE = auto()
-    POOL_SIZE = auto()
+    SIZE = 1
+    EXPLOSIONS = 2
+    EXPLODES_ON = 3
+    INPUT_DIE = 4
+    POOL_SIZE = 5
 
 
 def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Optional[Any]:

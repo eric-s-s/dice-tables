@@ -77,7 +77,7 @@ class TestLimitChecker(object):
         self, dice_pools, raises_error
     ):
         checker = LimitChecker(max_dice=5, max_dice_pools=3)
-        to_check: List[Type[ProtoDie]] = []
+        to_check = []  # type: List[Type[ProtoDie]]
         to_check += [BestOfDicePool] * dice_pools
         to_check += [Die] * (5 - dice_pools)
         if raises_error:
