@@ -3,7 +3,7 @@ from enum import Enum
 from inspect import BoundArguments
 from typing import Iterable, Type, Optional, Any
 
-from dicetables.bestworstmid import DicePool
+from dicetables.bestworstmid import DicePoolCollection
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.orderedcombinations import (
     count_unique_combination_keys,
@@ -138,7 +138,7 @@ class LimitChecker(AbstractLimitChecker):
         self, die_classes: Iterable[Type[ProtoDie]]
     ) -> None:
         class_list = list(die_classes)
-        dice_pool_list = [el for el in class_list if issubclass(el, DicePool)]
+        dice_pool_list = [el for el in class_list if issubclass(el, DicePoolCollection)]
         if (
             len(class_list) > self.max_dice_calls
             or len(dice_pool_list) > self.max_dice_pool_calls

@@ -1,39 +1,34 @@
 from typing import Dict
 
 from dicetables.dieevents import ProtoDie
-from dicetables.tools.orderedcombinations import ordered_combinations_of_events
+from dicetables.dicepool import DicePool
 
 
-class DicePool(ProtoDie):
+class DicePoolCollection(ProtoDie):
     """
-    The abstract class for all DicePool objects. A DicePool is a pool of one kind of die. Select determines how many
-    rolls are selected from the pool of total rolls. Different implementations determine which particular rolls
-    to select.
+    The abstract class for all DicePoolCollection objects. A DicePoolCollection creates a new die by selecting from a
+    DicePool. Select determines how many rolls are selected from the pool of total rolls.
+    Different implementations determine which particular rolls to select.
     """
 
-    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
+    def __init__(self, pool: DicePool, select: int):
         """
 
-        :param input_die: Any object that inherits from ProtoDie
-        :param pool_size: int > 0. How many total dice in the pool.
-        :param select: int <= `pool_size`. How many dice to select from the pool.
+        :param pool: the dice pool to select from
+        :param select: int <= `pool.size`. How many dice to select from the pool.
         """
-        if select > pool_size:
+        self._dice_pool = pool
+        if select > self._dice_pool.size:
             raise ValueError('you cannot select more dice than the pool_size.')
-        self._input_die = input_die
-        self._pool = pool_size
         self._select = select
         self._dict = self._generate_dict()
-        super(DicePool, self).__init__()
+        super(DicePoolCollection, self).__init__()
 
     def _generate_dict(self):
         raise NotImplementedError
 
-    def get_input_die(self) -> ProtoDie:
-        return self._input_die
-
-    def get_pool_size(self) -> int:
-        return self._pool
+    def get_pool(self) -> DicePool:
+        return self._dice_pool
 
     def get_select(self) -> int:
         return self._select
@@ -42,13 +37,14 @@ class DicePool(ProtoDie):
         return self._dict.copy()
 
     def get_size(self) -> int:
-        return self._input_die.get_size() * self._select
+        return self._dice_pool.die.get_size() * self._select
 
     def get_weight(self) -> int:
-        return self._input_die.get_weight() * self._select
+        return self._dice_pool.die.get_weight() * self._select
 
     def weight_info(self):
-        original_weight_info = self._input_die.weight_info().replace(str(self._input_die), 'input_die info:')
+        input_die = self._dice_pool.die
+        original_weight_info = input_die.weight_info().replace(str(input_die), 'input_die info:')
         return '{}\n{}'.format(self, original_weight_info)
 
     def multiply_str(self, number):
@@ -56,45 +52,47 @@ class DicePool(ProtoDie):
 
     def __str__(self):
         descriptor = self.__class__.__name__.replace('OfDicePool', '')
-        return '{} {} of {}'.format(descriptor, self._select, self._input_die.multiply_str(self._pool))
+        return '{} {} of {}'.format(descriptor, self._select, self._dice_pool.die.multiply_str(self._dice_pool.size))
 
     def __repr__(self):
-        return '{}({!r}, {}, {})'.format(self.__class__.__name__, self._input_die, self._pool, self._select)
+        return '{}({!r}, {})'.format(
+            self.__class__.__name__, self._dice_pool, self._select
+        )
 
 
-class BestOfDicePool(DicePool):
+class BestOfDicePool(DicePoolCollection):
     """
     Take the best [select] rolls from a pool of [pool_size] * [input_die].
     BestOfDicePool(Die(6), 4, 3) is the best 3 rolls from four six-sided dice.
     """
 
-    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
-        super(BestOfDicePool, self).__init__(input_die, pool_size, select)
+    def __init__(self, pool: DicePool, select: int):
+        super().__init__(pool, select)
 
     def _generate_dict(self):
-        ordered_combinations = ordered_combinations_of_events(self._input_die, self._pool)
-        start_at = self._pool - self._select
-        stop_before = self._pool
+        ordered_combinations = self._dice_pool.rolls
+        start_at = self._dice_pool.size - self._select
+        stop_before = self._dice_pool.size
         return generate_events_dict(ordered_combinations, start_at, stop_before)
 
 
-class WorstOfDicePool(DicePool):
+class WorstOfDicePool(DicePoolCollection):
     """
     Take the worst [select] rolls from a pool of [pool_size] * [input_die].
     WorstOfDicePool(Die(6), 4, 3) is the worst 3 rolls from four six-sided dice.
     """
 
-    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
-        super(WorstOfDicePool, self).__init__(input_die, pool_size, select)
+    def __init__(self, pool: DicePool, select: int):
+        super().__init__(pool, select)
 
     def _generate_dict(self):
-        ordered_combinations = ordered_combinations_of_events(self._input_die, self._pool)
+        ordered_combinations = self._dice_pool.rolls
         start_at = 0
         stop_before = self._select
         return generate_events_dict(ordered_combinations, start_at, stop_before)
 
 
-class UpperMidOfDicePool(DicePool):
+class UpperMidOfDicePool(DicePoolCollection):
     """
     Take the middle [select] rolls from a pool of [pool_size] * [input_die].
     UpperMidOfDicePool(Die(6), 5, 3) is the middle 3 rolls from five six-sided dice.
@@ -103,18 +101,18 @@ class UpperMidOfDicePool(DicePool):
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (2, 3).
     """
 
-    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
-        super(UpperMidOfDicePool, self).__init__(input_die, pool_size, select)
+    def __init__(self, pool: DicePool, select: int):
+        super().__init__(pool, select)
 
     def _generate_dict(self):
-        ordered_combinations = ordered_combinations_of_events(self._input_die, self._pool)
-        end_slice, extra = divmod(self._pool - self._select, 2)
+        ordered_combinations = self._dice_pool.rolls
+        end_slice, extra = divmod(self._dice_pool.size - self._select, 2)
         start_at = end_slice + extra
-        stop_before = self._pool - end_slice
+        stop_before = self._dice_pool.size - end_slice
         return generate_events_dict(ordered_combinations, start_at, stop_before)
 
 
-class LowerMidOfDicePool(DicePool):
+class LowerMidOfDicePool(DicePoolCollection):
     """
     Take the middle [select] rolls from a pool of [pool_size] * [input_die].
     LowerMidOfDicePool(Die(6), 5, 3) is the middle 3 rolls from five six-sided dice.
@@ -123,14 +121,14 @@ class LowerMidOfDicePool(DicePool):
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (1, 2).
     """
 
-    def __init__(self, input_die: ProtoDie, pool_size: int, select: int):
-        super(LowerMidOfDicePool, self).__init__(input_die, pool_size, select)
+    def __init__(self, pool: DicePool, select: int):
+        super().__init__(pool, select)
 
     def _generate_dict(self):
-        ordered_combinations = ordered_combinations_of_events(self._input_die, self._pool)
-        end_slice, extra = divmod(self._pool - self._select, 2)
+        ordered_combinations = self._dice_pool.rolls
+        end_slice, extra = divmod(self._dice_pool.size - self._select, 2)
         start_at = end_slice
-        stop_before = self._pool - (end_slice + extra)
+        stop_before = self._dice_pool.size - (end_slice + extra)
         return generate_events_dict(ordered_combinations, start_at, stop_before)
 
 
