@@ -3,13 +3,15 @@ from enum import Enum
 from inspect import BoundArguments
 from typing import Iterable, Type, Optional, Any, Union
 
-from dicetables.dicepool_collection import DicePoolCollection
 from dicetables.dicepool import DicePool
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.orderedcombinations import (
     count_unique_combination_keys,
     largest_permitted_pool_size,
 )
+
+
+DieOrPool = Union[Type[ProtoDie], Type[DicePool]]
 
 
 class LimitsError(ValueError):
@@ -43,7 +45,7 @@ def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Option
 class AbstractLimitChecker(ABC):
     @abstractmethod
     def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[Type[ProtoDie]]
+        self, die_classes: Iterable[DieOrPool]
     ) -> None:
         """
         asserts that the number of `dicetables.ProtoDie` calls and the number of
@@ -98,7 +100,7 @@ class AbstractLimitChecker(ABC):
 
 class NoOpLimitChecker(AbstractLimitChecker):
     def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[Type[ProtoDie]]
+        self, die_classes: Iterable[DieOrPool]
     ) -> None:
         pass
 
@@ -136,7 +138,7 @@ class LimitChecker(AbstractLimitChecker):
         }
 
     def assert_numbers_of_calls_within_limits(
-        self, call_classes: Iterable[Union[Type[ProtoDie], Type[DicePool]]]
+        self, call_classes: Iterable[DieOrPool]
     ) -> None:
         class_list = list(call_classes)
         die_classes = len([el for el in class_list if issubclass(el, ProtoDie)])

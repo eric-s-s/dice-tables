@@ -210,15 +210,27 @@ True
 Dice Pools
 ----------
 
-Dice Pools are collections of a single die. They are treated as one giant Die with very funky rolling behavior.
-They all follow the basic form: :code:`<WhatToSelect>OfDicePool(input_die, pool_size, select)`.
-:code:`BestOfDicePool(Die(6), 4, 3)` means: Roll 4D6 and take the best three results from every roll. This object
-is also an 18-sided "Die"
+Dice Pools are a pool of a single die. Dice Pool Collections are lightweight wrappers around a DicePool.
+They are a way to extract rolls from a Dice Pool and cast it as a :code:`ProtoDie`.
+The collections are treated as one giant Die with very funky rolling behavior. They all follow the basic form:
+:code:`<WhatToSelect>OfDicePool(pool=DicePool(input_die, pool_size), select)`.
+:code:`BestOfDicePool(DicePool(Die(6), 4), 3)` means: Make a dice pool of 4D6. Roll this
+and take the best three results from every roll. This object is also an 18-sided "Die" that rolls from 3 to 18.
 
-.. module:: dicetables.bestworstmid
+:code:`DicePools` can be expensive to instantiate, but they are immutable and can be use in several
+DicePoolCollections which are a lightweight wrapper around the DicePool.
+
+.. module:: dicetables.dicepool
 
 .. autoclass:: DicePool
-    :members: get_input_die, get_pool_size, get_select
+    :members: die, size, rolls
+    :undoc-members:
+
+
+.. module:: dicetables.dicepool_collection
+
+.. autoclass:: DicePoolCollection
+    :members: get_pool, get_select
     :undoc-members:
 
 .. autoclass:: BestOfDicePool
@@ -231,21 +243,31 @@ is also an 18-sided "Die"
 
 
 All DicePool objects calculate all the possible combinations of rolls
-and the frequency of each combination.  So, `BestOfDicePool(Die(3), 3, 2)` and `WorstOfDicePool(Die(3), 3, 1)`
-both need to first create the following dictionary::
+and the frequency of each combination.  So, `DicePool(Die(3), 3, 2)` creates
+the following dictionary
 
-    {(1, 1, 1): 1,
-     (1, 1, 2): 3,
-     (1, 1, 3): 3,
-     (1, 2, 2): 3,
-     (1, 2, 3): 6,
-     (1, 3, 3): 3,
-     (2, 2, 2): 1,
-     (2, 2, 3): 3,
-     (2, 3, 3): 3,
-     (3, 3, 3): 1}
+>>> pool = dt.DicePool(dt.Die(3), 3)
+>>> pool.rolls == {
+... (1, 1, 1): 1,
+... (1, 1, 2): 3,
+... (1, 1, 3): 3,
+... (1, 2, 2): 3,
+... (1, 2, 3): 6,
+... (1, 3, 3): 3,
+... (2, 2, 2): 1,
+... (2, 2, 3): 3,
+... (2, 3, 3): 3,
+... (3, 3, 3): 1
+... }
+True
 
 This says that, with 3*Die(3), the roll: (1, 1, 1) happens once.  The roll: (1, 2, 3) happens 6 times.
+:code: `BestOfDicePool(DicePool(Die(3), 3), 2)` looks at the above dictionary and selects the two best
+rolls in each tuple. so:
+
+>>> best_two = dt.BestOfDicePool(pool)
+>>> best_two.get_dict() == {2: 1, 3: 3, 4: 7, 5: 9, 6: 7}
+True
 
 The number of keys in any one of these dictionaries relies on pool_size and
 :code:`dict_size = len(input_die.get_dict())`. The formula is
@@ -291,7 +313,7 @@ Some Example Dice
 - :code:`StrongDie(ModWeightedDie({1: 10, 2: 90}, -1), 1000)` a thousand people who will almost
   certainly choose "1" and will all vote as a block. whatever they choose, they're doing it as a team.
 
-- :code:`BestOfDicePool(Die(6), 4, 3)` best 3 out of 4D6.
+- :code:`BestOfDicePool(DicePool(Die(6), 4), 3)` best 3 out of 4D6.
 
 - 2 :code:`Die(6)` and :code:`Modifier(3)` 2D6+3
 

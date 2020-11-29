@@ -46,7 +46,7 @@ Parser can only parse very specific types of parameters.
 >>> from typing import Dict, Iterable
 >>> from dicetables.eventsbases.protodie import ProtoDie
 >>> parser = dt.Parser()
->>> parser.param_types == {int: make_int, Dict[int, int]: make_int_dict,
+>>> parser.param_types == {int: make_int, Dict[int, int]: make_int_dict, dt.DicePool: parser.make_pool,
 ...                        ProtoDie: parser.make_die, Iterable[int]: make_int_tuple}
 True
 
@@ -263,18 +263,19 @@ was determined using the extremely scientific approach of "trying different thin
 is likely going to be different with whatever computer you will be using. That's why this a public variable.
 
 The other variable is :code:`Parser.with_limits().checker.max_dice_pools`, currently set to "2".
-This is separate from `max_nested_dice`. A dice pool call is still counted against nested dice.
+This is separate from `max_nested_dice`. This checks the number of calls to construct a :code:`Dicepool`
+The sheer unreadability of nested dice pools does beg the question of why you would ever want to do this.
 
 >>> parser = dt.Parser.with_limits(max_dice=4)
->>> two_pools_three_dice = 'BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)'
+>>> two_pools_three_dice = 'BestOfDicePool(DicePool(StrongDie(WorstOfDicePool(DicePool(Die(2), 3), 2), 2), 3), 2)'
 >>> parser.parse_die(two_pools_three_dice)
-BestOfDicePool(StrongDie(WorstOfDicePool(Die(2), 3, 2), 2), 3, 2)
->>> three_pools = 'BestOfDicePool(BestOfDicePool(WorstOfDicePool(Die(2), 3, 2), 3, 2), 3, 2)'
+BestOfDicePool(DicePool(StrongDie(WorstOfDicePool(DicePool(Die(2), 3), 2), 2), 3), 2)
+>>> three_pools = 'BestOfDicePool(DicePool(BestOfDicePool(DicePool(WorstOfDicePool(DicePool(Die(2), 3), 2), 3), 2), 4), 3)'
 >>> parser.parse_die(three_pools)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 LimitsError: "Limits exceeded. Max dice calls: 4. Max dice pool calls: 2 ...
->>> five_dice = 'BestOfDicePool(StrongDie(StrongDie(StrongDie(Die(2), 2), 2), 2), 2, 2)'
+>>> five_dice = 'BestOfDicePool(DicePool(StrongDie(StrongDie(StrongDie(Die(2), 2), 2), 2), 2), 2)'
 >>> parser.parse_die(five_dice)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
@@ -283,5 +284,6 @@ LimitsError: "Limits exceeded. Max dice calls: 4. Max dice pool calls: 2 ...
 With the current limits in place,
 an implementation of a dice pool could take up to 0.5s. If five calls were allowed, that would be 2.5s to parse a
 single die. It is hard to imagine any practical reason to use more than one pool.
-:code:`BestOfDicePool(WorstOfDicePool(Die(6), 4, 3), 2, 1)` would mean: "Roll 4D6 and take the worst three. Do that
+:code:`BestOfDicePool(DicePool(WorstOfDicePool(DicePool(Die(6), 4), 3), 2), 1)` would mean:
+"Roll 4D6 and take the worst three. Do that
 twice and take the best one". If the current limit of two feels too limiting, change it.

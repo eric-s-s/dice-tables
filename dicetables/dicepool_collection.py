@@ -62,8 +62,8 @@ class DicePoolCollection(ProtoDie):
 
 class BestOfDicePool(DicePoolCollection):
     """
-    Take the best [select] rolls from a pool of [pool_size] * [input_die].
-    BestOfDicePool(Die(6), 4, 3) is the best 3 rolls from four six-sided dice.
+    Take the best [select] rolls from a DicePool of [pool_size] * [input_die].
+    BestOfDicePool(DicePool(Die(6), 4), 3) is the best 3 rolls from four six-sided dice.
     """
 
     def __init__(self, pool: DicePool, select: int):
@@ -78,8 +78,8 @@ class BestOfDicePool(DicePoolCollection):
 
 class WorstOfDicePool(DicePoolCollection):
     """
-    Take the worst [select] rolls from a pool of [pool_size] * [input_die].
-    WorstOfDicePool(Die(6), 4, 3) is the worst 3 rolls from four six-sided dice.
+    Take the worst [select] rolls from a DicePool of [pool_size] * [input_die].
+    WorstOfDicePool(DicePool(Die(6), 4), 3) is the worst 3 rolls from four six-sided dice.
     """
 
     def __init__(self, pool: DicePool, select: int):
@@ -94,8 +94,8 @@ class WorstOfDicePool(DicePoolCollection):
 
 class UpperMidOfDicePool(DicePoolCollection):
     """
-    Take the middle [select] rolls from a pool of [pool_size] * [input_die].
-    UpperMidOfDicePool(Die(6), 5, 3) is the middle 3 rolls from five six-sided dice.
+    Take the middle [select] rolls from a DicePool of [pool_size] * [input_die].
+    UpperMidOfDicePool(DicePool(Die(6), 5), 3) is the middle 3 rolls from five six-sided dice.
 
     If there is no perfect middle, take the higher of two choices. For five dice that roll
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (2, 3).
@@ -114,8 +114,8 @@ class UpperMidOfDicePool(DicePoolCollection):
 
 class LowerMidOfDicePool(DicePoolCollection):
     """
-    Take the middle [select] rolls from a pool of [pool_size] * [input_die].
-    LowerMidOfDicePool(Die(6), 5, 3) is the middle 3 rolls from five six-sided dice.
+    Take the middle [select] rolls from a DicePool of [pool_size] * [input_die].
+    LowerMidOfDicePool(DicePool(Die(6), 5), 3) is the middle 3 rolls from five six-sided dice.
 
     If there is no perfect middle, take the lower of two choices. For five dice that roll
     (1, 1, 2, 3, 4), select=3 takes (1, 2, 3) and select=2 takes (1, 2).
