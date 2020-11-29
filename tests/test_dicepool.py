@@ -33,7 +33,7 @@ def test_dice_pool_size_must_be_gte_one(size):
         assert DicePool(die, size)
 
 
-@pytest.mark.parametrize("die", [Die(2), ModDie(2, 0), WeightedDie({1:1, 2: 1})])
+@pytest.mark.parametrize("die", [Die(2), ModDie(2, 0), WeightedDie({1: 1, 2: 1})])
 @pytest.mark.parametrize("size", [2, 4, 5])
 def test_dice_pool_equality_true(die, size):
     assert DicePool(die, size) == DicePool(die, size)

@@ -6,12 +6,13 @@ from typing import Dict, Iterable, List
 
 import pytest
 
-from dicetables.bestworstmid import (
+from dicetables.dicepool_collection import (
     BestOfDicePool,
     WorstOfDicePool,
     UpperMidOfDicePool,
     LowerMidOfDicePool,
 )
+from dicetables.dicepool import DicePool
 from dicetables.dieevents import (
     Die,
     ModDie,
@@ -43,7 +44,7 @@ def test_init_setting_ignore_case():
 def test_classes_property():
     parser = Parser()
     assert parser.classes == {Die, Modifier, ModDie, WeightedDie, ModWeightedDie, StrongDie, Exploding, ExplodingOn,
-                              BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool}
+                              BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool, DicePool}
     assert parser.classes is not parser.classes
 
 
@@ -86,6 +87,7 @@ def test_param_types():
         Dict[int, int]: make_int_dict,
         ProtoDie: the_parser.make_die,
         Iterable[int]: make_int_tuple,
+        DicePool: the_parser.make_pool,
     }
 
     assert the_parser.param_types == answer
@@ -209,6 +211,11 @@ def test_make_die_ignore_case_applies_to_kwargs():
     assert Parser(ignore_case=True).make_die(die_node) == ModDie(6, -1)
 
 
+def test_make_pool_ignore_case():
+    pool_node = ast.parse("diCePOOL(inPut_DIE=die(6), POOL_size=2)").body[0].value
+    assert Parser(ignore_case=True).make_pool(pool_node) == DicePool(Die(6), 2)
+
+
 def test_parse_arbitrary_spacing():
     assert Parser().parse_die("   Die  ( 5  )  ") == Die(5)
     assert Parser().parse_die("   Die  ( die_size = 5  )  ") == Die(5)
@@ -251,6 +258,16 @@ def test_walk_dice_calls_complex():
     assert len(result_list) == expected_die + expected_strong_die + expected_mod_die
 
 
+def test_walk_dice_calls_with_dice_pool():
+    call = "BestOfDicePool(DicePool(Die(5), 3), 2)"
+    result = Parser().walk_dice_calls(ast.parse(call).body[0].value)
+    result_list = list(result)
+    assert len(result_list) == 3
+    assert result_list.count(BestOfDicePool) == 1
+    assert result_list.count(DicePool) == 1
+    assert result_list.count(Die) == 1
+
+
 def test_walk_dice_calls_bad_value():
     parser = Parser()
     result = parser.walk_dice_calls(ast.parse("Die(Oops(3))").body[0].value)
@@ -285,25 +302,25 @@ class TestParserWithLimits(object):
             Parser.with_limits().parse_die("ExplodingOn(Die(6), (1, 2, 3), 8)")
 
     def test_parse_within_limits_dice_pool_passes_and_fails(self):
-        actual = Parser.with_limits().parse_die("BestOfDicePool(Die(3), 5, 1)")
-        assert actual == BestOfDicePool(Die(3), 5, 1)
+        actual = Parser.with_limits().parse_die("BestOfDicePool(DicePool(Die(3), 5), 1)")
+        assert actual == BestOfDicePool(DicePool(Die(3), 5), 1)
         with pytest.raises(LimitsError):
-            Parser.with_limits().parse_die("BestOfDicePool(Die(3), 600, 1)")
+            Parser.with_limits().parse_die("BestOfDicePool(DicePool(Die(3), 600), 1)")
 
-        actual = Parser.with_limits().parse_die("WorstOfDicePool(Die(3), 5, 1)")
-        assert actual == WorstOfDicePool(Die(3), 5, 1)
+        actual = Parser.with_limits().parse_die("WorstOfDicePool(DicePool(Die(3), 5), 1)")
+        assert actual == WorstOfDicePool(DicePool(Die(3), 5), 1)
         with pytest.raises(LimitsError):
-            Parser.with_limits().parse_die("WorstOfDicePool(Die(3), 600, 1)")
+            Parser.with_limits().parse_die("WorstOfDicePool(DicePool(Die(3), 600), 1)")
 
-        actual = Parser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 5, 1)")
-        assert actual == UpperMidOfDicePool(Die(3), 5, 1)
+        actual = Parser.with_limits().parse_die("UpperMidOfDicePool(DicePool(Die(3), 5), 1)")
+        assert actual == UpperMidOfDicePool(DicePool(Die(3), 5), 1)
         with pytest.raises(LimitsError):
-            Parser.with_limits().parse_die("UpperMidOfDicePool(Die(3), 600, 1)")
+            Parser.with_limits().parse_die("UpperMidOfDicePool(DicePool(Die(3), 600), 1)")
 
-        actual = Parser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 5, 1)")
-        assert actual == LowerMidOfDicePool(Die(3), 5, 1)
+        actual = Parser.with_limits().parse_die("LowerMidOfDicePool(DicePool(Die(3), 5), 1)")
+        assert actual == LowerMidOfDicePool(DicePool(Die(3), 5), 1)
         with pytest.raises(LimitsError):
-            Parser.with_limits().parse_die("LowerMidOfDicePool(Die(3), 600, 1)")
+            Parser.with_limits().parse_die("LowerMidOfDicePool(DicePool(Die(3), 600), 1)")
 
     def test_parse_within_limits_max_nested_dice(self):
         parser = Parser.with_limits(max_dice=4)
@@ -339,12 +356,12 @@ class TestParserWithLimits(object):
         ExplodingOn(Die(6), (2, 6), 0),
         ExplodingOn(Die(6), (2,)),
         ExplodingOn(Die(6), ()),
-        BestOfDicePool(Die(2), 5, 2),
-        BestOfDicePool(Die(2), 5, 5),
-        BestOfDicePool(Die(2), 5, 0),
-        WorstOfDicePool(Die(2), 5, 2),
-        UpperMidOfDicePool(Die(2), 5, 2),
-        LowerMidOfDicePool(Die(2), 5, 2),
+        BestOfDicePool(DicePool(Die(2), 5), 2),
+        BestOfDicePool(DicePool(Die(2), 5), 5),
+        BestOfDicePool(DicePool(Die(2), 5), 0),
+        WorstOfDicePool(DicePool(Die(2), 5), 2),
+        UpperMidOfDicePool(DicePool(Die(2), 5), 2),
+        LowerMidOfDicePool(DicePool(Die(2), 5), 2),
     ],
     ids=lambda el: repr(el),
 )
@@ -402,30 +419,30 @@ def test_exploding_on_with_kwargs():
 
 def test_best_of_dice_pool_with_kwargs():
     actual = Parser().parse_die(
-        "BestOfDicePool(input_die=Die(2), pool_size=5, select=2)"
+        "BestOfDicePool(pool=DicePool(input_die=Die(2), pool_size=5), select=2)"
     )
-    assert actual == BestOfDicePool(Die(2), 5, 2)
+    assert actual == BestOfDicePool(DicePool(Die(2), 5), 2)
 
 
 def test_worst_of_dice_pool_with_kwargs():
     actual = Parser().parse_die(
-        "WorstOfDicePool(input_die=Die(2), pool_size=5, select=2)"
+        "WorstOfDicePool(pool=DicePool(input_die=Die(2), pool_size=5), select=2)"
     )
-    assert actual == WorstOfDicePool(Die(2), 5, 2)
+    assert actual == WorstOfDicePool(DicePool(Die(2), 5), 2)
 
 
 def test_upper_mid_of_dice_pool_with_kwargs():
     actual = Parser().parse_die(
-        "UpperMidOfDicePool(input_die=Die(2), pool_size=5, select=2)"
+        "UpperMidOfDicePool(pool=DicePool(input_die=Die(2), pool_size=5), select=2)"
     )
-    assert actual == UpperMidOfDicePool(Die(2), 5, 2)
+    assert actual == UpperMidOfDicePool(DicePool(Die(2), 5), 2)
 
 
 def test_lower_mid_of_dice_pool_with_kwargs():
     actual = Parser().parse_die(
-        "LowerMidOfDicePool(input_die=Die(2), pool_size=5, select=2)"
+        "LowerMidOfDicePool(pool=DicePool(input_die=Die(2), pool_size=5), select=2)"
     )
-    assert actual == LowerMidOfDicePool(Die(2), 5, 2)
+    assert actual == LowerMidOfDicePool(DicePool(Die(2), 5), 2)
 
 
 def test_nested_dice():
@@ -524,6 +541,7 @@ def test_add_param_type():
         str: a_func,
         ProtoDie: parser.make_die,
         Iterable[int]: make_int_tuple,
+        DicePool: parser.make_pool,
     }
     assert answer == parser.param_types
 
