@@ -210,15 +210,10 @@ True
 Dice Pools
 ----------
 
-Dice Pools are a pool of a single die. Dice Pool Collections are lightweight wrappers around a DicePool.
-They are a way to extract rolls from a Dice Pool and cast it as a :code:`ProtoDie`.
-The collections are treated as one giant Die with very funky rolling behavior. They all follow the basic form:
-:code:`<WhatToSelect>OfDicePool(pool=DicePool(input_die, pool_size), select)`.
-:code:`BestOfDicePool(DicePool(Die(6), 4), 3)` means: Make a dice pool of 4D6. Roll this
-and take the best three results from every roll. This object is also an 18-sided "Die" that rolls from 3 to 18.
-
-:code:`DicePools` can be expensive to instantiate, but they are immutable and can be use in several
-DicePoolCollections which are a lightweight wrapper around the DicePool.
+:code:`DicePool` s are a pool of a single die. :code:`DicePoolCollection` s are lightweight wrappers around a DicePool.
+They are a way to extract rolls from a Dice Pool and cast it as a :code:`ProtoDie`. :code:`DicePool` can be expensive
+to instantiate, which is explained below.  They are immutable and a single instance can be passed to many
+collections.
 
 .. module:: dicetables.dicepool
 
@@ -226,6 +221,11 @@ DicePoolCollections which are a lightweight wrapper around the DicePool.
     :members: die, size, rolls
     :undoc-members:
 
+
+The collections are treated as one giant Die with very funky rolling behavior. They all follow the basic form:
+:code:`<WhatToSelect>OfDicePool(pool=DicePool(input_die, pool_size), select=<int>)`.
+:code:`BestOfDicePool(DicePool(Die(6), 4), 3)` means: Make a dice pool of 4D6. Roll this
+and take the best three results from every roll. This object is also an 18-sided "Die" that rolls from 3 to 18.
 
 .. module:: dicetables.dicepool_collection
 
@@ -262,7 +262,7 @@ the following dictionary
 True
 
 This says that, with 3*Die(3), the roll: (1, 1, 1) happens once.  The roll: (1, 2, 3) happens 6 times.
-:code: `BestOfDicePool(DicePool(Die(3), 3), 2)` looks at the above dictionary and selects the two best
+:code:`BestOfDicePool(DicePool(Die(3), 3), 2)` looks at the above dictionary and selects the two best
 rolls in each tuple. so:
 
 >>> best_two = dt.BestOfDicePool(pool, 2)

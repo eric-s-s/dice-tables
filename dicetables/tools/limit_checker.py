@@ -49,7 +49,7 @@ class AbstractLimitChecker(ABC):
     ) -> None:
         """
         asserts that the number of `dicetables.ProtoDie` calls and the number of
-        `dicetables.bestworstmid.DicePool` calls are within limits.
+        `dicetables.dicepool.DicePool` calls are within limits.
 
         :raises LimitsError:
         """

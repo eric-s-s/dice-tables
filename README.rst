@@ -209,7 +209,7 @@ v2.6.0
 
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
 
-.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#module-dicetables.bestworstmid
+.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#dice-pools
 
 
 v2.5.0
