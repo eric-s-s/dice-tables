@@ -265,7 +265,7 @@ This says that, with 3*Die(3), the roll: (1, 1, 1) happens once.  The roll: (1, 
 :code: `BestOfDicePool(DicePool(Die(3), 3), 2)` looks at the above dictionary and selects the two best
 rolls in each tuple. so:
 
->>> best_two = dt.BestOfDicePool(pool)
+>>> best_two = dt.BestOfDicePool(pool, 2)
 >>> best_two.get_dict() == {2: 1, 3: 3, 4: 7, 5: 9, 6: 7}
 True
 

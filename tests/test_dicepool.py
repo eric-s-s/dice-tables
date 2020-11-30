@@ -55,6 +55,12 @@ def test_dice_pool_equality_false_by_size():
     assert DicePool(die, size) != DicePool(die, size - 1)
 
 
+def test_dice_pool_equality_false_by_type():
+    pool = DicePool(Die(2), 3)
+    assert pool != 3
+    assert 3 != pool
+
+
 @pytest.mark.parametrize("die_size", [3, 4, 6])
 @pytest.mark.parametrize("pool_size", [2, 4, 5])
 def test_dice_pool_is_hashable(die_size, pool_size):
