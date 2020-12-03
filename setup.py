@@ -7,7 +7,7 @@ def readme():
 
 
 setup(name='dicetables',
-      version='4.0.0',
+      version='4.0.1',
       description='get all combinations for any set of dice',
       long_description=readme(),
       keywords='dice, die, statistics, table, probability, combinations',
