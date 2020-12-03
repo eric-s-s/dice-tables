@@ -1,13 +1,14 @@
 import ast
-from typing import Dict, Iterable, Type, Any
+from typing import Dict, Iterable, Type, Union
 from inspect import signature, _empty, Signature
 
-from dicetables.bestworstmid import (
+from dicetables.dicepool_collection import (
     BestOfDicePool,
     WorstOfDicePool,
     UpperMidOfDicePool,
     LowerMidOfDicePool,
 )
+from dicetables.dicepool import DicePool
 from dicetables.dieevents import (
     Die,
     ModDie,
@@ -24,6 +25,9 @@ from dicetables.tools.limit_checker import (
     NoOpLimitChecker,
     LimitChecker,
 )
+
+
+DieOrPool = Union[Type[ProtoDie], Type[DicePool]]
 
 
 class ParseError(ValueError):
@@ -58,12 +62,14 @@ class Parser(object):
             WorstOfDicePool,
             UpperMidOfDicePool,
             LowerMidOfDicePool,
+            DicePool,
         }
         self._param_types = {
             int: make_int,
             Dict[int, int]: make_int_dict,
             ProtoDie: self.make_die,
             Iterable[int]: make_int_tuple,
+            DicePool: self.make_pool,
         }
 
     @classmethod
@@ -116,33 +122,31 @@ class Parser(object):
         return self.make_die(ast_call_node)
 
     def make_die(self, call_node: ast.Call):
-        die_class_name = call_node.func.id
-        param_nodes = call_node.args
-        kwarg_nodes = call_node.keywords
-        die_class = self._get_die_class(die_class_name)
-
-        die_signature = signature(die_class)
-
-        die_params = self._get_params(param_nodes, die_signature)
-        die_kwargs = self._get_kwargs(kwarg_nodes, die_signature)
-
-        bound_args = die_signature.bind(*die_params, **die_kwargs)
-        bound_args.apply_defaults()
+        die_class = self._get_call_class(call_node)
+        bound_args = self._get_bound_args(call_node, die_class)
 
         self.checker.assert_explosions_within_limits(bound_args)
-        self.checker.assert_dice_pool_within_limits(bound_args)
         self.checker.assert_die_size_within_limits(bound_args)
 
-        return die_class(*die_params, **die_kwargs)
+        return die_class(*bound_args.args, **bound_args.kwargs)
 
-    def walk_dice_calls(self, call_node: ast.AST) -> Iterable[Type[ProtoDie]]:
+    def make_pool(self, call_node: ast.Call):
+        pool_class = self._get_call_class(call_node)
+        bound_args = self._get_bound_args(call_node, pool_class)
+
+        self.checker.assert_dice_pool_within_limits(bound_args)
+
+        return pool_class(*bound_args.args, **bound_args.kwargs)
+
+    def walk_dice_calls(self, call_node: ast.AST) -> Iterable[DieOrPool]:
         return (
-            self._get_die_class(node.func.id)
+            self._get_call_class(node)
             for node in ast.walk(call_node)
             if isinstance(node, ast.Call)
         )
 
-    def _get_die_class(self, class_name):
+    def _get_call_class(self, call_node: ast.AST):
+        class_name = call_node.func.id
         class_name = self._update_search_string(class_name)
         for die_class in self._classes:
             test_against = self._update_search_string(die_class.__name__)
@@ -155,29 +159,39 @@ class Parser(object):
             return search_str.lower()
         return search_str
 
-    def _get_params(self, param_nodes, die_signature: Signature):
+    def _get_bound_args(self, call_node: ast.Call, call_class: DieOrPool):
+        call_signature = signature(call_class)
+        args = self._get_params(call_node, call_signature)
+        kwargs = self._get_kwargs(call_node, call_signature)
+        bound_args = call_signature.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+        return bound_args
+
+    def _get_params(self, call_node: ast.Call, call_signature: Signature):
+        param_nodes = call_node.args
         params = []
-        for node, param in zip(param_nodes, die_signature.parameters.values()):
+        for node, param in zip(param_nodes, call_signature.parameters.values()):
             type_hint = param.annotation
             converter = self._param_types[type_hint]
             params.append(converter(node))
         return params
 
-    def _raise_error_for_missing_type(self, die_signature: Signature):
+    def _raise_error_for_missing_type(self, call_signature: Signature):
         if any(
             param.annotation not in self._param_types
-            for param in die_signature.parameters.values()
+            for param in call_signature.parameters.values()
         ):
             raise ParseError(
                 "The signature: {} has one or more un-recognized param types".format(
-                    die_signature
+                    call_signature
                 )
             )
 
-    def _get_kwargs(self, kwarg_nodes, die_signature):
+    def _get_kwargs(self, call_node: ast.Call, call_signature: Signature):
+        kwarg_nodes = call_node.keywords
         out = {}
         for kwarg_node in kwarg_nodes:
-            kwarg_name, value = self._get_kwarg_value(die_signature, kwarg_node)
+            kwarg_name, value = self._get_kwarg_value(call_signature, kwarg_node)
             out[kwarg_name] = value
         return out
 
@@ -251,4 +265,3 @@ def make_int(num_node):
     if not isinstance(value, int):
         raise ValueError("Expected an integer, but got: {!r}".format(value))
     return value
-

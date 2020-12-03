@@ -155,6 +155,46 @@ and the github repository at `<https://github.com/eric-s-s/dice-tables>`_
 ChangeLog
 ---------
 
+v4.0.0
+------
+
+**Breaking change again!**
+
+Revamped DicePools and the Parser.
+
+Dice Pools
+^^^^^^^^^^
+
+BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool and LowerMidOfDicePool are now ProtoDie
+wrappers around a DicePool object.  :code:`DicePool(Die(6), 4)` is now a non-IntegerEvents
+object. It is immutable and can get passed around to various DicePoolCollection objects which
+are ProtoDie.  So now it is:
+
+>>> import dicetables as dt
+>>> pool = dt.DicePool(dt.Die(6), 4)
+>>> best_of = dt.BestOfDicePool(pool=pool, select=3)
+>>> worst_of = dt.BestOfDicePool(pool=pool, select=3)
+>>> super_best_of = dt.BestOfDicePool(pool=pool, select=1)
+
+Parser
+^^^^^^
+
+The parser now takes a LimitChecker object.  This defaults to a NoOpLimitChecker
+which doesn't check limits and there's a class method to make a parser with a useful
+limit checker that is the same as the old behavior.  You can pass in your own limit
+checker provided that it inherits from
+:code:`dicetables.tools.limit_checker.AbstractLimitChecker`.
+
+>>> from dicetables import Parser, Die, LimitsError
+>>> no_limit = Parser()
+>>> Die(1000) == no_limit.parse_die("Die(1000)")
+True
+>>> limited = Parser.with_limits()
+>>> limited.parse_die("Die(1000)")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+LimitsError: Max die_size: 500
+
 v3.0.0
 ------
 
@@ -169,7 +209,7 @@ v2.6.0
 
 .. _`The Dice` : http://dice-tables.readthedocs.io/en/latest/the_dice.html
 
-.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#module-dicetables.bestworstmid
+.. _`DicePool` : http://dice-tables.readthedocs.io/en/latest/the_dice.html#dice-pools
 
 
 v2.5.0

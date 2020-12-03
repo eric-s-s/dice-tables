@@ -6,7 +6,7 @@ from time import perf_counter
 import matplotlib.pyplot as plt
 
 from dicetables.tools.orderedcombinations import count_unique_combination_keys
-from dicetables import BestOfDicePool, Die
+from dicetables import DicePool, Die
 
 
 def get_max_combinations(die):
@@ -40,7 +40,7 @@ def make_plots():
         pool_entries = count_unique_combination_keys(die, pool_size)
         while pool_entries < limit:
             start = perf_counter()
-            BestOfDicePool(die, pool_size, pool_size - 1)
+            DicePool(die, pool_size)
             elapsed = perf_counter() - start
 
             xs.append(pool_entries)

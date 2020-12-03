@@ -1,14 +1,17 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from inspect import BoundArguments
-from typing import Iterable, Type, Optional, Any
+from typing import Iterable, Type, Optional, Any, Union
 
-from dicetables.bestworstmid import DicePool
+from dicetables.dicepool import DicePool
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.orderedcombinations import (
     count_unique_combination_keys,
     largest_permitted_pool_size,
 )
+
+
+DieOrPool = Union[Type[ProtoDie], Type[DicePool]]
 
 
 class LimitsError(ValueError):
@@ -42,11 +45,11 @@ def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Option
 class AbstractLimitChecker(ABC):
     @abstractmethod
     def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[Type[ProtoDie]]
+        self, die_classes: Iterable[DieOrPool]
     ) -> None:
         """
         asserts that the number of `dicetables.ProtoDie` calls and the number of
-        `dicetables.bestworstmid.DicePool` calls are within limits.
+        `dicetables.dicepool.DicePool` calls are within limits.
 
         :raises LimitsError:
         """
@@ -97,7 +100,7 @@ class AbstractLimitChecker(ABC):
 
 class NoOpLimitChecker(AbstractLimitChecker):
     def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[Type[ProtoDie]]
+        self, die_classes: Iterable[DieOrPool]
     ) -> None:
         pass
 
@@ -135,13 +138,14 @@ class LimitChecker(AbstractLimitChecker):
         }
 
     def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[Type[ProtoDie]]
+        self, call_classes: Iterable[DieOrPool]
     ) -> None:
-        class_list = list(die_classes)
-        dice_pool_list = [el for el in class_list if issubclass(el, DicePool)]
+        class_list = list(call_classes)
+        die_classes = len([el for el in class_list if issubclass(el, ProtoDie)])
+        dice_pools = class_list.count(DicePool)
         if (
-            len(class_list) > self.max_dice_calls
-            or len(dice_pool_list) > self.max_dice_pool_calls
+            die_classes > self.max_dice_calls
+            or dice_pools > self.max_dice_pool_calls
         ):
             msg = (
                 "Limits exceeded. Max dice calls: {}. ".format(self.max_dice_calls) +

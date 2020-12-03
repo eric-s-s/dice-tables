@@ -1,5 +1,6 @@
 from dicetables.additiveevents import AdditiveEvents
-from dicetables.bestworstmid import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.dicepool_collection import BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool
+from dicetables.dicepool import DicePool
 from dicetables.dicerecord import DiceRecord
 from dicetables.dicetable import DiceTable, DetailedDiceTable
 from dicetables.dieevents import Die, ModDie, WeightedDie, ModWeightedDie, StrongDie, Modifier, ExplodingOn, Exploding

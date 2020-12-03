@@ -1,6 +1,6 @@
 from itertools import combinations_with_replacement
 from math import factorial
-from typing import Dict
+from typing import Dict, Tuple
 
 from dicetables.eventsbases.integerevents import IntegerEvents
 
@@ -23,7 +23,7 @@ def largest_permitted_pool_size(events, max_number_of_keys):
     return pool_size - 1
 
 
-def ordered_combinations_of_events(events: IntegerEvents, times: int) -> Dict[int, int]:
+def ordered_combinations_of_events(events: IntegerEvents, times: int) -> Dict[Tuple[int, ...], int]:
     base_dict = events.get_dict()
     ordered_combinations = combinations_with_replacement(sorted(base_dict.keys()), times)
     return {key: get_combination_occurrences(key, base_dict) for key in ordered_combinations}
