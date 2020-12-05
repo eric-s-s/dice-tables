@@ -199,6 +199,27 @@ def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
     assert Parser().make_die(die_node) == StrongDie(ModDie(6, -1), 3)
 
 
+def test_make_die_too_many_args():
+    die_node = ast.parse("Die(1, 2)").body[0].value
+    msg = "Too many parameters for class: Die"
+    with pytest.raises(ParseError, match=msg):
+        Parser().make_die(die_node)
+
+
+def test_make_die_too_many_args_plus_kwargs():
+    die_node = ast.parse("ModDie(1, 2, modifier=3)").body[0].value
+    msg = "multiple values for argument 'modifier' for class: ModDie"
+    with pytest.raises(ParseError, match=msg):
+        Parser().make_die(die_node)
+
+
+def test_make_die_not_enough_arguments():
+    die_node = ast.parse("ModDie(modifier=3)").body[0].value
+    msg = "missing a required argument: 'die_size' for class: ModDie"
+    with pytest.raises(ParseError, match=msg):
+        Parser().make_die(die_node)
+
+
 def test_make_die_incorrect_kwargs():
     die_node = ast.parse("ModDie(die_size=6, MODIFIER=-1)").body[0].value
     msg = r"The keyword: MODIFIER is not in the die signature: \(die_size: ?int, modifier: ?int\)"

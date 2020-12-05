@@ -163,14 +163,21 @@ class Parser(object):
         call_signature = signature(call_class)
         args = self._get_params(call_node, call_signature)
         kwargs = self._get_kwargs(call_node, call_signature)
-        bound_args = call_signature.bind(*args, **kwargs)
-        bound_args.apply_defaults()
+        try:
+            bound_args = call_signature.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+        except TypeError as e:
+            msg = "{} for class: {}".format(e.args[0], call_node.func.id)
+            raise ParseError(msg)
         return bound_args
 
     def _get_params(self, call_node: ast.Call, call_signature: Signature):
+        signature_params = list(call_signature.parameters.values())
         param_nodes = call_node.args
+        if len(param_nodes) > len(signature_params):
+            raise ParseError("Too many parameters for class: {}".format(call_node.func.id))
         params = []
-        for node, param in zip(param_nodes, call_signature.parameters.values()):
+        for node, param in zip(param_nodes, signature_params):
             type_hint = param.annotation
             converter = self._param_types[type_hint]
             params.append(converter(node))
