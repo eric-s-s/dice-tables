@@ -163,8 +163,12 @@ class Parser(object):
         call_signature = signature(call_class)
         args = self._get_params(call_node, call_signature)
         kwargs = self._get_kwargs(call_node, call_signature)
-        bound_args = call_signature.bind(*args, **kwargs)
-        bound_args.apply_defaults()
+        try:
+            bound_args = call_signature.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+        except TypeError as e:
+            msg = "{} for class: {}".format(e.args[0], call_node.func.id)
+            raise ParseError(msg)
         return bound_args
 
     def _get_params(self, call_node: ast.Call, call_signature: Signature):

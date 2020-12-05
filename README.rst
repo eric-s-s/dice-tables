@@ -159,8 +159,7 @@ v4.0.2
 ------
 
 fixed bug in Parser.  Before `Parser().parse_die("Die(1, 2, 3)")` returned `Die(1)`.  Now, it raises a ParserError.
-`Parser().parse_die("ModDie(1, 2, modifier=3")` raises `TypeError` as would happen if you tried this with an
-actual die
+`Parser().parse_die("ModDie(1, 2, modifier=3")` also raises `ParserError` as does not enough arguments.
 
 v4.0.0
 ------

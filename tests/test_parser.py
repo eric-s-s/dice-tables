@@ -208,7 +208,15 @@ def test_make_die_too_many_args():
 
 def test_make_die_too_many_args_plus_kwargs():
     die_node = ast.parse("ModDie(1, 2, modifier=3)").body[0].value
-    with pytest.raises(TypeError, match="multiple values for argument 'modifier'"):
+    msg = "multiple values for argument 'modifier' for class: ModDie"
+    with pytest.raises(ParseError, match=msg):
+        Parser().make_die(die_node)
+
+
+def test_make_die_not_enough_arguments():
+    die_node = ast.parse("ModDie(modifier=3)").body[0].value
+    msg = "missing a required argument: 'die_size' for class: ModDie"
+    with pytest.raises(ParseError, match=msg):
         Parser().make_die(die_node)
 
 
