@@ -1,3 +1,4 @@
+sjadfklsdajfklsaj;flkjdsl
 .. image:: https://travis-ci.org/eric-s-s/dice-tables.svg?branch=master
     :target: https://travis-ci.org/eric-s-s/dice-tables
 
