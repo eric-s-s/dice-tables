@@ -1,16 +1,15 @@
 from setuptools import setup, find_packages
+from pathlib import Path
 
-
-def readme():
-    with open("README.rst") as f:
-        return f.read()
+this_directory = Path(__file__).parent.resolve()
+long_description = (this_directory / "README.rst").read_text(encoding="utf-8")
 
 
 setup(
     name="dicetables",
     version="4.0.2",
     description="get all combinations for any set of dice",
-    long_description=readme(),
+    long_description=long_description,
     keywords="dice, die, statistics, table, probability, combinations",
     url="http://github.com/eric-s-s/dice-tables",
     author="Eric Shaw",

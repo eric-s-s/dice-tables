@@ -1,2 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dicetables"
+version = "4.0.2"
+dependencies = []
+requires-python = ">=3.7"
+authors = [
+  {name = "Eric Shaw", email = "shaweric01@gmail.com"},
+]
+maintainers = [
+  {name = "Eric Shaw", email = "shaweric01@gmail.com"},
+]
+description = "get all combinations for any set of dice"
+readme = "README.rst"
+license = {file = "LICENSE"}
+classifiers=[
+  "Development Status :: 5 - Production/Stable",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Topic :: Games/Entertainment :: Role-Playing",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://allthedice.com"
+Documentation = "https://dice-tables.readthedocs.io/en/latest"
+Repository = "https://github.com/eric-s-s/dice-tables.git"
+Issues = "https://github.com/eric-s-s/dice-tables/issues"
+
 [tool.ruff]
 line-length = 100
