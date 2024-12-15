@@ -2,6 +2,7 @@
     :target: https://coveralls.io/github/eric-s-s/dice-tables?branch=master
 
 
+TODO DELETE!!!
 
 #################
 dicetables v4.0.2
