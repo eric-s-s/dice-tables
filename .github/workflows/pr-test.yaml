@@ -28,4 +28,4 @@ jobs:
     - name: Test with pytest
       run: |
         pytest . --junitxml=junit/test-results.xml --cov=dicetables --cov-report=xml --cov-report=html
-        pytest doctests.py
+        python doctests.py
