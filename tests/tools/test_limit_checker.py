@@ -1,5 +1,4 @@
 from inspect import signature
-from typing import List, Type, Union
 
 import pytest
 
@@ -12,7 +11,6 @@ from dicetables import (
     ExplodingOn,
 )
 from dicetables.dicepool import DicePool
-from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.limit_checker import NoOpLimitChecker, LimitChecker, LimitsError
 from dicetables.tools.orderedcombinations import count_unique_combination_keys
 

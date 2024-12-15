@@ -11,3 +11,19 @@ from dicetables.eventsinfo import (EventsCalculations, EventsInformation,
 from dicetables.parser import Parser, ParseError
 from dicetables.tools.limit_checker import LimitsError
 from dicetables.roller import Roller
+
+__all__ = [
+    "AdditiveEvents",
+    "BestOfDicePool", "WorstOfDicePool", "UpperMidOfDicePool", "LowerMidOfDicePool",
+    "DicePool",
+    "DiceRecord",
+    "DiceTable", "DetailedDiceTable",
+    "Die", "ModDie", "WeightedDie", "ModWeightedDie", "StrongDie", "Modifier", "ExplodingOn", "Exploding",
+    "DiceRecordError", "InvalidEventsError",
+    "EventsCalculations", "EventsInformation",
+                                   "events_range", "mean", "stddev", "percentage_points", "percentage_axes", "stats",
+                                   "full_table_string",
+    "Parser", "ParseError",
+    "LimitsError",
+    "Roller"
+]
