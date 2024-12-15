@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-Alias = namedtuple('Alias', ['primary', 'alternate', 'primary_height'])
+Alias = namedtuple("Alias", ["primary", "alternate", "primary_height"])
 
 
 class AliasTable(object):
@@ -25,13 +25,17 @@ class AliasTable(object):
         while small_heights:
             primary, primary_height = small_heights.pop()
             alternate, alternate_height = big_heights.pop()
-            alias_list.append(Alias(primary=primary, alternate=alternate, primary_height=primary_height))
+            alias_list.append(
+                Alias(primary=primary, alternate=alternate, primary_height=primary_height)
+            )
             new_alternate_height = alternate_height - (self._height - primary_height)
             self._update_sorting_lists(alternate, new_alternate_height, big_heights, small_heights)
 
         while big_heights:
             primary, _ = big_heights.pop()
-            alias_list.append(Alias(primary=primary, alternate=primary, primary_height=self._height))
+            alias_list.append(
+                Alias(primary=primary, alternate=primary, primary_height=self._height)
+            )
 
         return alias_list
 
@@ -46,7 +50,9 @@ class AliasTable(object):
         greater_than_or_equal_height = []
         for event, frequency in sorted(input_dict.items()):
             event_height = self._length * frequency
-            self._update_sorting_lists(event, event_height, greater_than_or_equal_height, less_than_height)
+            self._update_sorting_lists(
+                event, event_height, greater_than_or_equal_height, less_than_height
+            )
         return greater_than_or_equal_height, less_than_height
 
     @property

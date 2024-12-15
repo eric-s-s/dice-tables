@@ -1,6 +1,7 @@
 """
 AdditiveEvents is the general case for DiceTable - an IntegerEvents that can combine with other IntegerEvents.
 """
+
 from typing import TypeVar, Type, Dict
 
 from dicetables.eventsbases.integerevents import IntegerEvents
@@ -12,11 +13,10 @@ def scrub_zeroes(dictionary):
     return {key: val for key, val in dictionary.items() if val}
 
 
-T = TypeVar('T', bound='AdditiveEvents')
+T = TypeVar("T", bound="AdditiveEvents")
 
 
 class AdditiveEvents(IntegerEvents):
-
     def __init__(self, events_dict):
         """
 
@@ -38,7 +38,7 @@ class AdditiveEvents(IntegerEvents):
     def __str__(self):
         min_event = min(self._table.keys())
         max_event = max(self._table.keys())
-        return 'table from {} to {}'.format(min_event, max_event)
+        return "table from {} to {}".format(min_event, max_event)
 
     def combine(self: T, events: IntegerEvents, times: int = 1) -> T:
         dictionary = DictCombiner(self.get_dict()).combine_by_fastest(events.get_dict(), times)
@@ -50,7 +50,9 @@ class AdditiveEvents(IntegerEvents):
         :WARNING - UNSAFE METHOD: len(flattened_list) = total occurrences of events.
             if this list is too big, it will raise MemoryError or OverflowError
         """
-        dictionary = DictCombiner(self.get_dict()).combine_by_flattened_list(events.get_dict(), times)
+        dictionary = DictCombiner(self.get_dict()).combine_by_flattened_list(
+            events.get_dict(), times
+        )
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_dictionary(self: T, events: IntegerEvents, times: int = 1) -> T:
@@ -58,7 +60,9 @@ class AdditiveEvents(IntegerEvents):
         return EventsFactory.from_dictionary(self, dictionary)
 
     def combine_by_indexed_values(self: T, events: IntegerEvents, times: int = 1) -> T:
-        dictionary = DictCombiner(self.get_dict()).combine_by_indexed_values(events.get_dict(), times)
+        dictionary = DictCombiner(self.get_dict()).combine_by_indexed_values(
+            events.get_dict(), times
+        )
         return EventsFactory.from_dictionary(self, dictionary)
 
     def remove(self: T, events: IntegerEvents, times: int = 1) -> T:

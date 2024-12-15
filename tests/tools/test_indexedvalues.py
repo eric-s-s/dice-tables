@@ -1,6 +1,7 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods, line-too-long
 
 """test indexedlist"""
+
 from __future__ import absolute_import
 
 import unittest
@@ -9,7 +10,6 @@ from dicetables.tools import indexedvalues as iv
 
 
 class TestIndexedValues(unittest.TestCase):
-
     def assert_indexed_values(self, indexed_values, start_index, values):
         self.assertEqual(indexed_values.start_index, start_index)
         self.assertEqual(indexed_values.raw_values, values)
@@ -97,17 +97,20 @@ class TestIndexedValues(unittest.TestCase):
         self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 5, 2), [0, 0, 1, 2, 3])
 
     def test_change_list_len_with_zeroes_offset_and_zeros_lt_total_size(self):
-        self.assertEqual(iv.change_list_len_with_zeroes([1, 2, 3], 10, 2), [0, 0, 1, 2, 3, 0, 0, 0, 0, 0])
+        self.assertEqual(
+            iv.change_list_len_with_zeroes([1, 2, 3], 10, 2), [0, 0, 1, 2, 3, 0, 0, 0, 0, 0]
+        )
 
     def test_equalize_len_demonstration(self):
         lower = [1, 2, 3, 4, 5, 6]
         higher = [1, 2, 3]
         diff_in_start_indices = 2
         total_size = 6
-        self.assertEqual(iv.change_list_len_with_zeroes(lower, total_size, 0),
-                         [1, 2, 3, 4, 5, 6])
-        self.assertEqual(iv.change_list_len_with_zeroes(higher, total_size, diff_in_start_indices),
-                         [0, 0, 1, 2, 3, 0])
+        self.assertEqual(iv.change_list_len_with_zeroes(lower, total_size, 0), [1, 2, 3, 4, 5, 6])
+        self.assertEqual(
+            iv.change_list_len_with_zeroes(higher, total_size, diff_in_start_indices),
+            [0, 0, 1, 2, 3, 0],
+        )
 
     def test_add_many_empty(self):
         self.assertEqual(iv.add_many(), 0)
@@ -164,5 +167,5 @@ class TestIndexedValues(unittest.TestCase):
         self.assert_indexed_values(test.combine_with_dictionary(input_dict), 4, [2, 5, 4, 1])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

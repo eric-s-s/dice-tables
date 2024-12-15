@@ -115,9 +115,7 @@ class Parser(object):
         die_string = die_string.strip()
         ast_call_node = ast.parse(die_string).body[0].value
 
-        self.checker.assert_numbers_of_calls_within_limits(
-            self.walk_dice_calls(ast_call_node)
-        )
+        self.checker.assert_numbers_of_calls_within_limits(self.walk_dice_calls(ast_call_node))
 
         return self.make_die(ast_call_node)
 
@@ -140,9 +138,7 @@ class Parser(object):
 
     def walk_dice_calls(self, call_node: ast.AST) -> Iterable[DieOrPool]:
         return (
-            self._get_call_class(node)
-            for node in ast.walk(call_node)
-            if isinstance(node, ast.Call)
+            self._get_call_class(node) for node in ast.walk(call_node) if isinstance(node, ast.Call)
         )
 
     def _get_call_class(self, call_node: ast.AST):
@@ -189,9 +185,7 @@ class Parser(object):
             for param in call_signature.parameters.values()
         ):
             raise ParseError(
-                "The signature: {} has one or more un-recognized param types".format(
-                    call_signature
-                )
+                "The signature: {} has one or more un-recognized param types".format(call_signature)
             )
 
     def _get_kwargs(self, call_node: ast.Call, call_signature: Signature):
@@ -208,8 +202,7 @@ class Parser(object):
 
         class_params = die_signature.parameters
         param_mapping = {
-            self._update_search_string(key): value
-            for key, value in class_params.items()
+            self._update_search_string(key): value for key, value in class_params.items()
         }
 
         try:
@@ -236,12 +229,8 @@ class Parser(object):
 
     @staticmethod
     def _raise_error_for_missing_annotation(die_signature: Signature):
-        if any(
-            param.annotation == _empty for param in die_signature.parameters.values()
-        ):
-            raise ParseError(
-                "The signature: {} is missing type annotations".format(die_signature)
-            )
+        if any(param.annotation == _empty for param in die_signature.parameters.values()):
+            raise ParseError("The signature: {} is missing type annotations".format(die_signature))
 
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method

@@ -56,9 +56,7 @@ class TestLimitChecker(object):
         }
 
     @pytest.mark.parametrize("dice, raises_error", [(2, False), (3, False), (4, True)])
-    def test_assert_number_of_calls_within_limits_dice_limit_three(
-            self, dice, raises_error
-    ):
+    def test_assert_number_of_calls_within_limits_dice_limit_three(self, dice, raises_error):
         checker = LimitChecker(max_dice=3, max_dice_pools=4)
         if raises_error:
             with pytest.raises(LimitsError):
@@ -77,9 +75,7 @@ class TestLimitChecker(object):
         else:
             checker.assert_numbers_of_calls_within_limits([Die, DicePool] * dice)
 
-    @pytest.mark.parametrize(
-        "dice_pools, raises_error", [(2, False), (3, False), (4, True)]
-    )
+    @pytest.mark.parametrize("dice_pools, raises_error", [(2, False), (3, False), (4, True)])
     def test_assert_number_of_calls_within_limits_dice_pool_limit_three(
         self, dice_pools, raises_error
     ):
@@ -93,9 +89,7 @@ class TestLimitChecker(object):
         else:
             checker.assert_numbers_of_calls_within_limits(to_check)
 
-    @pytest.mark.parametrize(
-        "die_size, raises_error", [(9, False), (10, False), (11, True)]
-    )
+    @pytest.mark.parametrize("die_size, raises_error", [(9, False), (10, False), (11, True)])
     def test_assert_die_size_die_with_size_argument(self, die_size, raises_error):
         checker = LimitChecker(max_size=10)
         bound_args = signature(ModDie).bind(die_size, 1000)
@@ -105,9 +99,7 @@ class TestLimitChecker(object):
         else:
             checker.assert_die_size_within_limits(bound_args)
 
-    @pytest.mark.parametrize(
-        "die_size, raises_error", [(9, False), (10, False), (11, True)]
-    )
+    @pytest.mark.parametrize("die_size, raises_error", [(9, False), (10, False), (11, True)])
     def test_assert_die_size_die_with_dictionary_argument(self, die_size, raises_error):
         checker = LimitChecker(max_size=10)
         bound_args = signature(ModWeightedDie).bind({die_size: 1}, 1000)
@@ -128,9 +120,7 @@ class TestLimitChecker(object):
         bound_args = signature(Die).bind(1000)
         checker.assert_explosions_within_limits(bound_args)
 
-    @pytest.mark.parametrize(
-        "explosions, raises_error", [(4, False), (5, False), (6, True)]
-    )
+    @pytest.mark.parametrize("explosions, raises_error", [(4, False), (5, False), (6, True)])
     def test_assert_explosions_no_explodes_on(self, explosions, raises_error):
         input_die = ModDie(100, 100)
         bound_args = signature(Exploding).bind(input_die, explosions)
@@ -141,18 +131,12 @@ class TestLimitChecker(object):
         else:
             checker.assert_explosions_within_limits(bound_args)
 
-    @pytest.mark.parametrize(
-        "explodes_on_len, raises_error", [(4, False), (5, False), (6, True)]
-    )
-    def test_assert_explosions_explosions_plus_len_explodes_on(
-        self, explodes_on_len, raises_error
-    ):
+    @pytest.mark.parametrize("explodes_on_len, raises_error", [(4, False), (5, False), (6, True)])
+    def test_assert_explosions_explosions_plus_len_explodes_on(self, explodes_on_len, raises_error):
         input_die = ModDie(100, 100)
         explosions = 10
         explodes_on = tuple(range(explodes_on_len))
-        bound_args = signature(ExplodingOn).bind(
-            input_die, explodes_on, explosions=explosions
-        )
+        bound_args = signature(ExplodingOn).bind(input_die, explodes_on, explosions=explosions)
         checker = LimitChecker(max_explosions=5 + explosions)
         if raises_error:
             with pytest.raises(LimitsError):
@@ -190,18 +174,11 @@ class TestLimitChecker(object):
         """
         checker = LimitChecker()
         bound_args_passing = signature(DicePool).bind(Die(die_size), die_pool)
-        bound_args_failing = signature(DicePool).bind(
-            Die(die_size), die_pool + 1
-        )
-        assert (
-            count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
-        )
+        bound_args_failing = signature(DicePool).bind(Die(die_size), die_pool + 1)
+        assert count_unique_combination_keys(Die(die_size), die_pool) <= max_combinations
         checker.assert_dice_pool_within_limits(bound_args_passing)
 
-        assert (
-            count_unique_combination_keys(Die(die_size), die_pool + 1)
-            > max_combinations
-        )
+        assert count_unique_combination_keys(Die(die_size), die_pool + 1) > max_combinations
         with pytest.raises(LimitsError):
             checker.assert_dice_pool_within_limits(bound_args_failing)
 

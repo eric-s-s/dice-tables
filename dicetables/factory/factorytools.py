@@ -64,13 +64,18 @@ class Getter(object):
         return self._method_name
 
     def __str__(self):
-        is_property = {True: 'property', False: 'method'}
-        return '{}: "{}", default: {!r}'.format(is_property[self._is_property], self._method_name, self._default_value)
+        is_property = {True: "property", False: "method"}
+        return '{}: "{}", default: {!r}'.format(
+            is_property[self._is_property], self._method_name, self._default_value
+        )
 
     def __eq__(self, other):
         try:
-            return ((self.get_default(), self.get_bool(), self.get_name()) ==
-                    (other.get_default(), other.get_bool(), other.get_name()))
+            return (self.get_default(), self.get_bool(), self.get_name()) == (
+                other.get_default(),
+                other.get_bool(),
+                other.get_name(),
+            )
         except AttributeError:
             return False
 

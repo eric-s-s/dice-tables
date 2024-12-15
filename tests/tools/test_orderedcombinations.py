@@ -1,9 +1,12 @@
 import unittest
 
 from dicetables import AdditiveEvents
-from dicetables.tools.orderedcombinations import (get_combination_occurrences, ordered_combinations_of_events,
-                                                  count_unique_combination_keys, largest_permitted_pool_size
-                                                  )
+from dicetables.tools.orderedcombinations import (
+    get_combination_occurrences,
+    ordered_combinations_of_events,
+    count_unique_combination_keys,
+    largest_permitted_pool_size,
+)
 
 
 class TestOrderedCombinations(unittest.TestCase):
@@ -40,12 +43,24 @@ class TestOrderedCombinations(unittest.TestCase):
 
     def test_count_number_of_combination_all_values_one_commutative_property(self):
         to_use = dict.fromkeys(range(1, 15), 1)
-        self.assertEqual(get_combination_occurrences((1, 2, 2, 3, 3, 3), to_use), 60)  # 6!/(1!*2!*3!)
-        self.assertEqual(get_combination_occurrences((1, 2, 2, 2, 3, 3), to_use), 60)  # 6!/(1!*3!*2!)
-        self.assertEqual(get_combination_occurrences((1, 1, 2, 3, 3, 3), to_use), 60)  # 6!/(2!*1!*3!)
-        self.assertEqual(get_combination_occurrences((1, 1, 2, 2, 2, 3), to_use), 60)  # 6!/(2!*3!*1!)
-        self.assertEqual(get_combination_occurrences((1, 1, 1, 2, 3, 3), to_use), 60)  # 6!/(3!*1!*2!)
-        self.assertEqual(get_combination_occurrences((1, 1, 1, 2, 2, 3), to_use), 60)  # 6!/(3!*2!*1!)
+        self.assertEqual(
+            get_combination_occurrences((1, 2, 2, 3, 3, 3), to_use), 60
+        )  # 6!/(1!*2!*3!)
+        self.assertEqual(
+            get_combination_occurrences((1, 2, 2, 2, 3, 3), to_use), 60
+        )  # 6!/(1!*3!*2!)
+        self.assertEqual(
+            get_combination_occurrences((1, 1, 2, 3, 3, 3), to_use), 60
+        )  # 6!/(2!*1!*3!)
+        self.assertEqual(
+            get_combination_occurrences((1, 1, 2, 2, 2, 3), to_use), 60
+        )  # 6!/(2!*3!*1!)
+        self.assertEqual(
+            get_combination_occurrences((1, 1, 1, 2, 3, 3), to_use), 60
+        )  # 6!/(3!*1!*2!)
+        self.assertEqual(
+            get_combination_occurrences((1, 1, 1, 2, 2, 3), to_use), 60
+        )  # 6!/(3!*2!*1!)
 
     def test_count_number_of_combinations_all_values_one_different_groupings(self):
         to_use = dict.fromkeys(range(1, 15), 1)
@@ -56,8 +71,12 @@ class TestOrderedCombinations(unittest.TestCase):
         self.assertEqual(get_combination_occurrences((1, 1, 2, 2, 2), to_use), 10)  # 5!/(2!*3!)
         self.assertEqual(get_combination_occurrences((1, 2, 2, 3, 3), to_use), 30)  # 5!/(1!*2!*2!)
         self.assertEqual(get_combination_occurrences((1, 1, 2, 3, 3), to_use), 30)  # 5!/(2!*1!*2!)
-        self.assertEqual(get_combination_occurrences((1, 1, 2, 2, 3, 3), to_use), 90)  # 6!/(2!*2!*2!)
-        self.assertEqual(get_combination_occurrences((1, 2, 2, 2, 3, 3), to_use), 60)  # 6!/(1!*3!*2!)
+        self.assertEqual(
+            get_combination_occurrences((1, 1, 2, 2, 3, 3), to_use), 90
+        )  # 6!/(2!*2!*2!)
+        self.assertEqual(
+            get_combination_occurrences((1, 2, 2, 2, 3, 3), to_use), 60
+        )  # 6!/(1!*3!*2!)
 
     def test_count_number_of_combination_different_values(self):
         to_use = {key: key for key in range(1, 11)}
@@ -68,20 +87,27 @@ class TestOrderedCombinations(unittest.TestCase):
 
     def test_ordered_combinations_of_events_all_single_weight_simple_case(self):
         answer = ordered_combinations_of_events(AdditiveEvents({1: 1, 2: 1}), 3)
-        self.assertEqual(answer, {(1, 1, 1): 1,
-                                  (1, 1, 2): 3,
-                                  (1, 2, 2): 3,
-                                  (2, 2, 2): 1})
+        self.assertEqual(answer, {(1, 1, 1): 1, (1, 1, 2): 3, (1, 2, 2): 3, (2, 2, 2): 1})
 
-    def test_ordered_combinations_of_events_different_weight_is_same_as_combining_integer_events(self):
+    def test_ordered_combinations_of_events_different_weight_is_same_as_combining_integer_events(
+        self,
+    ):
         answer = ordered_combinations_of_events(AdditiveEvents({1: 1, 2: 2, 3: 3}), 3)
-        self.assertEqual(answer, {(1, 1, 1): 1,  # 3: 1
-                                  (1, 1, 2): 6,  # 4: 6
-                                  (1, 2, 2): 12, (1, 1, 3): 9,  # 5: 12+9
-                                  (2, 2, 2): 8, (1, 2, 3): 36,  # 6: 8+36
-                                  (1, 3, 3): 27, (2, 2, 3): 36,  # 7: 27+36
-                                  (2, 3, 3): 54,  # 8: 54
-                                  (3, 3, 3): 27})  # 9: 27
+        self.assertEqual(
+            answer,
+            {
+                (1, 1, 1): 1,  # 3: 1
+                (1, 1, 2): 6,  # 4: 6
+                (1, 2, 2): 12,
+                (1, 1, 3): 9,  # 5: 12+9
+                (2, 2, 2): 8,
+                (1, 2, 3): 36,  # 6: 8+36
+                (1, 3, 3): 27,
+                (2, 2, 3): 36,  # 7: 27+36
+                (2, 3, 3): 54,  # 8: 54
+                (3, 3, 3): 27,
+            },
+        )  # 9: 27
         answer = AdditiveEvents.new().combine(AdditiveEvents({1: 1, 2: 2, 3: 3}), 3).get_dict()
         self.assertEqual(answer, {3: 1, 4: 6, 5: 21, 6: 44, 7: 63, 8: 54, 9: 27})
 

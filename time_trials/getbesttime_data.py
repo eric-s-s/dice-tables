@@ -35,17 +35,19 @@ def get_control_and_indexed_values_times(combine_times, events_tuples, input_dic
 def get_control_action(input_dict, events_tuples):
     control_events = DictCombiner(input_dict)
     control_method_str = get_control_method_str(events_tuples)
-    control_method_dict = {'tuple_list': control_events.combine_by_dictionary,
-                           'flattened_list': control_events.combine_by_flattened_list}
+    control_method_dict = {
+        "tuple_list": control_events.combine_by_dictionary,
+        "flattened_list": control_events.combine_by_flattened_list,
+    }
     control_events_action = control_method_dict[control_method_str]
     return control_events_action
 
 
 def get_control_method_str(prepped_list):
     if prepped_list[0][1] == 1:
-        return 'flattened_list'
+        return "flattened_list"
     else:
-        return 'tuple_list'
+        return "tuple_list"
 
 
 def get_tuple_list(size, many_occurrences=False, step=1):
@@ -57,17 +59,17 @@ def get_tuple_list(size, many_occurrences=False, step=1):
 
 
 def get_indexed_advantage_ratio(start_dict_size, adds, tuple_list_sizes, many_occurrences):
-
     events_tuples = get_tuple_list(tuple_list_sizes, many_occurrences)
     input_dict = get_input_dict(start_dict_size, True)
 
-    control_time, indexed_values_time = get_control_and_indexed_values_times(adds, events_tuples, input_dict)
+    control_time, indexed_values_time = get_control_and_indexed_values_times(
+        adds, events_tuples, input_dict
+    )
 
     return control_time / indexed_values_time
 
 
 def get_data_list(many_occurrences):
-
     # titles = ('TIMES', 'OBJ SIZE', 'INPUT SIZE', 'OCCUR MANY', 'RESULT')
     adds = [1, 2, 3, 4, 5, 10, 20, 50, 100, 500, 1000, 2000]
     start_dict_sizes = [1, 10, 50, 100, 200, 500, 1000, 2000, 5000]
@@ -78,8 +80,16 @@ def get_data_list(many_occurrences):
         for start_size in start_dict_sizes:
             for tuple_size in tuple_list_sizes:
                 if add_time * tuple_size <= 4000:
-                    datum = get_indexed_advantage_ratio(start_size, add_time, tuple_size, many_occurrences)
-                    data_line = (float(add_time), float(start_size), float(tuple_size), float(many_occurrences), datum)
+                    datum = get_indexed_advantage_ratio(
+                        start_size, add_time, tuple_size, many_occurrences
+                    )
+                    data_line = (
+                        float(add_time),
+                        float(start_size),
+                        float(tuple_size),
+                        float(many_occurrences),
+                        datum,
+                    )
                     all_data.append(data_line)
 
     return all_data
@@ -124,41 +134,41 @@ def remove_excess_one_obj_size_results(data_map):
 def write_dict_file(file_name):
     lines = []
     for suffix in range(10):
-        print('on set {} of 9'.format(suffix))
+        print("on set {} of 9".format(suffix))
         flat = get_data_list(False)
         many = get_data_list(True)
         flat_str = str(dict_maker(flat))
         many_str = str(dict_maker(many))
-        flat_str = 'flat_{} = '.format(suffix) + flat_str
-        many_str = 'many_{} = '.format(suffix) + many_str
+        flat_str = "flat_{} = ".format(suffix) + flat_str
+        many_str = "many_{} = ".format(suffix) + many_str
         lines.append(flat_str)
         lines.append(many_str)
-        lines.append('')
-    with open(file_name, 'w') as file:
-        file.write('\n'.join(lines))
+        lines.append("")
+    with open(file_name, "w") as file:
+        file.write("\n".join(lines))
 
 
 def write_two_txt_files_from_original(original_file_name):
     flat, many = convert_text_to_dicts_list(original_file_name)
-    if original_file_name.endswith('.txt'):
+    if original_file_name.endswith(".txt"):
         original_file_name = original_file_name[:-4]
     new_flat_str = group_dicts(flat)
     new_many_str = group_dicts(many)
-    with open(original_file_name + '_flat.txt', 'w') as file:
+    with open(original_file_name + "_flat.txt", "w") as file:
         file.write(new_flat_str)
-    with open(original_file_name + '_many.txt', 'w') as file:
+    with open(original_file_name + "_many.txt", "w") as file:
         file.write(new_many_str)
 
 
 def convert_text_to_dicts_list(file_name):
-    with open(file_name, 'r') as file:
-        lines = file.read().split('\n')
+    with open(file_name, "r") as file:
+        lines = file.read().split("\n")
     flat = []
     many = []
     for line in lines:
-        if line.startswith('flat'):
+        if line.startswith("flat"):
             flat.append(eval(line[9:]))
-        if line.startswith('many'):
+        if line.startswith("many"):
             many.append(eval(line[9:]))
     return flat, many
 
@@ -167,13 +177,13 @@ def group_dicts(dic_list):
     common_keys = sorted(dic_list[0].keys())
     lines = []
     for input_size in common_keys:
-        lines.append('input list: {}'.format(input_size))
+        lines.append("input list: {}".format(input_size))
         times_list = get_all_times_keys_for_one_input_size(dic_list, input_size)
         for dic in dic_list:
             times_obj_size = dic[input_size]
-            lines.append('    ' + sorted_dict_as_single_line_str(times_obj_size, times_list))
-        lines.append('')
-    return '\n'.join(lines)
+            lines.append("    " + sorted_dict_as_single_line_str(times_obj_size, times_list))
+        lines.append("")
+    return "\n".join(lines)
 
 
 def get_all_times_keys_for_one_input_size(dic_list, input_size):
@@ -185,18 +195,17 @@ def get_all_times_keys_for_one_input_size(dic_list, input_size):
 
 def sorted_dict_as_single_line_str(dic, key_list):
     width = 10
-    blank = ' '*width
-    out_str = '{'
+    blank = " " * width
+    out_str = "{"
     for key in key_list:
         if key in dic.keys():
-            new = '{}: {}, '.format(key, dic[key])
+            new = "{}: {}, ".format(key, dic[key])
             out_str += new.ljust(width)
         else:
             out_str += blank
     return out_str
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # write_dict_file('dict_combiner.txt')
-    write_two_txt_files_from_original('dict_combiner.txt')
+    write_two_txt_files_from_original("dict_combiner.txt")

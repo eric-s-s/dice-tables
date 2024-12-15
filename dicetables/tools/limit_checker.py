@@ -44,9 +44,7 @@ def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Option
 
 class AbstractLimitChecker(ABC):
     @abstractmethod
-    def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[DieOrPool]
-    ) -> None:
+    def assert_numbers_of_calls_within_limits(self, die_classes: Iterable[DieOrPool]) -> None:
         """
         asserts that the number of `dicetables.ProtoDie` calls and the number of
         `dicetables.dicepool.DicePool` calls are within limits.
@@ -99,9 +97,7 @@ class AbstractLimitChecker(ABC):
 
 
 class NoOpLimitChecker(AbstractLimitChecker):
-    def assert_numbers_of_calls_within_limits(
-        self, die_classes: Iterable[DieOrPool]
-    ) -> None:
+    def assert_numbers_of_calls_within_limits(self, die_classes: Iterable[DieOrPool]) -> None:
         pass
 
     def assert_die_size_within_limits(self, bound_args: BoundArguments) -> None:
@@ -137,20 +133,15 @@ class LimitChecker(AbstractLimitChecker):
             30: 250000,
         }
 
-    def assert_numbers_of_calls_within_limits(
-        self, call_classes: Iterable[DieOrPool]
-    ) -> None:
+    def assert_numbers_of_calls_within_limits(self, call_classes: Iterable[DieOrPool]) -> None:
         class_list = list(call_classes)
         die_classes = len([el for el in class_list if issubclass(el, ProtoDie)])
         dice_pools = class_list.count(DicePool)
-        if (
-            die_classes > self.max_dice_calls
-            or dice_pools > self.max_dice_pool_calls
-        ):
+        if die_classes > self.max_dice_calls or dice_pools > self.max_dice_pool_calls:
             msg = (
-                "Limits exceeded. Max dice calls: {}. ".format(self.max_dice_calls) +
-                "Max dice pool calls: {}. ".format(self.max_dice_pool_calls) +
-                "Calls requested: {}".format(class_list)
+                "Limits exceeded. Max dice calls: {}. ".format(self.max_dice_calls)
+                + "Max dice pool calls: {}. ".format(self.max_dice_pool_calls)
+                + "Calls requested: {}".format(class_list)
             )
             raise LimitsError(msg)
 
@@ -163,8 +154,8 @@ class LimitChecker(AbstractLimitChecker):
 
         if size and size > self.max_size:
             raise LimitsError(
-                "A die of size: {} is greater than the allowed ".format(size) +
-                "max: {}".format(self.max_size)
+                "A die of size: {} is greater than the allowed ".format(size)
+                + "max: {}".format(self.max_size)
             )
 
     def assert_explosions_within_limits(self, bound_args: BoundArguments) -> None:
@@ -176,9 +167,9 @@ class LimitChecker(AbstractLimitChecker):
         if explosions and explosions > self.max_explosions:
             raise LimitsError(
                 (
-                    "Explosions: {} + ".format(explosions) +
-                    "len({}) is greater than allowed ".format(explodes_on) +
-                    "max: {}".format(self.max_explosions)
+                    "Explosions: {} + ".format(explosions)
+                    + "len({}) is greater than allowed ".format(explodes_on)
+                    + "max: {}".format(self.max_explosions)
                 )
             )
 
