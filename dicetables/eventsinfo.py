@@ -29,7 +29,7 @@ def safe_true_div(numerator, denominator):
 
 def _convert_decimal_to_float_or_int(num):
     answer_as_float = float(num)
-    if answer_as_float == float('inf') or answer_as_float == float('-inf'):
+    if answer_as_float == float("inf") or answer_as_float == float("-inf"):
         return int(num)
     else:
         return answer_as_float
@@ -93,7 +93,6 @@ class EventsInformation(object):
 
 
 class EventsCalculations(object):
-
     def __init__(self, events: IntegerEvents, include_zeroes: bool = True):
         self._info = EventsInformation(events)
         self._include_zeroes = include_zeroes
@@ -116,7 +115,9 @@ class EventsCalculations(object):
         factor_to_truncate_digits = self._get_truncation_factor(decimal_place)
         truncated_deviations = 0
         for event_value, occurrences in self._info.get_items():
-            truncated_deviations += (occurrences // factor_to_truncate_digits) * (avg - event_value) ** 2.
+            truncated_deviations += (occurrences // factor_to_truncate_digits) * (
+                avg - event_value
+            ) ** 2.0
         truncated_total_occurrences = self._info.total_occurrences() // factor_to_truncate_digits
         return round((truncated_deviations / truncated_total_occurrences) ** 0.5, decimal_place)
 
@@ -134,10 +135,10 @@ class EventsCalculations(object):
         """
         Very fast, but only good to ten decimal places.
         """
-        return self._percentage_points_by_method('fast')
+        return self._percentage_points_by_method("fast")
 
     def percentage_points_exact(self) -> List[Tuple[int, float]]:
-        return self._percentage_points_by_method('exact')
+        return self._percentage_points_by_method("exact")
 
     def percentage_axes(self):
         """
@@ -154,8 +155,10 @@ class EventsCalculations(object):
 
         :param log10_of_zero_value: any zero-occurrence must have a preset value.
         """
-        return [(event, log10(occurrence) if occurrence != 0 else log10_of_zero_value)
-                for event, occurrence in self._get_data_set()]
+        return [
+            (event, log10(occurrence) if occurrence != 0 else log10_of_zero_value)
+            for event, occurrence in self._get_data_set()
+        ]
 
     def log10_axes(self, log10_of_zero_value=-100.0):
         """
@@ -166,10 +169,13 @@ class EventsCalculations(object):
         return list(zip(*self.log10_points(log10_of_zero_value)))
 
     def _percentage_points_by_method(self, method_str):
-        methods = {'fast': get_fast_pct_number, 'exact': get_exact_pct_number}
+        methods = {"fast": get_fast_pct_number, "exact": get_exact_pct_number}
         pct_method = methods[method_str]
         total_values = self._info.total_occurrences()
-        return [(event, pct_method(occurrence, total_values)) for event, occurrence in self._get_data_set()]
+        return [
+            (event, pct_method(occurrence, total_values))
+            for event, occurrence in self._get_data_set()
+        ]
 
     def _get_data_set(self):
         if self._include_zeroes:
@@ -187,9 +193,9 @@ class EventsCalculations(object):
         shown_digits = max(shown_digits, 1)
         formatter = NumberFormatter(shown_digits=shown_digits, max_comma_exp=max_power_for_commaed)
         right_just = self._get_right_just()
-        out_str = ''
+        out_str = ""
         for value, frequency in self._get_data_set():
-            out_str += '{:>{}}: {}\n'.format(value, right_just, formatter.format(frequency))
+            out_str += "{:>{}}: {}\n".format(value, right_just, formatter.format(frequency))
         return out_str
 
     def _get_right_just(self):
@@ -197,7 +203,9 @@ class EventsCalculations(object):
         value_right_just = max(len(str(min_event)), len(str(max_event)))
         return value_right_just
 
-    def stats_strings(self, query_list, shown_digits=4, max_power_for_commaed=6, min_power_for_fixed_pt=-3):
+    def stats_strings(
+        self, query_list, shown_digits=4, max_power_for_commaed=6, min_power_for_fixed_pt=-3
+    ):
         """
         Calculates the pct chance and one-in chance of any list of numbers,
         including numbers not in the Events.
@@ -211,19 +219,26 @@ class EventsCalculations(object):
         :return: (query values, query occurrences, total occurrences, inverse chance, pct chance)
         """
         shown_digits = max(shown_digits, 1)
-        formatter = NumberFormatter(shown_digits=shown_digits, max_comma_exp=max_power_for_commaed,
-                                    min_fixed_pt_exp=min_power_for_fixed_pt)
+        formatter = NumberFormatter(
+            shown_digits=shown_digits,
+            max_comma_exp=max_power_for_commaed,
+            min_fixed_pt_exp=min_power_for_fixed_pt,
+        )
 
         total_occurrences = self._info.total_occurrences()
         query_values_occurrences = self._get_query_values_occurrences(query_list)
 
-        inverse_chance_str, pct_str = _calculate_chance_and_pct(query_values_occurrences, total_occurrences)
+        inverse_chance_str, pct_str = _calculate_chance_and_pct(
+            query_values_occurrences, total_occurrences
+        )
 
-        return StatsStrings(get_string_from_list_of_ints(query_list),
-                            formatter.format(query_values_occurrences),
-                            formatter.format(total_occurrences),
-                            formatter.format(inverse_chance_str),
-                            formatter.format(pct_str))
+        return StatsStrings(
+            get_string_from_list_of_ints(query_list),
+            formatter.format(query_values_occurrences),
+            formatter.format(total_occurrences),
+            formatter.format(inverse_chance_str),
+            formatter.format(pct_str),
+        )
 
     def _get_query_values_occurrences(self, query_values):
         combinations_of_values = 0
@@ -233,22 +248,24 @@ class EventsCalculations(object):
         return combinations_of_values
 
 
-StatsStrings = namedtuple('StatsStrings',
-                          ['query_values', 'query_occurrences', 'total_occurrences', 'one_in_chance', 'pct_chance'])
+StatsStrings = namedtuple(
+    "StatsStrings",
+    ["query_values", "query_occurrences", "total_occurrences", "one_in_chance", "pct_chance"],
+)
 
 
 def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
     if not query_values_occurrences:
-        return Decimal('inf'), Decimal('0')
+        return Decimal("inf"), Decimal("0")
     inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
     pct = Decimal(100.0) / inverse_chance
     return inverse_chance, pct
 
 
 def get_fast_pct_number(number, total_values):
-    factor = 10 ** 50
+    factor = 10**50
     will_not_overflow = (number * factor) // total_values
-    return will_not_overflow * 100. / float(factor)
+    return will_not_overflow * 100.0 / float(factor)
 
 
 def get_exact_pct_number(number, total_values):
@@ -256,6 +273,7 @@ def get_exact_pct_number(number, total_values):
 
 
 # wrappers functions
+
 
 def events_range(events):
     return EventsInformation(events).events_range()
@@ -278,12 +296,15 @@ def percentage_axes(events, include_zeroes=True):
 
 
 def stats(events, query_values, shown_digits=4, max_power_for_commaed=6, min_power_for_fixed_pt=-3):
-    return EventsCalculations(events).stats_strings(query_values,
-                                                    shown_digits=shown_digits,
-                                                    max_power_for_commaed=max_power_for_commaed,
-                                                    min_power_for_fixed_pt=min_power_for_fixed_pt)
+    return EventsCalculations(events).stats_strings(
+        query_values,
+        shown_digits=shown_digits,
+        max_power_for_commaed=max_power_for_commaed,
+        min_power_for_fixed_pt=min_power_for_fixed_pt,
+    )
 
 
 def full_table_string(events, include_zeroes=True, shown_digits=4, max_power_for_commaed=6):
-    return EventsCalculations(events, include_zeroes).full_table_string(shown_digits=shown_digits,
-                                                                        max_power_for_commaed=max_power_for_commaed)
+    return EventsCalculations(events, include_zeroes).full_table_string(
+        shown_digits=shown_digits, max_power_for_commaed=max_power_for_commaed
+    )

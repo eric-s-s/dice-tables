@@ -43,8 +43,21 @@ def test_init_setting_ignore_case():
 
 def test_classes_property():
     parser = Parser()
-    assert parser.classes == {Die, Modifier, ModDie, WeightedDie, ModWeightedDie, StrongDie, Exploding, ExplodingOn,
-                              BestOfDicePool, WorstOfDicePool, UpperMidOfDicePool, LowerMidOfDicePool, DicePool}
+    assert parser.classes == {
+        Die,
+        Modifier,
+        ModDie,
+        WeightedDie,
+        ModWeightedDie,
+        StrongDie,
+        Exploding,
+        ExplodingOn,
+        BestOfDicePool,
+        WorstOfDicePool,
+        UpperMidOfDicePool,
+        LowerMidOfDicePool,
+        DicePool,
+    }
     assert parser.classes is not parser.classes
 
 
@@ -184,18 +197,12 @@ def test_make_die_some_kwargs():
 
 
 def test_make_die_kwargs_in_recursive_call():
-    die_node = (
-        ast.parse("StrongDie(ModDie(6, modifier=-1), multiplier=3)").body[0].value
-    )
+    die_node = ast.parse("StrongDie(ModDie(6, modifier=-1), multiplier=3)").body[0].value
     assert Parser().make_die(die_node) == StrongDie(ModDie(6, -1), 3)
 
 
 def test_make_die_kwargs_in_recursive_call_all_kwargs_in_outer_die():
-    die_node = (
-        ast.parse("StrongDie(input_die=ModDie(6, modifier=-1), multiplier=3)")
-        .body[0]
-        .value
-    )
+    die_node = ast.parse("StrongDie(input_die=ModDie(6, modifier=-1), multiplier=3)").body[0].value
     assert Parser().make_die(die_node) == StrongDie(ModDie(6, -1), 3)
 
 
@@ -240,9 +247,9 @@ def test_make_pool_ignore_case():
 def test_parse_arbitrary_spacing():
     assert Parser().parse_die("   Die  ( 5  )  ") == Die(5)
     assert Parser().parse_die("   Die  ( die_size = 5  )  ") == Die(5)
-    assert Parser().parse_die(
-        "   Exploding ( Die  ( die_size = 5  ) ,  1 ) "
-    ) == Exploding(Die(5), 1)
+    assert Parser().parse_die("   Exploding ( Die  ( die_size = 5  ) ,  1 ) ") == Exploding(
+        Die(5), 1
+    )
 
 
 def test_walk_dice_calls():
@@ -264,9 +271,9 @@ def test_walk_dice_calls_complex():
     mod_die = "ModDie"
     parser = Parser()
     die_string = (
-        "{}({}(), ".format(die, strong_die) +
-        "{}(3, {}".format(mod_die, die) +
-        "({}(3))))".format(strong_die)
+        "{}({}(), ".format(die, strong_die)
+        + "{}(3, {}".format(mod_die, die)
+        + "({}(3))))".format(strong_die)
     )
     result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
     expected_die = 2
@@ -303,16 +310,12 @@ class TestParserWithLimits(object):
             Parser.with_limits().parse_die("Die(501)")
 
     def test_parse_within_limits_max_size_dict(self):
-        assert Parser.with_limits().parse_die("WeightedDie({500:1})") == WeightedDie(
-            {500: 1}
-        )
+        assert Parser.with_limits().parse_die("WeightedDie({500:1})") == WeightedDie({500: 1})
         with pytest.raises(LimitsError):
             Parser.with_limits().parse_die("WeightedDie({501: 1})")
 
     def test_parse_within_limits_max_explosions_only_explosions(self):
-        assert Parser.with_limits().parse_die("Exploding(Die(6),  10)") == Exploding(
-            Die(6), 10
-        )
+        assert Parser.with_limits().parse_die("Exploding(Die(6),  10)") == Exploding(Die(6), 10)
         with pytest.raises(LimitsError):
             Parser.with_limits().parse_die("Exploding(Die(6), 11)")
 
@@ -399,22 +402,18 @@ def test_mod_die_with_kwargs():
 
 
 def test_weighted_die_with_kwargs():
-    assert Parser().parse_die(
-        "WeightedDie(dictionary_input={1: 2, 3: 4})"
-    ) == WeightedDie({1: 2, 3: 4})
+    assert Parser().parse_die("WeightedDie(dictionary_input={1: 2, 3: 4})") == WeightedDie(
+        {1: 2, 3: 4}
+    )
 
 
 def test_mod_weighted_die_with_kwargs():
-    actual = Parser().parse_die(
-        "ModWeightedDie(dictionary_input={1: 2, 3: 4}, modifier=-3)"
-    )
+    actual = Parser().parse_die("ModWeightedDie(dictionary_input={1: 2, 3: 4}, modifier=-3)")
     assert actual == ModWeightedDie({1: 2, 3: 4}, -3)
 
 
 def test_strong_die_with_kwargs():
-    assert Parser().parse_die(
-        "StrongDie(input_die=Die(6), multiplier=-2)"
-    ) == StrongDie(Die(6), -2)
+    assert Parser().parse_die("StrongDie(input_die=Die(6), multiplier=-2)") == StrongDie(Die(6), -2)
 
 
 def test_modifier_with_kwargs():
@@ -422,20 +421,14 @@ def test_modifier_with_kwargs():
 
 
 def test_exploding_with_kwargs():
-    assert Parser().parse_die(
-        "Exploding(input_die=Die(6), explosions=0)"
-    ) == Exploding(Die(6), 0)
+    assert Parser().parse_die("Exploding(input_die=Die(6), explosions=0)") == Exploding(Die(6), 0)
     assert Parser().parse_die("Exploding(input_die=Die(6))") == Exploding(Die(6))
 
 
 def test_exploding_on_with_kwargs():
-    actual = Parser().parse_die(
-        "ExplodingOn(input_die=Die(6), explodes_on=(2, 6), explosions=0)"
-    )
+    actual = Parser().parse_die("ExplodingOn(input_die=Die(6), explodes_on=(2, 6), explosions=0)")
     assert actual == ExplodingOn(Die(6), (2, 6), 0)
-    assert Parser().parse_die(
-        "ExplodingOn(Die(6), explodes_on=(2,))"
-    ) == ExplodingOn(Die(6), (2,))
+    assert Parser().parse_die("ExplodingOn(Die(6), explodes_on=(2,))") == ExplodingOn(Die(6), (2,))
 
 
 def test_best_of_dice_pool_with_kwargs():
@@ -467,9 +460,7 @@ def test_lower_mid_of_dice_pool_with_kwargs():
 
 
 def test_nested_dice():
-    actual = Parser().parse_die(
-        "Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)"
-    )
+    actual = Parser().parse_die("Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)")
     assert actual == Exploding(StrongDie(WeightedDie({1: 2, 3: 4}), 3), 4)
 
 
@@ -535,7 +526,7 @@ def test_add_class_using_stricter_typing_fails():
         def __init__(self, size: int, ints: List[int]):
             self.ints = tuple(ints)
             super(SillyDie, self).__init__(size)
-            
+
         def __eq__(self, other):
             return self.ints == other.ints and super(SillyDie, self).__eq__(other)
 
@@ -586,9 +577,7 @@ def test_new_parser_class_with_new_die():
             self.add_class(StupidDie)
 
     assert NewNewParser().parse_die('StupidDie("hello", 3)') == StupidDie("hello", 3)
-    assert NewNewParser().parse_die('StupidDie(name="hello", size=3)') == StupidDie(
-        "hello", 3
-    )
+    assert NewNewParser().parse_die('StupidDie(name="hello", size=3)') == StupidDie("hello", 3)
     assert NewNewParser().parse_die("Die(3)") == Die(3)
 
 

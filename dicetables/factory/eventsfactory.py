@@ -1,6 +1,7 @@
 """
 A factory class for creating instances of AdditiveEvent and its descendants.
 """
+
 from dicetables.dicerecord import DiceRecord
 from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
 from dicetables.factory.errorhandler import EventsFactoryErrorHandler
@@ -17,13 +18,13 @@ class Loader(object):
         self.factory = factory
 
     def load(self, new_class):
-        if 'factory_keys' in new_class.__dict__:
+        if "factory_keys" in new_class.__dict__:
             factory_keys = new_class.factory_keys
         else:
             raise LoaderError
 
         new_keys = ()
-        if 'new_keys' in new_class.__dict__:
+        if "new_keys" in new_class.__dict__:
             new_keys = new_class.new_keys
 
         for key in new_keys:
@@ -32,13 +33,17 @@ class Loader(object):
 
 
 class EventsFactory(object):
-    __default_getters = {'get_dict': Getter('get_dict', {0: 1}),
-                         'dice_data': Getter('dice_data', DiceRecord.new()),
-                         'calc_includes_zeroes': Getter('calc_includes_zeroes', True, is_property=True)}
+    __default_getters = {
+        "get_dict": Getter("get_dict", {0: 1}),
+        "dice_data": Getter("dice_data", DiceRecord.new()),
+        "calc_includes_zeroes": Getter("calc_includes_zeroes", True, is_property=True),
+    }
 
-    __default_class_args = {'AdditiveEvents': ('get_dict',),
-                            'DiceTable': ('get_dict', 'dice_data'),
-                            'DetailedDiceTable': ('get_dict', 'dice_data', 'calc_includes_zeroes')}
+    __default_class_args = {
+        "AdditiveEvents": ("get_dict",),
+        "DiceTable": ("get_dict", "dice_data"),
+        "DetailedDiceTable": ("get_dict", "dice_data", "calc_includes_zeroes"),
+    }
 
     _getters = StaticDict(__default_getters)
     _class_args = StaticDict(__default_class_args)
@@ -77,18 +82,22 @@ class EventsFactory(object):
     @classmethod
     def _check_against_factory_classes(cls, events_class, class_args_tuple):
         if cls.has_class(events_class) and cls.get_class_params(events_class) != class_args_tuple:
-            EventsFactoryErrorHandler(cls).raise_error('CLASS OVERWRITE', events_class, class_args_tuple)
+            EventsFactoryErrorHandler(cls).raise_error(
+                "CLASS OVERWRITE", events_class, class_args_tuple
+            )
 
     @classmethod
     def _check_for_missing_getters(cls, events_class, class_args_tuple):
         for getter_key in class_args_tuple:
             if not cls.has_getter(getter_key):
-                EventsFactoryErrorHandler(cls).raise_error('MISSING GETTER', events_class, getter_key)
+                EventsFactoryErrorHandler(cls).raise_error(
+                    "MISSING GETTER", events_class, getter_key
+                )
 
     @classmethod
-    def add_getter(cls, getter_name, empty_value, type_str='method'):
+    def add_getter(cls, getter_name, empty_value, type_str="method"):
         is_property = False
-        if type_str == 'property':
+        if type_str == "property":
             is_property = True
         new_getter = Getter(getter_name, empty_value, is_property)
         cls._check_against_factory_getters(getter_name, new_getter)
@@ -97,7 +106,7 @@ class EventsFactory(object):
     @classmethod
     def _check_against_factory_getters(cls, getter_key, new_getter):
         if cls.has_getter(getter_key) and cls._getters.get(getter_key) != new_getter:
-            EventsFactoryErrorHandler(cls).raise_error('GETTER OVERWRITE', getter_key, new_getter)
+            EventsFactoryErrorHandler(cls).raise_error("GETTER OVERWRITE", getter_key, new_getter)
 
     @classmethod
     def check(cls, events_class):
@@ -105,16 +114,16 @@ class EventsFactory(object):
             try:
                 Loader(cls).load(events_class)
             except LoaderError:
-                EventsFactoryWarningHandler(cls).raise_warning('CHECK', events_class)
+                EventsFactoryWarningHandler(cls).raise_warning("CHECK", events_class)
 
     @classmethod
     def from_dictionary(cls, events, dictionary):
-        passed_in_values = {'get_dict': dictionary}
+        passed_in_values = {"get_dict": dictionary}
         return cls._construct_from(events, passed_in_values)
 
     @classmethod
     def from_dictionary_and_dice(cls, events, dictionary, dice):
-        passed_in_values = {'get_dict': dictionary, 'dice_data': dice}
+        passed_in_values = {"get_dict": dictionary, "dice_data": dice}
         return cls._construct_from(events, passed_in_values)
 
     @classmethod
@@ -147,9 +156,11 @@ class EventsFactory(object):
     def _walk_the_mro(cls, failed_class):
         for parent_class in failed_class.mro():
             if cls.has_class(parent_class):
-                EventsFactoryWarningHandler(cls).raise_warning('CONSTRUCT', failed_class, parent_class)
+                EventsFactoryWarningHandler(cls).raise_warning(
+                    "CONSTRUCT", failed_class, parent_class
+                )
                 return parent_class
-        EventsFactoryErrorHandler(cls).raise_error('WTF', failed_class)
+        EventsFactoryErrorHandler(cls).raise_error("WTF", failed_class)
 
     @classmethod
     def _get_default_args(cls, in_factory):
@@ -177,5 +188,5 @@ class EventsFactory(object):
             return original_class(*args)
         except (TypeError, AttributeError, DiceRecordError, InvalidEventsError):
             if original_class == factory_class:
-                EventsFactoryErrorHandler(cls).raise_error('SIGNATURES DIFFERENT', original_class)
+                EventsFactoryErrorHandler(cls).raise_error("SIGNATURES DIFFERENT", original_class)
             return factory_class(*args)

@@ -1,6 +1,7 @@
 """
 All the descendants of ProtoDie.  These are IntegerEvents that represent different types of dice.
 """
+
 import itertools
 from typing import Dict, Iterable, Tuple
 
@@ -34,13 +35,13 @@ class Modifier(ProtoDie):
         return str(self)
 
     def multiply_str(self, number):
-        return '\n'.join([str(self)] * number)
+        return "\n".join([str(self)] * number)
 
     def __str__(self):
-        return '{:+}'.format(self._mod)
+        return "{:+}".format(self._mod)
 
     def __repr__(self):
-        return 'Modifier({})'.format(self._mod)
+        return "Modifier({})".format(self._mod)
 
 
 class Die(ProtoDie):
@@ -67,16 +68,16 @@ class Die(ProtoDie):
         return dict.fromkeys(range(1, self._die_size + 1), 1)
 
     def weight_info(self):
-        return '{}\n    No weights'.format(self)
+        return "{}\n    No weights".format(self)
 
     def multiply_str(self, number):
-        return '{}{}'.format(number, self)
+        return "{}{}".format(number, self)
 
     def __str__(self):
-        return 'D{}'.format(self._die_size)
+        return "D{}".format(self._die_size)
 
     def __repr__(self):
-        return 'Die({})'.format(self._die_size)
+        return "Die({})".format(self._die_size)
 
 
 class ModDie(Die):
@@ -102,13 +103,13 @@ class ModDie(Die):
         return dict.fromkeys(range(1 + self._mod, self.get_size() + 1 + self._mod), 1)
 
     def multiply_str(self, number):
-        return '{}D{}{:+}'.format(number, self.get_size(), number * self._mod)
+        return "{}D{}{:+}".format(number, self.get_size(), number * self._mod)
 
     def __str__(self):
-        return 'D{}{:+}'.format(self.get_size(), self._mod)
+        return "D{}{:+}".format(self.get_size(), self._mod)
 
     def __repr__(self):
-        return 'ModDie({}, {})'.format(self.get_size(), self._mod)
+        return "ModDie({}, {})".format(self.get_size(), self._mod)
 
 
 class WeightedDie(ProtoDie):
@@ -137,7 +138,7 @@ class WeightedDie(ProtoDie):
     @staticmethod
     def _raise_value_error_for_rolls_less_than_one(dictionary):
         if any(roll < 1 for roll in dictionary):
-            raise ValueError('rolls may not be less than 1. use ModWeightedDie')
+            raise ValueError("rolls may not be less than 1. use ModWeightedDie")
 
     def get_raw_dict(self) -> Dict[int, int]:
         return self._raw_dic.copy()
@@ -153,19 +154,21 @@ class WeightedDie(ProtoDie):
 
     def weight_info(self):
         max_roll_str_len = len(str(self.get_size()))
-        out = str(self) + '\n'
+        out = str(self) + "\n"
         for roll, weight in sorted(self.get_raw_dict().items()):
-            out += '    a roll of {:>{}} has a weight of {}\n'.format(roll, max_roll_str_len, weight)
-        return out.rstrip('\n')
+            out += "    a roll of {:>{}} has a weight of {}\n".format(
+                roll, max_roll_str_len, weight
+            )
+        return out.rstrip("\n")
 
     def multiply_str(self, number):
-        return '{}{}'.format(number, self)
+        return "{}{}".format(number, self)
 
     def __str__(self):
-        return 'D{}  W:{}'.format(self.get_size(), self.get_weight())
+        return "D{}  W:{}".format(self.get_size(), self.get_weight())
 
     def __repr__(self):
-        return 'WeightedDie({})'.format(self._raw_dic)
+        return "WeightedDie({})".format(self._raw_dic)
 
 
 class ModWeightedDie(WeightedDie):
@@ -193,14 +196,15 @@ class ModWeightedDie(WeightedDie):
         return {roll + self._mod: weight for roll, weight in self.get_raw_dict().items() if weight}
 
     def multiply_str(self, number):
-        return '{}D{}{:+}  W:{}'.format(number, self.get_size(),
-                                        number * self._mod, self.get_weight())
+        return "{}D{}{:+}  W:{}".format(
+            number, self.get_size(), number * self._mod, self.get_weight()
+        )
 
     def __str__(self):
-        return 'D{}{:+}  W:{}'.format(self.get_size(), self._mod, self.get_weight())
+        return "D{}{:+}  W:{}".format(self.get_size(), self._mod, self.get_weight())
 
     def __repr__(self):
-        return 'ModWeightedDie({}, {})'.format(self.get_raw_dict(), self._mod)
+        return "ModWeightedDie({}, {})".format(self.get_raw_dict(), self._mod)
 
 
 class StrongDie(ProtoDie):
@@ -235,19 +239,21 @@ class StrongDie(ProtoDie):
         return self._original
 
     def get_dict(self) -> Dict[int, int]:
-        return {roll * self._multiplier: weight for roll, weight in self._original.get_dict().items()}
+        return {
+            roll * self._multiplier: weight for roll, weight in self._original.get_dict().items()
+        }
 
     def weight_info(self):
         return self._original.weight_info().replace(str(self._original), str(self))
 
     def multiply_str(self, number):
-        return '({})X({})'.format(self._original.multiply_str(number), self._multiplier)
+        return "({})X({})".format(self._original.multiply_str(number), self._multiplier)
 
     def __str__(self):
-        return '({})X({})'.format(self._original, self._multiplier)
+        return "({})X({})".format(self._original, self._multiplier)
 
     def __repr__(self):
-        return 'StrongDie({!r}, {})'.format(self._original, self._multiplier)
+        return "StrongDie({!r}, {})".format(self._original, self._multiplier)
 
 
 class Exploding(ProtoDie):
@@ -302,7 +308,9 @@ class Exploding(ProtoDie):
         occurrence_mod = level_depth_multiplier * highest_roll_multiplier
         roll_mod = explosion_level * highest_roll
 
-        level_dict = {roll + roll_mod: occurrence * occurrence_mod for roll, occurrence in base_dict.items()}
+        level_dict = {
+            roll + roll_mod: occurrence * occurrence_mod for roll, occurrence in base_dict.items()
+        }
         if explosion_level == self._explosions:
             return level_dict
         return remove_keys_after_applying_modifier(level_dict, (highest_roll,), roll_mod)
@@ -324,17 +332,18 @@ class Exploding(ProtoDie):
         return self._dict.copy()
 
     def weight_info(self):
-        return '{}\nExploding adds weight: 1'.format(
-            self._original.weight_info().replace(str(self._original), str(self)))
+        return "{}\nExploding adds weight: 1".format(
+            self._original.weight_info().replace(str(self._original), str(self))
+        )
 
     def multiply_str(self, number):
-        return '{}({})'.format(number, self)
+        return "{}({})".format(number, self)
 
     def __str__(self):
-        return '{}: Explosions={}'.format(self._original, self._explosions)
+        return "{}: Explosions={}".format(self._original, self._explosions)
 
     def __repr__(self):
-        return 'Exploding({!r}, {})'.format(self._original, self._explosions)
+        return "Exploding({!r}, {})".format(self._original, self._explosions)
 
 
 class ExplodingOn(ProtoDie):
@@ -355,7 +364,7 @@ class ExplodingOn(ProtoDie):
     with size which gets overshadowed by the first factor.
     """
 
-    def __init__(self, input_die: ProtoDie, explodes_on: Iterable[int], explosions: int=2):
+    def __init__(self, input_die: ProtoDie, explodes_on: Iterable[int], explosions: int = 2):
         """
 
         :param input_die: Die, ModDie, WeightedDie, ModWeightedDie, StrongDie or subclass of ProtoDie
@@ -393,7 +402,10 @@ class ExplodingOn(ProtoDie):
             return [(0, 1)]
         base_roll_weight_mods = [(roll, base_dict[roll]) for roll in self._explodes_on]
         groups_of_roll_weight_mods = itertools.product(base_roll_weight_mods, repeat=level)
-        return [calc_roll_and_weight_mods(group_of_rollweights) for group_of_rollweights in groups_of_roll_weight_mods]
+        return [
+            calc_roll_and_weight_mods(group_of_rollweights)
+            for group_of_rollweights in groups_of_roll_weight_mods
+        ]
 
     def _get_level_dict(self, base_dict, level, roll_weights):
         answer = {}
@@ -406,12 +418,16 @@ class ExplodingOn(ProtoDie):
     def _get_partial_level_dict(self, base_dict, level, roll_mod, weight_multiplier):
         base_level_multiplier = sum(base_dict.values())
         level_multiplier = base_level_multiplier ** (self._explosions - level)
-        current_level_all_rolls = {roll + roll_mod: occurrence * weight_multiplier * level_multiplier
-                                   for roll, occurrence in base_dict.items()}
+        current_level_all_rolls = {
+            roll + roll_mod: occurrence * weight_multiplier * level_multiplier
+            for roll, occurrence in base_dict.items()
+        }
         if level == self._explosions:
             return current_level_all_rolls
 
-        return remove_keys_after_applying_modifier(current_level_all_rolls, self._explodes_on, roll_mod)
+        return remove_keys_after_applying_modifier(
+            current_level_all_rolls, self._explodes_on, roll_mod
+        )
 
     def get_size(self):
         return self._original.get_size()
@@ -435,18 +451,22 @@ class ExplodingOn(ProtoDie):
     def weight_info(self):
         base_weight_info = self._original.weight_info().replace(str(self._original), str(self))
         num_of_values = len(self._explodes_on)
-        value_str = 'value' if num_of_values == 1 else 'values'
-        return '{0}\nExploding on {1} {2} adds weight: {1}'.format(base_weight_info, num_of_values, value_str)
+        value_str = "value" if num_of_values == 1 else "values"
+        return "{0}\nExploding on {1} {2} adds weight: {1}".format(
+            base_weight_info, num_of_values, value_str
+        )
 
     def multiply_str(self, number):
-        return '{}({})'.format(number, self)
+        return "{}({})".format(number, self)
 
     def __str__(self):
-        explodes_on = ', '.join([str(val) for val in self._explodes_on])
-        return '{}: Explosions={} On: {}'.format(self._original, self._explosions, explodes_on)
+        explodes_on = ", ".join([str(val) for val in self._explodes_on])
+        return "{}: Explosions={} On: {}".format(self._original, self._explosions, explodes_on)
 
     def __repr__(self):
-        return 'ExplodingOn({!r}, {}, {})'.format(self._original, self._explodes_on, self._explosions)
+        return "ExplodingOn({!r}, {}, {})".format(
+            self._original, self._explodes_on, self._explosions
+        )
 
 
 def remove_duplicates(input_tuple: Iterable[int]) -> Tuple[int, ...]:
@@ -474,7 +494,11 @@ def calc_roll_and_weight_mods(group_of_rollweights):
 
 
 def remove_keys_after_applying_modifier(modified_dict, original_excluded_keys, key_modifier):
-    return {key: val for key, val in modified_dict.items() if key - key_modifier not in original_excluded_keys}
+    return {
+        key: val
+        for key, val in modified_dict.items()
+        if key - key_modifier not in original_excluded_keys
+    }
 
 
 def combine_rollweights_with_same_roll_value(rollweight_tuples):

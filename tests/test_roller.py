@@ -130,7 +130,7 @@ class TestRoller(unittest.TestCase):
 
     def test_roll_with_large_numbers(self):
         rng = random.Random(34889970)
-        events = AdditiveEvents({1: 1, 2: 10 ** 1000, 3: 2 * 10 ** 1000})
+        events = AdditiveEvents({1: 1, 2: 10**1000, 3: 2 * 10**1000})
         roller = Roller(events, rng)
 
         times = 100
@@ -158,11 +158,11 @@ class TestRoller(unittest.TestCase):
                     return answer
                 return self.large_range_value
 
-        events = AdditiveEvents({1: 1, 2: 10 ** 1000})
+        events = AdditiveEvents({1: 1, 2: 10**1000})
         random_generator = MyRandom(1)
         roller = Roller(events, random_generator)
         alias_table = roller.alias_table
-        self.assertEqual(alias_table.height, 10 ** 1000 + 1)
+        self.assertEqual(alias_table.height, 10**1000 + 1)
 
         self.assertEqual(alias_table.get(0, 1), 1)
         self.assertEqual(alias_table.get(1, 1), 2)

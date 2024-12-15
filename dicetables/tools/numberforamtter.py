@@ -20,7 +20,7 @@ class NumberFormatter(object):
         self._shown_digits = None
         self._max_comma_exp = None
         self._min_fixed_pt_exp = None
-        self._special_cases = {0: '0', float('inf'): 'Infinity', float('-inf'): '-Infinity'}
+        self._special_cases = {0: "0", float("inf"): "Infinity", float("-inf"): "-Infinity"}
 
         self.shown_digits = shown_digits
         self.max_comma_exp = max_comma_exp
@@ -96,20 +96,20 @@ class NumberFormatter(object):
     def get_exponent(self, number):
         if isinstance(number, int):
             return int(log10(abs(number)))
-        return int('{:.{}e}'.format(number, self.shown_digits - 1).split('e')[1])
+        return int("{:.{}e}".format(number, self.shown_digits - 1).split("e")[1])
 
     def _format_number_and_exponent_to_fixed_point(self, number, exponent):
-        return '{:.{}f}'.format(number, self.shown_digits - 1 - exponent)
+        return "{:.{}f}".format(number, self.shown_digits - 1 - exponent)
 
     def _format_number_and_exponent_to_commas(self, number, exponent):
         if isinstance(number, int):
-            return '{:,}'.format(number)
+            return "{:,}".format(number)
         else:
-            return '{:,.{}f}'.format(number, max(0, self.shown_digits - 1 - exponent))
+            return "{:,.{}f}".format(number, max(0, self.shown_digits - 1 - exponent))
 
     def _format_number_and_exponent_to_exponent(self, number, exponent):
         try:
-            answer = '{:.{}e}'.format(number, self.shown_digits - 1)
+            answer = "{:.{}e}".format(number, self.shown_digits - 1)
             if -10 < exponent < 10:
                 return remove_extra_zero_from_single_digit_exponent(answer)
             return answer
@@ -119,15 +119,15 @@ class NumberFormatter(object):
     def _format_huge_int_and_exponent_to_exponent(self, number, exponent):
         extra_digits = 10
         mantissa = number // 10 ** (exponent - self.shown_digits - extra_digits)
-        mantissa /= 10. ** (self.shown_digits + extra_digits)
+        mantissa /= 10.0 ** (self.shown_digits + extra_digits)
         mantissa = round(mantissa, self.shown_digits - 1)
         if mantissa == 10.0 or mantissa == -10.0:
             mantissa /= 10.0
             exponent += 1
-        return '{:.{}f}e+{}'.format(mantissa, self.shown_digits - 1, exponent)
+        return "{:.{}f}e+{}".format(mantissa, self.shown_digits - 1, exponent)
 
 
 def remove_extra_zero_from_single_digit_exponent(answer):
-    if answer[-2] == '0' and answer[-3] in ('-', '+'):
+    if answer[-2] == "0" and answer[-3] in ("-", "+"):
         return answer[:-2] + answer[-1:]
     return answer

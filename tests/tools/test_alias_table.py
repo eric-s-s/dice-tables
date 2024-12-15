@@ -59,13 +59,13 @@ class TestAliasTable(unittest.TestCase):
         self.assert_alias_table_has_expected_counts(alias_table, expected_counts)
 
     def test_alias_table_to_list_flat_chances(self):
-        input_dict = {1:1, 2: 1, 3: 1}
+        input_dict = {1: 1, 2: 1, 3: 1}
         alias_table = AliasTable(input_dict)
         result = alias_table.to_list()
         expected = [
             Alias(primary=3, alternate=3, primary_height=3),
             Alias(primary=2, alternate=2, primary_height=3),
-            Alias(primary=1, alternate=1, primary_height=3)
+            Alias(primary=1, alternate=1, primary_height=3),
         ]
         self.assertEqual(result, expected)
 
@@ -76,7 +76,7 @@ class TestAliasTable(unittest.TestCase):
             Alias(primary=1, alternate=4, primary_height=4),
             Alias(primary=4, alternate=4, primary_height=8),
             Alias(primary=3, alternate=3, primary_height=8),
-            Alias(primary=2, alternate=2, primary_height=8)
+            Alias(primary=2, alternate=2, primary_height=8),
         ]
         self.assertEqual(alias_table.to_list(), expected_list)
 
@@ -88,11 +88,15 @@ class TestAliasTable(unittest.TestCase):
         # small = [(1, 5), (2, 15), (3, 20)]
         # big = [(4, 30), (5, 35)]
         expected_list = [
-            Alias(primary=3, alternate=5, primary_height=20),  # small[(1, 5), (2, 15)], big[(4, 30), (5, 35-1)]
-            Alias(primary=2, alternate=5, primary_height=15),  # small[(1, 5)], big[(4, 30), (5, 34-6)]
+            Alias(
+                primary=3, alternate=5, primary_height=20
+            ),  # small[(1, 5), (2, 15)], big[(4, 30), (5, 35-1)]
+            Alias(
+                primary=2, alternate=5, primary_height=15
+            ),  # small[(1, 5)], big[(4, 30), (5, 34-6)]
             Alias(primary=1, alternate=5, primary_height=5),  # small[(5, 28-16)], big[(4, 30)]
             Alias(primary=5, alternate=4, primary_height=12),  # small[], big[(4, 30-9)]
-            Alias(primary=4, alternate=4, primary_height=21)
+            Alias(primary=4, alternate=4, primary_height=21),
         ]
         self.assertEqual(alias_table.to_list(), expected_list)
 

@@ -13,6 +13,7 @@ not mutate any dictionaries passed to it.)
 :variable - times: int >=0
 :variable - dictionary: {int: int>0, ...}
 """
+
 from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
 
 
@@ -36,11 +37,11 @@ class DictCombiner(object):
             new_combiner = new_combiner.combine_once_with_flattened_list(flattened_list)
         return new_combiner.get_dict()
 
-    def combine_once_with_flattened_list(self, flattened_list) -> 'DictCombiner':
+    def combine_once_with_flattened_list(self, flattened_list) -> "DictCombiner":
         new_dict = {}
         for event, current_frequency in self._dict.items():
             for new_event in flattened_list:
-                new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + current_frequency)
+                new_dict[event + new_event] = new_dict.get(event + new_event, 0) + current_frequency
         return DictCombiner(new_dict)
 
     def combine_by_dictionary(self, dictionary: dict, times: int) -> dict:
@@ -56,7 +57,9 @@ class DictCombiner(object):
         new_dict = {}
         for event, current_frequency in self._dict.items():
             for new_event, frequency in dictionary.items():
-                new_dict[event + new_event] = (new_dict.get(event + new_event, 0) + frequency * current_frequency)
+                new_dict[event + new_event] = (
+                    new_dict.get(event + new_event, 0) + frequency * current_frequency
+                )
         return DictCombiner(new_dict)
 
     def combine_by_indexed_values(self, dictionary: dict, times: int) -> dict:
@@ -72,9 +75,11 @@ class DictCombiner(object):
         """
         :dictionary: {int: int>0, ...}
         """
-        method_dict = {'dictionary': self.combine_by_dictionary,
-                       'flattened_list': self.combine_by_flattened_list,
-                       'indexed_values': self.combine_by_indexed_values}
+        method_dict = {
+            "dictionary": self.combine_by_dictionary,
+            "flattened_list": self.combine_by_flattened_list,
+            "indexed_values": self.combine_by_indexed_values,
+        }
         method = self.get_fastest_combine_method(dictionary, times)
 
         return method_dict[method](dictionary, times)
@@ -90,25 +95,27 @@ class DictCombiner(object):
     @staticmethod
     def _compare_tuple_list_with_flattened_list(dictionary):
         max_occurrences_to_events_ratio_for_flattened_list = 1.3
-        safe_limit_flattened_list_len = 10 ** 4
+        safe_limit_flattened_list_len = 10**4
         total_occurrences = sum(dictionary.values())
 
         if total_occurrences >= safe_limit_flattened_list_len:
-            return 'dictionary'
+            return "dictionary"
 
         occurrences_to_events_ratio = float(total_occurrences) / len(dictionary)
         if occurrences_to_events_ratio > max_occurrences_to_events_ratio_for_flattened_list:
-            return 'dictionary'
-        return 'flattened_list'
+            return "dictionary"
+        return "flattened_list"
 
     def _compare_with_indexed_values(self, first_method, times, dictionary):
         size_of_dict_to_combine = len(dictionary)
-        min_size_for_indexed_values = get_indexed_values_min(first_method, size_of_dict_to_combine, times)
+        min_size_for_indexed_values = get_indexed_values_min(
+            first_method, size_of_dict_to_combine, times
+        )
         size_of_main_dict = len(self._dict)
         if size_of_main_dict < min_size_for_indexed_values:
             return first_method
         else:
-            return 'indexed_values'
+            return "indexed_values"
 
     def remove_by_tuple_list(self, dictionary, times):
         """
@@ -124,7 +131,6 @@ class DictCombiner(object):
         new_dict_max, new_dict_min = self.get_new_dict_range(events_tuples)
         new_dict = {}
         for target_event in range(new_dict_min, new_dict_max + 1):
-
             freq_at_new_event = self.get_target_event_freq(target_event, events_tuples, new_dict)
             if freq_at_new_event:
                 new_dict[target_event] = freq_at_new_event
@@ -169,27 +175,25 @@ def get_indexed_values_min(first_method, size_of_dict_to_combine, combine_times)
     :first_method: 'flattened_list', 'dictionary'
     """
     choices = {
-        'flattened_list':
-            {
-                2: {10: 200, 20: 100, 100: 50, 500: 1},
-                4: {2: 100, 5: 50, 10: 10, 20: 1},
-                6: {1: 100, 4: 50, 10: 1},
-                8: {1: 100, 3: 50, 5: 10, 10: 1},
-                20: {1: 50, 3: 10, 4: 1},
-                50: {1: 50, 3: 1},
-                100: {1: 100, 2: 1}
-            },
-        'dictionary':
-            {
-                2: {10: 100, 50: 50, 100: 1},
-                4: {2: 100, 10: 50, 50: 1},
-                6: {2: 50, 10: 10, 20: 1},
-                8: {1: 100, 3: 50, 10: 1},
-                10: {1: 100, 3: 50, 5: 1},
-                20: {1: 50, 3: 10, 4: 1},
-                50: {1: 50, 2: 10, 3: 1},
-                100: {1: 100, 2: 1}
-            }
+        "flattened_list": {
+            2: {10: 200, 20: 100, 100: 50, 500: 1},
+            4: {2: 100, 5: 50, 10: 10, 20: 1},
+            6: {1: 100, 4: 50, 10: 1},
+            8: {1: 100, 3: 50, 5: 10, 10: 1},
+            20: {1: 50, 3: 10, 4: 1},
+            50: {1: 50, 3: 1},
+            100: {1: 100, 2: 1},
+        },
+        "dictionary": {
+            2: {10: 100, 50: 50, 100: 1},
+            4: {2: 100, 10: 50, 50: 1},
+            6: {2: 50, 10: 10, 20: 1},
+            8: {1: 100, 3: 50, 10: 1},
+            10: {1: 100, 3: 50, 5: 1},
+            20: {1: 50, 3: 10, 4: 1},
+            50: {1: 50, 2: 10, 3: 1},
+            100: {1: 100, 2: 1},
+        },
     }
     keys_are_input_dict_size = choices[first_method]
 

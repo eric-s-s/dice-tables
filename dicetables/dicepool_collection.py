@@ -19,7 +19,7 @@ class DicePoolCollection(ProtoDie):
         """
         self._dice_pool = pool
         if select > self._dice_pool.size:
-            raise ValueError('you cannot select more dice than the pool_size.')
+            raise ValueError("you cannot select more dice than the pool_size.")
         self._select = select
         self._dict = self._generate_dict()
         super(DicePoolCollection, self).__init__()
@@ -44,20 +44,20 @@ class DicePoolCollection(ProtoDie):
 
     def weight_info(self):
         input_die = self._dice_pool.die
-        original_weight_info = input_die.weight_info().replace(str(input_die), 'input_die info:')
-        return '{}\n{}'.format(self, original_weight_info)
+        original_weight_info = input_die.weight_info().replace(str(input_die), "input_die info:")
+        return "{}\n{}".format(self, original_weight_info)
 
     def multiply_str(self, number):
-        return '{}({})'.format(number, self)
+        return "{}({})".format(number, self)
 
     def __str__(self):
-        descriptor = self.__class__.__name__.replace('OfDicePool', '')
-        return '{} {} of {}'.format(descriptor, self._select, self._dice_pool.die.multiply_str(self._dice_pool.size))
+        descriptor = self.__class__.__name__.replace("OfDicePool", "")
+        return "{} {} of {}".format(
+            descriptor, self._select, self._dice_pool.die.multiply_str(self._dice_pool.size)
+        )
 
     def __repr__(self):
-        return '{}({!r}, {})'.format(
-            self.__class__.__name__, self._dice_pool, self._select
-        )
+        return "{}({!r}, {})".format(self.__class__.__name__, self._dice_pool, self._select)
 
 
 class BestOfDicePool(DicePoolCollection):

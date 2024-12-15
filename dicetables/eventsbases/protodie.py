@@ -1,6 +1,7 @@
 """
 The abstract class for any die represented by a set of events
 """
+
 from dicetables.eventsbases.integerevents import IntegerEvents
 
 
@@ -37,7 +38,7 @@ class ProtoDie(IntegerEvents):
 
     def multiply_str(self, number: int) -> str:
         """return a string that is the die string multiplied by a number. i.e.,
-        D6+1 times 3 is '3D6+3' """
+        D6+1 times 3 is '3D6+3'"""
         raise NotImplementedError
 
     def __str__(self):
@@ -47,22 +48,26 @@ class ProtoDie(IntegerEvents):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash('hash of {!r}, {}, {}, {}'.format(self,
-                                                      self.get_size(),
-                                                      self.get_weight(),
-                                                      self.get_dict()))
+        return hash(
+            "hash of {!r}, {}, {}, {}".format(
+                self, self.get_size(), self.get_weight(), self.get_dict()
+            )
+        )
 
     def __lt__(self, other):
-        return (
-                (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) <
-                (other.get_size(), other.get_weight(), sorted(other.get_dict().items()), repr(other))
+        return (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) < (
+            other.get_size(),
+            other.get_weight(),
+            sorted(other.get_dict().items()),
+            repr(other),
         )
 
     def __eq__(self, other):
-        return (super(ProtoDie, self).__eq__(other) and
-                (self.get_size(), self.get_weight(), repr(self)) ==
-                (other.get_size(), other.get_weight(), repr(other))
-                )
+        return super(ProtoDie, self).__eq__(other) and (
+            self.get_size(),
+            self.get_weight(),
+            repr(self),
+        ) == (other.get_size(), other.get_weight(), repr(other))
 
     def __le__(self, other):
         return self < other or self == other

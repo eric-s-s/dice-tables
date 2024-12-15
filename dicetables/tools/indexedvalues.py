@@ -14,7 +14,7 @@ def generate_indexed_values(sorted_tuple_list):
     return IndexedValues(start_val, values)
 
 
-def generate_indexed_values_from_dict(input_dict) -> 'IndexedValues':
+def generate_indexed_values_from_dict(input_dict) -> "IndexedValues":
     """
 
     :param input_dict: may not be empty.\n
@@ -59,7 +59,9 @@ class IndexedValues(object):
         return self.start_index, len(self.raw_values) + self.start_index - 1
 
     def get_dict(self):
-        return {index + self.start_index: value for index, value in enumerate(self.raw_values) if value}
+        return {
+            index + self.start_index: value for index, value in enumerate(self.raw_values) if value
+        }
 
     def get_value_at_key(self, key):
         index = key - self.start_index

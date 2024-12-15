@@ -7,7 +7,7 @@ def get_string_from_list_of_ints(input_list):
     to_use = sorted(input_list)
     list_of_sequences = split_at_gaps_larger_than_one(to_use)
     list_of_sequence_strings = format_sequences(list_of_sequences)
-    return ', '.join(list_of_sequence_strings)
+    return ", ".join(list_of_sequence_strings)
 
 
 def split_at_gaps_larger_than_one(sorted_list):
@@ -40,8 +40,8 @@ def format_one_sequence(sequence):
     if first == last:
         return format_for_sequence_str(first)
     else:
-        return '{}-{}'.format(format_for_sequence_str(first), format_for_sequence_str(last))
+        return "{}-{}".format(format_for_sequence_str(first), format_for_sequence_str(last))
 
 
 def format_for_sequence_str(num):
-    return '({:,})'.format(num) if num < 0 else '{:,}'.format(num)
+    return "({:,})".format(num) if num < 0 else "{:,}".format(num)

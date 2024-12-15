@@ -1,6 +1,7 @@
 """
 An immutable record of dice added to and removed from DiceTable
 """
+
 from typing import Dict
 
 from dicetables.eventsbases.eventerrors import DiceRecordError
@@ -10,19 +11,26 @@ from dicetables.eventsbases.protodie import ProtoDie
 class RecordVerifier(object):
     @staticmethod
     def check_types(die_input):
-        if any(not isinstance(die, ProtoDie) or not isinstance(num, int) for die, num in die_input.items()):
-            raise DiceRecordError('input must be {ProtoDie: int, ...}')
+        if any(
+            not isinstance(die, ProtoDie) or not isinstance(num, int)
+            for die, num in die_input.items()
+        ):
+            raise DiceRecordError("input must be {ProtoDie: int, ...}")
 
     @staticmethod
     def check_negative(die_input):
         for key, val in die_input.items():
             if val < 0:
-                raise DiceRecordError('Tried to create a DiceRecord with a negative value at {!r}: {}'.format(key, val))
+                raise DiceRecordError(
+                    "Tried to create a DiceRecord with a negative value at {!r}: {}".format(
+                        key, val
+                    )
+                )
 
     @staticmethod
     def check_number(num):
         if num < 0:
-            raise DiceRecordError('Tried to add_die or remove_die with a negative number.')
+            raise DiceRecordError("Tried to add_die or remove_die with a negative number.")
 
 
 def scrub_zeroes(input_dict):
@@ -36,7 +44,7 @@ class DiceRecord(object):
         self._record = scrub_zeroes(dice_number_dict)
 
     @classmethod
-    def new(cls) -> 'DiceRecord':
+    def new(cls) -> "DiceRecord":
         return cls({})
 
     def get_dict(self) -> Dict[ProtoDie, int]:
@@ -45,13 +53,13 @@ class DiceRecord(object):
     def get_number(self, query_die: ProtoDie) -> int:
         return self._record.get(query_die, 0)
 
-    def add_die(self, die: ProtoDie, times: int) -> 'DiceRecord':
+    def add_die(self, die: ProtoDie, times: int) -> "DiceRecord":
         RecordVerifier.check_number(times)
         new = self._record.copy()
         new[die] = times + self.get_number(die)
         return DiceRecord(new)
 
-    def remove_die(self, die: ProtoDie, times: int) -> 'DiceRecord':
+    def remove_die(self, die: ProtoDie, times: int) -> "DiceRecord":
         RecordVerifier.check_number(times)
         new = self._record.copy()
         new[die] = self.get_number(die) - times
@@ -66,4 +74,4 @@ class DiceRecord(object):
         return not self == other
 
     def __repr__(self):
-        return 'DiceRecord({!r})'.format(self._record)
+        return "DiceRecord({!r})".format(self._record)

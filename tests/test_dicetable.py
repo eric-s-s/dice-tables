@@ -10,7 +10,6 @@ from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordErr
 
 
 class TestDiceTable(unittest.TestCase):
-
     def test_DiceTable_init_raises_InvalidEventsError(self):
         self.assertRaises(InvalidEventsError, DiceTable, {1: 0}, DiceRecord.new())
 
@@ -23,14 +22,16 @@ class TestDiceTable(unittest.TestCase):
         events = {1: 1}
         dice = DiceRecord({Die(1): 1})
         table = DiceTable(events, dice)
-        events[1] = 'poop'
+        events[1] = "poop"
         dice.add_die(Die(3), 3)
         dice.remove_die(Die(1), 1)
-        dice.get_dict()[Die(1)] = 'still does not work'
+        dice.get_dict()[Die(1)] = "still does not work"
         self.assertEqual(table.get_dict(), {1: 1})
         self.assertEqual(table.get_list(), [(Die(1), 1)])
 
-    def test_DiceTable__class_method__new_returns_DiceTable_with_identity_dict_empty_dice_list(self):
+    def test_DiceTable__class_method__new_returns_DiceTable_with_identity_dict_empty_dice_list(
+        self,
+    ):
         table = DiceTable.new()
         self.assertEqual(table.get_dict(), {0: 1})
         self.assertEqual(table.get_list(), [])
@@ -52,7 +53,7 @@ class TestDiceTable(unittest.TestCase):
         dice_data = table.dice_data()
         dice_data.add_die(Die(100), 10)
         dice_data.remove_die(Die(2), 1)
-        dice_data.get_dict()['new'] = 5
+        dice_data.get_dict()["new"] = 5
 
         expected = DiceRecord({Die(1): 1, Die(2): 2})
         self.assertEqual(table.dice_data(), expected)
@@ -77,7 +78,7 @@ class TestDiceTable(unittest.TestCase):
 
     def test_DiceTable__eq__false_by_type(self):
         class Bob(DiceTable):
-            factory_keys = ('dice_data', 'get_dict')
+            factory_keys = ("dice_data", "get_dict")
 
         table_1 = DiceTable({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
         table_2 = Bob({1: 1}, DiceRecord({Die(3): 2, Die(2): 100, Die(1): 2}))
@@ -117,44 +118,45 @@ class TestDiceTable(unittest.TestCase):
 
     def test_DiceTable_weights_info_returns_empty_str_for_empty_table(self):
         table = DiceTable.new()
-        self.assertEqual(table.weights_info(), '')
+        self.assertEqual(table.weights_info(), "")
 
     def test_DiceTable_weights_info_returns_appropriate_string(self):
         table = DiceTable({1: 1}, DiceRecord({Die(4): 2, ModWeightedDie({1: 10, 4: 0}, 2): 5}))
-        w_info = ('2D4\n' +
-                  '    No weights\n\n' +
-                  '5D4+10  W:10\n' +
-                  '    a roll of 1 has a weight of 10\n' +
-                  '    a roll of 2 has a weight of 0\n' +
-                  '    a roll of 3 has a weight of 0\n' +
-                  '    a roll of 4 has a weight of 0')
+        w_info = (
+            "2D4\n"
+            + "    No weights\n\n"
+            + "5D4+10  W:10\n"
+            + "    a roll of 1 has a weight of 10\n"
+            + "    a roll of 2 has a weight of 0\n"
+            + "    a roll of 3 has a weight of 0\n"
+            + "    a roll of 4 has a weight of 0"
+        )
         self.assertEqual(table.weights_info(), w_info)
 
     def test_DiceTable_str_is_empty_for_empty_table(self):
         table = DiceTable.new()
-        self.assertEqual(str(table), '')
+        self.assertEqual(str(table), "")
 
     def test_DiceTable_str_one_element(self):
-        self.assertEqual(DiceTable({1: 1}, DiceRecord({Die(1): 2})).__str__(), '2D1')
+        self.assertEqual(DiceTable({1: 1}, DiceRecord({Die(1): 2})).__str__(), "2D1")
 
     def test_DiceTable_str_many_elements_note_they_are_sorted(self):
-        dice_record = DiceRecord({ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2})
+        dice_record = DiceRecord(
+            {ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2}
+        )
         table = DiceTable({1: 1}, dice_record)
-        table_str = ('+3\n' +
-                     '+3\n' +
-                     '2D4-4\n' +
-                     '5D4+10  W:10\n' +
-                     '3D10')
+        table_str = "+3\n" + "+3\n" + "2D4-4\n" + "5D4+10  W:10\n" + "3D10"
         self.assertEqual(str(table), table_str)
 
     def test_DiceTable_repr_empty(self):
-        self.assertEqual(repr(DiceTable.new()), '<DiceTable containing []>')
+        self.assertEqual(repr(DiceTable.new()), "<DiceTable containing []>")
 
     def test_DiceTable_repr_with_dice(self):
-        dice_record = DiceRecord({ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2})
+        dice_record = DiceRecord(
+            {ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2}
+        )
         table = DiceTable({1: 1}, dice_record)
-        self.assertEqual(repr(table),
-                         '<DiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>')
+        self.assertEqual(repr(table), "<DiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>")
 
     def test_DiceTable_add_die_raise_error_for_negative_add(self):
         table = DiceTable.new()
@@ -400,14 +402,17 @@ class TestDiceTable(unittest.TestCase):
         self.assertFalse(table_2.__eq__(table_1))
 
     def test_DetailedDiceTable_repr_empty(self):
-        self.assertEqual(repr(DetailedDiceTable.new()), '<DetailedDiceTable containing []>')
+        self.assertEqual(repr(DetailedDiceTable.new()), "<DetailedDiceTable containing []>")
 
     def test_DetailedDiceTable_repr_with_dice(self):
-        dice_record = DiceRecord({ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2})
+        dice_record = DiceRecord(
+            {ModDie(4, -2): 2, Die(10): 3, ModWeightedDie({4: 10}, 2): 5, Modifier(3): 2}
+        )
         table = DetailedDiceTable({1: 1}, dice_record)
-        self.assertEqual(repr(table),
-                         '<DetailedDiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>')
+        self.assertEqual(
+            repr(table), "<DetailedDiceTable containing [+3, +3, 2D4-4, 5D4+10  W:10, 3D10]>"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
