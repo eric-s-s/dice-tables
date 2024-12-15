@@ -174,6 +174,14 @@ If you want to contribute, you'll need to install the dev requirements.
     $ pre-commit install
     $ pre-commit run -a
 
+To build the docs:
+
+.. code-block:: bash
+
+    $ sphinx-build -M html docs build
+
+and then open ./build/html/index.html in your browser
+
 
 ---------
 ChangeLog

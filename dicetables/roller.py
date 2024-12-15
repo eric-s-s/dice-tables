@@ -21,8 +21,6 @@ class Roller(object):
         """
         here is
         `a nice explanation of alias tables: <http://www.keithschwarz.com/darts-dice-coins/>`_
-
-        :return: dicetables.tools.AliasTable
         """
         return self._alias_table
 

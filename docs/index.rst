@@ -19,7 +19,7 @@ For some quick examples, see :doc:`the_basics`
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    intro.rst
    the_basics.rst
