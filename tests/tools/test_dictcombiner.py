@@ -241,9 +241,9 @@ class TestDictCombiner(unittest.TestCase):
         new_dict = DictCombiner({0: 1}).combine_by_dictionary(to_combine, 3)
         """
         {1: 1, 2: 2}
-    
+
         {2: 1, 3: 2} + {3: 2, 4: 4} = {2: 1, 3: 4, 4: 4}
-    
+
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
@@ -266,7 +266,7 @@ class TestDictCombiner(unittest.TestCase):
         new_dict = complex_events.combine_by_dictionary(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
-    
+
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3: 1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
@@ -281,9 +281,9 @@ class TestDictCombiner(unittest.TestCase):
         new_dict = DictCombiner({0: 1}).combine_by_flattened_list(to_combine, 3)
         """
         {1: 1, 2: 2}
-    
+
         {2: 1, 3: 2} + {3: 2, 4: 4} = {2:1, 3: 4, 4: 4}
-    
+
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
@@ -306,7 +306,7 @@ class TestDictCombiner(unittest.TestCase):
         new_dict = complex_events.combine_by_flattened_list(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
-    
+
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
@@ -321,9 +321,9 @@ class TestDictCombiner(unittest.TestCase):
         new_dict = DictCombiner({0: 1}).combine_by_indexed_values(to_combine, 3)
         """
         {1: 1, 2: 2}
-    
+
         {2: 1, 3: 2} + {3: 2, 4: 4} = {2:1, 3: 4, 4: 4}
-    
+
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})
@@ -346,7 +346,7 @@ class TestDictCombiner(unittest.TestCase):
         new_dict = complex_events.combine_by_indexed_values(to_combine, 1)
         """
         {2: 1, 3: 4, 4: 4}
-    
+
         {3: 1, 4: 4, 5: 4} + {4: 2, 5: 8, 6:8} = {3:1, 4: 6, 5: 12, 6: 8}
         """
         self.assertEqual(new_dict, {3: 1, 4: 6, 5: 12, 6: 8})

@@ -322,4 +322,3 @@ Some Example Dice
   <DiceTable containing [+3, 2D6]>
 
 `Top`_
-

@@ -4,15 +4,15 @@ this UI shows the difference between adding a list of ints and a list of tuples
 to a AdditiveEvents.  the list [1,1,1,3,5] and tuple list [(1, 3), (3, 1), (5, 1)]
 are two ways to add the same (values, frequencies) to a table.
 
-the ratio is (len(int list) / len(tuple list))  
+the ratio is (len(int list) / len(tuple list))
 or (total frequency of tuple list/number of values) = 5/3 for the above list
 
-when you pick a length of a list, this program creates a random list with a 
-random generator that yields a tuple list of (list value, 1). the list is time 
-tested as a tuple list and an interger list.  then one or more frequencies will 
+when you pick a length of a list, this program creates a random list with a
+random generator that yields a tuple list of (list value, 1). the list is time
+tested as a tuple list and an interger list.  then one or more frequencies will
 be increased until the end of the test. (see gen_"something"_points for details of
 how the generators work)
 
 the range of values in this UI were picked for speed and accuracy.  too many adds
 to a list takes a lot of time.  too few adds and the time for adding is well
-below the error in adding times.  
+below the error in adding times.
