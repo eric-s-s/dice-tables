@@ -6,8 +6,8 @@
 .. image:: https://badge.fury.io/py/dicetables.svg
     :target: https://badge.fury.io/py/dicetables
 
-.. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=eric-s-s/issue-48/set-up-github-actions
-    :target: https://coveralls.io/github/eric-s-s/dice-tables?branch=eric-s-s/issue-48/set-up-github-actions
+.. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=master
+    :target: https://coveralls.io/github/eric-s-s/dice-tables?branch=master
 
 .. image:: https://static.pepy.tech/badge/dicetables
     :target: https://pepy.tech/projects/dicetables
