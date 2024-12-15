@@ -1,5 +1,18 @@
-.. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=master
-:target: https://coveralls.io/github/eric-s-s/dice-tables?branch=master
+.. image:: https://img.shields.io/badge/License-MIT-yellow
+    :target: https://opensource.org/license/MIT
+
+.. image:: https://img.shields.io/badge/Python-3.9%20%7C%203.12%20%7C%203.13-blue
+
+.. image:: https://badge.fury.io/py/dicetables.svg
+    :target: https://badge.fury.io/py/dicetables
+
+.. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=eric-s-s/issue-48/set-up-github-actions
+    :target: https://coveralls.io/github/eric-s-s/dice-tables?branch=eric-s-s/issue-48/set-up-github-actions
+
+.. image:: https://static.pepy.tech/badge/dicetables
+    :target: https://pepy.tech/projects/dicetables
+
+
 
 #################
 dicetables v4.0.2
@@ -145,6 +158,20 @@ That should get you started. For details see
 `<http://dice-tables.readthedocs.io/en/latest/>`_
 
 and the github repository at `<https://github.com/eric-s-s/dice-tables>`_
+
+-----------------
+Local Development
+-----------------
+
+If you want to contribute, you'll need to install the dev requirements.
+
+.. code-block:: bash
+
+    $ git clone https://github.com/eric-s-s/dice-tables.git
+    $ cd dice-tables
+    $ pip install --upgrade pip && pip install -r dev.requirements.txt
+    $ pytest . --cov=dicetables
+
 
 ---------
 ChangeLog
