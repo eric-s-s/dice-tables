@@ -1,13 +1,10 @@
-.. image:: https://travis-ci.org/eric-s-s/dice-tables.svg?branch=master
-    :target: https://travis-ci.org/eric-s-s/dice-tables
-
 .. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=master
     :target: https://coveralls.io/github/eric-s-s/dice-tables?branch=master
 
 
 
 #################
-dicetables v4.0.1
+dicetables v4.0.2
 #################
 
 Calculate the Combinations For Any Set of Dice
