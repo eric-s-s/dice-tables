@@ -1,8 +1,3 @@
-.. image:: https://coveralls.io/repos/github/eric-s-s/dice-tables/badge.svg?branch=master
-    :target: https://coveralls.io/github/eric-s-s/dice-tables?branch=master
-
-
-TODO DELETE!!!
 
 #################
 dicetables v4.0.2
