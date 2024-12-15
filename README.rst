@@ -171,6 +171,8 @@ If you want to contribute, you'll need to install the dev requirements.
     $ cd dice-tables
     $ pip install --upgrade pip && pip install -r dev.requirements.txt
     $ pytest . --cov=dicetables
+    $ pre-commit install
+    $ pre-commit run -a
 
 
 ---------

@@ -1,4 +1,5 @@
 ipython
+pre-commit
 pytest
 pytest-cov
 Sphinx==3.2.1

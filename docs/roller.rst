@@ -21,7 +21,7 @@ has a 1 in 6**1000 chance of occurring (a 7.059e-777% chance).  The roller can a
 
 `my_roll` actually has a chance of being `1000`, although if that actually happened ...  er ...
 um ... hmmm ... get your computer checked. Seriously! You probably have a higher chance of winning the lottery while
-getting eaten by a shark as you're struck by lightning.  
+getting eaten by a shark as you're struck by lightning.
 
 .. module:: dicetables.roller
 
@@ -46,4 +46,3 @@ Here's an example with a custom "random" generator
 >>> roller = dt.Roller(my_die, random_generator=ZeroForever())
 >>> roller.roll_many(10)
 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-
