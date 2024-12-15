@@ -182,6 +182,14 @@ To build the docs:
 
 and then open ./build/html/index.html in your browser
 
+to build a distribution:
+
+.. code-block:: bash
+
+    $ python -m build --sdist
+    $ python -m build --wheel
+
+and then you can pip install them directly.
 
 ---------
 ChangeLog
