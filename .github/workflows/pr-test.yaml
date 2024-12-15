@@ -1,20 +1,16 @@
 name: PR testing
-
 on:
   push:
     branches: [ "master" ]
   pull_request:
     types: ["opened", "reopened", "synchronize"]
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.12", "3.13"]
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
