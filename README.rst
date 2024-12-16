@@ -15,7 +15,7 @@
 
 
 #################
-dicetables v4.0.2
+dicetables v4.0.3
 #################
 
 Calculate the Combinations For Any Set of Dice
