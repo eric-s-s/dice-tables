@@ -66,7 +66,7 @@ The basic objects to use are DiceTable or DetailedDiceTable, and any of the dice
 - UpperMidOfDicePool
 - LowerMidOfDicePool
 
-for details about the dice, see `The Dice`_.
+for details about the dice, see `The Dice <https://dice-tables.readthedocs.io/en/latest/the_dice.html>`_.
 for details about the dice-tables see
 `DiceTable and DetailedDiceTable <http://dice-tables.readthedocs.io/en/latest/the_dicetable.html>`_
 

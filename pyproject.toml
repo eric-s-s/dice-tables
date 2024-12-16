@@ -32,7 +32,7 @@ Homepage = "https://allthedice.com"
 Documentation = "https://dice-tables.readthedocs.io/en/latest"
 Repository = "https://github.com/eric-s-s/dice-tables.git"
 Issues = "https://github.com/eric-s-s/dice-tables/issues"
-Changelog = "https://github.com/eric-s-s/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/eric-s-s/dice-tables/blob/master/CHANGELOG.md"
 
 [tool.ruff]
 line-length = 100
