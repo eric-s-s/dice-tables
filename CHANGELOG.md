@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+### Changed
+
+### Removed
+
+
+## [4.0.3](https://github.com/eric-s-s/dice-tables/releases/tag/4.0.3) - 2024-12-16
+
+### Added
+
+### Fixed
+
 - readthedocs.org jobs fixed.
 - coveralls now fixed with github actions.
 

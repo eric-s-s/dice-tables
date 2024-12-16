@@ -8,7 +8,7 @@
 Welcome to dicetables's documentation!
 ======================================
 
-v4.0.2
+v4.0.3
 
 dicetables is a module for getting all the combinations for any set of dice
 and getting information from that data.
