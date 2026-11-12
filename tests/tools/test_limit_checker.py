@@ -3,19 +3,19 @@ from inspect import signature
 import pytest
 
 from dicetables import (
-    Die,
     BestOfDicePool,
-    ModDie,
-    ModWeightedDie,
+    Die,
     Exploding,
     ExplodingOn,
+    ModDie,
+    ModWeightedDie,
 )
 from dicetables.dicepool import DicePool
-from dicetables.tools.limit_checker import NoOpLimitChecker, LimitChecker, LimitsError
+from dicetables.tools.limit_checker import LimitChecker, LimitsError, NoOpLimitChecker
 from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
-class TestNoOpLimitChecker(object):
+class TestNoOpLimitChecker:
     @pytest.fixture(params=[signature(open).bind("x"), signature(divmod).bind(1, 2)])
     def bound_args(self, request):
         yield request.param
@@ -37,7 +37,7 @@ class TestNoOpLimitChecker(object):
         NoOpLimitChecker().assert_explosions_within_limits(dice)
 
 
-class TestLimitChecker(object):
+class TestLimitChecker:
     def test_limit_checker_defaults(self):
         checker = LimitChecker()
         assert checker.max_dice_calls == 5

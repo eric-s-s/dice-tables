@@ -1,10 +1,8 @@
-from typing import Dict, Tuple
-
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
 
-class DicePool(object):
+class DicePool:
     def __init__(self, input_die: ProtoDie, pool_size: int):
         if pool_size < 1:
             raise ValueError("Minimum DicePool size is 1")
@@ -21,7 +19,7 @@ class DicePool(object):
         return self._pool_size
 
     @property
-    def rolls(self) -> Dict[Tuple[int, ...], int]:
+    def rolls(self) -> dict[tuple[int, ...], int]:
         return self._rolls.copy()
 
     def __eq__(self, other):
@@ -33,4 +31,4 @@ class DicePool(object):
         return hash((self.die, self.size))
 
     def __repr__(self):
-        return "{}({!r}, {})".format(self.__class__.__name__, self.die, self.size)
+        return f"{self.__class__.__name__}({self.die!r}, {self.size})"

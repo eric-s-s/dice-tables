@@ -1,17 +1,15 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-from __future__ import absolute_import
 
 import unittest
-from sys import version_info
 
 from dicetables.eventsbases.eventerrors import InvalidEventsError
-from dicetables.eventsbases.integerevents import IntegerEvents, EventsVerifier
+from dicetables.eventsbases.integerevents import EventsVerifier, IntegerEvents
 
 
 class DummyEvents(IntegerEvents):
     def __init__(self, dictionary):
         self._dictionary = dictionary
-        super(DummyEvents, self).__init__()
+        super().__init__()
 
     def get_dict(self):
         return self._dictionary
@@ -21,8 +19,6 @@ class TestIntegerEvents(unittest.TestCase):
     def setUp(self):
         self.checker = EventsVerifier()
         self.types_error = "all values must be ints"
-        if version_info[0] < 3:
-            self.types_error += " or longs"
 
     def tearDown(self):
         del self.checker

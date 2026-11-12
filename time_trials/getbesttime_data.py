@@ -2,17 +2,16 @@
 this module generates a txt file to get dictionaries.  it take a WHILE to run.
 """
 
-from __future__ import print_function
-
 import time
+
 from dicetables.tools.dictcombiner import DictCombiner
 
 
 def get_input_dict(input_dict_size, use_exponential_occurrences):
     if use_exponential_occurrences:
-        input_dict = dict([(event, 1 + 2 ** (event % 1000)) for event in range(input_dict_size)])
+        input_dict = {event: 1 + 2 ** (event % 1000) for event in range(input_dict_size)}
     else:
-        input_dict = dict([(event, 1 + event % 1000) for event in range(input_dict_size)])
+        input_dict = {event: 1 + event % 1000 for event in range(input_dict_size)}
     return input_dict
 
 
@@ -109,17 +108,16 @@ def dict_maker(data_points):
             obj_size_list.append(obj_size)
             data_map[input_size][times] = obj_size_list
 
-    for input_size in data_map.keys():
-        for times in data_map[input_size].keys():
-            first_obj_size_at_threshold = min(data_map[input_size][times])
-            data_map[input_size][times] = first_obj_size_at_threshold
+    for second_map in data_map.values():
+        for times, obj_size_list in second_map.items():
+            second_map[times] = min(obj_size_list)
 
     return remove_excess_one_obj_size_results(data_map)
 
 
 def remove_excess_one_obj_size_results(data_map):
     new_data_map = {}
-    for input_size in data_map.keys():
+    for input_size in data_map:
         old_times_obj_size_map = data_map[input_size]
         times_obj_size_map = {}
         for times in sorted(old_times_obj_size_map.keys()):
@@ -134,13 +132,13 @@ def remove_excess_one_obj_size_results(data_map):
 def write_dict_file(file_name):
     lines = []
     for suffix in range(10):
-        print("on set {} of 9".format(suffix))
+        print(f"on set {suffix} of 9")
         flat = get_data_list(False)
         many = get_data_list(True)
         flat_str = str(dict_maker(flat))
         many_str = str(dict_maker(many))
-        flat_str = "flat_{} = ".format(suffix) + flat_str
-        many_str = "many_{} = ".format(suffix) + many_str
+        flat_str = f"flat_{suffix} = " + flat_str
+        many_str = f"many_{suffix} = " + many_str
         lines.append(flat_str)
         lines.append(many_str)
         lines.append("")
@@ -150,8 +148,7 @@ def write_dict_file(file_name):
 
 def write_two_txt_files_from_original(original_file_name):
     flat, many = convert_text_to_dicts_list(original_file_name)
-    if original_file_name.endswith(".txt"):
-        original_file_name = original_file_name[:-4]
+    original_file_name = original_file_name.removesuffix(".txt")
     new_flat_str = group_dicts(flat)
     new_many_str = group_dicts(many)
     with open(original_file_name + "_flat.txt", "w") as file:
@@ -177,7 +174,7 @@ def group_dicts(dic_list):
     common_keys = sorted(dic_list[0].keys())
     lines = []
     for input_size in common_keys:
-        lines.append("input list: {}".format(input_size))
+        lines.append(f"input list: {input_size}")
         times_list = get_all_times_keys_for_one_input_size(dic_list, input_size)
         for dic in dic_list:
             times_obj_size = dic[input_size]
@@ -198,8 +195,8 @@ def sorted_dict_as_single_line_str(dic, key_list):
     blank = " " * width
     out_str = "{"
     for key in key_list:
-        if key in dic.keys():
-            new = "{}: {}, ".format(key, dic[key])
+        if key in dic:
+            new = f"{key}: {dic[key]}, "
             out_str += new.ljust(width)
         else:
             out_str += blank

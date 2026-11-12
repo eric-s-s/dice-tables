@@ -2,10 +2,12 @@
 A factory class for creating instances of AdditiveEvent and its descendants.
 """
 
+from typing import ClassVar
+
 from dicetables.dicerecord import DiceRecord
-from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
+from dicetables.eventsbases.eventerrors import DiceRecordError, InvalidEventsError
 from dicetables.factory.errorhandler import EventsFactoryErrorHandler
-from dicetables.factory.factorytools import StaticDict, Getter
+from dicetables.factory.factorytools import Getter, StaticDict
 from dicetables.factory.warninghandler import EventsFactoryWarningHandler
 
 
@@ -13,7 +15,7 @@ class LoaderError(AttributeError):
     pass
 
 
-class Loader(object):
+class Loader:
     def __init__(self, factory):
         self.factory = factory
 
@@ -32,14 +34,14 @@ class Loader(object):
         self.factory.add_class(new_class, factory_keys)
 
 
-class EventsFactory(object):
-    __default_getters = {
+class EventsFactory:
+    __default_getters: ClassVar[dict[str, Getter]] = {
         "get_dict": Getter("get_dict", {0: 1}),
         "dice_data": Getter("dice_data", DiceRecord.new()),
         "calc_includes_zeroes": Getter("calc_includes_zeroes", True, is_property=True),
     }
 
-    __default_class_args = {
+    __default_class_args: ClassVar[dict[str, tuple[str, ...]]] = {
         "AdditiveEvents": ("get_dict",),
         "DiceTable": ("get_dict", "dice_data"),
         "DetailedDiceTable": ("get_dict", "dice_data", "calc_includes_zeroes"),
@@ -55,11 +57,11 @@ class EventsFactory(object):
 
     @classmethod
     def has_class(cls, events_class):
-        return events_class.__name__ in cls._class_args.keys()
+        return events_class.__name__ in cls._class_args.keys()  # noqa: SIM118 StaticDict is not a container
 
     @classmethod
     def has_getter(cls, getter_key):
-        return getter_key in cls._getters.keys()
+        return getter_key in cls._getters.keys()  # noqa: SIM118 StaticDict is not a container
 
     @classmethod
     def get_class_params(cls, events_class):
@@ -174,7 +176,7 @@ class EventsFactory(object):
     def _get_args(cls, events, factory_class, passed_in_values):
         new_args = []
         for getter_key in cls.get_class_params(factory_class):
-            if getter_key in passed_in_values.keys():
+            if getter_key in passed_in_values:
                 arg_value = passed_in_values[getter_key]
             else:
                 getter = cls._getters.get(getter_key)

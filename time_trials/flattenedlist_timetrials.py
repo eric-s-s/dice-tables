@@ -9,13 +9,13 @@ the quick_and_dirty_ui is set up to demonstrate this.
 THIS MODULE REQUIRES numpy AND matplotlib TO RUN CORRECTLY
 """
 
-from __future__ import print_function
-
-import time
 import random
+import time
 from os import getcwd
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from dicetables.additiveevents import AdditiveEvents
 
 
@@ -70,7 +70,7 @@ def one_time_trial(events, num_adds, start_dict_size=1):
 
     occurrences_to_events_ratio = events_total_occurrences / float(len(events))
 
-    start_dict = dict([(event, 1 + event % 100) for event in range(start_dict_size)])
+    start_dict = {event: 1 + event % 100 for event in range(start_dict_size)}
     to_combine = AdditiveEvents(dict(events))
 
     id_table_a = AdditiveEvents(start_dict)
@@ -122,7 +122,7 @@ def plot_trial(ratios, tuples, lists, title="none", figure=1):
 
     plt.legend()
     intersection, tup_fit, lst_fit = polyfit_and_intersection(ratios, tuples, lists)
-    title += "\nintersection = %s" % intersection
+    title += f"\nintersection = {intersection}"
     plt.title(title)
     plt.plot(ratios, tup_fit, "c-")
     plt.plot(ratios, lst_fit, "c-")
@@ -159,20 +159,18 @@ def random_generator(num_vals, n_points_only=False):
     if gen_str == "one_point":
         loc = random.choice(["start", "mid", "end"])
         generator = gen_one_point(start_list, loc)
-        out_str = "%s\n%s at %s" % (start_list, gen_str, loc)
+        out_str = f"{start_list}\n{gen_str} at {loc}"
     elif gen_str == "random_point":
         generator = gen_random_point(start_list)
-        out_str = "%s\n%s" % (start_list, gen_str)
+        out_str = f"{start_list}\n{gen_str}"
     else:
         min_pts = len(start_list) // 10
         max_pts = len(start_list) // 5
-        if min_pts < 1:
-            min_pts = 1
-        if max_pts < 2:
-            max_pts = 2
+        min_pts = max(min_pts, 1)
+        max_pts = max(max_pts, 2)
         num_points = random.randrange(min_pts, max_pts + 1)
         generator = gen_n_points(start_list, num_points)
-        out_str = "%s\n%s n=%s" % (start_list, gen_str, num_points)
+        out_str = f"{start_list}\n{gen_str} n={num_points}"
     return generator, out_str
 
 
@@ -180,9 +178,7 @@ def random_trial(num_vals, adds_per_trial, figure=1, n_points_only=False, start_
     """make a random generator of a random list with num_vals elements. add that
     list num_adds times per trial and plot results and return intesection"""
     generator, title = random_generator(num_vals, n_points_only)
-    title += "  adds={}  vals={}  start dictionary size={}".format(
-        adds_per_trial, num_vals, start_dict_size
-    )
+    title += f"  adds={adds_per_trial}  vals={num_vals}  start dictionary size={start_dict_size}"
     ratio, tuples, lists = time_trial(generator, adds_per_trial, start_dict_size)
     return plot_trial(ratio, tuples, lists, title, figure)
 
@@ -191,10 +187,10 @@ def get_welcome():
     """return welcome_message.txt"""
     try:
         welcome_file_name = getcwd() + "\\" + "welcome_message.txt"
-        welcome_file = open(welcome_file_name, "r")
-        welcome_message = welcome_file.read()
-    except IOError:
-        welcome_message = 'took a guess where "welcome_' 'message.txt" was, and I was wrong.'
+        with open(welcome_file_name) as welcome_file:
+            welcome_message = welcome_file.read()
+    except OSError:
+        welcome_message = 'took a guess where "welcome_message.txt" was, and I was wrong.'
     return welcome_message
 
 
@@ -234,42 +230,42 @@ def quick_and_dirty_ui():
         ) % (min_vals, max_vals)
         num_vals = get_int(num_vals_question)
         if num_vals > max_vals:
-            print("num_vals too big. now = %s" % max_vals)
+            print(f"num_vals too big. now = {max_vals}")
             num_vals = max_vals
         if num_vals < min_vals:
-            print("num_vals too small. now = %s" % min_vals)
+            print(f"num_vals too small. now = {min_vals}")
             num_vals = min_vals
 
         max_adds = this_will_take_forever // num_vals
         min_adds = 1
         num_adds_question = (
             "please input the number of adds per trial\n"
-            + "an int between %s and %s\n" % (min_adds, max_adds)
+            + f"an int between {min_adds} and {max_adds}\n"
         )
         num_adds = get_int(num_adds_question)
         if num_adds < min_adds:
-            print("num_adds too small. now = %s" % min_adds)
+            print(f"num_adds too small. now = {min_adds}")
             num_adds = min_adds
         if num_adds > max_adds:
-            print("num_adds too big. now = %s" % max_adds)
+            print(f"num_adds too big. now = {max_adds}")
             num_adds = max_adds
 
         start_dict_question = (
             "please input the size of the starting dictionary\n"
-            + "an int between %s and %s\n" % (min_start_size, max_start_size)
+            + f"an int between {min_start_size} and {max_start_size}\n"
         )
         start_dict_size = get_int(start_dict_question)
         if num_adds < min_start_size:
-            print("num_adds too small. now = %s" % min_start_size)
+            print(f"num_adds too small. now = {min_start_size}")
             start_dict_size = min_start_size
         if num_adds > max_adds:
-            print("num_adds too big. now = %s" % max_start_size)
+            print(f"num_adds too big. now = {max_start_size}")
             start_dict_size = max_start_size
 
         n_points_only = num_vals >= needs_many_points
 
         intersection = random_trial(num_vals, num_adds, figure, n_points_only, start_dict_size)
-        print("the graphs intersect at %s" % intersection)
+        print(f"the graphs intersect at {intersection}")
         plt.pause(0.1)
 
 
@@ -289,7 +285,7 @@ def tst_num_adds(num_vals, start_add, stop_add):
         out_lst.append(ans[0])
     plt.figure(1)
     plt.plot(x_axis, out_lst, "bo-", label=str(start_list))
-    plt.xlabel("%s to %s" % (start_add, stop_add))
+    plt.xlabel(f"{start_add} to {stop_add}")
     plt.ylabel("intersections")
     return out_lst
 
@@ -312,7 +308,7 @@ def tst_num_vals(star_vals, stop_vals, num_adds):
         out_lst.append(ans[0])
     plt.figure(0)
     plt.plot(x_axis, out_lst, "bo-", label=str(start_list))
-    plt.xlabel("%s to %s" % (star_vals, stop_vals))
+    plt.xlabel(f"{star_vals} to {stop_vals}")
     plt.ylabel("intersections")
     return out_lst
 

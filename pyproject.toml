@@ -32,3 +32,15 @@ Changelog = "https://github.com/eric-s-s/dice-tables/blob/master/CHANGELOG.md"
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+ignore = [
+  "PYI019", # `typing.Self` needs python 3.11. The minimum is 3.10.
+  "TRY004", # the parser raises `ValueError` for bad values on purpose.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+  "PLR0124", # comparing an object with itself tests the comparison methods.
+  "RUF012",  # test classes set `factory_keys` and `new_keys` as plain class attributes.
+]

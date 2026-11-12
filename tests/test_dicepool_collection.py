@@ -1,15 +1,15 @@
 import unittest
 
-from dicetables import Die, WeightedDie, ModDie
+from dicetables import Die, ModDie, WeightedDie
+from dicetables.dicepool import DicePool
 from dicetables.dicepool_collection import (
-    DicePoolCollection,
     BestOfDicePool,
-    WorstOfDicePool,
-    UpperMidOfDicePool,
+    DicePoolCollection,
     LowerMidOfDicePool,
+    UpperMidOfDicePool,
+    WorstOfDicePool,
     generate_events_dict,
 )
-from dicetables.dicepool import DicePool
 from dicetables.tools.orderedcombinations import ordered_combinations_of_events
 
 

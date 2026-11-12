@@ -1,11 +1,10 @@
 import random
-from typing import Optional, List
 
 from dicetables.tools.alias_table import AliasTable
 
 
-class Roller(object):
-    def __init__(self, events, random_generator: Optional[random.Random] = None):
+class Roller:
+    def __init__(self, events, random_generator: random.Random | None = None):
         """
 
         :param events: any IntegerEvents
@@ -33,7 +32,7 @@ class Roller(object):
         height = self._random_generator.randrange(self._alias_table.height)
         return self._alias_table.get(length, height)
 
-    def roll_many(self, times) -> List[int]:
+    def roll_many(self, times) -> list[int]:
         """
 
         :param times: int - how many times to roll

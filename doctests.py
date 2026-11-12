@@ -1,7 +1,7 @@
 import doctest
+import os
 import unittest
 import warnings
-import os
 
 
 # Note loader and ignore are required arguments for unittest even if unused.

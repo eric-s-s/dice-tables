@@ -2,15 +2,15 @@
 it's effectively the empirical proof for how LongIntTable.add() chooses
 the fastest method with it's get_fastest_method() function."""
 
-from __future__ import print_function
-
-from math import log10
-import time
 import random
-from os import getcwd
+import time
 from itertools import cycle
+from math import log10
+from os import getcwd
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from dicetables.additiveevents import AdditiveEvents
 
 WELCOME_TXT = "hi"
@@ -159,7 +159,7 @@ def one_time_trial(
     """
 
     if events_tuples[0][1] < 10**100:
-        print("one_time_trial prepped list [{} .. {}]".format(events_tuples[0], events_tuples[-1]))
+        print(f"one_time_trial prepped list [{events_tuples[0]} .. {events_tuples[-1]}]")
     input_dict = get_input_dict(input_dict_size, use_exponential_occurrences)
 
     events_tuples = [pair for pair in events_tuples if pair[1]]
@@ -188,9 +188,9 @@ def one_time_trial(
 
 def get_input_dict(input_dict_size, use_exponential_occurrences):
     if use_exponential_occurrences:
-        input_dict = dict([(event, 1 + 2 ** (event % 1000)) for event in range(input_dict_size)])
+        input_dict = {event: 1 + 2 ** (event % 1000) for event in range(input_dict_size)}
     else:
-        input_dict = dict([(event, 1 + event % 1000) for event in range(input_dict_size)])
+        input_dict = {event: 1 + event % 1000 for event in range(input_dict_size)}
     return input_dict
 
 
@@ -250,7 +250,7 @@ def time_trial_vary_start_dict(
     print("please wait for the down to reach zero")
     input_dict_size = input_dict_start_size
     while input_dict_size > 0:
-        print("adds {}".format(adds_per_trial))
+        print(f"adds {adds_per_trial}")
         y_axis, control_time, indexed_values_time = one_time_trial(
             adds_per_trial,
             events_tuple_list,
@@ -261,11 +261,9 @@ def time_trial_vary_start_dict(
 
         variable = y_axis[4]
         print(
-            "results: variable: {:.2}, control: {:.3e}, IndexedValues: {:.3e}".format(
-                variable, control_time, indexed_values_time
-            )
+            f"results: variable: {variable:.2}, control: {control_time:.3e}, IndexedValues: {indexed_values_time:.3e}"
         )
-        print("count down: {}\n".format(input_dict_size))
+        print(f"count down: {input_dict_size}\n")
 
         variable_values.append(variable)
         control_times.append(control_time)
@@ -308,7 +306,7 @@ def time_trial(
                 max(1, tuple_list_length_times_add_times / len(tuple_list_for_trial))
             )
 
-        print("adds {}".format(adds_per_trial))
+        print(f"adds {adds_per_trial}")
         y_axis, control_time, indexed_values_time = one_time_trial(
             adds_per_trial, tuple_list_for_trial, input_dict_size=input_dict_size
         )
@@ -322,11 +320,9 @@ def time_trial(
         variable = y_axis[index]
 
         print(
-            "results: variable: {:.2}, control: {:.3e}, IndexedValues: {:.3e}".format(
-                variable, control_time, indexed_values_time
-            )
+            f"results: variable: {variable:.2}, control: {control_time:.3e}, IndexedValues: {indexed_values_time:.3e}"
         )
-        print("count down: {}\n".format(count))
+        print(f"count down: {count}\n")
         count -= 1
         variable_values.append(variable)
         control_times.append(control_time)
@@ -417,7 +413,7 @@ def plot_trial_two_lines(
     intersection, control_fit, iv_fit = get_poly_fit_and_intersection(
         variable_values, control_times, iv_times
     )
-    title += "\nintersection = {}".format(intersection)
+    title += f"\nintersection = {intersection}"
     plt.title(title)
     plt.plot(variable_values, control_fit, "c-")
     plt.plot(variable_values, iv_fit, "c-")
@@ -438,10 +434,10 @@ def get_welcome():
     """return welcome_message.txt"""
     try:
         welcome_file_name = getcwd() + "\\" + "welcome_message.txt"
-        welcome_file = open(welcome_file_name, "r")
-        welcome_message = welcome_file.read()
-    except IOError:
-        welcome_message = 'took a guess where "welcome_' 'message.txt" was, and I was wrong.'
+        with open(welcome_file_name) as welcome_file:
+            welcome_message = welcome_file.read()
+    except OSError:
+        welcome_message = 'took a guess where "welcome_message.txt" was, and I was wrong.'
     return welcome_message
 
 
@@ -460,7 +456,7 @@ def get_int(question):
 
 
 def get_answer(question, min_val, max_val):
-    question = "{} between {} and {}".format(question, min_val, max_val)
+    question = f"{question} between {min_val} and {max_val}"
     raw_val = get_int(question)
     return min(max_val, (max(min_val, raw_val)))
 
@@ -469,7 +465,7 @@ def get_plot_style_generator():
     pt_style = cycle(["o", "<", ">", "v", "s", "p", "*", "+", "x", "D", "d"])
     colors = cycle(["b", "y", "r", "c", "m", "k", "g"])
     while True:
-        yield "{}{}-".format(next(colors), next(pt_style))
+        yield f"{next(colors)}{next(pt_style)}-"
 
 
 def do_trials_vary_start_dict(
@@ -497,8 +493,8 @@ def do_trials_vary_start_dict(
     tuple_list_for_time_trial = next(list_for_vary_start_dict)
 
     for add_variable in adds_list:
-        title = "vary size of start dict. number of adds = {}\n".format(add_variable)
-        title += "input occurrences = {}.  input list length = {}".format(occurrences, add_list_len)
+        title = f"vary size of start dict. number of adds = {add_variable}\n"
+        title += f"input occurrences = {occurrences}.  input list length = {add_list_len}"
         results = time_trial_vary_start_dict(
             tuple_list_for_time_trial,
             input_dict_start_size=1000,
@@ -513,7 +509,7 @@ def do_trials_vary_start_dict(
             *results,
             figure=1,
             title=title,
-            label="add: {}".format(add_variable),
+            label=f"add: {add_variable}",
             style=next(style_generator),
             base_line=do_base_line,
         )
@@ -553,9 +549,7 @@ def do_trials_vary_event_occurrences(
             number_of_data_pts=100,
         )
         title = "increasing event occurrences.\n"
-        title += "starting dict size={}. input list length = {}".format(
-            start_dict_size, add_list_len
-        )
+        title += f"starting dict size={start_dict_size}. input list length = {add_list_len}"
         do_base_line = False
         if add_variable == adds_list[-1]:
             do_base_line = True
@@ -563,7 +557,7 @@ def do_trials_vary_event_occurrences(
             *results,
             figure=1,
             title=title,
-            label="add: {}".format(add_variable),
+            label=f"add: {add_variable}",
             style=next(style_generator),
             base_line=do_base_line,
         )
@@ -594,9 +588,7 @@ def do_trials_vary_list_length(start_dict_size=1, occurrences_are_many=False, ad
             number_of_data_pts=100,
         )
         title = "increasing list length.\n"
-        title += "starting dict size={}. input list occurrences = {}".format(
-            start_dict_size, occurrences
-        )
+        title += f"starting dict size={start_dict_size}. input list occurrences = {occurrences}"
         do_base_line = False
         if add_variable == adds_list[-1]:
             do_base_line = True
@@ -604,7 +596,7 @@ def do_trials_vary_list_length(start_dict_size=1, occurrences_are_many=False, ad
             *results,
             figure=1,
             title=title,
-            label="add: {}".format(add_variable),
+            label=f"add: {add_variable}",
             style=next(style_generator),
             base_line=do_base_line,
         )
@@ -650,9 +642,7 @@ def do_trials_vary_gaps_in_list(
         )
 
         title = "making many gaps in list.\n"
-        title += "starting dict size={}. input list length: {}, occurrences: {}".format(
-            start_dict_size, add_list_len, occurrences
-        )
+        title += f"starting dict size={start_dict_size}. input list length: {add_list_len}, occurrences: {occurrences}"
         do_base_line = False
         if add_variable == adds_list[-1]:
             do_base_line = True
@@ -660,7 +650,7 @@ def do_trials_vary_gaps_in_list(
             *results,
             figure=1,
             title=title,
-            label="add: {}".format(add_variable),
+            label=f"add: {add_variable}",
             style=next(style_generator),
             base_line=do_base_line,
         )
@@ -701,7 +691,7 @@ def graphing_ui():
         }
         variable = variable_dict[variable_choice]
         action = action_dict[variable_choice]
-        print("chose {}".format(variable))
+        print(f"chose {variable}")
         input_variables = get_kwargs(variable)
         action(**input_variables)
 
@@ -852,7 +842,7 @@ def get_result_str(data_list):
         line_strings = []
         for index, element in enumerate(line):
             if index == result_index:
-                to_add = "{:.3f}".format(element)
+                to_add = f"{element:.3f}"
             elif index == bool_index:
                 to_add = str(bool(element))
             else:
@@ -902,9 +892,9 @@ def data_points_ui():
             'generate new data pts (will take some minutes)? type "y" for yes.\n>>> '
         )
         if get_new_data == "y":
-            raise IOError
+            raise OSError
         data_points_flat, data_points_bumpy = get_saved_data()
-    except IOError:
+    except OSError:
         print("generating data points.  this will take a few minutes")
         data_points_flat = get_data_list(False)
         data_points_bumpy = get_data_list(True)

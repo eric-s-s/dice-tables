@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - support for python 3.14 and 3.15
+- `Parser` recognizes `dict[int, int]` and `collections.abc.Iterable[int]` in die signatures.
+  It still recognizes `typing.Dict[int, int]` and `typing.Iterable[int]`.
 
 ### Fixed
 
@@ -35,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `dicetables.parser.make_int` has new error messages for values that are not integers.
   It still raises `ValueError`.
 - CI tests against python 3.10, 3.12, 3.14 and 3.15
+- the built-in dice and `DicePool` classes are annotated with `dict[int, int]`, `tuple` and
+  `collections.abc.Iterable[int]` instead of the `typing` aliases.
+- ruff is pinned to 0.17.4 in CI, pre-commit and `dev.requirements.txt`. The code is updated to pass it.
 
 ### Removed
 

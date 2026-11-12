@@ -2,7 +2,7 @@ class EventsFactoryError(AssertionError):
     pass
 
 
-class EventsFactoryErrorHandler(object):
+class EventsFactoryErrorHandler:
     def __init__(self, factory):
         self._factory = factory
         self._format_kwargs = {}
@@ -55,11 +55,11 @@ class EventsFactoryErrorHandler(object):
         self._format_kwargs.update(kwargs_from_factory)
 
     def create_header(self, error_code, bad_param):
-        msg_start = "Error Code: {}\nFactory:    {}\nError At:   ".format(error_code, self._factory)
+        msg_start = f"Error Code: {error_code}\nFactory:    {self._factory}\nError At:   "
         if error_code == "GETTER OVERWRITE":
-            msg_end = "Factory Getter Key: {!r}\n".format(bad_param)
+            msg_end = f"Factory Getter Key: {bad_param!r}\n"
         else:
-            msg_end = "{}\n".format(bad_param)
+            msg_end = f"{bad_param}\n"
 
         return msg_start + msg_end
 

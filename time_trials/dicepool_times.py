@@ -5,8 +5,8 @@ from time import perf_counter
 
 import matplotlib.pyplot as plt
 
-from dicetables.tools.orderedcombinations import count_unique_combination_keys
 from dicetables import DicePool, Die
+from dicetables.tools.orderedcombinations import count_unique_combination_keys
 
 
 def get_max_combinations(die):
@@ -24,8 +24,8 @@ def make_plots():
     colors = cycle("rbgyc")
     styles = cycle("o*+x")
     for size in [2, 3, 4, 5, 6, 7, 8, 10, 12, 20]:
-        style = "{}{}-".format(next(colors), next(styles))
-        label = "Die({})".format(size)
+        style = f"{next(colors)}{next(styles)}-"
+        label = f"Die({size})"
         die = Die(size)
         limit = get_max_combinations(die)
 

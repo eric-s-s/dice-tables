@@ -1,6 +1,5 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods, line-too-long
 
-from __future__ import absolute_import
 
 import unittest
 from decimal import Decimal
@@ -136,9 +135,9 @@ class TestNumberFormatter(unittest.TestCase):
         why does formatting a number stick in that damn extra zero???  Decimal has figured this out.
         it's not that hard. arrrrrggggghhhhhhhh!
         """
-        float_format = "{:.2e}".format(123)
-        dec_format = "{:.2e}".format(Decimal(123))
-        dec_zero_exponent = "{:.2e}".format(Decimal(1))
+        float_format = f"{123:.2e}"
+        dec_format = f"{Decimal(123):.2e}"
+        dec_zero_exponent = f"{Decimal(1):.2e}"
         self.assertEqual(float_format, "1.23e+02")
         self.assertEqual(dec_format, "1.23e+2")
 
@@ -172,7 +171,7 @@ class TestNumberFormatter(unittest.TestCase):
     def test_NumberFormatter_format_as_exponent_remove_extra_zero(self):
         formatter = NumberFormatter()
         test = 1.23456789 * 10**5
-        self.assertEqual("{:.3e}".format(test), "1.235e+05")
+        self.assertEqual(f"{test:.3e}", "1.235e+05")
         self.assertEqual(formatter.format_exponent(test), "1.235e+5")
 
     def test_NumberFormatter_format_as_exponent_negative_number(self):

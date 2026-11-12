@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-
 import unittest
 
-from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
+from dicetables.eventsbases.eventerrors import DiceRecordError, InvalidEventsError
 
 
 class TestEventsErrors(unittest.TestCase):

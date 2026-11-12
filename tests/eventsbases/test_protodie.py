@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-from __future__ import absolute_import
 
 import unittest
 
@@ -12,7 +11,7 @@ class DummyDie(ProtoDie):
         self.weight = weight
         self.dictionary = dictionary
         self.repr_str = repr_str
-        super(DummyDie, self).__init__()
+        super().__init__()
 
     def get_dict(self):
         return self.dictionary

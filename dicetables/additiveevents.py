@@ -2,7 +2,7 @@
 AdditiveEvents is the general case for DiceTable - an IntegerEvents that can combine with other IntegerEvents.
 """
 
-from typing import TypeVar, Type, Dict
+from typing import TypeVar
 
 from dicetables.eventsbases.integerevents import IntegerEvents
 from dicetables.factory.eventsfactory import EventsFactory
@@ -25,20 +25,20 @@ class AdditiveEvents(IntegerEvents):
             total occurrences > 0
         """
         self._table = scrub_zeroes(events_dict)
-        super(AdditiveEvents, self).__init__()
+        super().__init__()
         EventsFactory.check(self.__class__)
 
     @classmethod
-    def new(cls: Type[T]) -> T:
+    def new(cls: type[T]) -> T:
         return EventsFactory.new(cls)
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return self._table.copy()
 
     def __str__(self):
         min_event = min(self._table.keys())
         max_event = max(self._table.keys())
-        return "table from {} to {}".format(min_event, max_event)
+        return f"table from {min_event} to {max_event}"
 
     def combine(self: T, events: IntegerEvents, times: int = 1) -> T:
         dictionary = DictCombiner(self.get_dict()).combine_by_fastest(events.get_dict(), times)

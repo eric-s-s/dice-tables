@@ -43,12 +43,21 @@ Customizing Parser
 Parser can only parse very specific types of parameters.
 
 >>> from dicetables.parser import make_int, make_int_dict, make_int_tuple
->>> from typing import Dict, Iterable
+>>> import collections.abc
+>>> import typing
+>>> from typing import Dict
 >>> from dicetables.eventsbases.protodie import ProtoDie
 >>> parser = dt.Parser()
->>> parser.param_types == {int: make_int, Dict[int, int]: make_int_dict, dt.DicePool: parser.make_pool,
-...                        ProtoDie: parser.make_die, Iterable[int]: make_int_tuple}
+>>> parser.param_types == {int: make_int, dt.DicePool: parser.make_pool, ProtoDie: parser.make_die,
+...                        dict[int, int]: make_int_dict,
+...                        collections.abc.Iterable[int]: make_int_tuple,
+...                        typing.Dict[int, int]: make_int_dict,
+...                        typing.Iterable[int]: make_int_tuple}
 True
+
+The builtin :code:`dict[int, int]` and :code:`typing.Dict[int, int]` are different keys. So are
+:code:`collections.abc.Iterable[int]` and :code:`typing.Iterable[int]`. The parser knows both spellings
+of each.
 
 If, for example, you need Parser to know how to parse a string, a list of strings and
 dictionary of keys=str: values=int, you first need to create functions that can parse

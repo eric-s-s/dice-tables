@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-from __future__ import absolute_import
 
 import unittest
 
@@ -9,7 +8,7 @@ from dicetables.factory.errorhandler import EventsFactoryError, EventsFactoryErr
 from dicetables.factory.eventsfactory import EventsFactory, Getter
 
 
-class StandInForBadClass(object):
+class StandInForBadClass:
     pass
 
 

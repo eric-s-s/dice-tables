@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # dice_tables documentation build configuration file, created by
 # sphinx-quickstart on Thu Jun 22 00:46:46 2017.
 #

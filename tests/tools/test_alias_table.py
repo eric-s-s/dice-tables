@@ -1,6 +1,6 @@
 import unittest
 
-from dicetables.tools.alias_table import AliasTable, Alias
+from dicetables.tools.alias_table import Alias, AliasTable
 
 
 class TestAliasTable(unittest.TestCase):

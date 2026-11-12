@@ -33,7 +33,7 @@ def make_start_index_and_list(sorted_tuple_list):
     return start_val, out_list
 
 
-class IndexedValues(object):
+class IndexedValues:
     def __init__(self, start_index, sorted_values):
         """
 

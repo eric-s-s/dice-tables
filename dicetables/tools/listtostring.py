@@ -40,8 +40,8 @@ def format_one_sequence(sequence):
     if first == last:
         return format_for_sequence_str(first)
     else:
-        return "{}-{}".format(format_for_sequence_str(first), format_for_sequence_str(last))
+        return f"{format_for_sequence_str(first)}-{format_for_sequence_str(last)}"
 
 
 def format_for_sequence_str(num):
-    return "({:,})".format(num) if num < 0 else "{:,}".format(num)
+    return f"({num:,})" if num < 0 else f"{num:,}"

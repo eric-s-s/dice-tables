@@ -21,7 +21,7 @@ class ProtoDie(IntegerEvents):
     """
 
     def __init__(self):
-        super(ProtoDie, self).__init__()
+        super().__init__()
 
     def get_size(self) -> int:
         raise NotImplementedError
@@ -30,7 +30,7 @@ class ProtoDie(IntegerEvents):
         raise NotImplementedError
 
     def get_dict(self):
-        super(ProtoDie, self).get_dict()
+        super().get_dict()
 
     def weight_info(self) -> str:
         """return detailed info of how the die is weighted"""
@@ -48,11 +48,7 @@ class ProtoDie(IntegerEvents):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash(
-            "hash of {!r}, {}, {}, {}".format(
-                self, self.get_size(), self.get_weight(), self.get_dict()
-            )
-        )
+        return hash(f"hash of {self!r}, {self.get_size()}, {self.get_weight()}, {self.get_dict()}")
 
     def __lt__(self, other):
         return (self.get_size(), self.get_weight(), sorted(self.get_dict().items()), repr(self)) < (
@@ -63,7 +59,7 @@ class ProtoDie(IntegerEvents):
         )
 
     def __eq__(self, other):
-        return super(ProtoDie, self).__eq__(other) and (
+        return super().__eq__(other) and (
             self.get_size(),
             self.get_weight(),
             repr(self),

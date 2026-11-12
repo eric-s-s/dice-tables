@@ -4,7 +4,7 @@ Getter is an object that remembers how to retrieve a parameter for a certain cla
 """
 
 
-class StaticDict(object):
+class StaticDict:
     def __init__(self, dictionary):
         self._dic = dictionary.copy()
 
@@ -34,7 +34,7 @@ class StaticDict(object):
         return StaticDict(new)
 
 
-class Getter(object):
+class Getter:
     def __init__(self, method_name, default_value, is_property=False):
         self._method_name = method_name
         self._is_property = is_property
@@ -65,9 +65,7 @@ class Getter(object):
 
     def __str__(self):
         is_property = {True: "property", False: "method"}
-        return '{}: "{}", default: {!r}'.format(
-            is_property[self._is_property], self._method_name, self._default_value
-        )
+        return f'{is_property[self._is_property]}: "{self._method_name}", default: {self._default_value!r}'
 
     def __eq__(self, other):
         try:

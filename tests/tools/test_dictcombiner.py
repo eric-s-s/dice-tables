@@ -1,14 +1,13 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods, line-too-long
 
-from __future__ import absolute_import
 
 import unittest
 
 from dicetables.tools.dictcombiner import (
+    DictCombiner,
     flatten_events_tuples,
     get_best_key,
     get_indexed_values_min,
-    DictCombiner,
 )
 
 
@@ -411,9 +410,9 @@ class TestDictCombiner(unittest.TestCase):
 def input_dict_generator():
     step_by_power_of_two = 1
     while True:
-        single_occurrence = dict([(event, 1) for event in range(step_by_power_of_two)])
-        middle_occurrences = dict([(event, 1 + event % 3) for event in range(step_by_power_of_two)])
-        high_occurrences = dict([(event, 1 + 2 * event) for event in range(step_by_power_of_two)])
+        single_occurrence = {event: 1 for event in range(step_by_power_of_two)}
+        middle_occurrences = {event: 1 + event % 3 for event in range(step_by_power_of_two)}
+        high_occurrences = {event: 1 + 2 * event for event in range(step_by_power_of_two)}
         step_by_power_of_two *= 2
         yield (single_occurrence, middle_occurrences, high_occurrences)
 

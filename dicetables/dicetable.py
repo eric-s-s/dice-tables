@@ -17,7 +17,7 @@ T = TypeVar("T", bound="DiceTable")
 class DiceTable(AdditiveEvents):
     def __init__(self, events_dict: dict, dice_record: DiceRecord):
         self._record = dice_record
-        super(DiceTable, self).__init__(events_dict)
+        super().__init__(events_dict)
 
     def dice_data(self) -> DiceRecord:
         return self._record
@@ -49,7 +49,7 @@ class DiceTable(AdditiveEvents):
     def __repr__(self):
         class_name = self.__class__.__name__
         dice = str(self).replace("\n", ", ")
-        return "<{} containing [{}]>".format(class_name, dice)
+        return f"<{class_name} containing [{dice}]>"
 
     def add_die(self: T, die: ProtoDie, times: int = 1) -> T:
         """
@@ -74,7 +74,7 @@ class DiceTable(AdditiveEvents):
         return EventsFactory.from_dictionary_and_dice(self, dictionary, dice_data)
 
     def __eq__(self, other):
-        return super(DiceTable, self).__eq__(other) and self.dice_data() == other.dice_data()
+        return super().__eq__(other) and self.dice_data() == other.dice_data()
 
 
 def format_die_info(die, number):
@@ -87,7 +87,7 @@ class DetailedDiceTable(DiceTable):
     def __init__(
         self, events_dict: dict, dice_record: DiceRecord, calc_includes_zeroes: bool = True
     ):
-        super(DetailedDiceTable, self).__init__(events_dict, dice_record)
+        super().__init__(events_dict, dice_record)
         self._calc = EventsCalculations(self, calc_includes_zeroes)
 
     @property
@@ -112,7 +112,4 @@ class DetailedDiceTable(DiceTable):
         )
 
     def __eq__(self, other):
-        return (
-            super(DetailedDiceTable, self).__eq__(other)
-            and self.calc_includes_zeroes == other.calc_includes_zeroes
-        )
+        return super().__eq__(other) and self.calc_includes_zeroes == other.calc_includes_zeroes
