@@ -2,32 +2,31 @@
 
 
 import ast
-from typing import Dict, Iterable, List
+import typing
+from collections.abc import Iterable
 
 import pytest
 
+from dicetables.dicepool import DicePool
 from dicetables.dicepool_collection import (
     BestOfDicePool,
-    WorstOfDicePool,
-    UpperMidOfDicePool,
     LowerMidOfDicePool,
+    UpperMidOfDicePool,
+    WorstOfDicePool,
 )
-from dicetables.dicepool import DicePool
 from dicetables.dieevents import (
     Die,
-    ModDie,
-    WeightedDie,
-    ModWeightedDie,
-    StrongDie,
-    Modifier,
     Exploding,
     ExplodingOn,
+    ModDie,
+    Modifier,
+    ModWeightedDie,
+    StrongDie,
+    WeightedDie,
 )
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.parser import (
     ParseError,
-)
-from dicetables.parser import (
     Parser,
     make_int,
     make_int_dict,
@@ -82,7 +81,7 @@ def test_make_int_tuple_error():
         make_int_tuple(ast.parse("('a', 1, 2)").body[0].value)
 
 
-@pytest.mark.parametrize("dict_value", [dict(), {-1: -2, 0: 0, 3: 4}])
+@pytest.mark.parametrize("dict_value", [{}, {-1: -2, 0: 0, 3: 4}])
 def test_make_int_dict(dict_value):
     node = ast.parse(str(dict_value)).body[0].value
     assert make_int_dict(node) == dict_value
@@ -97,14 +96,30 @@ def test_param_types():
     the_parser = Parser()
     answer = {
         int: make_int,
-        Dict[int, int]: make_int_dict,
+        dict[int, int]: make_int_dict,
         ProtoDie: the_parser.make_die,
         Iterable[int]: make_int_tuple,
         DicePool: the_parser.make_pool,
+        typing.Dict[int, int]: make_int_dict,  # noqa: UP006
+        typing.Iterable[int]: make_int_tuple,
     }
 
     assert the_parser.param_types == answer
     assert the_parser.param_types is not answer
+
+
+def test_parser_accepts_typing_aliases_in_die_signatures():
+    class TypingDie(Die):
+        def __init__(self, weights: typing.Dict[int, int], sizes: typing.Iterable[int]):  # noqa: UP006
+            self.weights = weights
+            super().__init__(sum(sizes))
+
+    parser = Parser()
+    parser.add_class(TypingDie)
+
+    die = parser.parse_die("TypingDie({1: 2}, (2, 4))")
+    assert die.weights == {1: 2}
+    assert die.get_size() == 6
 
 
 def test_param_types_is_specific_to_each_instance():
@@ -119,12 +134,11 @@ def test_make_die_raises_error_on_function_call_not_in_parser():
     assert cm.value.args[0] == "Die class: <NotThere> not recognized by parser."
 
 
-def test_make_die_on_die_with_bad_param_values():
-    die_node = ast.parse('WeightedDie({"K":2})').body[0].value
-    with pytest.raises(ValueError):
-        Parser().make_die(die_node)
-
-    die_node = ast.parse("Die(12.00)").body[0].value
+@pytest.mark.parametrize(
+    "bad_string", ["WeightedDie({'K': 2})", "Die(12.00)", "Die(not 1)", "Die(param_name)"]
+)
+def test_make_die_on_die_with_bad_param_values(bad_string):
+    die_node = ast.parse(bad_string).body[0].value
     with pytest.raises(ValueError):
         Parser().make_die(die_node)
 
@@ -270,11 +284,7 @@ def test_walk_dice_calls_complex():
     strong_die = "StrongDie"
     mod_die = "ModDie"
     parser = Parser()
-    die_string = (
-        "{}({}(), ".format(die, strong_die)
-        + "{}(3, {}".format(mod_die, die)
-        + "({}(3))))".format(strong_die)
-    )
+    die_string = f"{die}({strong_die}(), " + f"{mod_die}(3, {die}" + f"({strong_die}(3))))"
     result = parser.walk_dice_calls(ast.parse(die_string).body[0].value)
     expected_die = 2
     expected_strong_die = 2
@@ -303,7 +313,7 @@ def test_walk_dice_calls_bad_value():
         list(result)
 
 
-class TestParserWithLimits(object):
+class TestParserWithLimits:
     def test_parse_within_limits_max_size_int(self):
         assert Parser.with_limits().parse_die("Die(500)") == Die(500)
         with pytest.raises(LimitsError):
@@ -468,7 +478,7 @@ def test_add_class_un_recognized_param_types_raises_error():
     class StupidDie(Die):
         def __init__(self, name: str, size: int):
             self.name = name
-            super(StupidDie, self).__init__(size)
+            super().__init__(size)
 
     parser = Parser()
     msg = r"The signature: \(name: ?str, size: ?int\) has one or more un-recognized param types"
@@ -480,7 +490,7 @@ def test_add_class_missing_type_hint_raises_error():
     class StupidDie(Die):
         def __init__(self, name, size: int):
             self.name = name
-            super(StupidDie, self).__init__(size)
+            super().__init__(size)
 
     parser = Parser()
     msg = r"The signature: \(name, size: ?int\) is missing type annotations"
@@ -489,7 +499,7 @@ def test_add_class_missing_type_hint_raises_error():
 
 
 def test_add_class_auto_detect_kwargs():
-    class Thing(object):
+    class Thing:
         def __init__(self, num: int):
             self.num = num
 
@@ -506,14 +516,14 @@ def test_add_class_auto_detect_kwargs():
 
 
 def test_add_class_okay_if_no_init_parameters():
-    class Thing(object):
+    class Thing:
         pass
 
     Parser().add_class(Thing)
 
 
 def test_add_class_raises_error_if_no_type_hinting():
-    class Thing(object):
+    class Thing:
         def __init__(self, num):
             self.num = num
 
@@ -523,17 +533,17 @@ def test_add_class_raises_error_if_no_type_hinting():
 
 def test_add_class_using_stricter_typing_fails():
     class SillyDie(Die):
-        def __init__(self, size: int, ints: List[int]):
+        def __init__(self, size: int, ints: list[int]):
             self.ints = tuple(ints)
-            super(SillyDie, self).__init__(size)
+            super().__init__(size)
 
         def __eq__(self, other):
-            return self.ints == other.ints and super(SillyDie, self).__eq__(other)
+            return self.ints == other.ints and super().__eq__(other)
 
     parser = Parser()
     with pytest.raises(ParseError):
         parser.add_class(SillyDie)
-    parser.add_param_type(List[int], make_int_tuple)
+    parser.add_param_type(list[int], make_int_tuple)
     parser.add_class(SillyDie)
     expected = SillyDie(1, [1, 2])
     actual = parser.parse_die("SillyDie(1, [1, 2])")
@@ -549,11 +559,13 @@ def test_add_param_type():
 
     answer = {
         int: make_int,
-        Dict[int, int]: make_int_dict,
+        dict[int, int]: make_int_dict,
         str: a_func,
         ProtoDie: parser.make_die,
         Iterable[int]: make_int_tuple,
         DicePool: parser.make_pool,
+        typing.Dict[int, int]: make_int_dict,  # noqa: UP006
+        typing.Iterable[int]: make_int_tuple,
     }
     assert answer == parser.param_types
 
@@ -562,17 +574,17 @@ def test_new_parser_class_with_new_die():
     class StupidDie(Die):
         def __init__(self, name: str, size: int):
             self.name = name
-            super(StupidDie, self).__init__(size)
+            super().__init__(size)
 
         def __eq__(self, other):
-            return super(StupidDie, self).__eq__(other) and self.name == other.name
+            return super().__eq__(other) and self.name == other.name
 
     def make_string(str_node):
-        return str_node.s
+        return str_node.value
 
     class NewNewParser(Parser):
         def __init__(self, *args, **kwargs):
-            super(NewNewParser, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
             self.add_param_type(str, make_string)
             self.add_class(StupidDie)
 
@@ -585,14 +597,14 @@ def test_new_parser_class_with_new_die_that_calls_die():
     class DoubleDie(Die):
         def __init__(self, die: ProtoDie, size: int):
             self.die = die
-            super(DoubleDie, self).__init__(size)
+            super().__init__(size)
 
         def __eq__(self, other):
-            return super(DoubleDie, self).__eq__(other) and self.die == other.die
+            return super().__eq__(other) and self.die == other.die
 
     class NewNewParser(Parser):
         def __init__(self, *args, **kwargs):
-            super(NewNewParser, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
             self.add_class(DoubleDie)
 
     assert NewNewParser().parse_die("DoubleDie(DoubleDie(Die(2), 4), 3)") == DoubleDie(
@@ -604,7 +616,7 @@ def test_new_parser_class_with_new_die_that_calls_die():
 def test_parser_with_limits_fails_to_check_size_with_new_key_word():
     class NewDie(Die):
         def __init__(self, kwazy_size: int):
-            super(NewDie, self).__init__(kwazy_size)
+            super().__init__(kwazy_size)
 
     parser = Parser.with_limits(max_size=5)
     parser.add_class(NewDie)

@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-from __future__ import absolute_import
 
 import unittest
 import warnings
@@ -147,10 +146,10 @@ def create_warning_message(factory, code, *classes):
 
 def create_message_header(code, factory, failed_class):
     intro = (
-        "\nfactory: {}\n".format(factory)
-        + "Warning code: {}\n".format(code)
+        f"\nfactory: {factory}\n"
+        + f"Warning code: {code}\n"
         + "Failed to find/add the following class to the EventsFactory - \n"
-        + "class: {}\n".format(failed_class)
+        + f"class: {failed_class}\n"
     )
     return intro
 
@@ -159,7 +158,7 @@ def create_error_code_body(classes, code):
     if code == "CONSTRUCT":
         in_factory = classes[1]
         middle = (
-            "\nClass found in factory: {}\n".format(in_factory)
+            f"\nClass found in factory: {in_factory}\n"
             + "attempted object construction using its signature. tried to return instance of original class.\n"
             + "If that had failed, returned instance of the class found in EventsFactory.\n\n"
         )
@@ -170,9 +169,8 @@ def create_error_code_body(classes, code):
 
 def create_instructions(factory):
     instructions = (
-        "SOLUTION:\n"
-        + "  class variable: factory_keys = (getter method/property names)\n"
-        "  current factory keys are: {}\n".format(factory.get_keys()[1])
+        "SOLUTION:\n" + "  class variable: factory_keys = (getter method/property names)\n"
+        f"  current factory keys are: {factory.get_keys()[1]}\n"
         + "  class variable: new_keys = [(info for each key not already in factory)]\n"
         + '  Each tuple in "new_keys" is (getter_name, default_value, "property"/"method")\n'
         "ex:\n"

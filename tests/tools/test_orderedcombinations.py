@@ -2,10 +2,10 @@ import unittest
 
 from dicetables import AdditiveEvents
 from dicetables.tools.orderedcombinations import (
-    get_combination_occurrences,
-    ordered_combinations_of_events,
     count_unique_combination_keys,
+    get_combination_occurrences,
     largest_permitted_pool_size,
+    ordered_combinations_of_events,
 )
 
 

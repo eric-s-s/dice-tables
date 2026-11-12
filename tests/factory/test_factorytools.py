@@ -1,12 +1,11 @@
 # pylint: disable=missing-docstring, invalid-name, too-many-public-methods
-from __future__ import absolute_import
 
 import unittest
 
 from dicetables.additiveevents import AdditiveEvents
 from dicetables.dicerecord import DiceRecord
 from dicetables.dicetable import DetailedDiceTable
-from dicetables.factory.factorytools import StaticDict, Getter
+from dicetables.factory.factorytools import Getter, StaticDict
 
 
 class TestFactoryTools(unittest.TestCase):
@@ -155,13 +154,13 @@ class TestFactoryTools(unittest.TestCase):
         self.assertFalse(getter1 == getter2)
 
     def test_Getter_eq_false_by_incomparable_defaults(self):
-        class Bob(object):
+        class Bob:
             number = 5
 
             def __eq__(self, other):
                 return self.number == other.number
 
-        class Frank(object):
+        class Frank:
             letter = "a"
 
             def __eq__(self, other):
@@ -171,7 +170,7 @@ class TestFactoryTools(unittest.TestCase):
         self.assertFalse(Getter("a", Bob()) == Getter("a", Frank()))
 
     def test_Getter_eq_false_by_defaults_object_has_no_eq_method_two_instances(self):
-        class Bob(object):
+        class Bob:
             number = 5
 
         bob1 = Bob()

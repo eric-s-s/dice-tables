@@ -5,7 +5,7 @@ class EventsFactoryWarning(Warning):
     pass
 
 
-class EventsFactoryWarningHandler(object):
+class EventsFactoryWarningHandler:
     def __init__(self, factory):
         self._factory = factory
 
@@ -19,10 +19,10 @@ class EventsFactoryWarningHandler(object):
 
     def _get_msg_start(self, failed_class, warning_code):
         msg_start = (
-            "\nfactory: {}\n".format(self._factory)
-            + "Warning code: {}\n".format(warning_code)
+            f"\nfactory: {self._factory}\n"
+            + f"Warning code: {warning_code}\n"
             + "Failed to find/add the following class to the EventsFactory - \n"
-            + "class: {}\n".format(failed_class)
+            + f"class: {failed_class}\n"
         )
         return msg_start
 
@@ -32,7 +32,7 @@ class EventsFactoryWarningHandler(object):
         if warning_code == "CONSTRUCT":
             in_factory_class = params[1]
             msg_middle = (
-                "\nClass found in factory: {}\n".format(in_factory_class)
+                f"\nClass found in factory: {in_factory_class}\n"
                 + "attempted object construction using its signature. tried to return instance of original class.\n"
                 + "If that had failed, returned instance of the class found in EventsFactory.\n\n"
             )
@@ -42,9 +42,8 @@ class EventsFactoryWarningHandler(object):
 
     def _get_solution_message(self):
         instructions = (
-            "SOLUTION:\n"
-            + "  class variable: factory_keys = (getter method/property names)\n"
-            "  current factory keys are: {}\n".format(self._factory.get_keys()[1])
+            "SOLUTION:\n" + "  class variable: factory_keys = (getter method/property names)\n"
+            f"  current factory keys are: {self._factory.get_keys()[1]}\n"
             + "  class variable: new_keys = [(info for each key not already in factory)]\n"
             + '  Each tuple in "new_keys" is (getter_name, default_value, "property"/"method")\n'
             "ex:\n"

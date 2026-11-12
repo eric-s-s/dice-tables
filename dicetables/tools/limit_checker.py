@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from enum import Enum
 from inspect import BoundArguments
-from typing import Iterable, Type, Optional, Any, Union
+from typing import Any
 
 from dicetables.dicepool import DicePool
 from dicetables.eventsbases.protodie import ProtoDie
@@ -10,13 +11,12 @@ from dicetables.tools.orderedcombinations import (
     largest_permitted_pool_size,
 )
 
-
-DieOrPool = Union[Type[ProtoDie], Type[DicePool]]
+DieOrPool = type[ProtoDie] | type[DicePool]
 
 
 class LimitsError(ValueError):
     def __init__(self, *args):
-        super(LimitsError, self).__init__(*args)
+        super().__init__(*args)
 
 
 class ArgumentType(Enum):
@@ -27,7 +27,7 @@ class ArgumentType(Enum):
     POOL_SIZE = 5
 
 
-def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Optional[Any]:
+def get_bound_args(arg_type: ArgumentType, bound_args: BoundArguments) -> Any | None:
     arg_names = {
         ArgumentType.SIZE: ("die_size", "dictionary_input"),
         ArgumentType.EXPLOSIONS: ("explosions",),
@@ -139,9 +139,9 @@ class LimitChecker(AbstractLimitChecker):
         dice_pools = class_list.count(DicePool)
         if die_classes > self.max_dice_calls or dice_pools > self.max_dice_pool_calls:
             msg = (
-                "Limits exceeded. Max dice calls: {}. ".format(self.max_dice_calls)
-                + "Max dice pool calls: {}. ".format(self.max_dice_pool_calls)
-                + "Calls requested: {}".format(class_list)
+                f"Limits exceeded. Max dice calls: {self.max_dice_calls}. "
+                + f"Max dice pool calls: {self.max_dice_pool_calls}. "
+                + f"Calls requested: {class_list}"
             )
             raise LimitsError(msg)
 
@@ -154,8 +154,7 @@ class LimitChecker(AbstractLimitChecker):
 
         if size and size > self.max_size:
             raise LimitsError(
-                "A die of size: {} is greater than the allowed ".format(size)
-                + "max: {}".format(self.max_size)
+                f"A die of size: {size} is greater than the allowed " + f"max: {self.max_size}"
             )
 
     def assert_explosions_within_limits(self, bound_args: BoundArguments) -> None:
@@ -166,11 +165,9 @@ class LimitChecker(AbstractLimitChecker):
 
         if explosions and explosions > self.max_explosions:
             raise LimitsError(
-                (
-                    "Explosions: {} + ".format(explosions)
-                    + "len({}) is greater than allowed ".format(explodes_on)
-                    + "max: {}".format(self.max_explosions)
-                )
+                f"Explosions: {explosions} + "
+                + f"len({explodes_on}) is greater than allowed "
+                + f"max: {self.max_explosions}"
             )
 
     def assert_dice_pool_within_limits(self, bound_args: BoundArguments) -> None:
@@ -189,8 +186,6 @@ class LimitChecker(AbstractLimitChecker):
         score = count_unique_combination_keys(input_die, pool_size)
         if score > pool_limit:
             max_pool_size = largest_permitted_pool_size(input_die, pool_limit)
-            msg = "{!r} has a get_dict() of size: {}\n".format(input_die, dict_size)
-            explanation = "For this die, the largest permitted pool_size is {}".format(
-                max_pool_size
-            )
+            msg = f"{input_die!r} has a get_dict() of size: {dict_size}\n"
+            explanation = f"For this die, the largest permitted pool_size is {max_pool_size}"
             raise LimitsError(msg + explanation)

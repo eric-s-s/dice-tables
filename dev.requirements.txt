@@ -3,7 +3,7 @@ ipython
 pre-commit
 pytest
 pytest-cov
-ruff==0.8.3
+ruff==0.17.4
 twine
 
 -r ./docs/requirements.txt

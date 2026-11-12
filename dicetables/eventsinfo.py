@@ -14,7 +14,6 @@ Can be accessed through objects or wrapper functions.
 from collections import namedtuple
 from decimal import Decimal
 from math import log10
-from typing import List, Tuple
 
 from dicetables.eventsbases.integerevents import IntegerEvents
 from dicetables.tools.listtostring import get_string_from_list_of_ints
@@ -35,7 +34,7 @@ def _convert_decimal_to_float_or_int(num):
         return answer_as_float
 
 
-class EventsInformation(object):
+class EventsInformation:
     def __init__(self, events: IntegerEvents):
         self._dict = events.get_dict()
 
@@ -46,10 +45,10 @@ class EventsInformation(object):
         """
         return self._dict.items()
 
-    def events_keys(self) -> List[int]:
+    def events_keys(self) -> list[int]:
         return sorted(self._dict.keys())
 
-    def events_range(self) -> Tuple[int, int]:
+    def events_range(self) -> tuple[int, int]:
         all_keys = self.events_keys()
         return all_keys[0], all_keys[-1]
 
@@ -63,7 +62,7 @@ class EventsInformation(object):
         start, stop = self.events_range()
         return self.get_range_of_events(start, stop + 1)
 
-    def biggest_event(self) -> Tuple[int, int]:
+    def biggest_event(self) -> tuple[int, int]:
         """
 
         :return: (event, occurrences) for first event with highest occurrences
@@ -73,7 +72,7 @@ class EventsInformation(object):
             if occurrences == highest_occurrences:
                 return event, highest_occurrences
 
-    def biggest_events_all(self) -> List[Tuple[int, int]]:
+    def biggest_events_all(self) -> list[tuple[int, int]]:
         """
 
         :return: the list of all events that have biggest occurrence
@@ -85,14 +84,14 @@ class EventsInformation(object):
                 output.append((event, occurrences))
         return sorted(output)
 
-    def get_event(self, event: int) -> Tuple[int, int]:
+    def get_event(self, event: int) -> tuple[int, int]:
         return event, self._dict.get(event, 0)
 
-    def get_range_of_events(self, start: int, stop_before: int) -> List[Tuple[int, int]]:
+    def get_range_of_events(self, start: int, stop_before: int) -> list[tuple[int, int]]:
         return [self.get_event(event) for event in range(start, stop_before)]
 
 
-class EventsCalculations(object):
+class EventsCalculations:
     def __init__(self, events: IntegerEvents, include_zeroes: bool = True):
         self._info = EventsInformation(events)
         self._include_zeroes = include_zeroes
@@ -131,13 +130,13 @@ class EventsCalculations(object):
             factor_to_truncate_digits = 10 ** (largest_exponent - required_exp_for_accuracy)
         return factor_to_truncate_digits
 
-    def percentage_points(self) -> List[Tuple[int, float]]:
+    def percentage_points(self) -> list[tuple[int, float]]:
         """
         Very fast, but only good to ten decimal places.
         """
         return self._percentage_points_by_method("fast")
 
-    def percentage_points_exact(self) -> List[Tuple[int, float]]:
+    def percentage_points_exact(self) -> list[tuple[int, float]]:
         return self._percentage_points_by_method("exact")
 
     def percentage_axes(self):
@@ -149,7 +148,7 @@ class EventsCalculations(object):
     def percentage_axes_exact(self):
         return list(zip(*self.percentage_points_exact()))
 
-    def log10_points(self, log10_of_zero_value=-100.0) -> List[Tuple[int, float]]:
+    def log10_points(self, log10_of_zero_value=-100.0) -> list[tuple[int, float]]:
         """
         returns log10 of the occurrences.
 
@@ -256,9 +255,9 @@ StatsStrings = namedtuple(
 
 def _calculate_chance_and_pct(query_values_occurrences, total_combinations):
     if not query_values_occurrences:
-        return Decimal("inf"), Decimal("0")
+        return Decimal("inf"), Decimal(0)
     inverse_chance = Decimal(total_combinations) / Decimal(query_values_occurrences)
-    pct = Decimal(100.0) / inverse_chance
+    pct = Decimal(100) / inverse_chance
     return inverse_chance, pct
 
 

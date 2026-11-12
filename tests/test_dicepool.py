@@ -1,6 +1,6 @@
 import pytest
 
-from dicetables import Die, ModDie, WeightedDie, ModWeightedDie
+from dicetables import Die, ModDie, ModWeightedDie, WeightedDie
 from dicetables.dicepool import DicePool
 
 

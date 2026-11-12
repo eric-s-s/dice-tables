@@ -9,7 +9,7 @@ fast consistent and programmable object to convert all number types to strings.
 from math import log10
 
 
-class NumberFormatter(object):
+class NumberFormatter:
     def __init__(self, shown_digits=4, max_comma_exp=6, min_fixed_pt_exp=-3):
         """
 
@@ -103,7 +103,7 @@ class NumberFormatter(object):
 
     def _format_number_and_exponent_to_commas(self, number, exponent):
         if isinstance(number, int):
-            return "{:,}".format(number)
+            return f"{number:,}"
         else:
             return "{:,.{}f}".format(number, max(0, self.shown_digits - 1 - exponent))
 

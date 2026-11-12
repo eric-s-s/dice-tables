@@ -43,12 +43,21 @@ Customizing Parser
 Parser can only parse very specific types of parameters.
 
 >>> from dicetables.parser import make_int, make_int_dict, make_int_tuple
->>> from typing import Dict, Iterable
+>>> import collections.abc
+>>> import typing
+>>> from typing import Dict
 >>> from dicetables.eventsbases.protodie import ProtoDie
 >>> parser = dt.Parser()
->>> parser.param_types == {int: make_int, Dict[int, int]: make_int_dict, dt.DicePool: parser.make_pool,
-...                        ProtoDie: parser.make_die, Iterable[int]: make_int_tuple}
+>>> parser.param_types == {int: make_int, dt.DicePool: parser.make_pool, ProtoDie: parser.make_die,
+...                        dict[int, int]: make_int_dict,
+...                        collections.abc.Iterable[int]: make_int_tuple,
+...                        typing.Dict[int, int]: make_int_dict,
+...                        typing.Iterable[int]: make_int_tuple}
 True
+
+The builtin :code:`dict[int, int]` and :code:`typing.Dict[int, int]` are different keys. So are
+:code:`collections.abc.Iterable[int]` and :code:`typing.Iterable[int]`. The parser knows both spellings
+of each.
 
 If, for example, you need Parser to know how to parse a string, a list of strings and
 dictionary of keys=str: values=int, you first need to create functions that can parse
@@ -69,7 +78,7 @@ the appropriate Nodes. Then you assign the functions to the parser.
     "Module(body=[Expr(value=Dict(keys=[...], values=[...]))]...)"
     >>> my_list_node = ast.parse('[1, "A"]').body[0].value
     >>> ast.dump(my_list_node)
-    "List(elts=[...], ctx=Load())"
+    "List(elts=[...]...)"
 
     This says that the List node points to its elts:
 
@@ -78,17 +87,17 @@ the appropriate Nodes. Then you assign the functions to the parser.
 
 Now, to my example.
 
->>> str_value =  ast.Str(s="abd")
->>> str_value.s
+>>> str_value =  ast.Constant(value="abd")
+>>> str_value.value
 'abd'
->>> str_list = ast.List(elts=[ast.Str(s='a'), ast.Str(s='b'), ast.Str(s='c')])
+>>> str_list = ast.List(elts=[ast.Constant(value='a'), ast.Constant(value='b'), ast.Constant(value='c')])
 >>> str_int_dict = ast.parse("{'a': 2, 'b': 10}").body[0].value
 
 and here are conversion methods.
 
 >>> from dicetables.parser import make_int
 >>> def make_str(str_node):
-...     return str_node.s
+...     return str_node.value
 >>> make_str(str_value)
 'abd'
 

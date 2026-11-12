@@ -1,11 +1,8 @@
 import random
 import unittest
-from sys import version
 
 from dicetables.additiveevents import AdditiveEvents
 from dicetables.roller import Roller
-
-VERSION = int(version[0])
 
 
 class TestRoller(unittest.TestCase):
@@ -62,8 +59,6 @@ class TestRoller(unittest.TestCase):
         twos = rolls.count(2)
         threes = rolls.count(3)
         expected = [21, 50, 29]
-        if VERSION < 3:
-            expected = [30, 45, 25]
         self.assertEqual([ones, twos, threes], expected)
         self.assertEqual(sum(expected), times)
 
@@ -102,8 +97,6 @@ class TestRoller(unittest.TestCase):
         twos = result.count(2)
         threes = result.count(3)
         expected = [25, 54, 21]
-        if VERSION < 3:
-            expected = [27, 46, 27]
         self.assertEqual([ones, twos, threes], expected)
         self.assertEqual(sum(expected), times)
 
@@ -139,8 +132,6 @@ class TestRoller(unittest.TestCase):
         twos = result.count(2)
         threes = result.count(3)
         expected = [0, 29, 71]
-        if VERSION < 3:
-            expected = [0, 31, 69]
         self.assertEqual([ones, twos, threes], expected)
         self.assertEqual(sum(expected), times)
 

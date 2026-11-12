@@ -17,7 +17,7 @@ not mutate any dictionaries passed to it.)
 from dicetables.tools.indexedvalues import generate_indexed_values_from_dict
 
 
-class DictCombiner(object):
+class DictCombiner:
     def __init__(self, dictionary: dict):
         """
         :dictionary: {int: int>0, ...}

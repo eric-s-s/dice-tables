@@ -3,7 +3,7 @@ All the descendants of ProtoDie.  These are IntegerEvents that represent differe
 """
 
 import itertools
-from typing import Dict, Iterable, Tuple
+from collections.abc import Iterable
 
 from dicetables.eventsbases.protodie import ProtoDie
 
@@ -17,7 +17,7 @@ class Modifier(ProtoDie):
 
     def __init__(self, modifier: int):
         self._mod = modifier
-        super(Modifier, self).__init__()
+        super().__init__()
 
     def get_modifier(self) -> int:
         return self._mod
@@ -38,10 +38,10 @@ class Modifier(ProtoDie):
         return "\n".join([str(self)] * number)
 
     def __str__(self):
-        return "{:+}".format(self._mod)
+        return f"{self._mod:+}"
 
     def __repr__(self):
-        return "Modifier({})".format(self._mod)
+        return f"Modifier({self._mod})"
 
 
 class Die(ProtoDie):
@@ -56,7 +56,7 @@ class Die(ProtoDie):
         :param die_size: int > 0
         """
         self._die_size = die_size
-        super(Die, self).__init__()
+        super().__init__()
 
     def get_size(self):
         return self._die_size
@@ -64,20 +64,20 @@ class Die(ProtoDie):
     def get_weight(self):
         return 0
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return dict.fromkeys(range(1, self._die_size + 1), 1)
 
     def weight_info(self):
-        return "{}\n    No weights".format(self)
+        return f"{self}\n    No weights"
 
     def multiply_str(self, number):
-        return "{}{}".format(number, self)
+        return f"{number}{self}"
 
     def __str__(self):
-        return "D{}".format(self._die_size)
+        return f"D{self._die_size}"
 
     def __repr__(self):
-        return "Die({})".format(self._die_size)
+        return f"Die({self._die_size})"
 
 
 class ModDie(Die):
@@ -94,22 +94,22 @@ class ModDie(Die):
         :param modifier: int
         """
         self._mod = modifier
-        super(ModDie, self).__init__(die_size)
+        super().__init__(die_size)
 
     def get_modifier(self) -> int:
         return self._mod
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return dict.fromkeys(range(1 + self._mod, self.get_size() + 1 + self._mod), 1)
 
     def multiply_str(self, number):
-        return "{}D{}{:+}".format(number, self.get_size(), number * self._mod)
+        return f"{number}D{self.get_size()}{number * self._mod:+}"
 
     def __str__(self):
-        return "D{}{:+}".format(self.get_size(), self._mod)
+        return f"D{self.get_size()}{self._mod:+}"
 
     def __repr__(self):
-        return "ModDie({}, {})".format(self.get_size(), self._mod)
+        return f"ModDie({self.get_size()}, {self._mod})"
 
 
 class WeightedDie(ProtoDie):
@@ -118,7 +118,7 @@ class WeightedDie(ProtoDie):
     :code:`WeightedDie({1:1, 2:5})` rolls 1 once for every five times that 2 is rolled.
     """
 
-    def __init__(self, dictionary_input: Dict[int, int]):
+    def __init__(self, dictionary_input: dict[int, int]):
         """
 
         :param dictionary_input: {roll: weight} roll: int>1, weight: int>=0\n
@@ -126,7 +126,7 @@ class WeightedDie(ProtoDie):
         """
 
         self._raw_dic = self._create_raw_dict(dictionary_input)
-        super(WeightedDie, self).__init__()
+        super().__init__()
 
     def _create_raw_dict(self, dictionary):
         self._raise_value_error_for_rolls_less_than_one(dictionary)
@@ -140,7 +140,7 @@ class WeightedDie(ProtoDie):
         if any(roll < 1 for roll in dictionary):
             raise ValueError("rolls may not be less than 1. use ModWeightedDie")
 
-    def get_raw_dict(self) -> Dict[int, int]:
+    def get_raw_dict(self) -> dict[int, int]:
         return self._raw_dic.copy()
 
     def get_size(self):
@@ -149,7 +149,7 @@ class WeightedDie(ProtoDie):
     def get_weight(self):
         return sum(self._raw_dic.values())
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return {key: value for key, value in self._raw_dic.items() if value}
 
     def weight_info(self):
@@ -162,13 +162,13 @@ class WeightedDie(ProtoDie):
         return out.rstrip("\n")
 
     def multiply_str(self, number):
-        return "{}{}".format(number, self)
+        return f"{number}{self}"
 
     def __str__(self):
-        return "D{}  W:{}".format(self.get_size(), self.get_weight())
+        return f"D{self.get_size()}  W:{self.get_weight()}"
 
     def __repr__(self):
-        return "WeightedDie({})".format(self._raw_dic)
+        return f"WeightedDie({self._raw_dic})"
 
 
 class ModWeightedDie(WeightedDie):
@@ -179,7 +179,7 @@ class ModWeightedDie(WeightedDie):
     rolls 0 once for every five times that 2 is rolled.
     """
 
-    def __init__(self, dictionary_input: Dict[int, int], modifier: int):
+    def __init__(self, dictionary_input: dict[int, int], modifier: int):
         """
 
         :param dictionary_input: {roll: weight} roll: int, weight: int>=0\n
@@ -187,7 +187,7 @@ class ModWeightedDie(WeightedDie):
         :param modifier: int
         """
         self._mod = modifier
-        super(ModWeightedDie, self).__init__(dictionary_input)
+        super().__init__(dictionary_input)
 
     def get_modifier(self) -> int:
         return self._mod
@@ -196,15 +196,13 @@ class ModWeightedDie(WeightedDie):
         return {roll + self._mod: weight for roll, weight in self.get_raw_dict().items() if weight}
 
     def multiply_str(self, number):
-        return "{}D{}{:+}  W:{}".format(
-            number, self.get_size(), number * self._mod, self.get_weight()
-        )
+        return f"{number}D{self.get_size()}{number * self._mod:+}  W:{self.get_weight()}"
 
     def __str__(self):
-        return "D{}{:+}  W:{}".format(self.get_size(), self._mod, self.get_weight())
+        return f"D{self.get_size()}{self._mod:+}  W:{self.get_weight()}"
 
     def __repr__(self):
-        return "ModWeightedDie({}, {})".format(self.get_raw_dict(), self._mod)
+        return f"ModWeightedDie({self.get_raw_dict()}, {self._mod})"
 
 
 class StrongDie(ProtoDie):
@@ -223,7 +221,7 @@ class StrongDie(ProtoDie):
         """
         self._multiplier = multiplier
         self._original = input_die
-        super(StrongDie, self).__init__()
+        super().__init__()
 
     def get_size(self):
         return self._original.get_size()
@@ -238,7 +236,7 @@ class StrongDie(ProtoDie):
         """returns an instance of the original die"""
         return self._original
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return {
             roll * self._multiplier: weight for roll, weight in self._original.get_dict().items()
         }
@@ -247,13 +245,13 @@ class StrongDie(ProtoDie):
         return self._original.weight_info().replace(str(self._original), str(self))
 
     def multiply_str(self, number):
-        return "({})X({})".format(self._original.multiply_str(number), self._multiplier)
+        return f"({self._original.multiply_str(number)})X({self._multiplier})"
 
     def __str__(self):
-        return "({})X({})".format(self._original, self._multiplier)
+        return f"({self._original})X({self._multiplier})"
 
     def __repr__(self):
-        return "StrongDie({!r}, {})".format(self._original, self._multiplier)
+        return f"StrongDie({self._original!r}, {self._multiplier})"
 
 
 class Exploding(ProtoDie):
@@ -283,7 +281,7 @@ class Exploding(ProtoDie):
         self._explosions = explosions
         self._raise_error_for_negative_explosions()
         self._dict = self._get_exploding_dict()
-        super(Exploding, self).__init__()
+        super().__init__()
 
     def _raise_error_for_negative_explosions(self):
         if self._explosions < 0:
@@ -328,22 +326,20 @@ class Exploding(ProtoDie):
         """returns an instance of the original die"""
         return self._original
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return self._dict.copy()
 
     def weight_info(self):
-        return "{}\nExploding adds weight: 1".format(
-            self._original.weight_info().replace(str(self._original), str(self))
-        )
+        return f"{self._original.weight_info().replace(str(self._original), str(self))}\nExploding adds weight: 1"
 
     def multiply_str(self, number):
-        return "{}({})".format(number, self)
+        return f"{number}({self})"
 
     def __str__(self):
-        return "{}: Explosions={}".format(self._original, self._explosions)
+        return f"{self._original}: Explosions={self._explosions}"
 
     def __repr__(self):
-        return "Exploding({!r}, {})".format(self._original, self._explosions)
+        return f"Exploding({self._original!r}, {self._explosions})"
 
 
 class ExplodingOn(ProtoDie):
@@ -377,7 +373,7 @@ class ExplodingOn(ProtoDie):
         self._raise_error_for_bad_explodes_on()
         self._raise_error_for_negative_explosions()
         self._dict = self._get_exploding_dict()
-        super(ExplodingOn, self).__init__()
+        super().__init__()
 
     def _raise_error_for_bad_explodes_on(self):
         base_dict = self._original.get_dict()
@@ -438,38 +434,34 @@ class ExplodingOn(ProtoDie):
     def get_explosions(self):
         return self._explosions
 
-    def get_explodes_on(self) -> Tuple[int, ...]:
+    def get_explodes_on(self) -> tuple[int, ...]:
         return self._explodes_on
 
     def get_input_die(self) -> ProtoDie:
         """returns an instance of the original die"""
         return self._original
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return self._dict.copy()
 
     def weight_info(self):
         base_weight_info = self._original.weight_info().replace(str(self._original), str(self))
         num_of_values = len(self._explodes_on)
         value_str = "value" if num_of_values == 1 else "values"
-        return "{0}\nExploding on {1} {2} adds weight: {1}".format(
-            base_weight_info, num_of_values, value_str
-        )
+        return f"{base_weight_info}\nExploding on {num_of_values} {value_str} adds weight: {num_of_values}"
 
     def multiply_str(self, number):
-        return "{}({})".format(number, self)
+        return f"{number}({self})"
 
     def __str__(self):
         explodes_on = ", ".join([str(val) for val in self._explodes_on])
-        return "{}: Explosions={} On: {}".format(self._original, self._explosions, explodes_on)
+        return f"{self._original}: Explosions={self._explosions} On: {explodes_on}"
 
     def __repr__(self):
-        return "ExplodingOn({!r}, {}, {})".format(
-            self._original, self._explodes_on, self._explosions
-        )
+        return f"ExplodingOn({self._original!r}, {self._explodes_on}, {self._explosions})"
 
 
-def remove_duplicates(input_tuple: Iterable[int]) -> Tuple[int, ...]:
+def remove_duplicates(input_tuple: Iterable[int]) -> tuple[int, ...]:
     list_version = []
     for val in input_tuple:
         if val not in list_version:

@@ -1,44 +1,44 @@
 import ast
-from typing import Dict, Iterable, Type, Union
-from inspect import signature, _empty, Signature
+import typing
+from collections.abc import Iterable
+from inspect import Signature, _empty, signature
 
+from dicetables.dicepool import DicePool
 from dicetables.dicepool_collection import (
     BestOfDicePool,
-    WorstOfDicePool,
-    UpperMidOfDicePool,
     LowerMidOfDicePool,
+    UpperMidOfDicePool,
+    WorstOfDicePool,
 )
-from dicetables.dicepool import DicePool
 from dicetables.dieevents import (
     Die,
+    Exploding,
+    ExplodingOn,
     ModDie,
     Modifier,
     ModWeightedDie,
-    WeightedDie,
     StrongDie,
-    Exploding,
-    ExplodingOn,
+    WeightedDie,
 )
 from dicetables.eventsbases.protodie import ProtoDie
 from dicetables.tools.limit_checker import (
     AbstractLimitChecker,
-    NoOpLimitChecker,
     LimitChecker,
+    NoOpLimitChecker,
 )
 
-
-DieOrPool = Union[Type[ProtoDie], Type[DicePool]]
+DieOrPool = type[ProtoDie] | type[DicePool]
 
 
 class ParseError(ValueError):
     pass
 
 
-class Parser(object):
+class Parser:
     def __init__(
         self,
         ignore_case: bool = False,
-        checker: AbstractLimitChecker = NoOpLimitChecker(),
+        checker: AbstractLimitChecker = NoOpLimitChecker(),  # noqa: B008 stateless
     ):
         """
 
@@ -66,10 +66,14 @@ class Parser(object):
         }
         self._param_types = {
             int: make_int,
-            Dict[int, int]: make_int_dict,
+            dict[int, int]: make_int_dict,
             ProtoDie: self.make_die,
             Iterable[int]: make_int_tuple,
             DicePool: self.make_pool,
+            # The `typing` aliases are different keys from the two above.
+            # They stay so that dice annotated with them still parse.
+            typing.Dict[int, int]: make_int_dict,  # noqa: UP006
+            typing.Iterable[int]: make_int_tuple,
         }
 
     @classmethod
@@ -141,14 +145,14 @@ class Parser(object):
             self._get_call_class(node) for node in ast.walk(call_node) if isinstance(node, ast.Call)
         )
 
-    def _get_call_class(self, call_node: ast.AST):
+    def _get_call_class(self, call_node: ast.Call):
         class_name = call_node.func.id
         class_name = self._update_search_string(class_name)
         for die_class in self._classes:
             test_against = self._update_search_string(die_class.__name__)
             if class_name == test_against:
                 return die_class
-        raise ParseError("Die class: <{}> not recognized by parser.".format(class_name))
+        raise ParseError(f"Die class: <{class_name}> not recognized by parser.")
 
     def _update_search_string(self, search_str):
         if self.ignore_case:
@@ -163,7 +167,7 @@ class Parser(object):
             bound_args = call_signature.bind(*args, **kwargs)
             bound_args.apply_defaults()
         except TypeError as e:
-            msg = "{} for class: {}".format(e.args[0], call_node.func.id)
+            msg = f"{e.args[0]} for class: {call_node.func.id}"
             raise ParseError(msg)
         return bound_args
 
@@ -171,7 +175,7 @@ class Parser(object):
         signature_params = list(call_signature.parameters.values())
         param_nodes = call_node.args
         if len(param_nodes) > len(signature_params):
-            raise ParseError("Too many parameters for class: {}".format(call_node.func.id))
+            raise ParseError(f"Too many parameters for class: {call_node.func.id}")
         params = []
         for node, param in zip(param_nodes, signature_params):
             type_hint = param.annotation
@@ -185,7 +189,7 @@ class Parser(object):
             for param in call_signature.parameters.values()
         ):
             raise ParseError(
-                "The signature: {} has one or more un-recognized param types".format(call_signature)
+                f"The signature: {call_signature} has one or more un-recognized param types"
             )
 
     def _get_kwargs(self, call_node: ast.Call, call_signature: Signature):
@@ -209,9 +213,7 @@ class Parser(object):
             param = param_mapping[kwarg_name_to_search_for]
         except KeyError:
             raise ParseError(
-                "The keyword: {} is not in the die signature: {}".format(
-                    kwarg_node.arg, die_signature
-                )
+                f"The keyword: {kwarg_node.arg} is not in the die signature: {die_signature}"
             )
         converter = self._param_types[param.annotation]
 
@@ -230,7 +232,7 @@ class Parser(object):
     @staticmethod
     def _raise_error_for_missing_annotation(die_signature: Signature):
         if any(param.annotation == _empty for param in die_signature.parameters.values()):
-            raise ParseError("The signature: {} is missing type annotations".format(die_signature))
+            raise ParseError(f"The signature: {die_signature} is missing type annotations")
 
     def add_param_type(self, param_type, creation_method):
         self._param_types[param_type] = creation_method
@@ -250,14 +252,15 @@ def _make_int_list(num_node_list):
     return [make_int(num_node) for num_node in num_node_list]
 
 
-def make_int(num_node):
-    if isinstance(num_node, ast.UnaryOp) and isinstance(num_node.op, ast.USub):
-        value = num_node.operand.n * -1
+def make_int(num_node) -> int:
+    if not isinstance(num_node, (ast.UnaryOp, ast.Constant)):
+        raise ValueError("Value not recognized as an integer.")
+    if isinstance(num_node, ast.UnaryOp):
+        if not isinstance(num_node.op, ast.USub):
+            raise ValueError(f"Failed to interpret operand on: {num_node!r}")
+        value = num_node.operand.value * -1
     else:
-        value = None
-        for key, val in ast.iter_fields(num_node):
-            if key != "kind":  # pragma no branch
-                value = val
+        value = num_node.value
     if not isinstance(value, int):
-        raise ValueError("Expected an integer, but got: {!r}".format(value))
+        raise ValueError(f"Expected an integer, but got: {value!r}")
     return value

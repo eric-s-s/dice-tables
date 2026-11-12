@@ -2,14 +2,12 @@
 why i don't use Counter (also disappoint. while it is only marginally slower, it doesn't really improve the code).
 they are slower, without really conferring any great advantages.  :("""
 
-from __future__ import print_function
-
 import time
 from decimal import Decimal
 
 from dicetables.additiveevents import AdditiveEvents
-from dicetables.tools.dictcombiner import DictCombiner
 from dicetables.eventsinfo import EventsInformation
+from dicetables.tools.dictcombiner import DictCombiner
 
 
 def time_trial(times, func, *args):
@@ -38,15 +36,11 @@ def print_combine_trial(times, new_events, method, the_object):
     start, stop = info.events_range()
     first = info.get_event(start)
     last = info.get_event(stop)
-    print(
-        "added [{} ... {}]  {} times using {}.  time: {:.3e}".format(
-            first, last, times, method, result
-        )
-    )
+    print(f"added [{first} ... {last}]  {times} times using {method}.  time: {result:.3e}")
 
 
 def time_trial_output(times, text, func, *args):
-    return "call using {} {} times: {:.5}".format(text, times, time_trial(times, func, *args))
+    return f"call using {text} {times} times: {time_trial(times, func, *args):.5}"
 
 
 # for demonstration that NumberFormatter.format() works better
@@ -93,7 +87,7 @@ def fastest_vs_tuple_indexed_ui():
     while True:
         print("\n\n")
         start_dict_size = get_answer("pick a start size for AdditiveEvents", 1, 1000)
-        start_dict = dict([(event, 2 ** (event % 100)) for event in range(start_dict_size)])
+        start_dict = {event: 2 ** (event % 100) for event in range(start_dict_size)}
 
         show_fastest_method_speed = DictCombiner(start_dict)
         flattened_list_control = AdditiveEvents(start_dict)

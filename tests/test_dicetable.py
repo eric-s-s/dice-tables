@@ -4,9 +4,9 @@
 import unittest
 
 from dicetables.dicerecord import DiceRecord
-from dicetables.dicetable import DiceTable, DetailedDiceTable
-from dicetables.dieevents import Die, ModWeightedDie, ModDie, StrongDie, Modifier
-from dicetables.eventsbases.eventerrors import InvalidEventsError, DiceRecordError
+from dicetables.dicetable import DetailedDiceTable, DiceTable
+from dicetables.dieevents import Die, ModDie, Modifier, ModWeightedDie, StrongDie
+from dicetables.eventsbases.eventerrors import DiceRecordError, InvalidEventsError
 
 
 class TestDiceTable(unittest.TestCase):

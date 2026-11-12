@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import unittest
 
 import dicetables.tools.listtostring as l2s

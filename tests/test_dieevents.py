@@ -5,18 +5,18 @@ import unittest
 
 from dicetables.dieevents import (
     Die,
-    ModDie,
-    WeightedDie,
-    ModWeightedDie,
-    StrongDie,
-    Modifier,
     Exploding,
     ExplodingOn,
+    ModDie,
+    Modifier,
+    ModWeightedDie,
+    StrongDie,
+    WeightedDie,
     add_dicts,
-    remove_keys_after_applying_modifier,
-    remove_duplicates,
     calc_roll_and_weight_mods,
     combine_rollweights_with_same_roll_value,
+    remove_duplicates,
+    remove_keys_after_applying_modifier,
 )
 from dicetables.eventsbases.eventerrors import InvalidEventsError
 
@@ -193,7 +193,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(WeightedDie({1: 2, 3: 0}).get_dict(), {1: 2})
 
     def test_WeightedDie_weight_info(self):
-        dic = dict((x, x + 1) for x in range(1, 6, 2))
+        dic = {x: x + 1 for x in range(1, 6, 2)}
         weights_str = (
             "D5  W:12\n"
             + "    a roll of 1 has a weight of 2\n"
@@ -205,7 +205,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(WeightedDie(dic).weight_info(), weights_str)
 
     def test_WeightedDie_weight_info_formatting_large_num(self):
-        dic = dict((x, x + 1) for x in range(1, 12, 2))
+        dic = {x: x + 1 for x in range(1, 12, 2)}
         weights_str = (
             "D11  W:42\n"
             + "    a roll of  1 has a weight of 2\n"
@@ -295,7 +295,7 @@ class TestDieEvents(unittest.TestCase):
         self.assertEqual(die.get_dict(), {-2: 2, -6: 4})
 
     def test_StrongDie_weight_info(self):
-        dic = dict((x, x + 1) for x in range(1, 6, 2))
+        dic = {x: x + 1 for x in range(1, 6, 2)}
         weights_str = (
             "(D5  W:12)X(10)\n"
             + "    a roll of 1 has a weight of 2\n"
@@ -327,7 +327,7 @@ class TestDieEvents(unittest.TestCase):
 
     def test_StrongDie_edge_case_StrongDie_of_StrongDie_get_dict(self):
         die = StrongDie(ModDie(3, 1), 2)
-        expected_tuple = dict((roll * 6, 1) for roll in [2, 3, 4])
+        expected_tuple = {roll * 6: 1 for roll in [2, 3, 4]}
         self.assertEqual(StrongDie(die, 3).get_dict(), expected_tuple)
 
     def test_StrongDie_edge_case_StrongDie_of_StrongDie_get_multiplier(self):

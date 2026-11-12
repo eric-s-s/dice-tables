@@ -3,7 +3,7 @@ from collections import namedtuple
 Alias = namedtuple("Alias", ["primary", "alternate", "primary_height"])
 
 
-class AliasTable(object):
+class AliasTable:
     """
 
     here is

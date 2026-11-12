@@ -1,7 +1,5 @@
-from typing import Dict
-
-from dicetables.dieevents import ProtoDie
 from dicetables.dicepool import DicePool
+from dicetables.dieevents import ProtoDie
 
 
 class DicePoolCollection(ProtoDie):
@@ -22,7 +20,7 @@ class DicePoolCollection(ProtoDie):
             raise ValueError("you cannot select more dice than the pool_size.")
         self._select = select
         self._dict = self._generate_dict()
-        super(DicePoolCollection, self).__init__()
+        super().__init__()
 
     def _generate_dict(self):
         raise NotImplementedError
@@ -33,7 +31,7 @@ class DicePoolCollection(ProtoDie):
     def get_select(self) -> int:
         return self._select
 
-    def get_dict(self) -> Dict[int, int]:
+    def get_dict(self) -> dict[int, int]:
         return self._dict.copy()
 
     def get_size(self) -> int:
@@ -45,19 +43,17 @@ class DicePoolCollection(ProtoDie):
     def weight_info(self):
         input_die = self._dice_pool.die
         original_weight_info = input_die.weight_info().replace(str(input_die), "input_die info:")
-        return "{}\n{}".format(self, original_weight_info)
+        return f"{self}\n{original_weight_info}"
 
     def multiply_str(self, number):
-        return "{}({})".format(number, self)
+        return f"{number}({self})"
 
     def __str__(self):
         descriptor = self.__class__.__name__.replace("OfDicePool", "")
-        return "{} {} of {}".format(
-            descriptor, self._select, self._dice_pool.die.multiply_str(self._dice_pool.size)
-        )
+        return f"{descriptor} {self._select} of {self._dice_pool.die.multiply_str(self._dice_pool.size)}"
 
     def __repr__(self):
-        return "{}({!r}, {})".format(self.__class__.__name__, self._dice_pool, self._select)
+        return f"{self.__class__.__name__}({self._dice_pool!r}, {self._select})"
 
 
 class BestOfDicePool(DicePoolCollection):
@@ -132,7 +128,7 @@ class LowerMidOfDicePool(DicePoolCollection):
         return generate_events_dict(ordered_combinations, start_at, stop_before)
 
 
-def generate_events_dict(ordered_combinations, start_at, stop_before) -> Dict[int, int]:
+def generate_events_dict(ordered_combinations, start_at, stop_before) -> dict[int, int]:
     master_dict = {}
     for key, val in ordered_combinations.items():
         master_key = sum(key[start_at:stop_before])
