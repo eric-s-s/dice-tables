@@ -1,7 +1,7 @@
 .. image:: https://img.shields.io/badge/License-MIT-yellow
     :target: https://opensource.org/license/MIT
 
-.. image:: https://img.shields.io/badge/Python-3.9%20%7C%203.12%20%7C%203.13-blue
+.. image:: https://img.shields.io/badge/Python-3.10%20%7C%203.12%20%7C%203.14%20%7C%203.15-blue
 
 .. image:: https://badge.fury.io/py/dicetables.svg
     :target: https://badge.fury.io/py/dicetables

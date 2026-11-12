@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "dicetables"
 version = "5.0.0"
 dependencies = []
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [{ name = "Eric Shaw", email = "shaweric01@gmail.com" }]
 maintainers = [{ name = "Eric Shaw", email = "shaweric01@gmail.com" }]
 description = "get all combinations for any set of dice"
