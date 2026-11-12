@@ -16,6 +16,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [5.0.0](https://github.com/eric-s-s/dice-tables/releases/tag/5.0.0) - 2026-11-12
+
+### Added
+
+- support for python 3.14 and 3.15
+
+### Fixed
+
+- `Parser` now works on python 3.14 and later. Before, any die string with a negative number,
+  like `Parser().parse_die("ModDie(6, -2)")`, raised `AttributeError`, because python 3.14 removed
+  the deprecated `ast.Num`, `ast.Str` and the `.n` and `.s` attributes.
+- the examples in the `Parser` docs now use `ast.Constant` and run on python 3.14 and later.
+
+### Changed
+
+- minimum python version is now 3.8
+- `dicetables.parser.make_int` has new error messages for values that are not integers.
+  It still raises `ValueError`.
+- CI tests against python 3.8, 3.12, 3.14 and 3.15
+
+### Removed
+
+- support for python 3.7
+
 ## [4.0.3](https://github.com/eric-s-s/dice-tables/releases/tag/4.0.3) - 2024-12-16
 
 ### Added

@@ -141,7 +141,7 @@ class Parser(object):
             self._get_call_class(node) for node in ast.walk(call_node) if isinstance(node, ast.Call)
         )
 
-    def _get_call_class(self, call_node: ast.AST):
+    def _get_call_class(self, call_node: ast.Call):
         class_name = call_node.func.id
         class_name = self._update_search_string(class_name)
         for die_class in self._classes:
@@ -250,14 +250,15 @@ def _make_int_list(num_node_list):
     return [make_int(num_node) for num_node in num_node_list]
 
 
-def make_int(num_node):
-    if isinstance(num_node, ast.UnaryOp) and isinstance(num_node.op, ast.USub):
-        value = num_node.operand.n * -1
+def make_int(num_node) -> int:
+    if not isinstance(num_node, (ast.UnaryOp, ast.Constant)):
+        raise ValueError("Value not recognized as an integer.")
+    if isinstance(num_node, ast.UnaryOp):
+        if not isinstance(num_node.op, ast.USub):
+            raise ValueError(f"Failed to interpret operand on: {num_node!r}")
+        value = num_node.operand.value * -1
     else:
-        value = None
-        for key, val in ast.iter_fields(num_node):
-            if key != "kind":  # pragma no branch
-                value = val
+        value = num_node.value
     if not isinstance(value, int):
         raise ValueError("Expected an integer, but got: {!r}".format(value))
     return value

@@ -69,7 +69,7 @@ the appropriate Nodes. Then you assign the functions to the parser.
     "Module(body=[Expr(value=Dict(keys=[...], values=[...]))]...)"
     >>> my_list_node = ast.parse('[1, "A"]').body[0].value
     >>> ast.dump(my_list_node)
-    "List(elts=[...], ctx=Load())"
+    "List(elts=[...]...)"
 
     This says that the List node points to its elts:
 
@@ -78,17 +78,17 @@ the appropriate Nodes. Then you assign the functions to the parser.
 
 Now, to my example.
 
->>> str_value =  ast.Str(s="abd")
->>> str_value.s
+>>> str_value =  ast.Constant(value="abd")
+>>> str_value.value
 'abd'
->>> str_list = ast.List(elts=[ast.Str(s='a'), ast.Str(s='b'), ast.Str(s='c')])
+>>> str_list = ast.List(elts=[ast.Constant(value='a'), ast.Constant(value='b'), ast.Constant(value='c')])
 >>> str_int_dict = ast.parse("{'a': 2, 'b': 10}").body[0].value
 
 and here are conversion methods.
 
 >>> from dicetables.parser import make_int
 >>> def make_str(str_node):
-...     return str_node.s
+...     return str_node.value
 >>> make_str(str_value)
 'abd'
 

@@ -119,12 +119,11 @@ def test_make_die_raises_error_on_function_call_not_in_parser():
     assert cm.value.args[0] == "Die class: <NotThere> not recognized by parser."
 
 
-def test_make_die_on_die_with_bad_param_values():
-    die_node = ast.parse('WeightedDie({"K":2})').body[0].value
-    with pytest.raises(ValueError):
-        Parser().make_die(die_node)
-
-    die_node = ast.parse("Die(12.00)").body[0].value
+@pytest.mark.parametrize(
+    "bad_string", ["WeightedDie({'K': 2})", "Die(12.00)", "Die(not 1)", "Die(param_name)"]
+)
+def test_make_die_on_die_with_bad_param_values(bad_string):
+    die_node = ast.parse(bad_string).body[0].value
     with pytest.raises(ValueError):
         Parser().make_die(die_node)
 
@@ -568,7 +567,7 @@ def test_new_parser_class_with_new_die():
             return super(StupidDie, self).__eq__(other) and self.name == other.name
 
     def make_string(str_node):
-        return str_node.s
+        return str_node.value
 
     class NewNewParser(Parser):
         def __init__(self, *args, **kwargs):
