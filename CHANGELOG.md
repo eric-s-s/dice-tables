@@ -16,6 +16,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [5.0.1](https://github.com/eric-s-s/dice-tables/releases/tag/5.0.1) - 2026-11-16
+
+### Added
+
+- `.github/workflows/actions.lock`, made by `gh actions-lock`. It pins every GitHub action
+  the workflows use to a commit.
+- the "Upload Test Python Package" workflow can be run manually (`workflow_dispatch`).
+
+### Changed
+
+- workflows use full version tags for GitHub actions, updated to the latest releases:
+  `actions/checkout` v7.0.1, `actions/setup-python` v7.1.0, `actions/upload-artifact` v7.0.2,
+  `actions/download-artifact` v8.0.2 and `coverallsapp/github-action` v2.3.8.
+- no changes to the `dicetables` package.
+
+
 ## [5.0.0](https://github.com/eric-s-s/dice-tables/releases/tag/5.0.0) - 2026-11-12
 
 ### Added
