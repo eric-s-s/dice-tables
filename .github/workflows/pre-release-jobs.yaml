@@ -2,6 +2,7 @@ name: Upload Test Python Package
 on:
   release:
     types: [prereleased]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
